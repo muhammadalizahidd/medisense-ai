@@ -133,7 +133,7 @@ export function TasksWorkspace() {
         ))}
       </section>
 
-      <div className="mt-6 grid items-stretch gap-6 lg:grid-cols-12">
+      {/* <div className="mt-6 grid items-stretch gap-6 lg:grid-cols-12">
         <Card aria-labelledby="by-owner" className="flex flex-col px-6 pt-5 pb-4 lg:col-span-5">
           <CardTitle
             id="by-owner"
@@ -204,7 +204,7 @@ export function TasksWorkspace() {
               ))
           )}
         </Card>
-      </div>
+      </div> */}
 
       <div className="mt-6">
         <FilterBar aside={`Showing ${rows.length} of ${tasks.length}`}>

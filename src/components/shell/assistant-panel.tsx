@@ -1,6 +1,15 @@
 "use client";
 
-import { ArrowRight, CornerDownLeft, Lock, X } from "lucide-react";
+import {
+  ArrowRight,
+  BookOpen,
+  CornerDownLeft,
+  Lock,
+  PlayCircle,
+  Route,
+  Stethoscope,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { PenNib } from "@/components/ai/provenance";
@@ -9,6 +18,7 @@ import type { KeyStatus } from "@/lib/ai/engine";
 import { answerQuestion, roleQuestions } from "@/lib/assistant";
 import { answerLocally, smallTalk } from "@/lib/knowledge/local";
 import type { Answer, LiveState } from "@/lib/knowledge/state";
+import { matchWorkflow, workflowGuides } from "@/lib/knowledge/workflows";
 import { useDemoStore } from "@/state/demo-store";
 
 type Exchange = {
@@ -32,6 +42,8 @@ type LiveResponse =
   | { ok: false; error: string };
 
 type Resolved = Omit<Exchange, "id" | "question">;
+
+const GUIDE = "Medisense guide";
 
 const modeLabel = { instant: "no AI call", "records-first": "1 AI call", "tool-loop": "tool loop" };
 
@@ -69,6 +81,10 @@ function aiStatus() {
  * to live AI (records fetched first, one call) or, without a working key, to the local tools.
  */
 export async function resolveQuestion(question: string): Promise<Resolved> {
+  // Standard workflows are fixed guides: they open instantly and are never labelled as AI.
+  const guide = matchWorkflow(question);
+  if (guide) return { answer: guide.answer, engine: GUIDE, toolCalls: [], notice: null };
+
   const state = liveState();
   const talk = smallTalk(question, state);
   if (talk) return { answer: talk, engine: "Instant · no AI call", toolCalls: [], notice: null };
@@ -285,6 +301,34 @@ export function AssistantPanel({
                 </button>
               )}
 
+              <div className="mt-6 mb-2 eyebrow">Workflow guides</div>
+              <div className="grid gap-2.5 sm:grid-cols-2">
+                {workflowGuides.map((g) => {
+                  const Icon = { patient: Route, therapist: Stethoscope, try: PlayCircle }[g.id];
+                  const name = {
+                    patient: "Patient journey",
+                    therapist: "Therapist workflow",
+                    try: "Try it: new client to finished visit",
+                  }[g.id];
+                  return (
+                    <button
+                      key={g.id}
+                      type="button"
+                      onClick={() => ask(g.question)}
+                      className={`group flex cursor-pointer flex-col items-start gap-2 rounded-card border border-border bg-surface px-4 py-3.5 text-left surface-lift transition-colors hover:border-accent-fill ${g.id === "try" ? "sm:col-span-2" : ""}`}
+                    >
+                      <span className="flex size-8 items-center justify-center rounded-control bg-accent-tint text-accent">
+                        <Icon className="size-4" strokeWidth={1.75} aria-hidden="true" />
+                      </span>
+                      <span className="text-small font-semibold text-ink-900 group-hover:text-accent">
+                        {name}
+                      </span>
+                      <span className="text-caption text-ink-500">{g.blurb}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
               <div className="mt-6 mb-2 eyebrow">Most asked by {role.toLowerCase()}</div>
               <ol className="overflow-hidden rounded-card border border-border bg-surface surface-lift">
                 {popular.map((q, i) => (
@@ -325,15 +369,19 @@ export function AssistantPanel({
               <article className="mt-3 overflow-hidden rounded-card border border-l-2 border-border border-l-accent-fill bg-surface shadow-hairline">
                 <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-2.5">
                   <span className="flex items-center gap-1.5 eyebrow text-brass">
-                    <PenNib className="size-3.5 text-brass" />
-                    Medisense AI
+                    {engine === GUIDE ? (
+                      <BookOpen className="size-3.5 text-brass" strokeWidth={1.75} aria-hidden="true" />
+                    ) : (
+                      <PenNib className="size-3.5 text-brass" />
+                    )}
+                    {engine === GUIDE ? "Medisense guide" : "Medisense AI"}
                   </span>
                   {answer && (
                     <span
                       className="text-caption text-ink-500"
                       title={[engine, toolCalls.join(", "), notice].filter(Boolean).join(" · ")}
                     >
-                      From Medisense records
+                      {engine === GUIDE ? "Standard workflow" : "From Medisense records"}
                     </span>
                   )}
                 </div>
@@ -425,7 +473,9 @@ export function AssistantPanel({
                     )}
 
                     <p className="mt-3 border-t border-border pt-2.5 text-caption text-ink-500">
-                      AI answer. Check before acting; a person makes every decision.
+                      {engine === GUIDE
+                        ? "Standard Medisense workflow. Open a step to go to its screen."
+                        : "AI answer. Check before acting; a person makes every decision."}
                     </p>
                   </div>
                 )}

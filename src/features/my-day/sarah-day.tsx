@@ -2,7 +2,7 @@
 
 import { Car, UserCheck, Video } from "lucide-react";
 import Link from "next/link";
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
 import { AiMark, TaskTag } from "@/components/ai/marks";
 import { PenNib } from "@/components/ai/provenance";
 import { Button, ButtonLink } from "@/components/ui/button";
@@ -11,11 +11,15 @@ import { ScreenTitle } from "@/components/ui/page";
 import { Tag } from "@/components/ui/tag";
 import { caseNotes } from "@/data/case-note";
 import { preparedDaySummary, sarahDay, sarahSupervisionSlot, type Visit } from "@/data/story";
+import { formatTime, scheduleDays, TODAY, type ScheduleItem } from "@/data/schedule";
+import { VisitSheet } from "@/features/schedule/visit-sheet";
 import { cn } from "@/lib/cn";
 import { useDemoStore } from "@/state/demo-store";
 import { useStoryAi } from "@/state/use-story-ai";
 
 const SESSION = "/sessions/oliver-grant";
+/** The therapist signed in to the Therapist view. */
+const ME = "sarah-thompson";
 
 function VisitRow({
   visit,
@@ -86,6 +90,15 @@ export function SarahDay() {
   const notes = useDemoStore((s) => s.caseNotes);
   const allTasks = useDemoStore((s) => s.tasks);
   const completeTask = useDemoStore((s) => s.completeTask);
+  const bookings = useDemoStore((s) => s.bookings);
+  const visitChanges = useDemoStore((s) => s.visitChanges);
+  const [openVisit, setOpenVisit] = useState<ScheduleItem | null>(null);
+  // Visits booked into Sarah's diary from Schedule, a client record or + New.
+  const myBookings = bookings
+    .filter((b) => b.clinicianId === ME && b.day >= TODAY)
+    .map((b) => ({ ...b, status: visitChanges[b.id] ?? b.status }))
+    .filter((b) => b.status !== "cancelled")
+    .sort((a, b) => a.day - b.day || a.start - b.start);
   const approved = stage === "approved";
   const nextDay = dayOffset > 0;
 
@@ -154,6 +167,40 @@ export function SarahDay() {
         </Card>
 
         <div className="flex flex-col gap-6 xl:col-span-4">
+          {myBookings.length > 0 && (
+            <Card aria-labelledby="new-bookings" className="overflow-hidden">
+              <div className="px-5 pt-4.5 pb-3">
+                <h2 id="new-bookings" className="headline text-h2">
+                  New bookings
+                </h2>
+                <Caption>Booked into your diary by the team</Caption>
+              </div>
+              {myBookings.map((b) => (
+                <button
+                  key={b.id}
+                  type="button"
+                  onClick={() => setOpenVisit(b)}
+                  className="flex w-full cursor-pointer items-center justify-between gap-3 border-t border-border px-5 py-3 text-left hover:bg-canvas"
+                >
+                  <span className="min-w-0">
+                    <span className="block text-small font-semibold text-ink-900">{b.title}</span>
+                    <Caption>
+                      {b.day === TODAY ? "Today" : (scheduleDays[b.day]?.label ?? "")},{" "}
+                      {formatTime(b.start)} · {b.type}
+                    </Caption>
+                  </span>
+                  {b.status === "completed" ? (
+                    <Tag tone="healthy">Completed</Tag>
+                  ) : b.day === TODAY ? (
+                    <Tag tone="live">Finish visit</Tag>
+                  ) : (
+                    <Tag tone="neutral">Scheduled</Tag>
+                  )}
+                </button>
+              ))}
+            </Card>
+          )}
+
           <Card aria-labelledby="notes-due" className="overflow-hidden">
             <h2 id="notes-due" className="px-5 pt-4.5 pb-3 headline text-h2">
               Notes to write
@@ -247,6 +294,7 @@ export function SarahDay() {
           </Card>
         </div>
       </div>
+      {openVisit && <VisitSheet visit={openVisit} onClose={() => setOpenVisit(null)} />}
     </>
   );
 }
