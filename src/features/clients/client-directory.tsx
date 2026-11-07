@@ -107,7 +107,7 @@ export function ClientDirectory() {
         ))}
       </section>
 
-      <div className="mt-6 grid items-stretch gap-6 lg:grid-cols-12">
+      {/* <div className="mt-6 grid items-stretch gap-6 lg:grid-cols-12">
         <Card aria-labelledby="funding-mix" className="flex flex-col px-6 pt-5 pb-5 lg:col-span-4">
           <CardTitle id="funding-mix" title="Funding mix" description="Click a slice to filter" />
           <div className="mt-5">
@@ -169,7 +169,7 @@ export function ClientDirectory() {
             />
           </div>
         </Card>
-      </div>
+      </div> */}
 
       <div className="mt-6">
         <FilterBar aside={`Showing ${rows.length} of ${directoryClients.length} sample records`}>
