@@ -560,6 +560,175 @@ html[data-theme="clear-blue"][data-palette="green"] .ai-surface {
   box-shadow: 0 10px 28px rgb(8 132 74 / 0.1);
 }
 
+/*
+ * Navy rail and Mint: the two options in the Medisense colour specification. They share the
+ * evergreen accents (#0d7a43 for selection and actions, #18a05e as the secondary accent) and
+ * differ in the rail and canvas. #18a05e is below 4.5:1 on white, so it is used for fills, dots
+ * and charts, never for text. Text values meet 4.5:1 on the surfaces they sit on.
+ */
+html[data-theme="clear-blue"]:is([data-palette="navy"], [data-palette="mint"]) {
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-topbar: #ffffff;
+
+  --color-nav-active: #0d7a43;
+  --color-nav-active-ink: #ffffff;
+
+  --color-accent: #0d7a43;
+  --color-accent-hover: #0a6337;
+  --color-accent-tint: #dff4e8;
+  --color-accent-fill: #0d7a43;
+  --color-accent-fill-hover: #0b6a3a;
+  --color-accent-fill-pressed: #095a31;
+
+  --color-healthy: #0a6b3c;
+  --color-healthy-bg: rgb(24 160 94 / 0.13);
+  --color-healthy-dot: #18a05e;
+  --color-available: #0b6b80;
+  --color-available-bg: rgb(14 116 144 / 0.1);
+  --color-available-dot: #0e8fa8;
+
+  --color-draft: #f3faf6;
+  --color-draft-rule: #6cc592;
+  --color-brass: #0d7a43;
+
+  --color-series-1: #0d7a43;
+  --color-series-2: #7a5af8;
+  --color-series-3: #0e9fc4;
+  --color-series-4: #c4679b;
+  --color-chart-evergreen: #0d7a43;
+  --color-chart-sage: #18a05e;
+  --color-chart-sand: #a7dfc0;
+
+  --shadow-focus: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-accent-hover);
+  --shadow-focus-dark: 0 0 0 2px var(--color-sidebar), 0 0 0 4px #18a05e;
+
+  --primary-sheen: linear-gradient(135deg, #18a05e 0%, #0d7a43 100%);
+  --ai-border: linear-gradient(120deg, #0d7a43 0%, #0e9fc4 55%, #18a05e 100%);
+  --nav-active-rule: 0 8px 18px rgb(13 122 67 / 0.3);
+  --primary-glow: rgb(13 122 67 / 0.3);
+}
+
+/* Option 01: deep navy-charcoal rail on a soft, low-glare workspace. */
+html[data-theme="clear-blue"][data-palette="navy"] {
+  --color-page: #f7faf9;
+  --color-canvas: #eef5f2;
+  --color-surface-sunken: #f3f8f6;
+  --color-border: rgb(23 43 54 / 0.1);
+  --color-border-strong: rgb(23 43 54 / 0.2);
+  --color-grid: rgb(23 43 54 / 0.07);
+
+  --color-ink-900: #1f2937;
+  --color-ink-700: #4b5563;
+  --color-ink-500: #525d6b;
+  --color-ink-400: #5a6573;
+
+  --color-sidebar: #172b36;
+  --color-sidebar-ink: #f3f7f5;
+  --color-sidebar-muted: rgb(243 247 245 / 0.74);
+  --color-sidebar-faint: rgb(243 247 245 / 0.6);
+  --color-sidebar-hover: rgb(243 247 245 / 0.08);
+  --color-sidebar-border: rgb(243 247 245 / 0.1);
+
+  --hero-deep: linear-gradient(120deg, #0e1c24 0%, #172b36 45%, #10503a 82%, #0d7a43 112%);
+  --surface-lift: 0 1px 1px rgb(23 43 54 / 0.04), 0 18px 44px -12px rgb(23 43 54 / 0.14);
+  --hero-ink: #172b36;
+  --room-glow: #10503a;
+  --room-deep: #0e1c24;
+}
+
+/* Option 02: white rail with pale-mint hover on a mint-tinted canvas. */
+html[data-theme="clear-blue"][data-palette="mint"] {
+  --color-page: #f8fbfa;
+  --color-canvas: #eef7f2;
+  --color-surface-sunken: #f4faf7;
+  --color-border: rgb(32 52 72 / 0.1);
+  --color-border-strong: rgb(32 52 72 / 0.2);
+  --color-grid: rgb(32 52 72 / 0.07);
+
+  --color-ink-900: #203448;
+  --color-ink-700: #47586a;
+  --color-ink-500: #506173;
+  --color-ink-400: #58687a;
+
+  --color-sidebar: #ffffff;
+  --color-sidebar-ink: #203448;
+  --color-sidebar-muted: #47586a;
+  --color-sidebar-faint: #58687a;
+  --color-sidebar-hover: #e8f7f0;
+  --color-sidebar-border: rgb(32 52 72 / 0.09);
+
+  --hero-deep: linear-gradient(120deg, #13222f 0%, #203448 42%, #0d6b40 82%, #18a05e 115%);
+  --surface-lift: 0 1px 1px rgb(32 52 72 / 0.04), 0 18px 44px -12px rgb(32 52 72 / 0.14);
+  --hero-ink: #203448;
+  --room-glow: #0d6b40;
+  --room-deep: #13222f;
+}
+
+html[data-theme="clear-blue"]:is([data-palette="navy"], [data-palette="mint"]) .page-hero {
+  --color-accent: #b4f0cd;
+  --color-brass: #b4f0cd;
+  box-shadow: 0 26px 60px -18px rgb(14 28 36 / 0.5);
+}
+
+html[data-theme="clear-blue"]:is([data-palette="navy"], [data-palette="mint"]) .page-hero::after {
+  background: radial-gradient(circle, rgb(24 160 94 / 0.3), transparent 68%);
+}
+
+html[data-theme="clear-blue"][data-palette="navy"]
+  .page-hero
+  :is([class*="rounded-control"], .on-light) {
+  --color-ink-900: #1f2937;
+  --color-ink-700: #4b5563;
+  --color-ink-500: #525d6b;
+  --color-ink-400: #5a6573;
+  --color-accent: #0d7a43;
+  --color-brass: #0d7a43;
+  --color-border: rgb(23 43 54 / 0.1);
+}
+
+html[data-theme="clear-blue"][data-palette="mint"]
+  .page-hero
+  :is([class*="rounded-control"], .on-light) {
+  --color-ink-900: #203448;
+  --color-ink-700: #47586a;
+  --color-ink-500: #506173;
+  --color-ink-400: #58687a;
+  --color-accent: #0d7a43;
+  --color-brass: #0d7a43;
+  --color-border: rgb(32 52 72 / 0.1);
+}
+
+html[data-theme="clear-blue"]:is([data-palette="navy"], [data-palette="mint"])
+  .page-hero
+  .bg-accent-tint:not(.on-light *) {
+  color: #0d7a43;
+}
+
+html[data-theme="clear-blue"]:is([data-palette="navy"], [data-palette="mint"]) .stat-band > * {
+  --tint: rgb(24 160 94 / 0.14);
+}
+
+html[data-theme="clear-blue"]:is([data-palette="navy"], [data-palette="mint"])
+  .stat-band
+  > :nth-child(5n + 2) {
+  --tint: rgb(14 159 196 / 0.12);
+}
+
+html[data-theme="clear-blue"]:is([data-palette="navy"], [data-palette="mint"]) .ai-surface {
+  background:
+    linear-gradient(#f8fcfa, #f8fcfa) padding-box,
+    var(--ai-border) border-box;
+  box-shadow: 0 10px 28px rgb(13 122 67 / 0.1);
+}
+
+/* On the navy rail the evergreen accent is too dark to read, so accent text there uses mint. */
+html[data-theme="clear-blue"][data-palette="navy"]
+  .bg-sidebar
+  :is(.text-accent, .text-accent-fill) {
+  color: #6cc592;
+}
+
 @keyframes rise-in {
   from {
     opacity: 0;

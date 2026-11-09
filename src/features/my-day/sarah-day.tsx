@@ -13,6 +13,7 @@ import { caseNotes } from "@/data/case-note";
 import { preparedDaySummary, sarahDay, sarahSupervisionSlot, type Visit } from "@/data/story";
 import { formatTime, scheduleDays, TODAY, type ScheduleItem } from "@/data/schedule";
 import { VisitSheet } from "@/features/schedule/visit-sheet";
+import { TaskDetailSheet, VisitDetailSheet } from "./day-details";
 import { cn } from "@/lib/cn";
 import { useDemoStore } from "@/state/demo-store";
 import { useStoryAi } from "@/state/use-story-ai";
@@ -25,10 +26,12 @@ function VisitRow({
   visit,
   approved,
   nextDay,
+  onOpen,
 }: {
   visit: Visit;
   approved: boolean;
   nextDay: boolean;
+  onOpen: () => void;
 }) {
   const current = visit.state === "just-finished" && !nextDay;
   const done = visit.state === "done" && !nextDay;
@@ -36,8 +39,9 @@ function VisitRow({
 
   return (
     <div
+      onClick={onOpen}
       className={cn(
-        "grid grid-cols-[76px_minmax(0,1fr)] gap-x-4 px-5 py-4 md:grid-cols-[96px_minmax(0,1fr)_auto] md:items-center",
+        "relative grid cursor-pointer grid-cols-[76px_minmax(0,1fr)] gap-x-4 px-5 py-4 transition-colors hover:bg-canvas md:grid-cols-[96px_minmax(0,1fr)_auto] md:items-center",
         highlight && "bg-accent-tint shadow-rule-accent md:py-6",
       )}
     >
@@ -48,9 +52,20 @@ function VisitRow({
         <Caption>to {visit.end}</Caption>
       </div>
       <div className="min-w-0">
-        <div className={cn("font-semibold", highlight && "headline text-h2 font-medium")}>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpen();
+          }}
+          aria-label={`Open visit details for ${visit.client}`}
+          className={cn(
+            "cursor-pointer text-left font-semibold text-ink-900 hover:text-accent",
+            highlight && "headline text-h2 font-medium",
+          )}
+        >
           {visit.client}
-        </div>
+        </button>
         <div className="flex flex-wrap items-center gap-x-1.5 text-small text-ink-700">
           {visit.kind === "Telehealth" && (
             <Video className="size-3.5" strokeWidth={1.5} aria-hidden="true" />
@@ -68,7 +83,10 @@ function VisitRow({
           </div>
         )}
       </div>
-      <div className="col-start-2 mt-3 md:col-start-auto md:mt-0">
+      <div
+        className="col-start-2 mt-3 md:col-start-auto md:mt-0"
+        onClick={(e) => e.stopPropagation()}
+      >
         {highlight && (
           <ButtonLink href={SESSION} variant="primary">
             Write note with AI
@@ -93,6 +111,8 @@ export function SarahDay() {
   const bookings = useDemoStore((s) => s.bookings);
   const visitChanges = useDemoStore((s) => s.visitChanges);
   const [openVisit, setOpenVisit] = useState<ScheduleItem | null>(null);
+  const [dayVisit, setDayVisit] = useState<Visit | null>(null);
+  const [openTaskId, setOpenTaskId] = useState<string | null>(null);
   // Visits booked into Sarah's diary from Schedule, a client record or + New.
   const myBookings = bookings
     .filter((b) => b.clinicianId === ME && b.day >= TODAY)
@@ -106,6 +126,7 @@ export function SarahDay() {
     (c) => c.id !== "oliver-grant" && notes[c.id]?.mode !== "approved",
   );
   const tasks = allTasks.filter((t) => t.owner === "Sarah Thompson" && !t.done);
+  const openTask = tasks.find((t) => t.id === openTaskId) ?? null;
   const overdueNotes = backlog.filter((c) => c.backlog.kind === "overdue").length;
 
   const summary = useStoryAi<string>(
@@ -161,7 +182,12 @@ export function SarahDay() {
               ) : (
                 i > 0 && <div className="border-t border-border" />
               )}
-              <VisitRow visit={v} approved={approved} nextDay={nextDay} />
+              <VisitRow
+                visit={v}
+                approved={approved}
+                nextDay={nextDay}
+                onOpen={() => setDayVisit(v)}
+              />
             </Fragment>
           ))}
         </Card>
@@ -256,10 +282,20 @@ export function SarahDay() {
             {tasks.map((t) => (
               <div
                 key={t.id}
-                className="flex items-center justify-between gap-3 border-t border-border px-5 py-3"
+                onClick={() => setOpenTaskId(t.id)}
+                className="flex cursor-pointer items-center justify-between gap-3 border-t border-border px-5 py-3 transition-colors hover:bg-canvas"
               >
                 <div className="min-w-0">
-                  <div className="text-small font-semibold">{t.title}</div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenTaskId(t.id);
+                    }}
+                    className="cursor-pointer text-left text-small font-semibold text-ink-900 hover:text-accent"
+                  >
+                    {t.title}
+                  </button>
                   <Caption>
                     {t.client},{" "}
                     {t.daysOverdue > 0
@@ -269,7 +305,13 @@ export function SarahDay() {
                         : `due ${t.due}`}
                   </Caption>
                 </div>
-                <Button size="sm" onClick={() => completeTask(t.id)}>
+                <Button
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    completeTask(t.id);
+                  }}
+                >
                   Mark done
                 </Button>
               </div>
@@ -295,6 +337,21 @@ export function SarahDay() {
         </div>
       </div>
       {openVisit && <VisitSheet visit={openVisit} onClose={() => setOpenVisit(null)} />}
+      {dayVisit && (
+        <VisitDetailSheet
+          visit={dayVisit}
+          approved={approved}
+          nextDay={nextDay}
+          onClose={() => setDayVisit(null)}
+        />
+      )}
+      {openTask && (
+        <TaskDetailSheet
+          task={openTask}
+          onDone={() => completeTask(openTask.id)}
+          onClose={() => setOpenTaskId(null)}
+        />
+      )}
     </>
   );
 }
