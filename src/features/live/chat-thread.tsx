@@ -176,7 +176,7 @@ export function ChatThread({
         aria-label="Messages"
         className={cn(
           "min-h-0 flex-1 overflow-y-auto bg-canvas/60",
-          compact ? "px-3 py-3" : "px-5 py-4",
+          compact ? "no-scrollbar px-3 py-3" : "px-5 py-4",
         )}
       >
         {error && !messages ? (

@@ -83,34 +83,61 @@ export function PhoneFrame({
           className="absolute top-2.5 left-1/2 z-30 hidden h-6 w-24 -translate-x-1/2 rounded-full bg-ink-900 md:block"
         />
         <StatusBar />
-        <div className="min-h-0 flex-1 overflow-y-auto pb-24">{children}</div>
+        <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain pb-28">
+          {children}
+        </div>
         <nav
           aria-label="App sections"
-          className="absolute inset-x-3 bottom-3 z-10 flex rounded-full border border-border bg-surface/95 p-1.5 shadow-overlay backdrop-blur"
+          className="absolute inset-x-0 bottom-0 z-10 border-t border-border bg-surface/90 backdrop-blur-xl"
         >
-          {tabs.map(({ id, label, icon: Icon, badge }) => (
-            <button
-              key={id}
-              type="button"
-              aria-current={active === id ? "page" : undefined}
-              onClick={() => onTab(id)}
-              className={cn(
-                "flex h-13 min-w-0 flex-1 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-full text-[10.5px] font-semibold",
-                active === id ? "primary-glow bg-accent-fill text-on-accent" : "text-ink-500",
-              )}
-            >
-              <span className="relative">
-                <Icon className="size-5 flex-none" strokeWidth={1.75} aria-hidden="true" />
-                {badge ? (
-                  <span className="absolute -top-1.5 -right-2.5 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-surface bg-over-dot px-1 text-eyebrow leading-none font-bold text-white">
-                    {badge > 9 ? "9+" : badge}
-                    <span className="sr-only"> unread</span>
+          <div className="flex px-1.5 pt-1.5 pb-1">
+            {tabs.map(({ id, label, icon: Icon, badge }) => {
+              const current = active === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  aria-current={current ? "page" : undefined}
+                  onClick={() => onTab(id)}
+                  className="group flex h-15 min-w-0 flex-1 cursor-pointer flex-col items-center justify-center gap-1 transition-transform duration-150 active:scale-95"
+                >
+                  <span
+                    className={cn(
+                      "relative flex h-8 w-15 items-center justify-center rounded-full transition-colors duration-200",
+                      current
+                        ? "bg-accent-tint text-accent"
+                        : "text-ink-500 group-hover:bg-canvas group-hover:text-ink-900",
+                    )}
+                  >
+                    <Icon
+                      className="size-5.5 flex-none"
+                      strokeWidth={current ? 2.25 : 1.75}
+                      aria-hidden="true"
+                    />
+                    {badge ? (
+                      <span className="absolute -top-1 right-2 flex h-4.5 min-w-4.5 items-center justify-center rounded-full border-2 border-surface bg-over-dot px-1 text-eyebrow leading-none font-bold text-white">
+                        {badge > 9 ? "9+" : badge}
+                        <span className="sr-only"> unread</span>
+                      </span>
+                    ) : null}
                   </span>
-                ) : null}
-              </span>
-              <span className="max-w-full truncate">{label}</span>
-            </button>
-          ))}
+                  <span
+                    className={cn(
+                      "max-w-full truncate text-eyebrow",
+                      current ? "font-bold text-accent" : "font-medium text-ink-500",
+                    )}
+                  >
+                    {label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <span
+            aria-hidden="true"
+            className="mx-auto mb-2 hidden h-1.5 w-32 rounded-full bg-ink-900 md:block"
+          />
+          <span aria-hidden="true" className="block h-[env(safe-area-inset-bottom)] md:hidden" />
         </nav>
         {overlay}
       </div>
@@ -211,7 +238,7 @@ export function AppSheet({
             <X className="size-4" strokeWidth={1.75} aria-hidden="true" />
           </button>
         </header>
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-4">{children}</div>
+        <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-5 pb-4">{children}</div>
         {footer && (
           <footer className="flex gap-2 border-t border-border px-5 py-3">{footer}</footer>
         )}
