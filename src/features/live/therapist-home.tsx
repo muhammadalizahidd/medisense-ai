@@ -1,6 +1,7 @@
 "use client";
 
 import { BellRing, CalendarDays, MapPin, MessageCircle } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Select } from "@/components/ui/select";
@@ -32,7 +33,7 @@ export function TherapistHome() {
       </div>
     );
   }
-  const { therapist, requests, clients, upcoming, toRecord, notesToWrite } = data;
+  const { therapist, requests, clients, upcoming, toRecord, notesToWrite, recent } = data;
 
   return (
     <>
@@ -99,6 +100,14 @@ export function TherapistHome() {
               emptyText="No booked visits yet. They appear when you accept a patient."
             />
           </Panel>
+          <Panel title="Recent visits">
+            <VisitList
+              visits={recent}
+              show="client"
+              onChanged={reload}
+              emptyText="Completed, missed and cancelled visits from the last two weeks appear here."
+            />
+          </Panel>
         </div>
         <div className="flex flex-col gap-6 xl:col-span-4">
           <Panel
@@ -120,7 +129,12 @@ export function TherapistHome() {
                   >
                     <Avatar name={c.name} size={36} />
                     <span className="min-w-0 flex-1">
-                      <span className="block text-small font-semibold">{c.name}</span>
+                      <Link
+                        href={`/therapist/patients/${c.id}`}
+                        className="block text-small font-semibold text-ink-900"
+                      >
+                        {c.name}
+                      </Link>
                       <span className="block text-caption text-ink-500">
                         {c.suburb} · {c.discipline}, {c.frequency.toLowerCase()}
                       </span>

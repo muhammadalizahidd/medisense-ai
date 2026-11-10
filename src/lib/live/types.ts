@@ -135,6 +135,8 @@ export type TherapistHomeDto = {
   toRecord: AppointmentDto[];
   /** Completed visits in the last 30 days without a session note. */
   notesToWrite: AppointmentDto[];
+  /** Completed, missed and cancelled visits from the last two weeks, newest first. */
+  recent: AppointmentDto[];
 };
 
 export type ClientHomeDto = {
@@ -160,6 +162,7 @@ export type NotificationDto = {
 
 export type ConversationDto = {
   id: string;
+  clientId: string;
   title: string;
   subtitle: string;
   lastMessage: string | null;

@@ -207,6 +207,10 @@ type RouteMeta = { section: string; page: string; role: Role };
 
 const routes: { prefix: string; meta: RouteMeta }[] = [
   {
+    prefix: "/therapist/patients",
+    meta: { section: "My new patients", page: "Patient", role: "Clinician" },
+  },
+  {
     prefix: "/care/therapists",
     meta: { section: "Patient onboarding", page: "Therapists", role: "Admin" },
   },

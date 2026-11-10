@@ -70,6 +70,7 @@ export async function listConversations(user: UserDoc): Promise<ConversationDto[
     const iAmTherapist = user.role === "therapist";
     return {
       id: r._id.toHexString(),
+      clientId: r.clientId.toHexString(),
       title: (iAmTherapist ? client?.name : therapist?.name) ?? "Conversation",
       subtitle: iAmTherapist ? (client?.suburb ?? "") : (therapist?.discipline ?? ""),
       lastMessage: r.lastMessage?.body ?? null,

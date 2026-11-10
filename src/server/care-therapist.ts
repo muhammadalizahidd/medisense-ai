@@ -146,7 +146,7 @@ export async function respond(
 export async function therapistHome(user: UserDoc): Promise<TherapistHomeDto> {
   const db = await collections();
   const therapist = await myTherapist(user);
-  const [assigned, visits, conversations, unrecorded, unwritten] = await Promise.all([
+  const [assigned, visits, conversations, unrecorded, unwritten, past] = await Promise.all([
     db.assignments
       .find({ therapistId: therapist._id, status: { $in: ["pending", "accepted"] } })
       .sort({ createdAt: -1 })
@@ -174,10 +174,25 @@ export async function therapistHome(user: UserDoc): Promise<TherapistHomeDto> {
       })
       .sort({ start: 1 })
       .toArray(),
+    db.appointments
+      .find({
+        therapistId: therapist._id,
+        // Released holds from declined or withdrawn requests have no cancellation record; skip them.
+        $or: [
+          { status: { $in: ["completed", "no-show", "late-cancelled"] } },
+          { status: "cancelled", cancellation: { $type: "object" } },
+        ],
+        start: { $gte: new Date(Date.now() - 14 * 86_400_000) },
+      })
+      .sort({ start: -1 })
+      .limit(15)
+      .toArray(),
   ]);
   const clientIds = [
     ...new Set(
-      [...assigned, ...visits, ...unrecorded, ...unwritten].map((a) => a.clientId.toHexString()),
+      [...assigned, ...visits, ...unrecorded, ...unwritten, ...past].map((a) =>
+        a.clientId.toHexString(),
+      ),
     ),
   ].map((id) => new ObjectId(id));
   const clients = await db.clients.find({ _id: { $in: clientIds } }).toArray();
@@ -247,5 +262,19 @@ export async function therapistHome(user: UserDoc): Promise<TherapistHomeDto> {
     upcoming: visits.map((v) => appointmentDto(v, clientNames, me, series)),
     toRecord: unrecorded.map((v) => appointmentDto(v, clientNames, me, series)),
     notesToWrite: unwritten.map((v) => appointmentDto(v, clientNames, me, series)),
+    recent: past.map((v) => appointmentDto(v, clientNames, me, series)),
   };
+}
+
+/** A therapist may open the record of any patient they've been asked to see. */
+export async function assertMyPatient(user: UserDoc, clientId: ObjectId) {
+  const db = await collections();
+  const mine = user.therapistId
+    ? await db.assignments.findOne({
+        clientId,
+        therapistId: user.therapistId,
+        status: { $in: ["pending", "accepted"] },
+      })
+    : null;
+  if (!mine) throw new UserFacingError("Patient not found.", 404);
 }
