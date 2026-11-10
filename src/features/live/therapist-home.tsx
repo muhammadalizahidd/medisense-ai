@@ -9,9 +9,10 @@ import { Avatar } from "@/components/ui/premium";
 import { Tag } from "@/components/ui/tag";
 import { declineReasons } from "@/lib/live/catalogue";
 import { api, useResource } from "@/lib/live/client";
-import { relativeTime, shortDate, slotLabel, timeOfDay } from "@/lib/live/time";
+import { relativeTime, slotLabel } from "@/lib/live/time";
 import type { RequestDto, TherapistHomeDto } from "@/lib/live/types";
 import { CaseloadTag, EmptyNote, ErrorNote, LiveBadge, Panel, Skeleton } from "./bits";
+import { VisitList } from "./visit-list";
 
 export function TherapistHome() {
   const { data, error, loading, reload } = useResource<TherapistHomeDto>(
@@ -28,7 +29,7 @@ export function TherapistHome() {
       </div>
     );
   }
-  const { therapist, requests, clients, upcoming } = data;
+  const { therapist, requests, clients, upcoming, toRecord } = data;
 
   return (
     <>
@@ -61,6 +62,29 @@ export function TherapistHome() {
               </ul>
             )}
           </Panel>
+          {toRecord.length > 0 && (
+            <Panel
+              title="Record what happened"
+              action={<Tag tone="monitor">{toRecord.length} to record</Tag>}
+            >
+              <VisitList
+                visits={toRecord}
+                show="client"
+                onChanged={reload}
+                emptyText="All past visits are recorded."
+              />
+            </Panel>
+          )}
+          <Panel title="Coming up">
+            <VisitList
+              visits={upcoming.filter((v) => v.status === "booked")}
+              show="client"
+              onChanged={reload}
+              emptyText="No booked visits yet. They appear when you accept a client."
+            />
+          </Panel>
+        </div>
+        <div className="flex flex-col gap-6 xl:col-span-4">
           <Panel
             title="My new clients"
             action={
@@ -97,28 +121,6 @@ export function TherapistHome() {
             )}
           </Panel>
         </div>
-        <Panel title="Coming up" className="xl:col-span-4">
-          {upcoming.length === 0 ? (
-            <p className="text-small text-ink-500">No booked visits from new clients yet.</p>
-          ) : (
-            <ol className="flex flex-col gap-3">
-              {upcoming.map((v) => (
-                <li key={v.id} className="flex gap-3">
-                  <span className="w-16 flex-none text-small font-semibold">
-                    {timeOfDay(v.start)}
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block text-small">{v.clientName}</span>
-                    <span className="block text-caption text-ink-500">
-                      {shortDate(v.start)} ·{" "}
-                      {v.status === "tentative" ? "Held, waiting for you" : "Booked"}
-                    </span>
-                  </span>
-                </li>
-              ))}
-            </ol>
-          )}
-        </Panel>
       </div>
     </>
   );

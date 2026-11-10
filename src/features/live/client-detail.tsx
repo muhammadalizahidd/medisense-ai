@@ -19,6 +19,7 @@ import {
   StageTag,
 } from "./bits";
 import { MatchPicker } from "./match-picker";
+import { VisitList } from "./visit-list";
 
 export function ClientDetail({ clientId }: { clientId: string }) {
   const { data, error, loading, reload } = useResource<{ client: ClientDetailDto }>(
@@ -68,6 +69,24 @@ export function ClientDetail({ clientId }: { clientId: string }) {
               onChange={reload}
             />
           ))}
+          <Panel
+            title="Visits"
+            action={
+              client.appointments.some((a) => a.cancellation?.chargeable) && (
+                <Tag tone="over">
+                  {client.appointments.filter((a) => a.cancellation?.chargeable).length} may be
+                  charged
+                </Tag>
+              )
+            }
+          >
+            <VisitList
+              visits={client.appointments}
+              show="therapist"
+              onChanged={reload}
+              emptyText="Visits appear here once a therapist accepts."
+            />
+          </Panel>
         </div>
         <div className="flex flex-col gap-6 xl:col-span-4">
           <Panel title="Details">

@@ -4,13 +4,15 @@ import { CalendarDays, House, LogOut, MessageCircle, UserRound } from "lucide-re
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/premium";
-import { AppCard, AppHeader, PhoneFrame } from "@/features/mobile/phone-frame";
+import { AppCard, AppHeader, AppSheet, PhoneFrame } from "@/features/mobile/phone-frame";
 import { signOut, useResource, useSession } from "@/lib/live/client";
 import { practitioner } from "@/lib/live/catalogue";
-import { shortDate, slotLabel, timeOfDay } from "@/lib/live/time";
-import type { ClientHomeDto, SessionUser } from "@/lib/live/types";
+import { slotLabel } from "@/lib/live/time";
+import type { AppointmentDto, ClientHomeDto, SessionUser } from "@/lib/live/types";
 import { ErrorNote, Skeleton } from "./bits";
+import { CancelVisitPanel } from "./cancel-visit";
 import { ChatOverlay } from "./chat-overlay";
+import { ClientVisits } from "./client-visits";
 import { ConversationList, useConversations } from "./conversations";
 import { SignInForm } from "./sign-in-form";
 
@@ -37,6 +39,7 @@ export function ClientApp() {
   const { user, loading, reload } = useSession();
   const [tab, setTab] = useState("home");
   const [chat, setChat] = useState<string | null>(null);
+  const [cancelling, setCancelling] = useState<AppointmentDto | null>(null);
   const signedIn = user?.role === "client";
 
   if (loading) {
@@ -75,14 +78,30 @@ export function ClientApp() {
       onTab={(id) => {
         setTab(id);
         setChat(null);
+        setCancelling(null);
       }}
       overlay={
         chat ? (
           <ChatOverlay conversationId={chat} myId={user.id} onBack={() => setChat(null)} />
+        ) : cancelling ? (
+          <AppSheet title="Cancel or change" onClose={() => setCancelling(null)}>
+            <CancelVisitPanel
+              visit={cancelling}
+              staff={false}
+              onClose={() => setCancelling(null)}
+              onChanged={() => undefined}
+            />
+          </AppSheet>
         ) : undefined
       }
     >
-      <ClientTabs tab={tab} user={user} onChat={setChat} onSignedOut={reload} />
+      <ClientTabs
+        tab={tab}
+        user={user}
+        onChat={setChat}
+        onCancel={setCancelling}
+        onSignedOut={reload}
+      />
     </PhoneFrame>
   );
 }
@@ -91,11 +110,13 @@ function ClientTabs({
   tab,
   user,
   onChat,
+  onCancel,
   onSignedOut,
 }: {
   tab: string;
   user: SessionUser;
   onChat: (id: string) => void;
+  onCancel: (visit: AppointmentDto) => void;
   onSignedOut: () => void;
 }) {
   const home = useResource<ClientHomeDto>(
@@ -113,35 +134,7 @@ function ClientTabs({
     );
   const data = home.data;
 
-  if (tab === "visits") {
-    return (
-      <>
-        <AppHeader eyebrow="Visits" title="Coming up" />
-        <div className="p-4">
-          {!data ? (
-            <Skeleton className="h-24" />
-          ) : data.upcoming.length === 0 ? (
-            <AppCard>
-              <p className="text-small text-ink-700">
-                No visits booked yet. They appear here once your therapist accepts.
-              </p>
-            </AppCard>
-          ) : (
-            data.upcoming.map((v) => (
-              <AppCard key={v.id}>
-                <p className="text-small font-semibold">
-                  {shortDate(v.start)} · {timeOfDay(v.start)}
-                </p>
-                <p className="text-caption text-ink-700">
-                  {v.discipline} with {v.therapistName} · at home
-                </p>
-              </AppCard>
-            ))
-          )}
-        </div>
-      </>
-    );
-  }
+  if (tab === "visits") return <ClientVisits onCancel={onCancel} />;
 
   if (tab === "messages") {
     return (
