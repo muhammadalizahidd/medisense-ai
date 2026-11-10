@@ -28,14 +28,26 @@ export type ClientSummaryDto = {
   createdAt: string;
 };
 
+export type VisitStatus =
+  "tentative" | "booked" | "completed" | "cancelled" | "late-cancelled" | "no-show";
+
 export type AppointmentDto = {
   id: string;
   start: string;
   end: string;
-  status: "tentative" | "booked" | "cancelled" | "completed";
+  status: VisitStatus;
   discipline: Discipline;
   clientName: string;
   therapistName: string;
+  /** "Visit 3 of 8" for a recurring series; null for a one-off. */
+  series: { index: number; total: number } | null;
+  cancellation: {
+    by: "client" | "medisense";
+    reason: string;
+    noticeHours: number;
+    chargeable: boolean;
+    actorName: string;
+  } | null;
 };
 
 export type AssignmentDto = {
@@ -103,6 +115,8 @@ export type TherapistHomeDto = {
     conversationId: string | null;
   }[];
   upcoming: AppointmentDto[];
+  /** Past visits still waiting for "Completed" or "No-show". */
+  toRecord: AppointmentDto[];
 };
 
 export type ClientHomeDto = {
@@ -147,3 +161,16 @@ export type LiveEvent =
   | { type: "care"; payload: { clientId?: string } }
   | { type: "read"; payload: { conversationId: string } }
   | { type: "connected"; payload: Record<string, never> };
+
+export type LiveOverviewDto = {
+  onboarding: {
+    needsTherapist: number;
+    waiting: number;
+    active: number;
+    oldestPendingAt: string | null;
+  };
+  visits: { today: number; week: { day: string; booked: number; cancelled: number }[] };
+  /** Last 30 days. */
+  cancellations: { total: number; late: number; noShows: number };
+  team: { therapists: number; activeClients: number; capacity: number; atRisk: number };
+};

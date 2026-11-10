@@ -67,3 +67,22 @@ export const declineReasons = [
   "Not the right fit clinically",
   "Other",
 ] as const;
+
+/** From medisense.com.au: 48 hours' notice is needed to cancel or reschedule. */
+export const CANCELLATION_NOTICE_HOURS = 48;
+
+/** How many visits a frequency books after the first, and how far apart. */
+export const seriesPlan: Record<Frequency, { visits: number; everyDays: number }> = {
+  Assessment: { visits: 1, everyDays: 0 },
+  Weekly: { visits: 8, everyDays: 7 },
+  Fortnightly: { visits: 6, everyDays: 14 },
+  Monthly: { visits: 4, everyDays: 28 },
+};
+
+export const cancelReasons = [
+  "Client unwell",
+  "Family or carer unavailable",
+  "Clinician unwell or unavailable",
+  "Appointment clash",
+  "Other",
+] as const;

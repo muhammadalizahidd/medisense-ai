@@ -5,10 +5,11 @@ import { caseloadStatus, declineReasons } from "@/lib/live/catalogue";
 import { ageFrom, slotLabel } from "@/lib/live/time";
 import type { TherapistHomeDto } from "@/lib/live/types";
 import { collections } from "./db";
-import { appointmentDto, assignmentDto, nameMap } from "./dto";
+import { appointmentDto, assignmentDto, nameMap, seriesLookup } from "./dto";
 import { UserFacingError } from "./http";
 import { adminIds, audit, notify, publish } from "./live";
 import type { UserDoc } from "./models";
+import { bookSeries } from "./visits";
 
 export const respondSchema = z.discriminatedUnion("decision", [
   z.object({ decision: z.literal("accept") }),
@@ -101,15 +102,25 @@ export async function respond(
   }
 
   const admins = await adminIds();
+  const schedule = { booked: 0, skipped: 0 };
   if (accepted) {
+    const frequency =
+      client.needs.find((n) => n.discipline === assignment.discipline)?.frequency ?? "Assessment";
+    const series = await bookSeries({ ...visit, status: "booked" }, therapist, frequency);
+    schedule.booked = series.booked.length;
+    schedule.skipped = series.skipped.length;
+    const plan =
+      schedule.booked > 1
+        ? ` ${schedule.booked} visits are booked, ${frequency.toLowerCase()}.`
+        : "";
     await notify([client.userId], {
       title: `${therapist.name} is your ${assignment.discipline.toLowerCase()} therapist`,
-      body: `Your first visit is ${slotLabel(visit.start)}. You can message ${therapist.name.split(" ")[0]} in the app.`,
+      body: `Your first visit is ${slotLabel(visit.start)}.${plan} You can message ${therapist.name.split(" ")[0]} in the app.`,
       href: "/mobile/client",
     });
     await notify(admins, {
       title: `${therapist.name} accepted ${client.name}`,
-      body: `${assignment.discipline}. First visit ${slotLabel(visit.start)}.`,
+      body: `${assignment.discipline}. First visit ${slotLabel(visit.start)}.${plan}${schedule.skipped ? ` ${schedule.skipped} could not be booked; choose times on the client page.` : ""}`,
       href: `/care/${client._id.toHexString()}`,
     });
   } else {
@@ -129,13 +140,13 @@ export async function respond(
   await publish([...admins, user._id, client.userId], "care", {
     clientId: client._id.toHexString(),
   });
-  return { conversationId: result.conversationId?.toHexString() ?? null };
+  return { conversationId: result.conversationId?.toHexString() ?? null, ...schedule };
 }
 
 export async function therapistHome(user: UserDoc): Promise<TherapistHomeDto> {
   const db = await collections();
   const therapist = await myTherapist(user);
-  const [assigned, visits, conversations] = await Promise.all([
+  const [assigned, visits, conversations, unrecorded] = await Promise.all([
     db.assignments
       .find({ therapistId: therapist._id, status: { $in: ["pending", "accepted"] } })
       .sort({ createdAt: -1 })
@@ -146,15 +157,33 @@ export async function therapistHome(user: UserDoc): Promise<TherapistHomeDto> {
       .limit(20)
       .toArray(),
     db.conversations.find({ therapistId: therapist._id }).toArray(),
+    db.appointments
+      .find({
+        therapistId: therapist._id,
+        status: "booked",
+        start: { $lt: new Date(), $gte: new Date(Date.now() - 14 * 86_400_000) },
+      })
+      .sort({ start: 1 })
+      .toArray(),
   ]);
-  const clientIds = [...new Set(assigned.map((a) => a.clientId.toHexString()))].map(
-    (id) => new ObjectId(id),
-  );
+  const clientIds = [
+    ...new Set([...assigned, ...visits, ...unrecorded].map((a) => a.clientId.toHexString())),
+  ].map((id) => new ObjectId(id));
   const clients = await db.clients.find({ _id: { $in: clientIds } }).toArray();
   const clientById = new Map(clients.map((c) => [c._id.toHexString(), c]));
   const clientNames = nameMap(clients);
   const me = nameMap([therapist]);
   const visitById = new Map(visits.map((v) => [v._id.toHexString(), v]));
+  const seriesIds = [
+    ...new Set(
+      [...visits, ...unrecorded].flatMap((v) => (v.seriesId ? [v.seriesId.toHexString()] : [])),
+    ),
+  ];
+  const series = seriesLookup(
+    await db.appointments
+      .find({ seriesId: { $in: seriesIds.map((id) => new ObjectId(id)) } })
+      .toArray(),
+  );
   const chatByClient = new Map(conversations.map((c) => [c.clientId.toHexString(), c._id]));
 
   const requests = assigned
@@ -203,6 +232,7 @@ export async function therapistHome(user: UserDoc): Promise<TherapistHomeDto> {
           },
         ];
       }),
-    upcoming: visits.map((v) => appointmentDto(v, clientNames, me)),
+    upcoming: visits.map((v) => appointmentDto(v, clientNames, me, series)),
+    toRecord: unrecorded.map((v) => appointmentDto(v, clientNames, me, series)),
   };
 }

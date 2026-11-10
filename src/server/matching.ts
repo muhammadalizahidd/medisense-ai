@@ -10,9 +10,15 @@ const SEARCH_DAYS = 14;
 
 type Interval = { start: number; end: number };
 
-function hash(text: string) {
+/** FNV-1a with a final avalanche, so keys that differ by one character give unrelated values. */
+export function hash(text: string) {
   let h = 2166136261;
   for (let i = 0; i < text.length; i += 1) h = Math.imul(h ^ text.charCodeAt(i), 16777619);
+  h ^= h >>> 16;
+  h = Math.imul(h, 0x85ebca6b);
+  h ^= h >>> 13;
+  h = Math.imul(h, 0xc2b2ae35);
+  h ^= h >>> 16;
   return (h >>> 0) / 4294967295;
 }
 

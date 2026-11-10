@@ -6,7 +6,7 @@ import type { ClientDetailDto, MatchDto } from "@/lib/live/types";
 import { slotLabel } from "@/lib/live/time";
 import { newInviteCode } from "./auth";
 import { collections } from "./db";
-import { appointmentDto, assignmentDto, clientSummary, nameMap } from "./dto";
+import { appointmentDto, assignmentDto, clientSummary, nameMap, seriesLookup } from "./dto";
 import { UserFacingError } from "./http";
 import { audit, notify, publish, adminIds } from "./live";
 import { isSlotFree, rankTherapists } from "./matching";
@@ -97,7 +97,11 @@ export async function clientDetail(id: ObjectId): Promise<ClientDetailDto> {
   const names = nameMap(team);
   const clientNames = new Map([[id.toHexString(), client.name]]);
   const visitById = new Map(allVisits.map((v) => [v._id.toHexString(), v]));
-  const visits = allVisits.filter((v) => v.status !== "cancelled");
+  // Holds released by a declined or withdrawn request carry no cancellation record; leave them out.
+  const visits = allVisits.filter(
+    (v) => v.status !== "tentative" && !(v.status === "cancelled" && !v.cancellation),
+  );
+  const series = seriesLookup(allVisits);
   return {
     ...clientSummary(client, names),
     dateOfBirth: client.dateOfBirth,
@@ -117,7 +121,7 @@ export async function clientDetail(id: ObjectId): Promise<ClientDetailDto> {
         names,
       ),
     ),
-    appointments: visits.map((v) => appointmentDto(v, clientNames, names)),
+    appointments: visits.map((v) => appointmentDto(v, clientNames, names, series)),
     activity: activity.map((e) => ({
       id: e._id.toHexString(),
       action: e.action,

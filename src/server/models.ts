@@ -87,7 +87,20 @@ export interface AssignmentDoc {
   respondedAt: Date | null;
 }
 
-export type AppointmentStatus = "tentative" | "booked" | "cancelled" | "completed";
+export type AppointmentStatus =
+  "tentative" | "booked" | "completed" | "cancelled" | "late-cancelled" | "no-show";
+
+export interface Cancellation {
+  /** Who called it off. Only a client-side cancellation can count as late. */
+  by: "client" | "medisense";
+  reason: string;
+  /** Whole hours between the cancellation and the visit. */
+  noticeHours: number;
+  /** True for a late cancellation or no-show, which may be charged under the 48-hour policy. */
+  chargeable: boolean;
+  actorName: string;
+  at: Date;
+}
 
 export interface AppointmentDoc {
   _id: ObjectId;
@@ -99,6 +112,11 @@ export interface AppointmentDoc {
   status: AppointmentStatus;
   /** True while the appointment occupies the therapist's time (tentative or booked). */
   holdsSlot: boolean;
+  /** The first visit of a recurring series; null for a one-off. */
+  seriesId?: ObjectId | null;
+  /** The visit this one was booked to replace. */
+  replaces?: ObjectId | null;
+  cancellation?: Cancellation | null;
   createdAt: Date;
 }
 
