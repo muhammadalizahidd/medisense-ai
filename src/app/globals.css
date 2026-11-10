@@ -803,3 +803,13 @@ html[data-theme="clear-blue"][data-palette="navy"]
 @utility hero-wash {
   background-image: var(--hero-wash);
 }
+
+/* Browser autofill keeps the theme's surface and ink instead of its own pale blue. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--color-ink-900);
+  -webkit-box-shadow: 0 0 0 1000px var(--color-surface-raised) inset;
+  caret-color: var(--color-ink-900);
+  transition: background-color 9999s ease-out 0s;
+}

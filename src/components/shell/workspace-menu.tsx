@@ -17,6 +17,12 @@ const workspaces: { id: Role; label: string }[] = [
   { id: "Supervisor", label: "Supervisor" },
 ];
 
+const sessionWorkspace: Record<"admin" | "therapist" | "client", Role | null> = {
+  admin: "Admin",
+  therapist: "Clinician",
+  client: null,
+};
+
 const accountLabel = {
   admin: "Administration",
   therapist: "Therapist",
@@ -43,6 +49,15 @@ export function WorkspaceMenu() {
       }
     : sample;
   const [open, setOpen] = useState(false);
+  const synced = useRef<string | null>(null);
+
+  // The menu follows whoever signs in: admins get the admin workspace, therapists the therapist one.
+  useEffect(() => {
+    if (!account || account.id === synced.current) return;
+    synced.current = account.id;
+    const workspace = sessionWorkspace[account.role];
+    if (workspace && workspace !== role) setRole(workspace);
+  }, [account, role, setRole]);
   const button = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
 

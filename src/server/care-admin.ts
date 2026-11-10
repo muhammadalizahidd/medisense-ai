@@ -3,7 +3,7 @@ import { MongoServerError, ObjectId } from "mongodb";
 import { z } from "zod";
 import { disciplines, frequencies, fundingStreams, regions } from "@/lib/live/catalogue";
 import type { ClientDetailDto, MatchDto } from "@/lib/live/types";
-import { slotLabel } from "@/lib/live/time";
+import { brisbaneDay, slotLabel } from "@/lib/live/time";
 import { newInviteCode } from "./auth";
 import { collections } from "./db";
 import { appointmentDto, assignmentDto, clientSummary, nameMap, seriesLookup } from "./dto";
@@ -17,6 +17,11 @@ export const newClientSchema = z.object({
   dateOfBirth: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .refine((d) => d >= "1900-01-01", "Check the year of birth")
+    .refine(
+      (d) => d <= brisbaneDay(new Date()).toISOString().slice(0, 10),
+      "The date of birth can't be in the future",
+    )
     .nullable(),
   email: z.email("Enter a valid email").transform((v) => v.toLowerCase()),
   phone: z.string().trim().max(30).nullable(),

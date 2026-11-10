@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Field, inputClass, Sheet } from "@/components/ui/sheet";
 import { dischargeReasons } from "@/lib/live/catalogue";
@@ -135,15 +136,15 @@ export function DischargeSheet({
     >
       <div className="flex flex-col gap-4">
         <Field label="Reason">
-          <select
+          <Select
             value={reason}
             onChange={(e) => setReason(e.target.value as (typeof dischargeReasons)[number])}
-            className={inputClass}
+            className="w-full"
           >
             {dischargeReasons.map((r) => (
               <option key={r}>{r}</option>
             ))}
-          </select>
+          </Select>
         </Field>
         <ul className="list-disc pl-5 text-small text-ink-700">
           <li>

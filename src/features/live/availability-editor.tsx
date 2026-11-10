@@ -2,6 +2,7 @@
 
 import { CalendarOff, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/sheet";
 import { CLOSE_MINUTES, OPEN_MINUTES } from "@/lib/live/catalogue";
@@ -135,31 +136,31 @@ export function AvailabilityEditor({
               </label>
               {hours ? (
                 <span className="flex items-center gap-2 text-small">
-                  <select
+                  <Select
                     aria-label={`${name} start`}
                     value={hours.start}
                     onChange={(e) => setDay(weekday, { start: Number(e.target.value) })}
-                    className={`${inputClass} h-8 w-28`}
+                    className="h-8 w-28"
                   >
                     {TIMES.filter((t) => t <= hours.end - 60).map((t) => (
                       <option key={t} value={t}>
                         {label(t)}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                   to
-                  <select
+                  <Select
                     aria-label={`${name} finish`}
                     value={hours.end}
                     onChange={(e) => setDay(weekday, { end: Number(e.target.value) })}
-                    className={`${inputClass} h-8 w-28`}
+                    className="h-8 w-28"
                   >
                     {TIMES.filter((t) => t >= hours.start + 60).map((t) => (
                       <option key={t} value={t}>
                         {label(t)}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </span>
               ) : (
                 <span className="text-small text-ink-500">Not working</span>
@@ -225,15 +226,15 @@ export function AvailabilityEditor({
         </label>
         <label className="flex flex-col gap-1 text-caption font-semibold text-ink-700">
           Reason
-          <select
+          <Select
             value={draft.reason}
             onChange={(e) => setDraft({ ...draft, reason: e.target.value })}
-            className={`${inputClass} w-40`}
+            className="w-40"
           >
             {timeOffReasons.map((r) => (
               <option key={r}>{r}</option>
             ))}
-          </select>
+          </Select>
         </label>
         <Button onClick={addTimeOff}>
           <Plus className="size-4" aria-hidden="true" />

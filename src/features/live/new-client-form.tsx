@@ -3,23 +3,15 @@
 import { Check, Copy } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { Select } from "@/components/ui/select";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page";
 import { Field, inputClass } from "@/components/ui/sheet";
 import { api } from "@/lib/live/client";
-import {
-  disciplines,
-  frequencies,
-  fundingStreams,
-  regions,
-  type Discipline,
-  type Frequency,
-  type FundingStream,
-  type Region,
-} from "@/lib/live/catalogue";
-import { shortDate } from "@/lib/live/time";
-import { cn } from "@/lib/cn";
+import { fundingStreams, regions, type FundingStream, type Region } from "@/lib/live/catalogue";
+import { brisbaneDay, shortDate } from "@/lib/live/time";
 import { Panel } from "./bits";
+import { TherapyPicker, type Needs } from "./therapy-picker";
 
 type Created = { id: string; inviteCode: string; inviteExpires: string };
 
@@ -35,7 +27,8 @@ export function NewClientForm() {
     funding: "NDIS" as FundingStream,
     notes: "",
   });
-  const [needs, setNeeds] = useState<Partial<Record<Discipline, Frequency>>>({});
+  const [needs, setNeeds] = useState<Needs>({});
+  const [today] = useState(() => brisbaneDay(new Date()).toISOString().slice(0, 10));
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [created, setCreated] = useState<Created | null>(null);
@@ -49,6 +42,10 @@ export function NewClientForm() {
       discipline,
       frequency,
     }));
+    if (form.dateOfBirth && form.dateOfBirth > today) {
+      setError("The date of birth can't be in the future.");
+      return;
+    }
     if (!chosen.length) {
       setError("Choose at least one therapy.");
       return;
@@ -104,6 +101,8 @@ export function NewClientForm() {
               <Field label="Date of birth" hint="Optional">
                 <input
                   type="date"
+                  max={today}
+                  min="1900-01-01"
                   value={form.dateOfBirth}
                   onChange={(e) => set("dateOfBirth", e.target.value)}
                   className={inputClass}
@@ -141,79 +140,36 @@ export function NewClientForm() {
                 />
               </Field>
               <Field label="Service region" hint="Used to find therapists close by.">
-                <select
+                <Select
                   value={form.region}
                   onChange={(e) => set("region", e.target.value as Region)}
-                  className={inputClass}
+                  className="w-full"
                 >
                   {regions.map((r) => (
                     <option key={r}>{r}</option>
                   ))}
-                </select>
+                </Select>
               </Field>
               <Field label="Funding">
-                <select
+                <Select
                   value={form.funding}
                   onChange={(e) => set("funding", e.target.value as FundingStream)}
-                  className={inputClass}
+                  className="w-full"
                 >
                   {fundingStreams.map((f) => (
                     <option key={f}>{f}</option>
                   ))}
-                </select>
+                </Select>
               </Field>
             </div>
           </Panel>
 
           <Panel title="Therapy needed">
             <p className="-mt-2 mb-4 text-small text-ink-700">
-              Tick each therapy and choose how often.
+              Choose each therapy the patient needs, then how often. Recurring visits are booked
+              when the therapist accepts.
             </p>
-            <ul className="grid gap-2 md:grid-cols-2">
-              {disciplines.map((d) => {
-                const chosen = needs[d];
-                return (
-                  <li
-                    key={d}
-                    className={cn(
-                      "flex items-center gap-3 rounded-control border px-3 py-2",
-                      chosen ? "border-accent bg-accent-tint" : "border-border",
-                    )}
-                  >
-                    <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 text-small font-medium">
-                      <input
-                        type="checkbox"
-                        checked={Boolean(chosen)}
-                        onChange={(e) =>
-                          setNeeds((n) => {
-                            const next = { ...n };
-                            if (e.target.checked) next[d] = "Assessment";
-                            else delete next[d];
-                            return next;
-                          })
-                        }
-                        className="size-4 accent-accent-fill"
-                      />
-                      {d}
-                    </label>
-                    {chosen && (
-                      <select
-                        aria-label={`${d} frequency`}
-                        value={chosen}
-                        onChange={(e) =>
-                          setNeeds((n) => ({ ...n, [d]: e.target.value as Frequency }))
-                        }
-                        className={`${inputClass} h-8 w-34`}
-                      >
-                        {frequencies.map((f) => (
-                          <option key={f}>{f}</option>
-                        ))}
-                      </select>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
+            <TherapyPicker value={needs} onChange={setNeeds} />
           </Panel>
         </div>
 

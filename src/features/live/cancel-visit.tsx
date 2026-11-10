@@ -2,9 +2,10 @@
 
 import { CalendarCheck } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Segmented } from "@/components/ui/segmented";
-import { Field, inputClass } from "@/components/ui/sheet";
+import { Field } from "@/components/ui/sheet";
 import { classifyCancellation, noticeSummary, type CancelledBy } from "@/lib/live/cancellation";
 import { cancelReasons, CANCELLATION_NOTICE_HOURS } from "@/lib/live/catalogue";
 import { api } from "@/lib/live/client";
@@ -117,15 +118,15 @@ export function CancelVisitPanel({
             </div>
           )}
           <Field label="Reason">
-            <select
+            <Select
               value={reason}
               onChange={(e) => setReason(e.target.value as (typeof cancelReasons)[number])}
-              className={inputClass}
+              className="w-full"
             >
               {cancelReasons.map((r) => (
                 <option key={r}>{r}</option>
               ))}
-            </select>
+            </Select>
           </Field>
           <p
             role="status"

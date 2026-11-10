@@ -36,6 +36,18 @@ export function parseId(value: string) {
   return new ObjectId(value);
 }
 
+/** Our own messages already read well; generic ones name the field in plain words instead. */
+function describeIssue(error: ZodError) {
+  const first = error.issues[0];
+  if (!first) return "Some details are missing.";
+  const generic = /^(Invalid|Too (small|big)|Expected|Required)/i.test(first.message);
+  if (!generic) return first.message.endsWith(".") ? first.message : `${first.message}.`;
+  const field = String(first.path.findLast((p) => typeof p === "string") ?? "")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .toLowerCase();
+  return field ? `Check the ${field}.` : "Some details are missing or invalid.";
+}
+
 /** Runs a route body and turns known failures into clear JSON errors. */
 export async function handle<T>(run: () => Promise<T>) {
   try {
@@ -48,12 +60,7 @@ export async function handle<T>(run: () => Promise<T>) {
       return NextResponse.json({ error: error.message }, { status: error.status });
     }
     if (error instanceof ZodError) {
-      const first = error.issues[0];
-      const where = first?.path.join(".");
-      return NextResponse.json(
-        { error: where ? `Check ${where}: ${first?.message}` : "Some details are missing." },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: describeIssue(error) }, { status: 400 });
     }
     if (error instanceof MongoNetworkError || error instanceof MongoServerSelectionError) {
       serverLog(`Database connection dropped: ${error.message}`);

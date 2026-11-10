@@ -3,6 +3,7 @@
 import { BellRing, CalendarDays, MapPin, MessageCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Select } from "@/components/ui/select";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page";
 import { Avatar } from "@/components/ui/premium";
@@ -231,15 +232,15 @@ export function RequestCard({
         <div className="mt-3 flex flex-wrap items-end gap-2">
           <label className="flex flex-col gap-1 text-caption font-semibold text-ink-700">
             Reason
-            <select
+            <Select
               value={reason}
               onChange={(e) => setReason(e.target.value as (typeof declineReasons)[number])}
-              className="h-9 rounded-control border border-border-strong bg-surface-raised px-2 text-small"
+              className="w-60"
             >
               {declineReasons.map((x) => (
                 <option key={x}>{x}</option>
               ))}
-            </select>
+            </Select>
           </label>
           <Button disabled={busy} onClick={() => answer({ decision: "decline", reason })}>
             {busy ? "Sending…" : "Decline patient"}
