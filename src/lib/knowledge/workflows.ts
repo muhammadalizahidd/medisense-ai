@@ -149,8 +149,7 @@ export const workflowGuides: WorkflowGuide[] = [
         },
         {
           label: "Keep the family updated",
-          detail:
-            "Progress, upcoming visits and messages are shared through the Family Portal.",
+          detail: "Progress, upcoming visits and messages are shared through the Family Portal.",
           href: "/portal",
         },
         {

@@ -45,7 +45,8 @@ function useClient(name: string) {
 
 const visitStatus = (visit: Visit, approved: boolean, nextDay: boolean) => {
   if (nextDay) return { tone: "neutral", label: "Scheduled" } as const;
-  if (visit.state === "done") return { tone: "healthy", label: "Completed · note approved" } as const;
+  if (visit.state === "done")
+    return { tone: "healthy", label: "Completed · note approved" } as const;
   if (visit.state === "just-finished")
     return approved
       ? ({ tone: "healthy", label: "Completed · note approved" } as const)
@@ -77,9 +78,7 @@ export function VisitDetailSheet({
   return (
     <Sheet
       title={visit.client}
-      description={
-        <Tag tone={status.tone}>{status.label}</Tag>
-      }
+      description={<Tag tone={status.tone}>{status.label}</Tag>}
       onClose={onClose}
       footer={
         <>
@@ -137,7 +136,11 @@ export function VisitDetailSheet({
 
       {visit.note && !nextDay && (
         <div className="mt-5 flex items-start gap-2.5 rounded-control bg-surface-sunken px-3.5 py-3 text-small text-ink-900">
-          <Quote className="mt-0.5 size-3.5 flex-none text-ink-500" strokeWidth={1.75} aria-hidden="true" />
+          <Quote
+            className="mt-0.5 size-3.5 flex-none text-ink-500"
+            strokeWidth={1.75}
+            aria-hidden="true"
+          />
           {visit.note}
         </div>
       )}
@@ -192,7 +195,11 @@ export function VisitDetailSheet({
             className="flex items-center justify-between gap-3 rounded-control border border-border px-3.5 py-3 hover:bg-canvas hover:no-underline"
           >
             <span className="flex min-w-0 items-center gap-2.5">
-              <FileText className="size-4 flex-none text-ink-500" strokeWidth={1.5} aria-hidden="true" />
+              <FileText
+                className="size-4 flex-none text-ink-500"
+                strokeWidth={1.5}
+                aria-hidden="true"
+              />
               <span className="min-w-0">
                 <span className="block text-small font-semibold text-ink-900">
                   Session {lastNote.sessionDate}
@@ -233,11 +240,7 @@ export function TaskDetailSheet({
     <Sheet
       title={task.title}
       description={
-        task.daysOverdue > 0 ? (
-          <Tag tone="over">Overdue</Tag>
-        ) : (
-          <Tag tone="available">Open</Tag>
-        )
+        task.daysOverdue > 0 ? <Tag tone="over">Overdue</Tag> : <Tag tone="available">Open</Tag>
       }
       onClose={onClose}
       footer={
@@ -274,7 +277,11 @@ export function TaskDetailSheet({
       {task.sentence && (
         <Section title="From the approved note">
           <div className="flex items-start gap-2.5 rounded-control bg-surface-sunken px-3.5 py-3 text-small text-ink-900">
-            <Quote className="mt-0.5 size-3.5 flex-none text-ink-500" strokeWidth={1.75} aria-hidden="true" />
+            <Quote
+              className="mt-0.5 size-3.5 flex-none text-ink-500"
+              strokeWidth={1.75}
+              aria-hidden="true"
+            />
             {task.sentence}
           </div>
         </Section>
