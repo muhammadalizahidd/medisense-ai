@@ -22,6 +22,7 @@ import { cn } from "@/lib/cn";
 import { useDemoStore } from "@/state/demo-store";
 import { unownedFollowUps } from "@/state/story-selectors";
 import { useBriefing } from "../ai-briefing";
+import { LiveCarePanel } from "@/features/live/live-care-panel";
 import { AssistantCard, MonthCalendar, Notifications, UpcomingSupervision } from "./blue-rail";
 import {
   CaseloadOverview,
@@ -309,6 +310,7 @@ export function BlueOverview({ children }: { children: ReactNode }) {
         <Hero />
         <KpiCards />
         <QuickActions />
+        <LiveCarePanel />
         <div className={ROW}>
           <TodaysSchedule className={THIRD} />
           <ClientStatus className={THIRD} />
