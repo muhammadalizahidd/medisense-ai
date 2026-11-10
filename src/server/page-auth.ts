@@ -1,0 +1,23 @@
+import "server-only";
+import { redirect } from "next/navigation";
+import { homeFor } from "@/lib/live/routes";
+import { currentUser } from "./auth";
+import { DatabaseUnavailable } from "./db";
+import type { UserRole } from "./models";
+
+/**
+ * For live pages: sends people who aren't signed in to the sign-in screen, and people with the
+ * wrong role to their own home. Returns null when the database can't be reached.
+ */
+export async function requirePageUser(next: string, ...roles: UserRole[]) {
+  let user;
+  try {
+    user = await currentUser();
+  } catch (error) {
+    if (error instanceof DatabaseUnavailable) return null;
+    throw error;
+  }
+  if (!user) redirect(`/login?next=${encodeURIComponent(next)}`);
+  if (roles.length && !roles.includes(user.role)) redirect(homeFor(user.role));
+  return user;
+}
