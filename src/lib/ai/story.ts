@@ -1,3 +1,4 @@
+import { disciplines } from "@/lib/live/catalogue";
 import {
   allSentences,
   type Brief,
@@ -41,9 +42,11 @@ const record = (value: unknown) =>
   typeof value === "object" && value !== null ? (value as Record<string, unknown>) : {};
 
 /** Reads a referral as written, and names the line each detail came from. A person confirms it. */
+const disciplineList = disciplines.map((d) => d.toLowerCase()).join(", ");
+
 export async function extractReferral(lines: string[]) {
   const out = await generateJson("story-referral", {
-    system: `You read referrals sent to an allied health provider in Brisbane that delivers occupational therapy and speech pathology through home visits and telehealth.
+    system: `You read referrals sent to an allied health provider in Brisbane that delivers ${disciplineList} through home visits and telehealth.
 
 ${GUARDRAILS}
 

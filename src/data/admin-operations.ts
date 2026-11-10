@@ -141,7 +141,7 @@ export const expiryItems: ExpiryItem[] = [...clientDue, ...staffDue].sort(
   (a, b) => a.daysLeft - b.daysLeft,
 );
 
-/** Expiries across all 184 clients and 12 staff, by month. */
+/** Expiries across all clients and staff, by month. */
 export const expiriesByMonth = [
   { month: mo("Oct"), client: 6, staff: 1 },
   { month: mo("Nov"), client: 17, staff: 4 },

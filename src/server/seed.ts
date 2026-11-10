@@ -19,104 +19,18 @@ type SeedTherapist = {
   seniority: TherapistDoc["seniority"];
 };
 
-/**
- * The twelve clinicians the platform already describes keep their figures, so the caseload
- * story still holds. Eight more cover the other disciplines on medisense.com.au.
- */
-const extraTherapists: SeedTherapist[] = [
-  {
-    slug: "olivia-reyes",
-    name: "Olivia Reyes",
-    discipline: "Physiotherapy",
-    region: "Brisbane North",
-    fte: 1,
-    activeClients: 19,
-    capacity: 24,
-    caseloadScore: 46,
-    seniority: "Senior",
-  },
-  {
-    slug: "jacob-morris",
-    name: "Jacob Morris",
-    discipline: "Physiotherapy",
-    region: "Brisbane South",
-    fte: 0.8,
-    activeClients: 14,
-    capacity: 19,
-    caseloadScore: 41,
-    seniority: "Clinician",
-  },
-  {
-    slug: "chloe-adams",
-    name: "Chloe Adams",
-    discipline: "Exercise Physiology",
-    region: "Brisbane North",
-    fte: 1,
-    activeClients: 17,
-    capacity: 24,
-    caseloadScore: 39,
-    seniority: "Clinician",
-  },
-  {
-    slug: "nadia-hassan",
-    name: "Nadia Hassan",
-    discipline: "Psychology",
-    region: "Brisbane South",
-    fte: 0.8,
-    activeClients: 16,
-    capacity: 18,
-    caseloadScore: 58,
-    seniority: "Senior",
-  },
-  {
-    slug: "ryan-cole",
-    name: "Ryan Cole",
-    discipline: "Trauma Therapy",
-    region: "Brisbane North",
-    fte: 0.6,
-    activeClients: 9,
-    capacity: 12,
-    caseloadScore: 44,
-    seniority: "Senior",
-  },
-  {
-    slug: "mei-tanaka",
-    name: "Mei Tanaka",
-    discipline: "Dietetics",
-    region: "Brisbane South",
-    fte: 0.6,
-    activeClients: 10,
-    capacity: 15,
-    caseloadScore: 30,
-    seniority: "Clinician",
-  },
-  {
-    slug: "sam-oconnor",
-    name: "Sam O'Connor",
-    discipline: "Podiatry",
-    region: "Brisbane North",
-    fte: 0.6,
-    activeClients: 11,
-    capacity: 15,
-    caseloadScore: 35,
-    seniority: "Clinician",
-  },
-  {
-    slug: "lucy-grant",
-    name: "Lucy Grant",
-    discipline: "Nursing",
-    region: "Brisbane South",
-    fte: 0.8,
-    activeClients: 13,
-    capacity: 16,
-    caseloadScore: 37,
-    seniority: "Senior",
-  },
-];
+const seniors = new Set([
+  "grace-liu",
+  "sarah-thompson",
+  "marcus-bell",
+  "olivia-reyes",
+  "nadia-hassan",
+  "ryan-cole",
+  "lucy-grant",
+]);
 
-const seniors = new Set(["grace-liu", "sarah-thompson", "marcus-bell"]);
-
-function fromStory(): SeedTherapist[] {
+/** Every therapist comes from the one clinician list the rest of the platform uses. */
+function fromClinicians(): SeedTherapist[] {
   return clinicians.map((c) => ({
     slug: c.id,
     name: c.name,
@@ -191,7 +105,7 @@ export async function seedIfEmpty(db: Db) {
     );
   }
 
-  for (const t of [...fromStory(), ...extraTherapists]) {
+  for (const t of fromClinicians()) {
     const therapistId = new ObjectId();
     const userId = new ObjectId();
     const email = staffEmail(t.name);
@@ -233,7 +147,5 @@ export async function seedIfEmpty(db: Db) {
       { upsert: true },
     );
   }
-  serverLog(
-    `Seeded ${admins.length} admin and ${clinicians.length + extraTherapists.length} therapist accounts.`,
-  );
+  serverLog(`Seeded ${admins.length} admin and ${clinicians.length} therapist accounts.`);
 }

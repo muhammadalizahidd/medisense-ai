@@ -69,7 +69,7 @@ export function summarise(scope: ClinicianScope, adjust?: (c: Clinician) => Clin
   const ndis = sum(list, (c) => c.funding.ndis);
   const nearCapacity = list.filter((c) => c.utilisation >= 95).length;
   const supervisionDue = list.filter((c) => c.supervisionDue).length;
-  const ot = list.filter((c) => c.discipline === "Occupational Therapy").length;
+  const disciplineCount = new Set(list.map((c) => c.discipline)).size;
   const supervision = supervisionRate(list);
   const orgSupervision = supervisionRate(clinicians);
 
@@ -88,7 +88,7 @@ export function summarise(scope: ClinicianScope, adjust?: (c: Clinician) => Clin
     {
       label: "Active clinicians",
       value: String(list.length),
-      caption: `${fte.toFixed(1)} FTE · ${ot} OT · ${list.length - ot} Speech Pathology`,
+      caption: `${fte.toFixed(1)} FTE · ${disciplineCount} ${disciplineCount === 1 ? "discipline" : "disciplines"}`,
     },
     {
       label: "Active clients",

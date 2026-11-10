@@ -1,3 +1,4 @@
+import { disciplines } from "@/lib/live/catalogue";
 import { AiError, generateJson, generateWithTools } from "@/lib/ai/engine";
 import { aiLog } from "@/lib/ai/log";
 import { runTool } from "@/lib/ai/types";
@@ -9,7 +10,7 @@ import { dt } from "@/lib/clock";
 const MAX_QUESTION = 500;
 const MAX_BODY = 300_000;
 
-const SYSTEM = `You are Ask Medisense, the assistant inside Medisense's clinical operations platform. Medisense is an allied health provider in Brisbane (occupational therapy and speech pathology, home visits and telehealth, NDIS and aged care clients). Today is ${dt("Tuesday 20 October 2026")}, 10:15 am.
+const SYSTEM = `You are Ask Medisense, the assistant inside Medisense's clinical operations platform. Medisense is an allied health provider in Brisbane (${disciplines.map((d) => d.toLowerCase()).join(", ")}; home visits and telehealth; NDIS, workers' compensation, aged care, Medicare, private health and self-funded clients). Today is ${dt("Tuesday 20 October 2026")}, 10:15 am.
 
 How to answer:
 - Answer only from the records: either the records given with the question, or tool results when tools are available (call the ones you need; several when the question spans topics). Never invent people, numbers or dates.

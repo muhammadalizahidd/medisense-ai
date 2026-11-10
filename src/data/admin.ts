@@ -10,7 +10,7 @@ export type TimeCategory = {
 export const loggedHoursPerWeek = 342;
 
 /**
- * Org-wide logged time across all 12 clinicians, last 4 weeks. Medisense delivers therapy in
+ * Org-wide logged time across all clinicians, last 4 weeks. Medisense delivers therapy in
  * clients' homes, so driving between visits is its own category.
  */
 export const timeByCategory: TimeCategory[] = [
@@ -39,7 +39,7 @@ export const automationOpportunities = [
   },
   {
     label: "Progress report drafting",
-    description: "Drafts NDIS and aged care reports from approved notes, goals and outcomes.",
+    description: "Drafts funding reports from approved notes, goals and outcomes.",
     hours: 9,
     live: true,
   },

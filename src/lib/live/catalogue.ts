@@ -27,6 +27,36 @@ export const practitioner: Record<Discipline, string> = {
   Nursing: "Registered Nurse",
 };
 
+/** Short labels for charts and tight spaces. */
+export const disciplineShort: Record<Discipline, string> = {
+  "Occupational Therapy": "OT",
+  "Speech Pathology": "Speech",
+  Physiotherapy: "Physio",
+  "Exercise Physiology": "EP",
+  Psychology: "Psych",
+  "Trauma Therapy": "Trauma",
+  Dietetics: "Dietetics",
+  Podiatry: "Podiatry",
+  Nursing: "Nursing",
+};
+
+const disciplineWords: [RegExp, Discipline][] = [
+  [/speech|swallow|language/i, "Speech Pathology"],
+  [/occupational|ot/i, "Occupational Therapy"],
+  [/physio(?!log)|physiotherap/i, "Physiotherapy"],
+  [/exercise|ep/i, "Exercise Physiology"],
+  [/trauma/i, "Trauma Therapy"],
+  [/psycholog|counsell/i, "Psychology"],
+  [/diet|nutrition/i, "Dietetics"],
+  [/podiat|foot|orthotic/i, "Podiatry"],
+  [/nurs|wound|continence|catheter/i, "Nursing"],
+];
+
+/** The first discipline named in free text, such as a referral's services line. */
+export function disciplineIn(text: string): Discipline | undefined {
+  return disciplineWords.find(([pattern]) => pattern.test(text))?.[1];
+}
+
 /** The referral form's frequency options. */
 export const frequencies = ["Assessment", "Weekly", "Fortnightly", "Monthly"] as const;
 export type Frequency = (typeof frequencies)[number];

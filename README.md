@@ -1,6 +1,6 @@
 # Medisense — Clinical Operations & Supervision Dashboard
 
-**Medisense Clinical Operations & Supervision Intelligence Platform.** A product demo for allied health leadership: reduce clinician admin, protect sustainable caseloads, strengthen supervision and surface clients or clinicians needing attention, without replacing clinical judgement. All data is synthetic (12 clinicians, 184 NDIS and aged care clients).
+**Medisense Clinical Operations & Supervision Intelligence Platform.** A product demo for allied health leadership: reduce clinician admin, protect sustainable caseloads, strengthen supervision and surface clients or clinicians needing attention, without replacing clinical judgement. The live care workflow runs on MongoDB; the other screens use synthetic data (20 clinicians across 9 disciplines, 293 clients).
 
 ## Getting started
 

@@ -4,6 +4,7 @@ import { weeklyMeasures } from "@/data/analytics";
 import { attentionClients } from "@/data/attention";
 import { caseNotes } from "@/data/case-note";
 import { clientProfiles } from "@/data/client-profiles";
+import { clientTotals } from "@/data/client-directory";
 import { clinicians } from "@/data/clinicians";
 import { formDrafts } from "@/data/forms";
 import { hannahDay } from "@/data/my-day";
@@ -106,7 +107,7 @@ const intents: Intent[] = [
       const notesOnTime = weeklyMeasures.notesOnTime;
       return {
         title: "Medisense this week",
-        intro: `12 clinicians are seeing 184 clients (128 NDIS, 56 aged care). Demand is rising faster than capacity: ${nearCapacity.length} clinicians are near or over capacity, and notes approved on time fell from ${notesOnTime[0]}% to ${notesOnTime.at(-1)}% over 12 weeks.`,
+        intro: `${clinicians.length} clinicians are seeing ${clientTotals.all} clients (${clientTotals.ndis} NDIS, ${clientTotals.agedCare} aged care). Demand is rising faster than capacity: ${nearCapacity.length} clinicians are near or over capacity, and notes approved on time fell from ${notesOnTime[0]}% to ${notesOnTime.at(-1)}% over 12 weeks.`,
         items: [
           ...atRisk.map((c) => ({
             label: `${c.name} is At Risk`,

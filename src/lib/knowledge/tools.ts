@@ -8,6 +8,7 @@ import { caseNotes } from "@/data/case-note";
 import { clientTotals, directoryClients } from "@/data/client-directory";
 import { clientProfiles } from "@/data/client-profiles";
 import { clinicians } from "@/data/clinicians";
+import { disciplines } from "@/lib/live/catalogue";
 import { formDrafts } from "@/data/forms";
 import { referrals } from "@/data/referrals";
 import { libraryReports, type ReportStatus } from "@/data/reports-library";
@@ -131,7 +132,7 @@ function orgSummary(state: LiveState): ToolResult {
   const n = weeklyMeasures;
   return {
     title: "Medisense at a glance",
-    summary: `12 clinicians (OT and Speech Pathology, Brisbane North and South, home visits and telehealth) see ${clientTotals.all} clients: ${clientTotals.ndis} NDIS and ${clientTotals.agedCare} aged care. ${atRisk.length} clinician At Risk, ${monitor.length} Monitor. ${notes} notes overdue and ${drafts} AI drafts waiting; ${followUps} follow-ups overdue; ${attentionClients.length} clients need review. Notes approved on time fell from ${n.notesOnTime[0]}% to ${n.notesOnTime.at(-1)}% over 12 weeks; sessions per week rose from ${n.sessions[0]} to ${n.sessions.at(-1)}. Estimated time AI could return: ${automationTotal.hours} ${automationTotal.fte}.`,
+    summary: `${clinicians.length} clinicians across ${new Set(clinicians.map((c) => c.discipline)).size} disciplines (Brisbane North and South, home visits and telehealth) see ${clientTotals.all} clients: ${clientTotals.ndis} NDIS and ${clientTotals.agedCare} aged care. ${atRisk.length} clinician At Risk, ${monitor.length} Monitor. ${notes} notes overdue and ${drafts} AI drafts waiting; ${followUps} follow-ups overdue; ${attentionClients.length} clients need review. Notes approved on time fell from ${n.notesOnTime[0]}% to ${n.notesOnTime.at(-1)}% over 12 weeks; sessions per week rose from ${n.sessions[0]} to ${n.sessions.at(-1)}. Estimated time AI could return: ${automationTotal.hours} ${automationTotal.fte}.`,
     items: [
       ...atRisk.map((c) => ({
         label: `${c.name} · At Risk`,
@@ -362,7 +363,7 @@ function listClinicians(_state: LiveState, input: Input): ToolResult {
     .sort((a, b) => b.score - a.score);
   return {
     title: "Clinicians",
-    summary: `${rows.length} of 12 clinicians. Status comes from the caseload score (Monitor from 60, At Risk from 80), weighted by complexity, overdue work and admin hours.`,
+    summary: `${rows.length} of ${clinicians.length} clinicians. Status comes from the caseload score (Monitor from 60, At Risk from 80), weighted by complexity, overdue work and admin hours.`,
     items: rows.map((c) => ({
       label: `${c.name} · ${statusLabel[c.status]}${c.available ? " · has room" : ""}`,
       detail: clinicianLine(c),
@@ -864,10 +865,10 @@ export const toolDefs: ToolDef[] = [
   {
     name: "list_clinicians",
     description:
-      "List the 12 clinicians with capacity and status. Filter by region, discipline or status (At Risk, Watch, Healthy, available).",
+      "List the clinicians with capacity and status. Filter by region, discipline or status (At Risk, Watch, Healthy, available).",
     properties: {
       region: s("Region", ["Brisbane North", "Brisbane South"]),
-      discipline: s("Discipline", ["Occupational Therapy", "Speech Pathology"]),
+      discipline: s("Discipline", [...disciplines]),
       status: s("Status", ["At Risk", "Watch", "Healthy", "available"]),
     },
     run: listClinicians,

@@ -16,7 +16,7 @@ export const weeklyMeasures = {
   goalsSpeech: ramp(70, 72, { seed: 19 }),
 };
 
-/** All 428 active goals across 184 clients, by status. */
+/** All 428 active goals across the client base, by status. */
 export const goalStatusTotals = [
   { id: "Achieved", value: 62 },
   { id: "On track", value: 141 },

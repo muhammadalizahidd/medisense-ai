@@ -5,7 +5,7 @@ All screens use the shell, tokens and components in `design-system.md` and the e
 > **Revision 2 (after the second meeting).** Where this file and the list below disagree, the list wins:
 >
 > - Status scale is **Healthy / Monitor / At Risk** everywhere (replaces At Risk). Attention priorities are **High / Medium / Review** (replaces Low).
-> - Data: 12 clinicians (OT and Speech Pathology), 184 clients, NDIS and aged care funding on every client row. See `demo-dataset.md`.
+> - Data: 20 clinicians across 9 disciplines, 293 clients, NDIS and aged care funding on every client row. See `demo-dataset.md`.
 > - **Overview:** filter bar (Site · Discipline · Trend period) scoping KPIs, four trend cards with sparklines (admin backlog, caseload pressure, follow-up risk, supervision completion), caseload health with a score-trend column, then charts: active clients against capacity, client mix (funding donut and complexity bar), caseload pressure by clinician, admin backlog by clinician. The impact band shows **projected** impact, not pilot results.
 > - **Caseload:** workload chart with 6/12-week toggle and admin hours bars; complexity, funding and continuity-of-care charts; client table gains Funding and "With Sarah" columns, a funding filter and sorting.
 > - **Case note:** raw note is editable (type or paste); four draft sections (Session Summary, Interventions, Progress / Observations, Next Actions); live Claude generation with a prepared fallback and an AI status tag in the header.

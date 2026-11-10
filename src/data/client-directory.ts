@@ -141,10 +141,14 @@ export const directoryClients: DirectoryClient[] = [
   ...others,
 ].filter((c, i, all) => all.findIndex((x) => x.id === c.id) === i);
 
-/** Org totals the directory is a sample of; matches the overview KPIs. */
-export const clientTotals = { all: 184, ndis: 128, agedCare: 56 };
+/** Org totals the directory is a sample of, summed from the clinicians' caseloads like the overview KPIs. */
+export const clientTotals = {
+  all: clinicians.reduce((sum, c) => sum + c.active, 0),
+  ndis: clinicians.reduce((sum, c) => sum + c.funding.ndis, 0),
+  agedCare: clinicians.reduce((sum, c) => sum + c.funding.agedCare, 0),
+};
 
-/** Monthly plan reviews across all 184 clients, next six months. */
+/** Monthly plan reviews across all clients, next six months. */
 export const planReviewsByMonth = [
   { month: mo("Nov"), ndis: 14, agedCare: 5 },
   { month: mo("Dec"), ndis: 11, agedCare: 4 },
@@ -155,7 +159,11 @@ export const planReviewsByMonth = [
 ];
 
 /** Active clients by region and funding across the whole organisation. */
-export const clientsByRegion = [
-  { region: "Brisbane North", ndis: 74, agedCare: 31 },
-  { region: "Brisbane South", ndis: 54, agedCare: 25 },
-];
+export const clientsByRegion = (["Brisbane North", "Brisbane South"] as const).map((region) => {
+  const team = clinicians.filter((c) => c.site === region);
+  return {
+    region,
+    ndis: team.reduce((sum, c) => sum + c.funding.ndis, 0),
+    agedCare: team.reduce((sum, c) => sum + c.funding.agedCare, 0),
+  };
+});

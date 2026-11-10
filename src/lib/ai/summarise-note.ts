@@ -1,7 +1,8 @@
+import { disciplines } from "@/lib/live/catalogue";
 import type { StructuredNote } from "./case-note-contract";
 import { AiError, NO_KEY, generateJson } from "./engine";
 
-const SYSTEM = `You draft structured session notes for allied health clinicians (occupational therapy and speech pathology) in Australia.
+const SYSTEM = `You draft structured session notes for allied health clinicians (${disciplines.map((d) => d.toLowerCase()).join(", ")}) in Australia.
 
 Turn the therapist's raw session note into a structured draft. The clinician reviews and approves every draft, so:
 - Use only what the note says. Never add facts, scores, diagnoses, risk ratings or treatment decisions that are not in the note.

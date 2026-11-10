@@ -1,7 +1,7 @@
 # Medisense — Master Demo Dataset (synthetic)
 
 > All people, clients and figures below are **fictional demo data**. Every screen must use these exact values so numbers agree everywhere.
-> Revision 2 (after the second meeting with Neil): 12 clinicians (OT and Speech Pathology only), 184 clients across NDIS and aged care, and the status scale **Healthy / Monitor / At Risk**.
+> Revision 3 (10 Nov 2026): 20 clinicians across the 9 disciplines on medisense.com.au and 293 clients. The original 12 clinicians and every backlog figure are unchanged; 8 clinicians were added for physiotherapy, exercise physiology, psychology, trauma therapy, dietetics, podiatry and nursing, with no overdue work. Revision 2 (after the second meeting with Neil) set the status scale **Healthy / Monitor / At Risk**.
 > The code in `src/data` is the source of truth. Derived figures (utilisation, weighted units, totals, trends) are computed there, never typed into components.
 
 ## 0. Context
@@ -21,9 +21,9 @@ These match the table agreed in the second meeting exactly.
 
 | KPI                      | Value    | Caption                                       |
 | ------------------------ | -------- | --------------------------------------------- |
-| Active clinicians        | **12**   | 9.0 FTE · 7 OT · 5 Speech Pathology           |
-| Active clients           | **184**  | 128 NDIS · 56 aged care                       |
-| Average caseload         | **15.3** | Utilisation 88% of configured capacity (208)  |
+| Active clinicians        | **20**   | 15.2 FTE · 9 disciplines                      |
+| Active clients           | **293**  | 186 NDIS · 107 aged care                      |
+| Average caseload         | **14.7** | Utilisation 83% of configured capacity (351)  |
 | Clinicians near capacity | **3**    | At or above 95% of configured capacity        |
 | Notes due                | **17**   | 12 overdue · 5 AI drafts awaiting approval    |
 | Follow-ups overdue       | **11**   | +6 over 12 weeks                              |

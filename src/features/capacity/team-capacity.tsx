@@ -8,7 +8,7 @@ import { Caption, Card, CardTitle } from "@/components/ui/card";
 import { CapacityMeter } from "@/components/ui/capacity-meter";
 import { LevelDot } from "@/components/ui/dot";
 import { PageHeader } from "@/components/ui/page";
-import { FilterBar, FilterField, Segmented } from "@/components/ui/segmented";
+import { FilterBar, FilterField, Segmented, SelectField } from "@/components/ui/segmented";
 import { TableHeader, TableRow } from "@/components/ui/table";
 import { StatusTag, Tag } from "@/components/ui/tag";
 import { tenureLabel } from "@/data/caseload";
@@ -24,6 +24,7 @@ import {
   statusCounts,
 } from "@/data/clinicians";
 import type { Clinician, Discipline, Site } from "@/data/types";
+import { disciplineShort } from "@/lib/live/catalogue";
 import { cn } from "@/lib/cn";
 import { Recommendation } from "./recommendation";
 
@@ -108,7 +109,7 @@ export function TeamCapacity() {
   const breakdown = [
     ...sites.map((x) => ({ group: x, list: visible.filter((c) => c.site === x) })),
     ...disciplines.map((d) => ({
-      group: d === "Occupational Therapy" ? "OT" : "Speech Path.",
+      group: disciplineShort[d],
       list: visible.filter((c) => c.discipline === d),
     })),
   ]
@@ -138,18 +139,16 @@ export function TeamCapacity() {
             ]}
           />
         </FilterField>
-        <FilterField label="Discipline">
-          <Segmented
-            label="Discipline"
-            value={discipline}
-            onChange={setDiscipline}
-            options={[
-              { id: "all", label: "All" },
-              { id: "Occupational Therapy", label: "Occupational Therapy" },
-              { id: "Speech Pathology", label: "Speech Pathology" },
-            ]}
-          />
-        </FilterField>
+        <SelectField
+          label="Discipline"
+          value={discipline}
+          onChange={(v) => setDiscipline(v as "all" | Discipline)}
+        >
+          <option value="all">All disciplines</option>
+          {disciplines.map((d) => (
+            <option key={d}>{d}</option>
+          ))}
+        </SelectField>
         {previewing && <Tag tone="monitor">Scenario preview · not applied</Tag>}
       </FilterBar>
 

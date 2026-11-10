@@ -84,7 +84,7 @@ Read these before changing data, UI or copy:
 **Data**
 
 - Demo data lives only in `src/data`. Components never hard-code names or figures.
-- Exact KPI figures agreed with the client: **12 clinicians (OT and Speech Pathology only), 184 clients (128 NDIS, 56 aged care), 3 near capacity, 17 notes due, 11 follow-ups overdue, 4 supervision due, 14 clients requiring review.** Don't change them.
+- KPI figures: **20 clinicians across the 9 disciplines on medisense.com.au, 293 clients (186 NDIS, 107 aged care), 3 near capacity, 17 notes due, 11 follow-ups overdue, 4 supervision due, 14 clients requiring review.** Decided 10 Nov 2026: the website's disciplines replace the earlier OT and Speech Pathology only scope, and 293 (the live database total) replaces 184. Client and clinician totals are summed from `src/data/clinicians.ts`, which also seeds the database; `src/data/organisation.test.ts` pins them.
 - One status scale everywhere: **Healthy (<60) / Monitor (60–79) / At Risk (≥80)**, plus an "Available" tag. "Over Capacity" and "Overloaded" are retired. Attention priorities are **High / Medium / Review** (not Low).
 - Caseload Health score = six weighted factors (dataset §3). Sarah = 83 and is At Risk.
 - Emma Clarke is an **OT in Brisbane North** (same discipline and service region as Sarah) so the rebalancing suggestion makes clinical sense. Continuity of care is part of every capacity recommendation.

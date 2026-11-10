@@ -1,3 +1,4 @@
+import { disciplineIn } from "@/lib/live/catalogue";
 import { directoryClients, type DirectoryClient } from "./client-directory";
 import { clientProfileById } from "./client-profiles";
 import { clinicians } from "./clinicians";
@@ -95,7 +96,7 @@ export function regionForSuburb(suburb: string): Site | null {
 
 /** A rule, not AI: the matching discipline in the client's region with the most room. */
 export function suggestClinician(services: string, region: Site) {
-  const discipline = /speech/i.test(services) ? "Speech Pathology" : "Occupational Therapy";
+  const discipline = disciplineIn(services) ?? "Occupational Therapy";
   const matching = clinicians.filter((c) => c.discipline === discipline);
   const local = matching.filter((c) => c.site === region);
   const pool = local.length ? local : matching;

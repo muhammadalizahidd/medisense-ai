@@ -1,3 +1,4 @@
+import { clinicians } from "@/data/clinicians";
 import { Download } from "lucide-react";
 import type { Metadata } from "next";
 import { Button } from "@/components/ui/button";
@@ -22,7 +23,7 @@ export default function AdminInsightsPage() {
       <PageHeader
         eyebrow="Admin insights"
         title="Where clinician time goes"
-        description={`All 12 clinicians · last 4 weeks · ≈${loggedHoursPerWeek} logged hours per week.`}
+        description={`All ${clinicians.length} clinicians · last 4 weeks · ≈${loggedHoursPerWeek} logged hours per week.`}
         actions={
           <Button>
             <Download className="size-4" strokeWidth={1.5} aria-hidden="true" />

@@ -7,8 +7,8 @@ import { DonutChart } from "@/components/charts/donut-chart";
 import { StackedColumns } from "@/components/charts/stacked-columns";
 import { TrendChart } from "@/components/charts/trend-chart";
 import { Caption, Card, CardTitle } from "@/components/ui/card";
-import { FilterBar, FilterField, Segmented } from "@/components/ui/segmented";
-import { scoreThresholds, type ClinicianScope } from "@/data/clinicians";
+import { FilterBar, FilterField, Segmented, SelectField } from "@/components/ui/segmented";
+import { disciplines, scoreThresholds, type ClinicianScope } from "@/data/clinicians";
 import { summarise } from "@/data/organisation";
 import type { CaseloadStatus, Discipline, Site } from "@/data/types";
 import { weeks } from "@/data/weeks";
@@ -154,18 +154,16 @@ export function OverviewDashboard() {
             ]}
           />
         </FilterField>
-        <FilterField label="Discipline">
-          <Segmented
-            label="Discipline"
-            value={discipline}
-            onChange={setDiscipline}
-            options={[
-              { id: "all", label: "All" },
-              { id: "Occupational Therapy", label: "Occupational Therapy" },
-              { id: "Speech Pathology", label: "Speech Pathology" },
-            ]}
-          />
-        </FilterField>
+        <SelectField
+          label="Discipline"
+          value={discipline}
+          onChange={(v) => setDiscipline(v as "all" | Discipline)}
+        >
+          <option value="all">All disciplines</option>
+          {disciplines.map((d) => (
+            <option key={d}>{d}</option>
+          ))}
+        </SelectField>
         <FilterField label="Trend period">
           <Segmented
             label="Trend period"

@@ -10,6 +10,7 @@ import type {
 } from "./types";
 import { ramp, seedFrom } from "./weeks";
 import { dt } from "@/lib/clock";
+import { disciplines as allDisciplines, practitioner } from "@/lib/live/catalogue";
 
 /** Complexity weights used for every capacity calculation. */
 export const complexityWeights = { high: 2.5, medium: 1.5, low: 1.0 } as const;
@@ -70,8 +71,7 @@ function clinician(input: ClinicianInput): Clinician {
   const weightedCapacity = input.capacity * CAPACITY_WEIGHT;
   const notesDue = input.notesOverdue + input.draftsAwaiting;
   const seed = seedFrom(input.id);
-  const roleByDiscipline =
-    input.discipline === "Occupational Therapy" ? "Occupational Therapist" : "Speech Pathologist";
+  const roleByDiscipline = practitioner[input.discipline];
 
   return {
     id: input.id,
@@ -375,6 +375,175 @@ export const clinicians: Clinician[] = [
     adminHours: 2.9,
     start: { active: 5, notesDue: 0, followUps: 0, score: 22, admin: 2.5 },
   }),
+  // The disciplines added from medisense.com.au. No overdue work, so the agreed backlog figures hold.
+  clinician({
+    id: "olivia-reyes",
+    name: "Olivia Reyes",
+    discipline: "Physiotherapy",
+    site: "Brisbane North",
+    fte: 1.0,
+    active: 19,
+    capacity: 24,
+    mix: { high: 3, medium: 10, low: 6 },
+    notesOverdue: 0,
+    draftsAwaiting: 0,
+    followUpsOverdue: 0,
+    ndis: 9,
+    nextSupervision: dt("Thu 12 Nov"),
+    supervisionNote: "Scheduled",
+    supervisionDue: false,
+    supervisionHistory: ["held", "held", "held"],
+    score: 46,
+    adminHours: 6.4,
+    start: { active: 17, notesDue: 0, followUps: 0, score: 42, admin: 6.0 },
+  }),
+  clinician({
+    id: "jacob-morris",
+    name: "Jacob Morris",
+    discipline: "Physiotherapy",
+    site: "Brisbane South",
+    fte: 0.8,
+    active: 14,
+    capacity: 19,
+    mix: { high: 2, medium: 7, low: 5 },
+    notesOverdue: 0,
+    draftsAwaiting: 0,
+    followUpsOverdue: 0,
+    ndis: 6,
+    nextSupervision: dt("Fri 13 Nov"),
+    supervisionNote: "Scheduled",
+    supervisionDue: false,
+    supervisionHistory: ["held", "rescheduled", "held"],
+    score: 41,
+    adminHours: 5.1,
+    start: { active: 13, notesDue: 0, followUps: 0, score: 38, admin: 4.8 },
+  }),
+  clinician({
+    id: "chloe-adams",
+    name: "Chloe Adams",
+    discipline: "Exercise Physiology",
+    site: "Brisbane North",
+    fte: 1.0,
+    active: 17,
+    capacity: 24,
+    mix: { high: 1, medium: 8, low: 8 },
+    notesOverdue: 0,
+    draftsAwaiting: 0,
+    followUpsOverdue: 0,
+    ndis: 7,
+    nextSupervision: dt("Mon 16 Nov"),
+    supervisionNote: "Scheduled",
+    supervisionDue: false,
+    supervisionHistory: ["held", "held", "held"],
+    score: 39,
+    adminHours: 5.9,
+    start: { active: 15, notesDue: 0, followUps: 0, score: 35, admin: 5.6 },
+  }),
+  clinician({
+    id: "nadia-hassan",
+    name: "Nadia Hassan",
+    discipline: "Psychology",
+    site: "Brisbane South",
+    fte: 0.8,
+    active: 16,
+    capacity: 18,
+    mix: { high: 4, medium: 9, low: 3 },
+    notesOverdue: 0,
+    draftsAwaiting: 0,
+    followUpsOverdue: 0,
+    ndis: 9,
+    nextSupervision: dt("Wed 11 Nov"),
+    supervisionNote: "Scheduled",
+    supervisionDue: false,
+    supervisionHistory: ["held", "held", "rescheduled"],
+    score: 58,
+    adminHours: 6.2,
+    start: { active: 14, notesDue: 0, followUps: 0, score: 51, admin: 5.5 },
+  }),
+  clinician({
+    id: "ryan-cole",
+    name: "Ryan Cole",
+    discipline: "Trauma Therapy",
+    site: "Brisbane North",
+    fte: 0.6,
+    active: 9,
+    capacity: 12,
+    mix: { high: 3, medium: 4, low: 2 },
+    notesOverdue: 0,
+    draftsAwaiting: 0,
+    followUpsOverdue: 0,
+    ndis: 6,
+    nextSupervision: dt("Thu 19 Nov"),
+    supervisionNote: "Scheduled",
+    supervisionDue: false,
+    supervisionHistory: ["held", "held", "held"],
+    score: 44,
+    adminHours: 3.9,
+    start: { active: 8, notesDue: 0, followUps: 0, score: 40, admin: 3.6 },
+  }),
+  clinician({
+    id: "mei-tanaka",
+    name: "Mei Tanaka",
+    discipline: "Dietetics",
+    site: "Brisbane South",
+    fte: 0.6,
+    active: 10,
+    capacity: 15,
+    mix: { high: 0, medium: 5, low: 5 },
+    notesOverdue: 0,
+    draftsAwaiting: 0,
+    followUpsOverdue: 0,
+    ndis: 5,
+    nextSupervision: dt("Tue 17 Nov"),
+    supervisionNote: "Scheduled",
+    supervisionDue: false,
+    supervisionHistory: ["held", "held", "held"],
+    score: 30,
+    adminHours: 3.4,
+    start: { active: 9, notesDue: 0, followUps: 0, score: 28, admin: 3.2 },
+  }),
+  clinician({
+    id: "sam-oconnor",
+    name: "Sam O'Connor",
+    discipline: "Podiatry",
+    site: "Brisbane North",
+    fte: 0.6,
+    active: 11,
+    capacity: 15,
+    mix: { high: 1, medium: 5, low: 5 },
+    notesOverdue: 0,
+    draftsAwaiting: 0,
+    followUpsOverdue: 0,
+    ndis: 7,
+    nextSupervision: dt("Wed 18 Nov"),
+    supervisionNote: "Scheduled",
+    supervisionDue: false,
+    supervisionHistory: ["held", "held", "held"],
+    score: 35,
+    adminHours: 3.6,
+    start: { active: 10, notesDue: 0, followUps: 0, score: 33, admin: 3.5 },
+  }),
+  clinician({
+    id: "lucy-grant",
+    name: "Lucy Grant",
+    discipline: "Nursing",
+    site: "Brisbane South",
+    fte: 0.8,
+    active: 13,
+    capacity: 16,
+    mix: { high: 3, medium: 7, low: 3 },
+    notesOverdue: 0,
+    draftsAwaiting: 0,
+    followUpsOverdue: 0,
+    ndis: 9,
+    nextSupervision: dt("Fri 20 Nov"),
+    supervisionNote: "Scheduled",
+    supervisionDue: false,
+    supervisionHistory: ["held", "held", "held"],
+    score: 37,
+    adminHours: 5.0,
+    start: { active: 12, notesDue: 0, followUps: 0, score: 34, admin: 4.7 },
+  }),
 ];
 
 export function clinicianById(id: string) {
@@ -384,7 +553,8 @@ export function clinicianById(id: string) {
 export const sarah = clinicians[0] as Clinician;
 export const emma = clinicianById("emma-clarke") as Clinician;
 
-export const disciplines: Discipline[] = ["Occupational Therapy", "Speech Pathology"];
+/** Every discipline Medisense offers, in the website's order. */
+export const disciplines: Discipline[] = [...allDisciplines];
 export const sites: Site[] = ["Brisbane North", "Brisbane South"];
 
 export type ClinicianScope = { site: "all" | Site; discipline: "all" | Discipline };
@@ -421,6 +591,14 @@ export const capacityTableOrder = [
   "tom-fitzgerald",
   "ben-holloway",
   "aisha-karim",
+  "olivia-reyes",
+  "jacob-morris",
+  "chloe-adams",
+  "nadia-hassan",
+  "ryan-cole",
+  "mei-tanaka",
+  "sam-oconnor",
+  "lucy-grant",
 ];
 
 export function formatFte(fte: number) {

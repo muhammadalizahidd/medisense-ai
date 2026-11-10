@@ -1,3 +1,4 @@
+import { disciplineIn } from "@/lib/live/catalogue";
 import { directoryClients } from "@/data/client-directory";
 import { clinicians } from "@/data/clinicians";
 import { referrals } from "@/data/referrals";
@@ -191,11 +192,7 @@ function filters(q: string) {
       : has(q, /\bsouth\b/)
         ? "Brisbane South"
         : undefined,
-    discipline: has(q, /speech/)
-      ? "Speech Pathology"
-      : has(q, /\bot\b|occupational/)
-        ? "Occupational Therapy"
-        : undefined,
+    discipline: disciplineIn(q),
     priority: has(q, /\bhigh\b/) ? "High" : has(q, /medium/) ? "Medium" : undefined,
     within,
     day: day ?? (has(q, /\btoday\b/) ? "today" : has(q, /tomorrow/) ? "tomorrow" : undefined),

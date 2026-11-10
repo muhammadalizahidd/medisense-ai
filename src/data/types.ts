@@ -1,10 +1,12 @@
+import type { Discipline } from "@/lib/live/catalogue";
+
+export type { Discipline };
+
 export type Complexity = "High" | "Medium" | "Low";
 
 export type CaseloadStatus = "healthy" | "monitor" | "at-risk";
 
 export type Priority = "High" | "Medium" | "Review";
-
-export type Discipline = "Occupational Therapy" | "Speech Pathology";
 
 /** Medisense works from client homes, so clinicians are grouped by service region, not clinic. */
 export type Site = "Brisbane North" | "Brisbane South";
