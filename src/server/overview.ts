@@ -16,7 +16,7 @@ export async function liveOverview(): Promise<LiveOverviewDto> {
   const toUtc = (day: Date) => atBrisbane(day, 0);
 
   const [clientRows, pending, week, recent, team] = await Promise.all([
-    clients.find({}, { projection: { needs: 1 } }).toArray(),
+    clients.find({}, { projection: { needs: 1, discharged: 1 } }).toArray(),
     assignments.find({ status: "pending" }, { projection: { createdAt: 1 } }).toArray(),
     appointments
       .find({ start: { $gte: toUtc(weekStart), $lt: toUtc(addDays(weekStart, 5)) } })

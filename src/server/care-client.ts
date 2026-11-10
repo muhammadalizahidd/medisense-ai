@@ -23,8 +23,19 @@ export async function clientHome(user: UserDoc): Promise<ClientHomeDto> {
   const chatByTherapist = new Map(
     conversations.map((c) => [c.therapistId.toHexString(), c._id.toHexString()]),
   );
+  const toRate = visits
+    .filter(
+      (v) => v.status === "completed" && !v.feedback && v.start.getTime() >= now - 30 * 86_400_000,
+    )
+    .slice(-5);
   return {
     name: client.name,
+    phone: client.phone,
+    emergencyContact: client.emergencyContact ?? null,
+    discharged: client.discharged
+      ? { at: client.discharged.at.toISOString(), reason: client.discharged.reason }
+      : null,
+    toRate: toRate.map((v) => appointmentDto(v, nameMap([client]), names, series, "patient")),
     needs: needDtos(client, names),
     team: client.needs.flatMap((n) =>
       n.status === "assigned" && n.therapistId
@@ -37,6 +48,6 @@ export async function clientHome(user: UserDoc): Promise<ClientHomeDto> {
           ]
         : [],
     ),
-    upcoming: upcoming.map((v) => appointmentDto(v, nameMap([client]), names, series)),
+    upcoming: upcoming.map((v) => appointmentDto(v, nameMap([client]), names, series, "patient")),
   };
 }

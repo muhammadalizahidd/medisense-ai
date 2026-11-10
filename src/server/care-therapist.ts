@@ -146,7 +146,7 @@ export async function respond(
 export async function therapistHome(user: UserDoc): Promise<TherapistHomeDto> {
   const db = await collections();
   const therapist = await myTherapist(user);
-  const [assigned, visits, conversations, unrecorded] = await Promise.all([
+  const [assigned, visits, conversations, unrecorded, unwritten] = await Promise.all([
     db.assignments
       .find({ therapistId: therapist._id, status: { $in: ["pending", "accepted"] } })
       .sort({ createdAt: -1 })
@@ -165,9 +165,20 @@ export async function therapistHome(user: UserDoc): Promise<TherapistHomeDto> {
       })
       .sort({ start: 1 })
       .toArray(),
+    db.appointments
+      .find({
+        therapistId: therapist._id,
+        status: "completed",
+        note: { $in: [null] },
+        start: { $gte: new Date(Date.now() - 30 * 86_400_000) },
+      })
+      .sort({ start: 1 })
+      .toArray(),
   ]);
   const clientIds = [
-    ...new Set([...assigned, ...visits, ...unrecorded].map((a) => a.clientId.toHexString())),
+    ...new Set(
+      [...assigned, ...visits, ...unrecorded, ...unwritten].map((a) => a.clientId.toHexString()),
+    ),
   ].map((id) => new ObjectId(id));
   const clients = await db.clients.find({ _id: { $in: clientIds } }).toArray();
   const clientById = new Map(clients.map((c) => [c._id.toHexString(), c]));
@@ -229,10 +240,12 @@ export async function therapistHome(user: UserDoc): Promise<TherapistHomeDto> {
             discipline: a.discipline,
             frequency: need?.frequency ?? "Weekly",
             conversationId: chatByClient.get(client._id.toHexString())?.toHexString() ?? null,
+            discharged: Boolean(client.discharged),
           },
         ];
       }),
     upcoming: visits.map((v) => appointmentDto(v, clientNames, me, series)),
     toRecord: unrecorded.map((v) => appointmentDto(v, clientNames, me, series)),
+    notesToWrite: unwritten.map((v) => appointmentDto(v, clientNames, me, series)),
   };
 }

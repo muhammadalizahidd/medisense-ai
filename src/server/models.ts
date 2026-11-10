@@ -13,6 +13,7 @@ export interface UserDoc {
   invite: { codeHash: string; expiresAt: Date } | null;
   therapistId: ObjectId | null;
   clientId: ObjectId | null;
+  phone?: string | null;
   createdAt: Date;
 }
 
@@ -31,6 +32,20 @@ export interface WeeklyHours {
   end: number;
 }
 
+export interface TimeOff {
+  id: string;
+  /** Brisbane calendar days, "YYYY-MM-DD", inclusive. */
+  from: string;
+  to: string;
+  reason: string;
+}
+
+export interface TherapistProfile {
+  bio: string;
+  qualifications: string;
+  languages: string[];
+}
+
 export interface TherapistDoc {
   _id: ObjectId;
   slug: string;
@@ -44,6 +59,10 @@ export interface TherapistDoc {
   caseloadScore: number;
   sessionMinutes: number;
   weekly: WeeklyHours[];
+  /** Leave and other days away; no new visits are offered on these days. */
+  timeOff?: TimeOff[];
+  profile?: TherapistProfile;
+  availabilityUpdatedAt?: Date | null;
   userId: ObjectId;
 }
 
@@ -67,6 +86,8 @@ export interface ClientDoc {
   funding: FundingStream;
   needs: ClientNeed[];
   notes: string;
+  emergencyContact?: { name: string; relationship: string; phone: string } | null;
+  discharged?: { at: Date; reason: string; byName: string } | null;
   userId: ObjectId;
   createdBy: ObjectId;
   createdAt: Date;
@@ -117,6 +138,10 @@ export interface AppointmentDoc {
   /** The visit this one was booked to replace. */
   replaces?: ObjectId | null;
   cancellation?: Cancellation | null;
+  /** Written by the therapist after a completed visit. */
+  note?: { text: string; forPatient: string; byName: string; at: Date } | null;
+  /** Left by the patient after a completed visit, once. */
+  feedback?: { rating: number; comment: string; at: Date } | null;
   createdAt: Date;
 }
 

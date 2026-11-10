@@ -15,7 +15,7 @@ export type NeedDto = {
   therapistName: string | null;
 };
 
-export type ClientStage = "Needs a therapist" | "Waiting for therapist" | "Active";
+export type ClientStage = "Needs a therapist" | "Waiting for therapist" | "Active" | "Discharged";
 
 export type ClientSummaryDto = {
   id: string;
@@ -33,6 +33,7 @@ export type VisitStatus =
 
 export type AppointmentDto = {
   id: string;
+  clientId: string;
   start: string;
   end: string;
   status: VisitStatus;
@@ -48,6 +49,9 @@ export type AppointmentDto = {
     chargeable: boolean;
     actorName: string;
   } | null;
+  /** `text` is the clinical note, sent to staff only; `forPatient` is the plain summary. */
+  note: { text: string | null; forPatient: string; byName: string; at: string } | null;
+  feedback: { rating: number; comment: string; at: string } | null;
 };
 
 export type AssignmentDto = {
@@ -63,6 +67,8 @@ export type AssignmentDto = {
 };
 
 export type ClientDetailDto = ClientSummaryDto & {
+  discharged: { at: string; reason: string; byName: string } | null;
+  emergencyContact: { name: string; relationship: string; phone: string } | null;
   dateOfBirth: string | null;
   email: string;
   phone: string | null;
@@ -71,6 +77,13 @@ export type ClientDetailDto = ClientSummaryDto & {
   assignments: AssignmentDto[];
   appointments: AppointmentDto[];
   activity: { id: string; action: string; actor: string; at: string }[];
+};
+
+export type AvailabilitySummary = {
+  /** "Mon, Tue, Thu · 9 am–5 pm" */
+  pattern: string;
+  /** Time off starting within the next four weeks. */
+  away: { from: string; to: string; reason: string }[];
 };
 
 export type MatchDto = {
@@ -86,6 +99,7 @@ export type MatchDto = {
   score: number;
   reasons: { label: string; tone: "good" | "neutral" | "warn" }[];
   slots: string[];
+  availability: AvailabilitySummary;
 };
 
 export type RequestDto = AssignmentDto & {
@@ -113,14 +127,22 @@ export type TherapistHomeDto = {
     discipline: Discipline;
     frequency: Frequency;
     conversationId: string | null;
+    discharged: boolean;
   }[];
   upcoming: AppointmentDto[];
   /** Past visits still waiting for "Completed" or "No-show". */
   toRecord: AppointmentDto[];
+  /** Completed visits in the last 30 days without a session note. */
+  notesToWrite: AppointmentDto[];
 };
 
 export type ClientHomeDto = {
   name: string;
+  phone: string | null;
+  emergencyContact: { name: string; relationship: string; phone: string } | null;
+  discharged: { at: string; reason: string } | null;
+  /** Completed visits the patient hasn't rated yet. */
+  toRate: AppointmentDto[];
   needs: NeedDto[];
   team: { therapistName: string; discipline: Discipline; conversationId: string | null }[];
   upcoming: AppointmentDto[];
@@ -173,4 +195,39 @@ export type LiveOverviewDto = {
   /** Last 30 days. */
   cancellations: { total: number; late: number; noShows: number };
   team: { therapists: number; activeClients: number; capacity: number; atRisk: number };
+};
+
+export type WeeklyHoursDto = { weekday: number; start: number; end: number };
+export type TimeOffDto = { id: string; from: string; to: string; reason: string };
+
+export type TherapistCardDto = {
+  id: string;
+  name: string;
+  discipline: Discipline;
+  region: Region;
+  seniority: "Graduate" | "Clinician" | "Senior";
+  status: CaseloadStatus;
+  activeClients: number;
+  capacity: number;
+  availability: AvailabilitySummary;
+  rating: { average: number; count: number } | null;
+};
+
+export type TherapistDetailDto = TherapistCardDto & {
+  email: string;
+  phone: string | null;
+  profile: { bio: string; qualifications: string; languages: string[] };
+  weekly: WeeklyHoursDto[];
+  timeOff: TimeOffDto[];
+  sessionMinutes: number;
+  stats: { upcoming: number; completed: number; noShows: number; lateCancellations: number };
+  patients: {
+    id: string;
+    name: string;
+    discipline: Discipline;
+    since: string;
+    discharged: boolean;
+  }[];
+  feedback: { rating: number; comment: string; at: string; patient: string; visit: string }[];
+  history: { id: string; action: string; at: string }[];
 };

@@ -364,5 +364,87 @@ export async function listVisits(user: UserDoc): Promise<AppointmentDto[]> {
       .toArray(),
   ]);
   const lookup = seriesLookup(series);
-  return rows.map((r) => appointmentDto(r, nameMap(clientRows), nameMap(therapistRows), lookup));
+  const viewer = user.role === "client" ? "patient" : "staff";
+  return rows.map((r) =>
+    appointmentDto(r, nameMap(clientRows), nameMap(therapistRows), lookup, viewer),
+  );
+}
+
+/* ------------------------------------------------------- session notes */
+
+export const noteSchema = z.object({
+  text: z.string().trim().min(10, "Write at least a sentence").max(4000),
+  forPatient: z.string().trim().min(10, "Add a short summary for the patient").max(800),
+});
+
+/** The therapist's note for a completed visit, plus a plain summary the patient sees. */
+export async function writeNote(user: UserDoc, id: ObjectId, input: z.infer<typeof noteSchema>) {
+  const { appointments } = await collections();
+  const { visit, actsFor } = await visitFor(user, id);
+  if (actsFor === "client") throw new UserFacingError("Only the care team can write notes.", 409);
+  if (visit.status !== "completed") {
+    throw new UserFacingError("Record the visit as completed before writing its note.", 409);
+  }
+  const first = !visit.note;
+  await appointments.updateOne(
+    { _id: id },
+    { $set: { note: { ...input, byName: user.name, at: new Date() } } },
+  );
+  const { client, therapist } = await partiesOf(visit);
+  if (first) {
+    await notify([client.userId], {
+      title: `Visit summary from ${therapist.name.split(" ")[0]}`,
+      body: `Your ${visit.discipline.toLowerCase()} visit on ${slotLabel(visit.start)}: ${input.forPatient.slice(0, 120)}`,
+      href: "/mobile/patient",
+    });
+  }
+  await audit(
+    user,
+    `${first ? "Wrote" : "Updated"} the session note for ${slotLabel(visit.start)}`,
+    client._id,
+  );
+  await publish([...(await adminIds()), client.userId, therapist.userId], "care", {
+    clientId: client._id.toHexString(),
+  });
+}
+
+/* ------------------------------------------------------------ feedback */
+
+export const feedbackSchema = z.object({
+  rating: z.number().int().min(1).max(5),
+  comment: z.string().trim().max(600),
+});
+
+/** The patient rates a completed visit, once. The therapist and care team see it straight away. */
+export async function leaveFeedback(
+  user: UserDoc,
+  id: ObjectId,
+  input: z.infer<typeof feedbackSchema>,
+) {
+  const { appointments } = await collections();
+  const { visit, actsFor } = await visitFor(user, id);
+  if (actsFor !== "client") throw new UserFacingError("Only the patient can rate a visit.", 409);
+  if (visit.status !== "completed")
+    throw new UserFacingError("Only completed visits can be rated.", 409);
+  const saved = await appointments.updateOne(
+    { _id: id, feedback: { $in: [null] } },
+    { $set: { feedback: { ...input, at: new Date() } } },
+  );
+  if (saved.modifiedCount !== 1) throw new UserFacingError("You've already rated this visit.", 409);
+  const { client, therapist } = await partiesOf(visit);
+  const stars = `${input.rating} out of 5`;
+  await notify([therapist.userId], {
+    title: `New feedback: ${stars}`,
+    body: `${client.name} rated your visit on ${slotLabel(visit.start)}.${input.comment ? ` "${input.comment.slice(0, 120)}"` : ""}`,
+    href: "/profile",
+  });
+  await notify(await adminIds(), {
+    title: `Feedback for ${therapist.name}: ${stars}`,
+    body: `${client.name}, ${visit.discipline}, ${slotLabel(visit.start)}.`,
+    href: `/care/therapists/${therapist._id.toHexString()}`,
+  });
+  await audit(user, `Rated the visit on ${slotLabel(visit.start)} ${stars}`, client._id);
+  await publish([...(await adminIds()), therapist.userId, client.userId], "care", {
+    clientId: client._id.toHexString(),
+  });
 }

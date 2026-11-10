@@ -104,6 +104,14 @@ export async function clientDetail(id: ObjectId): Promise<ClientDetailDto> {
   const series = seriesLookup(allVisits);
   return {
     ...clientSummary(client, names),
+    discharged: client.discharged
+      ? {
+          at: client.discharged.at.toISOString(),
+          reason: client.discharged.reason,
+          byName: client.discharged.byName,
+        }
+      : null,
+    emergencyContact: client.emergencyContact ?? null,
     dateOfBirth: client.dateOfBirth,
     email: client.email,
     phone: client.phone,

@@ -1,6 +1,6 @@
 import "server-only";
 import { caseloadStatus, CLOSE_MINUTES, OPEN_MINUTES, type Region } from "@/lib/live/catalogue";
-import type { MatchDto } from "@/lib/live/types";
+import type { AvailabilitySummary, MatchDto } from "@/lib/live/types";
 import { addDays, atBrisbane, brisbaneDay, brisbaneMinutes, isoWeekday } from "@/lib/live/time";
 import type { AppointmentDoc, TherapistDoc } from "./models";
 
@@ -48,9 +48,16 @@ function bookedOn(day: Date, appointments: AppointmentDoc[]): Interval[] {
     .map((a) => ({ start: brisbaneMinutes(a.start), end: brisbaneMinutes(a.end) }));
 }
 
-/** True when the therapist works then, is inside opening hours and has no visit too close. */
+/** True when the day falls inside any of the therapist's time off. */
+export function isAway(t: TherapistDoc, day: Date) {
+  const key = day.toISOString().slice(0, 10);
+  return (t.timeOff ?? []).some((off) => off.from <= key && key <= off.to);
+}
+
+/** True when the therapist works then, isn't away, is inside opening hours and has no visit too close. */
 export function isSlotFree(t: TherapistDoc, start: Date, appointments: AppointmentDoc[]) {
   const day = brisbaneDay(start);
+  if (isAway(t, day)) return false;
   const minutes = brisbaneMinutes(start);
   const slot = { start: minutes, end: minutes + t.sessionMinutes };
   const hours = t.weekly.find((w) => w.weekday === isoWeekday(day));
@@ -147,7 +154,43 @@ export function rankTherapists(
       score,
       reasons,
       slots: slots.map((s) => s.toISOString()),
+      availability: availabilitySummary(t),
     };
   });
   return matches.sort((a, b) => b.score - a.score);
+}
+
+const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+
+function clock(minutes: number) {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  const suffix = h >= 12 ? "pm" : "am";
+  return `${((h + 11) % 12) + 1}${m ? `:${String(m).padStart(2, "0")}` : ""} ${suffix}`;
+}
+
+/** The therapist's working pattern in words, and any time off in the next four weeks. */
+export function availabilitySummary(t: TherapistDoc): AvailabilitySummary {
+  const days = [...t.weekly].sort((a, b) => a.weekday - b.weekday);
+  const sameHours = days.every((d) => d.start === days[0]?.start && d.end === days[0]?.end);
+  const pattern = days
+    .map(
+      (d) => `${DAY_NAMES[d.weekday - 1]}${sameHours ? "" : ` ${clock(d.start)}–${clock(d.end)}`}`,
+    )
+    .join(", ");
+  const first = days[0];
+  const today = brisbaneDay(new Date()).toISOString().slice(0, 10);
+  const horizon = addDays(brisbaneDay(new Date()), 28).toISOString().slice(0, 10);
+  return {
+    pattern:
+      days.length === 0
+        ? "No working days set"
+        : sameHours && first
+          ? `${pattern} · ${clock(first.start)}–${clock(first.end)}`
+          : pattern,
+    away: (t.timeOff ?? [])
+      .filter((off) => off.to >= today && off.from <= horizon)
+      .sort((a, b) => a.from.localeCompare(b.from))
+      .map((off) => ({ from: off.from, to: off.to, reason: off.reason })),
+  };
 }

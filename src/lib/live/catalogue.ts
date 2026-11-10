@@ -116,3 +116,12 @@ export const cancelReasons = [
   "Appointment clash",
   "Other",
 ] as const;
+
+export const dischargeReasons = [
+  "Goals met",
+  "Funding ended",
+  "Moved out of the area",
+  "Patient's choice",
+  "Transferred to another provider",
+  "Other",
+] as const;

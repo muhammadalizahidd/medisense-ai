@@ -24,7 +24,8 @@ export const nameMap = (docs: { _id: ObjectId; name: string }[]): NameLookup =>
 const nameOf = (names: NameLookup, id: ObjectId | null) =>
   (id && names.get(id.toHexString())) ?? null;
 
-export function stageOf(client: Pick<ClientDoc, "needs">): ClientStage {
+export function stageOf(client: Pick<ClientDoc, "needs" | "discharged">): ClientStage {
+  if (client.discharged) return "Discharged";
   if (client.needs.some((n) => n.status === "needs-therapist")) return "Needs a therapist";
   if (client.needs.some((n) => n.status === "waiting")) return "Waiting for therapist";
   return "Active";
@@ -77,9 +78,12 @@ export function appointmentDto(
   clients: NameLookup,
   therapists: NameLookup,
   series: SeriesLookup = new Map(),
+  /** Patients see the plain-language summary only, never the clinical note. */
+  viewer: "staff" | "patient" = "staff",
 ): AppointmentDto {
   return {
     id: a._id.toHexString(),
+    clientId: a.clientId.toHexString(),
     start: a.start.toISOString(),
     end: a.end.toISOString(),
     status: a.status,
@@ -95,6 +99,17 @@ export function appointmentDto(
           chargeable: a.cancellation.chargeable,
           actorName: a.cancellation.actorName,
         }
+      : null,
+    note: a.note
+      ? {
+          text: viewer === "staff" ? a.note.text : null,
+          forPatient: a.note.forPatient,
+          byName: a.note.byName,
+          at: a.note.at.toISOString(),
+        }
+      : null,
+    feedback: a.feedback
+      ? { rating: a.feedback.rating, comment: a.feedback.comment, at: a.feedback.at.toISOString() }
       : null,
   };
 }
