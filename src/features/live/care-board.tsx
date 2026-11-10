@@ -8,7 +8,7 @@ import { MetricBand } from "@/components/ui/metric-band";
 import { PageHeader } from "@/components/ui/page";
 import { Segmented } from "@/components/ui/segmented";
 import { Tag } from "@/components/ui/tag";
-import { useResource } from "@/lib/live/client";
+import { useNow, useResource } from "@/lib/live/client";
 import { relativeTime } from "@/lib/live/time";
 import type { ClientStage, ClientSummaryDto } from "@/lib/live/types";
 import { EmptyNote, ErrorNote, LiveBadge, needTone, Skeleton, StageTag } from "./bits";
@@ -22,7 +22,8 @@ export function CareBoard() {
   );
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
-  const [weekAgo] = useState(() => Date.now() - 7 * 86_400_000);
+  const now = useNow();
+  const weekAgo = now === null ? Infinity : now - 7 * 86_400_000;
   const clients = data?.clients ?? [];
   const count = (stage: ClientStage) => clients.filter((c) => c.stage === stage).length;
   const rows = clients

@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page";
 import { Tag } from "@/components/ui/tag";
-import { api, useResource } from "@/lib/live/client";
+import { api, useNow, useResource } from "@/lib/live/client";
 import { ageFrom, relativeTime, shortDate, slotLabel } from "@/lib/live/time";
 import type { AssignmentDto, ClientDetailDto, NeedDto } from "@/lib/live/types";
 import {
@@ -24,7 +24,7 @@ import { VisitList } from "./visit-list";
 
 export function ClientDetail({ clientId }: { clientId: string }) {
   const [discharging, setDischarging] = useState(false);
-  const [now] = useState(() => Date.now());
+  const now = useNow() ?? 0;
   const { data, error, loading, reload } = useResource<{ client: ClientDetailDto }>(
     `/api/care/clients/${clientId}`,
     (event) =>

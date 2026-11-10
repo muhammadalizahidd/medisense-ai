@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet } from "@/components/ui/sheet";
 import { Tag, type TagTone } from "@/components/ui/tag";
-import { api } from "@/lib/live/client";
+import { api, useNow } from "@/lib/live/client";
 import { shortDate, timeOfDay } from "@/lib/live/time";
 import type { AppointmentDto, VisitStatus } from "@/lib/live/types";
 import { Stars } from "./bits";
@@ -46,7 +46,7 @@ export function VisitList({
   const [noting, setNoting] = useState<AppointmentDto | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [now] = useState(() => Date.now());
+  const now = useNow() ?? 0;
 
   async function record(visit: AppointmentDto, outcome: "completed" | "no-show") {
     setBusy(visit.id);

@@ -6,8 +6,8 @@ import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/sheet";
 import { CLOSE_MINUTES, OPEN_MINUTES } from "@/lib/live/catalogue";
-import { api } from "@/lib/live/client";
-import { brisbaneDay, shortDate } from "@/lib/live/time";
+import { api, useToday } from "@/lib/live/client";
+import { shortDate } from "@/lib/live/time";
 import type { AvailabilitySummary, TimeOffDto, WeeklyHoursDto } from "@/lib/live/types";
 import { cn } from "@/lib/cn";
 import { Panel } from "./bits";
@@ -24,8 +24,6 @@ function label(minutes: number) {
   const m = minutes % 60;
   return `${((h + 11) % 12) + 1}:${String(m).padStart(2, "0")} ${h >= 12 ? "pm" : "am"}`;
 }
-
-const isoToday = () => brisbaneDay(new Date()).toISOString().slice(0, 10);
 
 type Saved = {
   availability: AvailabilitySummary;
@@ -45,14 +43,14 @@ export function AvailabilityEditor({
   const [weekly, setWeekly] = useState(initialWeekly);
   const [timeOff, setTimeOff] = useState(initialTimeOff);
   const [draft, setDraft] = useState({
-    from: isoToday(),
-    to: isoToday(),
+    from: "",
+    to: "",
     reason: timeOffReasons[0] ?? "",
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState<Saved | null>(null);
-  const [today] = useState(isoToday);
+  const today = useToday() ?? "";
   const dayOf = (weekday: number) => weekly.find((w) => w.weekday === weekday);
 
   function setDay(weekday: number, patch: Partial<WeeklyHoursDto> | null) {
@@ -70,14 +68,17 @@ export function AvailabilityEditor({
   }
 
   function addTimeOff() {
-    if (!draft.from || !draft.to) return;
+    const from = draft.from || today;
+    const to = draft.to || from;
+    if (!from) return;
     setSaved(null);
     setTimeOff((list) => [
       ...list,
       {
-        id: `new-${list.length}-${draft.from}`,
-        ...draft,
-        to: draft.to < draft.from ? draft.from : draft.to,
+        id: `new-${list.length}-${from}`,
+        reason: draft.reason,
+        from,
+        to: to < from ? from : to,
       },
     ]);
   }
@@ -209,7 +210,7 @@ export function AvailabilityEditor({
           <input
             type="date"
             min={today}
-            value={draft.from}
+            value={draft.from || today}
             onChange={(e) => setDraft({ ...draft, from: e.target.value })}
             className={`${inputClass} w-40`}
           />
@@ -218,8 +219,8 @@ export function AvailabilityEditor({
           To
           <input
             type="date"
-            min={draft.from}
-            value={draft.to}
+            min={draft.from || today}
+            value={draft.to || draft.from || today}
             onChange={(e) => setDraft({ ...draft, to: e.target.value })}
             className={`${inputClass} w-40`}
           />

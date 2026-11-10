@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { LiveEvent, SessionUser } from "./types";
 
 export class ApiError extends Error {
@@ -168,4 +168,27 @@ export function useSession() {
 export async function signOut() {
   await api("/api/auth/logout", { method: "POST" });
   disconnect();
+}
+
+/* ------------------------------------------------------------- the time */
+
+let firstRead: number | null = null;
+const noSubscribe = () => () => undefined;
+
+/**
+ * The time on this device, read once. It's null while the page is being built on the server,
+ * because a pre-built page can't depend on the moment it was built.
+ */
+export function useNow(): number | null {
+  return useSyncExternalStore(
+    noSubscribe,
+    () => (firstRead ??= Date.now()),
+    () => null,
+  );
+}
+
+/** Today in Brisbane as "YYYY-MM-DD", or null while building on the server. */
+export function useToday(): string | null {
+  const now = useNow();
+  return now === null ? null : new Date(now + 10 * 3_600_000).toISOString().slice(0, 10);
 }

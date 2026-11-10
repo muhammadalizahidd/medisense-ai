@@ -16,7 +16,7 @@ export function LiveBadge() {
   return (
     <span
       role="status"
-      className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 py-1 text-caption font-medium text-ink-700"
+      className="on-light inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 py-1 text-caption font-medium text-ink-700"
     >
       <i
         aria-hidden="true"

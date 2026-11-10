@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tag } from "@/components/ui/tag";
 import { AppCard, AppHeader } from "@/features/mobile/phone-frame";
 import { CANCELLATION_NOTICE_HOURS } from "@/lib/live/catalogue";
-import { useResource } from "@/lib/live/client";
+import { useNow, useResource } from "@/lib/live/client";
 import { shortDate, timeOfDay } from "@/lib/live/time";
 import type { AppointmentDto } from "@/lib/live/types";
 import { ErrorNote, Skeleton, Stars } from "./bits";
@@ -24,7 +23,7 @@ export function ClientVisits({
     (e) => e.type === "care",
   );
   const visits = data?.visits ?? [];
-  const [now] = useState(() => Date.now());
+  const now = useNow() ?? 0;
   const upcoming = visits.filter(
     (v) => v.status === "booked" && new Date(v.start).getTime() >= now,
   );

@@ -145,17 +145,20 @@ export const navigation: { group: string; items: NavItem[] }[] = [
 
 const roleLayouts: Partial<Record<Role, { group: string; hrefs: string[] }[]>> = {
   Clinician: [
+    { group: "Live care", hrefs: ["/therapist", "/messages", "/profile"] },
     { group: "My work", hrefs: ["/my-day", "/sessions/oliver-grant", "/tasks"] },
     { group: "AI workspace", hrefs: ["/case-notes/mia-robinson", "/reports"] },
     { group: "Clinical", hrefs: ["/patients", "/schedule", "/telehealth"] },
     { group: "Platform", hrefs: ["/portal"] },
-    { group: "Mobile apps", hrefs: ["/mobile/staff", "/mobile/family"] },
+    { group: "Mobile apps", hrefs: ["/mobile/staff", "/mobile/family", "/mobile/patient"] },
   ],
   Admin: [
+    { group: "Live care", hrefs: ["/care", "/care/therapists", "/profile"] },
     { group: "Admin", hrefs: ["/admin-queue", "/intake", "/forms", "/tasks", "/admin-operations"] },
     { group: "Clinical", hrefs: ["/patients-requiring-attention", "/patients", "/schedule"] },
     { group: "AI workspace", hrefs: ["/reports"] },
     { group: "Business", hrefs: ["/billing"] },
+    { group: "Mobile apps", hrefs: ["/mobile/patient"] },
   ],
   Supervisor: [
     {
@@ -318,11 +321,17 @@ const under = (pathname: string, prefix: string) =>
 
 export function isActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
+  const hrefs = navigation.flatMap((g) => g.items.map((i) => i.href));
   const section = href.split("/").slice(0, 2).join("/");
-  const inSection = [section, ...(activeAliases[section] ?? [])].some((p) => under(pathname, p));
+  // Single-record entries (e.g. /sessions/oliver-grant) light up for their whole section, unless
+  // another entry shares that section; then each entry matches its own address only.
+  const shared = hrefs.some((h) => h !== href && h.split("/").slice(0, 2).join("/") === section);
+  const own = shared ? href : section;
+  const inSection = [own, ...(shared ? [] : (activeAliases[section] ?? []))].some((p) =>
+    under(pathname, p),
+  );
   if (!inSection) return false;
   // A more specific entry wins, so "/care/therapists" doesn't also light up "/care".
-  const hrefs = navigation.flatMap((g) => g.items.map((i) => i.href));
   return !hrefs.some((h) => h !== href && h.startsWith(`${href}/`) && under(pathname, h));
 }
 

@@ -7,9 +7,9 @@ import { Select } from "@/components/ui/select";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page";
 import { Field, inputClass } from "@/components/ui/sheet";
-import { api } from "@/lib/live/client";
+import { api, useToday } from "@/lib/live/client";
 import { fundingStreams, regions, type FundingStream, type Region } from "@/lib/live/catalogue";
-import { brisbaneDay, shortDate } from "@/lib/live/time";
+import { shortDate } from "@/lib/live/time";
 import { Panel } from "./bits";
 import { TherapyPicker, type Needs } from "./therapy-picker";
 
@@ -28,7 +28,7 @@ export function NewClientForm() {
     notes: "",
   });
   const [needs, setNeeds] = useState<Needs>({});
-  const [today] = useState(() => brisbaneDay(new Date()).toISOString().slice(0, 10));
+  const today = useToday() ?? "";
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [created, setCreated] = useState<Created | null>(null);
