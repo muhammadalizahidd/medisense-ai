@@ -370,7 +370,11 @@ export function AssistantPanel({
                 <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-2.5">
                   <span className="flex items-center gap-1.5 eyebrow text-brass">
                     {engine === GUIDE ? (
-                      <BookOpen className="size-3.5 text-brass" strokeWidth={1.75} aria-hidden="true" />
+                      <BookOpen
+                        className="size-3.5 text-brass"
+                        strokeWidth={1.75}
+                        aria-hidden="true"
+                      />
                     ) : (
                       <PenNib className="size-3.5 text-brass" />
                     )}

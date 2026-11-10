@@ -7,6 +7,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { PenNib } from "@/components/ai/provenance";
 import { cn } from "@/lib/cn";
 import { longDate } from "@/lib/clock";
+import { api, useResource, useSession } from "@/lib/live/client";
+import { relativeTime } from "@/lib/live/time";
+import type { NotificationDto } from "@/lib/live/types";
 import { isStandalone, routeMeta } from "@/lib/navigation";
 import { useDemoStore } from "@/state/demo-store";
 import { AssistantPanel } from "./assistant-panel";
@@ -20,7 +23,14 @@ function Notifications() {
   const all = useDemoStore((s) => s.story.notices);
   const markRead = useDemoStore((s) => s.markNoticesRead);
   const notices = all.filter((n) => n.to === role);
-  const unread = notices.filter((n) => !n.read).length;
+  const { user } = useSession();
+  const live = useResource<{ notifications: NotificationDto[] }>(
+    user ? "/api/notifications" : null,
+    (event) => event.type === "notification",
+  );
+  const liveNotes = user ? (live.data?.notifications ?? []) : [];
+  const liveUnread = liveNotes.filter((n) => !n.read).length;
+  const unread = notices.filter((n) => !n.read).length + liveUnread;
   const [open, setOpen] = useState(false);
   const button = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
@@ -53,7 +63,11 @@ function Notifications() {
         aria-expanded={open}
         aria-label={unread ? `${unread} new notifications` : "Notifications"}
         onClick={() => {
-          if (!open) markRead(role);
+          if (!open) {
+            markRead(role);
+            if (liveUnread)
+              void api("/api/notifications", { method: "POST" }).then(live.reload, () => undefined);
+          }
           setOpen(!open);
         }}
         className="relative flex size-9 cursor-pointer items-center justify-center rounded-control border border-border bg-surface hover:bg-canvas"
@@ -74,7 +88,29 @@ function Notifications() {
           className="absolute top-11 right-0 z-30 w-80 overflow-hidden rounded-card border border-border bg-surface-raised shadow-overlay"
         >
           <h2 className="px-4 pt-3 pb-2 text-small font-semibold">Notifications</h2>
-          {notices.length === 0 ? (
+          {liveNotes.length > 0 && (
+            <ul className="max-h-80 overflow-y-auto">
+              {liveNotes.map((n) => (
+                <li key={n.id} className="border-t border-border">
+                  <Link
+                    href={n.href}
+                    onClick={() => setOpen(false)}
+                    className={cn(
+                      "block px-4 py-2.5 text-ink-900 hover:bg-canvas hover:no-underline",
+                      !n.read && "bg-accent-tint",
+                    )}
+                  >
+                    <span className="block text-small font-semibold">{n.title}</span>
+                    <span className="block text-caption text-ink-700">{n.body}</span>
+                    <span className="block text-caption text-ink-500">
+                      {relativeTime(n.createdAt)}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+          {liveNotes.length > 0 && notices.length === 0 ? null : notices.length === 0 ? (
             <p className="border-t border-border px-4 py-4 text-small text-ink-700">
               Nothing new. Reminders and escalations will appear here.
             </p>

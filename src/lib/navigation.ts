@@ -1,4 +1,7 @@
 import {
+  UserPlus,
+  MessagesSquare,
+  BellRing,
   Briefcase,
   CalendarClock,
   CalendarDays,
@@ -66,6 +69,14 @@ export const navigation: { group: string; items: NavItem[] }[] = [
     ],
   },
   {
+    group: "Live care",
+    items: [
+      { href: "/care", label: "Client onboarding", icon: UserPlus, roles: [L, A] },
+      { href: "/therapist", label: "My new clients", icon: BellRing, roles: [C] },
+      { href: "/messages", label: "Messages", icon: MessagesSquare, roles: [C] },
+    ],
+  },
+  {
     group: "Intake & Admin",
     items: [
       { href: "/admin-queue", label: "Work queue", icon: Inbox, roles: [L, A] },
@@ -115,6 +126,7 @@ export const navigation: { group: string; items: NavItem[] }[] = [
     items: [
       { href: "/mobile/staff", label: "Staff app", icon: Tablet, roles: [L, C] },
       { href: "/mobile/family", label: "Family app", icon: Smartphone, roles: [L, C] },
+      { href: "/mobile/client", label: "Client app", icon: Smartphone, roles: [L, A, C] },
     ],
   },
   {
@@ -187,6 +199,17 @@ export const roleUsers: Record<Role, { name: string; initials: string; title: st
 type RouteMeta = { section: string; page: string; role: Role };
 
 const routes: { prefix: string; meta: RouteMeta }[] = [
+  {
+    prefix: "/care/new",
+    meta: { section: "Client onboarding", page: "Add a client", role: "Admin" },
+  },
+  { prefix: "/care/", meta: { section: "Client onboarding", page: "Client", role: "Admin" } },
+  { prefix: "/care", meta: { section: "Live care", page: "Client onboarding", role: "Admin" } },
+  {
+    prefix: "/therapist",
+    meta: { section: "Live care", page: "My new clients", role: "Clinician" },
+  },
+  { prefix: "/messages", meta: { section: "Live care", page: "Messages", role: "Clinician" } },
   { prefix: "/sessions", meta: { section: "AI notes", page: "Oliver Grant", role: "Clinician" } },
   { prefix: "/admin-queue", meta: { section: "Admin", page: "Work queue", role: "Admin" } },
   {
@@ -275,7 +298,7 @@ export function routeMeta(pathname: string): RouteMeta {
 
 /** Screens that stand alone, without the staff sidebar and top bar. */
 export function isStandalone(pathname: string) {
-  return pathname.startsWith("/family") || pathname.startsWith("/mobile");
+  return pathname.startsWith("/family") || pathname.startsWith("/mobile") || pathname === "/login";
 }
 
 /** Detail pages that belong to a differently named sidebar entry. */

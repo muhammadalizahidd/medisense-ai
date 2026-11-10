@@ -4,13 +4,16 @@ import { CalendarPlus, FileInput, Plus, UserPlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { blankClient, ClientFormSheet } from "@/features/clients/client-form";
 import { NewReferralSheet } from "@/features/intake/new-referral";
 import { BookVisitSheet } from "@/features/schedule/book-visit";
-import { useDemoStore } from "@/state/demo-store";
 
 const actions = [
-  { id: "client", label: "Add client", detail: "Create a new client record", icon: UserPlus },
+  {
+    id: "client",
+    label: "Add client",
+    detail: "Add a client and match a therapist",
+    icon: UserPlus,
+  },
   {
     id: "referral",
     label: "New referral",
@@ -23,7 +26,6 @@ const actions = [
 /** The way to create something from any screen, for every workspace. */
 export function QuickAdd() {
   const router = useRouter();
-  const addClient = useDemoStore((s) => s.addClient);
   const [open, setOpen] = useState(false);
   const [sheet, setSheet] = useState<(typeof actions)[number]["id"] | null>(null);
   const panel = useRef<HTMLDivElement>(null);
@@ -58,7 +60,8 @@ export function QuickAdd() {
               type="button"
               onClick={() => {
                 setOpen(false);
-                setSheet(id);
+                if (id === "client") router.push("/care/new");
+                else setSheet(id);
               }}
               className="flex w-full cursor-pointer items-center gap-3 rounded-control px-2.5 py-2 text-left hover:bg-canvas"
             >
@@ -72,19 +75,6 @@ export function QuickAdd() {
             </button>
           ))}
         </div>
-      )}
-      {sheet === "client" && (
-        <ClientFormSheet
-          title="Add client"
-          initial={blankClient}
-          submitLabel="Create client"
-          onClose={() => setSheet(null)}
-          onSubmit={(client) => {
-            addClient(client);
-            setSheet(null);
-            router.push(`/clients/${client.id}`);
-          }}
-        />
       )}
       {sheet === "referral" && (
         <NewReferralSheet onClose={() => setSheet(null)} onAdded={() => router.push("/intake")} />

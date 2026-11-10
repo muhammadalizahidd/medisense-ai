@@ -1,9 +1,12 @@
 "use client";
 
-import { Check, ChevronDown } from "lucide-react";
+import { Check, ChevronDown, LogIn, LogOut } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
+import { signOut, useSession } from "@/lib/live/client";
+import { homeFor } from "@/lib/live/routes";
 import { roleHome, roleUsers, type Role } from "@/lib/navigation";
 import { useDemoStore } from "@/state/demo-store";
 
@@ -14,12 +17,27 @@ const workspaces: { id: Role; label: string }[] = [
   { id: "Supervisor", label: "Supervisor" },
 ];
 
+const accountLabel = { admin: "Administration", therapist: "Therapist", client: "Client" } as const;
+
 /** The signed-in person, and the way to move between the four workspaces. */
 export function WorkspaceMenu() {
   const router = useRouter();
   const role = useDemoStore((s) => s.role);
   const setRole = useDemoStore((s) => s.setRole);
-  const user = roleUsers[role];
+  const sample = roleUsers[role];
+  const live = useSession();
+  const account = live.user;
+  const user = account
+    ? {
+        name: account.name,
+        initials: account.name
+          .split(" ")
+          .map((p) => p[0])
+          .slice(0, 2)
+          .join(""),
+        title: accountLabel[account.role],
+      }
+    : sample;
   const [open, setOpen] = useState(false);
   const button = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
@@ -71,6 +89,45 @@ export function WorkspaceMenu() {
           ref={panel}
           className="absolute top-12 right-0 z-30 w-72 max-w-[calc(100vw-2rem)] overflow-hidden rounded-card border border-border bg-surface-raised p-1.5 shadow-overlay"
         >
+          <div className="mb-1.5 border-b border-border px-2.5 pt-1.5 pb-2.5">
+            {account ? (
+              <>
+                <p className="text-small font-semibold">{account.name}</p>
+                <p className="truncate text-caption text-ink-500">{account.email}</p>
+                <div className="mt-2 flex gap-1.5">
+                  <Link
+                    href={homeFor(account.role)}
+                    onClick={() => setOpen(false)}
+                    className="rounded-control border border-border-strong px-2.5 py-1.5 text-caption font-semibold text-ink-900 hover:bg-canvas hover:no-underline"
+                  >
+                    My workspace
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await signOut();
+                      setOpen(false);
+                      live.reload();
+                      router.push("/login");
+                    }}
+                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-control px-2.5 py-1.5 text-caption font-semibold text-accent hover:bg-accent-tint"
+                  >
+                    <LogOut className="size-3.5" aria-hidden="true" />
+                    Sign out
+                  </button>
+                </div>
+              </>
+            ) : (
+              <Link
+                href="/login"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 text-small font-semibold"
+              >
+                <LogIn className="size-4" aria-hidden="true" />
+                Sign in to your account
+              </Link>
+            )}
+          </div>
           <h2 className="px-2.5 pt-1.5 pb-2 text-small font-semibold">Switch workspace</h2>
           <div role="radiogroup" aria-label="Workspace" className="flex flex-col gap-0.5">
             {workspaces.map((w) => (

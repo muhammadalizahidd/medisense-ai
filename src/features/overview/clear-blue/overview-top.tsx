@@ -50,7 +50,6 @@ import {
   type ScheduleItem,
 } from "@/data/schedule";
 import { weeks } from "@/data/weeks";
-import { blankClient, ClientFormSheet } from "@/features/clients/client-form";
 import { BookVisitSheet } from "@/features/schedule/book-visit";
 import { longDate } from "@/lib/clock";
 import { cn } from "@/lib/cn";
@@ -332,11 +331,11 @@ export function KpiCards() {
 /* --------------------------------------------------------- quick actions */
 
 type Action = { label: string; icon: LucideIcon } & (
-  { href: string; sheet?: never } | { sheet: "client" | "visit"; href?: never }
+  { href: string; sheet?: never } | { sheet: "visit"; href?: never }
 );
 
 const actions: Action[] = [
-  { label: "New client", icon: UserPlus, sheet: "client" },
+  { label: "New client", icon: UserPlus, href: "/care/new" },
   { label: "Book appointment", icon: CalendarPlus, sheet: "visit" },
   { label: "Add clinical note", icon: FileCheck2, href: "/case-notes/mia-robinson" },
   { label: "Create care plan", icon: Layers, href: "/clients" },
@@ -349,8 +348,7 @@ const actionTile =
 
 export function QuickActions() {
   const router = useRouter();
-  const addClient = useDemoStore((s) => s.addClient);
-  const [sheet, setSheet] = useState<"client" | "visit" | null>(null);
+  const [sheet, setSheet] = useState<"visit" | null>(null);
 
   return (
     <nav
@@ -379,19 +377,6 @@ export function QuickActions() {
           </button>
         );
       })}
-      {sheet === "client" && (
-        <ClientFormSheet
-          title="Add client"
-          initial={blankClient}
-          submitLabel="Create client"
-          onClose={() => setSheet(null)}
-          onSubmit={(client) => {
-            addClient(client);
-            setSheet(null);
-            router.push(`/clients/${client.id}`);
-          }}
-        />
-      )}
       {sheet === "visit" && (
         <BookVisitSheet onClose={() => setSheet(null)} onBooked={() => router.push("/schedule")} />
       )}
