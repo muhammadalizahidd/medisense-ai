@@ -1,0 +1,10 @@
+import { agent } from "./lib.mjs";
+const d = agent();
+await d("/api/auth/login", { body: { email: "daniel.okafor@medisense.test", password: process.env.SEED_PASSWORD } });
+const home = await d("/api/care/therapist");
+console.log("recent visits:", home.recent.map((v) => `${v.clientName} ${v.status}${v.cancellation?.chargeable ? " (may be charged)" : ""}`).join(", ") || "none");
+const qasim = home.clients[0];
+const rec = await d(`/api/care/patients/${qasim.id}`);
+console.log("patient record:", rec.client.name, "| visits:", rec.client.appointments.map((a) => a.status).join(","), "| history:", rec.client.activity.slice(0, 3).map((a) => a.action).join(" | "));
+const other = await d.raw("/api/care/patients/6af34bf95792bc62aec69600");
+console.log("someone else's patient:", other.status);
