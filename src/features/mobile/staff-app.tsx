@@ -6,6 +6,7 @@ import {
   Car,
   Check,
   CircleUserRound,
+  Inbox,
   ListChecks,
   MapPin,
   Mic,
@@ -45,6 +46,7 @@ import { cn } from "@/lib/cn";
 import { noteSectionTitles, type SessionNote } from "@/lib/story/types";
 import { useDemoStore } from "@/state/demo-store";
 import { callStory } from "@/state/use-story-ai";
+import { StaffChatOverlay, StaffInbox } from "@/features/live/staff-inbox";
 import { AppCard, AppHeader, AppSheet, PhoneFrame } from "./phone-frame";
 import { Select } from "@/components/ui/select";
 
@@ -53,6 +55,7 @@ const tabs = [
   { id: "home", label: "Home", icon: House },
   { id: "schedule", label: "Schedule", icon: CalendarDays },
   { id: "clients", label: "Clients", icon: Users },
+  { id: "inbox", label: "Inbox", icon: Inbox },
   { id: "tasks", label: "Tasks", icon: ListChecks },
   { id: "me", label: "Me", icon: CircleUserRound },
 ];
@@ -1020,6 +1023,7 @@ export function StaffApp() {
   const completeTask = useDemoStore((s) => s.completeTask);
   const [tab, setTab] = useState("home");
   const [noteOpen, setNoteOpen] = useState(false);
+  const [chat, setChat] = useState<string | null>(null);
   const queued = queuedValue ? queuedValue.split(",") : [];
 
   function toggleOffline() {
@@ -1039,12 +1043,17 @@ export function StaffApp() {
         "Talk through the visit and AI writes the note",
         "Add clients and book visits on the go",
         "Tasks and notifications in one place",
+        "New client requests and live chat with clients",
       ]}
       tabs={tabs}
       active={tab}
       onTab={setTab}
       overlay={
-        noteOpen ? <NoteView offline={offline} onBack={() => setNoteOpen(false)} /> : undefined
+        noteOpen ? (
+          <NoteView offline={offline} onBack={() => setNoteOpen(false)} />
+        ) : chat ? (
+          <StaffChatOverlay conversationId={chat} onBack={() => setChat(null)} />
+        ) : undefined
       }
     >
       {offline && (
@@ -1058,6 +1067,7 @@ export function StaffApp() {
       {tab === "home" && <HomeTab onNote={() => setNoteOpen(true)} onTab={setTab} />}
       {tab === "schedule" && <ScheduleTab onNote={() => setNoteOpen(true)} />}
       {tab === "clients" && <ClientsTab />}
+      {tab === "inbox" && <StaffInbox onChat={setChat} />}
       {tab === "tasks" && <TasksTab offline={offline} queued={queued} />}
       {tab === "me" && <MeTab offline={offline} queued={queued.length} onOffline={toggleOffline} />}
     </PhoneFrame>

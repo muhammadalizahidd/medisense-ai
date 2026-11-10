@@ -77,6 +77,18 @@ Anyone can add a client from **+ New** in the top bar, from **Clients**, or from
 3. Click **Book first visit**. Double-booking is blocked, and the next free time is offered.
 4. On **Schedule** or the client's page, open the visit and click **Mark session complete**. A note task goes to the clinician.
 
+## Live care workflow (MongoDB)
+
+These screens run on real data in MongoDB, with sign-in and live updates. The rest of the platform still shows sample data.
+
+1. **Admin** (`/care`): **Add client** with their details, funding and the therapy needed (frequency per therapy). The client gets an 8-character app invite code, shown once.
+2. **Matching** (`/care/[clientId]`): therapists in that discipline are ranked by service region, free places, caseload status (At Risk last) and how soon they're free. Each shows open first-visit times, Monday to Friday, 9 to 5. Choose a time and **Send request**; the time is held.
+3. **Therapist** (`/therapist`, or the **Inbox** tab in the Staff app): the request arrives live in the bell and on the dashboard. **Accept client** books the visit and opens a chat; **Decline** asks for a reason and returns the client to matching.
+4. **Client** (`/mobile/client`): **I have an invite code** to activate, then see the therapist, the next visit, and **Message** them.
+5. **Chat** (`/messages` on the web, Messages in both apps): messages, unread counts and "Seen" update live.
+
+**How it works:** route handlers in `src/app/api` call services in `src/server` (`care-admin.ts`, `care-therapist.ts`, `care-client.ts`, `chat.ts`, `matching.ts`). Requests and acceptances run in MongoDB transactions, and a unique index stops two clients holding the same start time. Every change also writes a row to `events`; `GET /api/events` streams them to the signed-in person over Server-Sent Events from a MongoDB change stream, falling back to polling. Sessions are random tokens stored as hashes, in an httpOnly cookie. On first connection the database is seeded with 20 therapists across all nine disciplines and staff accounts (see `.env.example`).
+
 ## Family portal
 
 Open **Family Portal**, then **Open family sign-in** (or go to `/family`), and use **Use demo family details**. This is a demo gate, not real authentication.
