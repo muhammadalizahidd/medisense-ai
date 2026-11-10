@@ -1,20 +1,19 @@
 "use client";
 
-import { CalendarDays, House, LogOut, MessageCircle, UserRound } from "lucide-react";
-import { useState } from "react";
+import { CalendarDays, House, LogOut, MessageCircle, UserRound, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/premium";
 import { AppCard, AppHeader, AppSheet, PhoneFrame } from "@/features/mobile/phone-frame";
-import { signOut, useResource, useSession } from "@/lib/live/client";
-import { practitioner } from "@/lib/live/catalogue";
-import { slotLabel } from "@/lib/live/time";
-import type { AppointmentDto, ClientHomeDto, SessionUser } from "@/lib/live/types";
+import { signOut, useLiveEvents, useResource, useSession } from "@/lib/live/client";
+import type { AppointmentDto, ClientHomeDto, MessageDto, SessionUser } from "@/lib/live/types";
 import { ErrorNote, Skeleton } from "./bits";
 import { CancelVisitPanel } from "./cancel-visit";
 import { ChatOverlay } from "./chat-overlay";
 import { ClientVisits } from "./client-visits";
 import { PatientDetailsCard, RateVisitPanel } from "./patient-panels";
-import { ConversationList, useConversations } from "./conversations";
+import { ConversationList, useConversations, useUnreadMessages } from "./conversations";
+import { PatientHome } from "./patient-home";
 import { SignInForm } from "./sign-in-form";
 
 const tabs = [
@@ -43,6 +42,21 @@ export function ClientApp() {
   const [cancelling, setCancelling] = useState<AppointmentDto | null>(null);
   const [rating, setRating] = useState<AppointmentDto | null>(null);
   const signedIn = user?.role === "client";
+  const unread = useUnreadMessages(signedIn);
+  const [banner, setBanner] = useState<MessageDto | null>(null);
+  const bannerTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  // A message from someone else, while that chat isn't open, slides in from the top.
+  useLiveEvents((event) => {
+    if (!signedIn || event.type !== "message") return;
+    const m = event.payload.message;
+    if (m.senderId === user.id || m.conversationId === chat) return;
+    setBanner(m);
+    clearTimeout(bannerTimer.current);
+    bannerTimer.current = setTimeout(() => setBanner(null), 4_500);
+  }, signedIn);
+  useEffect(() => () => clearTimeout(bannerTimer.current), []);
+  const tabsWithBadges = tabs.map((t) => (t.id === "messages" ? { ...t, badge: unread } : t));
 
   if (loading) {
     return (
@@ -75,7 +89,7 @@ export function ClientApp() {
   return (
     <PhoneFrame
       {...frame}
-      tabs={tabs}
+      tabs={tabsWithBadges}
       active={tab}
       onTab={(id) => {
         setTab(id);
@@ -84,7 +98,16 @@ export function ClientApp() {
         setRating(null);
       }}
       overlay={
-        chat ? (
+        banner && !chat ? (
+          <MessageBanner
+            message={banner}
+            onOpen={() => {
+              setChat(banner.conversationId);
+              setBanner(null);
+            }}
+            onDismiss={() => setBanner(null)}
+          />
+        ) : chat ? (
           <ChatOverlay conversationId={chat} myId={user.id} onBack={() => setChat(null)} />
         ) : rating ? (
           <AppSheet title="How was your visit?" onClose={() => setRating(null)}>
@@ -112,6 +135,7 @@ export function ClientApp() {
         onChat={setChat}
         onCancel={setCancelling}
         onRate={setRating}
+        onOpenVisits={() => setTab("visits")}
         onSignedOut={reload}
       />
     </PhoneFrame>
@@ -124,6 +148,7 @@ function ClientTabs({
   onChat,
   onCancel,
   onRate,
+  onOpenVisits,
   onSignedOut,
 }: {
   tab: string;
@@ -131,6 +156,7 @@ function ClientTabs({
   onChat: (id: string) => void;
   onCancel: (visit: AppointmentDto) => void;
   onRate: (visit: AppointmentDto) => void;
+  onOpenVisits: () => void;
   onSignedOut: () => void;
 }) {
   const home = useResource<ClientHomeDto>(
@@ -202,76 +228,52 @@ function ClientTabs({
     );
   }
 
-  const waiting = data?.needs.filter((n) => n.status !== "assigned") ?? [];
-  const next = data?.upcoming[0];
   return (
-    <>
-      <AppHeader eyebrow="Welcome back" title={`Hi ${first}`} />
-      <div className="p-4">
-        {data?.discharged && (
-          <AppCard title="Your care has finished">
-            <p className="text-small text-ink-700">
-              {data.discharged.reason}. Thank you for choosing Medisense. Your visit history stays
-              here, and you can still rate your visits.
-            </p>
-          </AppCard>
-        )}
-        {data?.toRate.map((v) => (
-          <AppCard key={v.id} title="How was your visit?">
-            <p className="mb-2 text-small text-ink-700">
-              {v.discipline} with {v.therapistName}, {slotLabel(v.start)}
-            </p>
-            <Button size="sm" variant="primary" onClick={() => onRate(v)}>
-              Rate this visit
-            </Button>
-          </AppCard>
-        ))}
-        {!data ? (
-          <Skeleton className="h-32" />
-        ) : (
-          <>
-            {next && (
-              <AppCard title="Next visit">
-                <p className="headline text-h2">{slotLabel(next.start)}</p>
-                <p className="text-caption text-ink-700">
-                  {next.therapistName} · {next.discipline} · at home
-                </p>
-              </AppCard>
-            )}
-            {data.team.map((t) => (
-              <AppCard key={t.discipline}>
-                <div className="flex items-center gap-3">
-                  <Avatar name={t.therapistName} size={44} />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-small font-semibold">{t.therapistName}</p>
-                    <p className="text-caption text-ink-700">
-                      Your {practitioner[t.discipline].toLowerCase()}
-                    </p>
-                  </div>
-                  {t.conversationId && (
-                    <Button
-                      size="sm"
-                      variant="primary"
-                      onClick={() => t.conversationId && onChat(t.conversationId)}
-                    >
-                      Message
-                    </Button>
-                  )}
-                </div>
-              </AppCard>
-            ))}
-            {waiting.map((n) => (
-              <AppCard key={n.discipline} title={n.discipline}>
-                <p className="text-small text-ink-700">
-                  {n.status === "waiting"
-                    ? `We've asked ${n.therapistName ?? "a therapist"} to be your ${practitioner[n.discipline].toLowerCase()}. You'll see them here as soon as they accept.`
-                    : "We're finding the right therapist for you. You'll hear from us soon."}
-                </p>
-              </AppCard>
-            ))}
-          </>
-        )}
+    <PatientHome
+      first={first ?? ""}
+      data={data ?? null}
+      conversations={chats.data?.conversations ?? []}
+      onChat={onChat}
+      onChange={onCancel}
+      onRate={onRate}
+      onOpenVisits={onOpenVisits}
+    />
+  );
+}
+
+/** A new message slides in at the top of the phone; tap to open the conversation. */
+function MessageBanner({
+  message,
+  onOpen,
+  onDismiss,
+}: {
+  message: MessageDto;
+  onOpen: () => void;
+  onDismiss: () => void;
+}) {
+  return (
+    <div className="banner-in absolute inset-x-2.5 top-12 z-40" role="status">
+      <div className="flex items-center gap-3 rounded-card bg-surface p-3 shadow-overlay ring-1 ring-border">
+        <button
+          type="button"
+          onClick={onOpen}
+          className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 text-left"
+        >
+          <Avatar name={message.senderName || "Therapist"} size={38} />
+          <span className="min-w-0 flex-1">
+            <span className="block text-caption font-semibold">{message.senderName}</span>
+            <span className="block truncate text-small text-ink-700">{message.body}</span>
+          </span>
+        </button>
+        <button
+          type="button"
+          aria-label="Dismiss"
+          onClick={onDismiss}
+          className="flex size-7 flex-none cursor-pointer items-center justify-center rounded-full text-ink-500 hover:bg-canvas"
+        >
+          <X className="size-4" aria-hidden="true" />
+        </button>
       </div>
-    </>
+    </div>
   );
 }

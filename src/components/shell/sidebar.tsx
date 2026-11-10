@@ -7,6 +7,8 @@ import type { CSSProperties } from "react";
 import { caseNotes } from "@/data/case-note";
 import { cn } from "@/lib/cn";
 import { isActive, isStandalone, navigationFor, roleUsers } from "@/lib/navigation";
+import { useUnreadMessages } from "@/features/live/conversations";
+import { useSession } from "@/lib/live/client";
 import { useDemoStore } from "@/state/demo-store";
 
 export const darkFocus = { "--shadow-focus": "var(--shadow-focus-dark)" } as CSSProperties;
@@ -18,6 +20,8 @@ export function Sidebar() {
   const user = roleUsers[role];
   const notes = useDemoStore((s) => s.caseNotes);
   const notesLeft = caseNotes.filter((c) => notes[c.id]?.mode !== "approved").length;
+  const { user: account } = useSession();
+  const unreadMessages = useUnreadMessages(account?.role === "therapist");
 
   if (isStandalone(pathname)) return null;
 
@@ -70,15 +74,26 @@ export function Sidebar() {
                     : "font-medium text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-ink",
                 )}
               >
-                <Icon
-                  className={cn(
-                    "size-5 flex-none",
-                    active ? "text-nav-active-ink" : "text-sidebar-faint",
+                <span className="relative flex-none">
+                  <Icon
+                    className={cn("size-5", active ? "text-nav-active-ink" : "text-sidebar-faint")}
+                    strokeWidth={1.5}
+                    aria-hidden="true"
+                  />
+                  {href === "/messages" && unreadMessages > 0 && (
+                    <i
+                      aria-hidden="true"
+                      className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full border-2 border-sidebar bg-over-dot xl:hidden"
+                    />
                   )}
-                  strokeWidth={1.5}
-                  aria-hidden="true"
-                />
+                </span>
                 <span className="hidden flex-1 truncate xl:block">{label}</span>
+                {href === "/messages" && unreadMessages > 0 && (
+                  <span className="hidden h-5 min-w-5 items-center justify-center rounded-full bg-over-dot px-1.5 text-eyebrow font-semibold text-surface motion-safe:animate-pulse xl:flex">
+                    {unreadMessages}
+                    <span className="sr-only"> unread</span>
+                  </span>
+                )}
                 {badge !== undefined && (
                   <span
                     className={cn(

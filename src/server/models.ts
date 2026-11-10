@@ -173,7 +173,7 @@ export interface MessageDoc {
   readBy: ObjectId[];
 }
 
-export type LiveEventType = "notification" | "message" | "care" | "read";
+export type LiveEventType = "notification" | "message" | "care" | "read" | "typing";
 
 /** One row per change a person should see straight away. Kept for a day, then expired. */
 export interface EventDoc {

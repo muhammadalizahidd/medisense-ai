@@ -1,9 +1,36 @@
 "use client";
 
-import { ArrowLeft, X, type LucideIcon } from "lucide-react";
+import { ArrowLeft, BatteryFull, Signal, Wifi, X, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { ButtonLink } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
+import { useNow } from "@/lib/live/client";
+
+/** The device's status bar, shown only when the app is drawn inside a phone on a large screen. */
+function StatusBar() {
+  const now = useNow();
+  const time = now
+    ? new Intl.DateTimeFormat("en-AU", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: false,
+        timeZone: "Australia/Brisbane",
+      }).format(now)
+    : "";
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-x-0 top-0 z-20 hidden h-11 items-center justify-between px-7 text-caption font-semibold text-white md:flex"
+    >
+      <span>{time}</span>
+      <span className="flex items-center gap-1">
+        <Signal className="size-3.5" strokeWidth={2.5} />
+        <Wifi className="size-3.5" strokeWidth={2.5} />
+        <BatteryFull className="size-4" strokeWidth={2} />
+      </span>
+    </div>
+  );
+}
 
 /** Full-screen on a phone. On a larger screen, a device beside a short description of the app. */
 export function PhoneFrame({
@@ -19,7 +46,7 @@ export function PhoneFrame({
   name: string;
   description: string;
   features: string[];
-  tabs: { id: string; label: string; icon: LucideIcon }[];
+  tabs: { id: string; label: string; icon: LucideIcon; badge?: number }[];
   active: string;
   onTab: (id: string) => void;
   overlay?: ReactNode;
@@ -50,17 +77,18 @@ export function PhoneFrame({
         </ul>
       </div>
 
-      <div className="relative flex h-dvh w-full flex-col overflow-hidden bg-canvas md:h-211 md:max-h-[calc(100dvh-4rem)] md:w-103 md:rounded-[44px] md:border-10 md:border-ink-900 md:shadow-overlay">
+      <div className="relative flex h-dvh w-full flex-col overflow-hidden bg-canvas md:h-197 md:max-h-[calc(100dvh-4rem)] md:w-95 md:rounded-[44px] md:border-10 md:border-ink-900 md:shadow-overlay">
         <span
           aria-hidden="true"
-          className="absolute top-2.5 left-1/2 z-20 hidden h-6 w-24 -translate-x-1/2 rounded-full bg-ink-900 md:block"
+          className="absolute top-2.5 left-1/2 z-30 hidden h-6 w-24 -translate-x-1/2 rounded-full bg-ink-900 md:block"
         />
+        <StatusBar />
         <div className="min-h-0 flex-1 overflow-y-auto pb-24">{children}</div>
         <nav
           aria-label="App sections"
           className="absolute inset-x-3 bottom-3 z-10 flex rounded-full border border-border bg-surface/95 p-1.5 shadow-overlay backdrop-blur"
         >
-          {tabs.map(({ id, label, icon: Icon }) => (
+          {tabs.map(({ id, label, icon: Icon, badge }) => (
             <button
               key={id}
               type="button"
@@ -71,7 +99,15 @@ export function PhoneFrame({
                 active === id ? "primary-glow bg-accent-fill text-on-accent" : "text-ink-500",
               )}
             >
-              <Icon className="size-5 flex-none" strokeWidth={1.75} aria-hidden="true" />
+              <span className="relative">
+                <Icon className="size-5 flex-none" strokeWidth={1.75} aria-hidden="true" />
+                {badge ? (
+                  <span className="absolute -top-1.5 -right-2.5 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-surface bg-over-dot px-1 text-eyebrow leading-none font-bold text-white">
+                    {badge > 9 ? "9+" : badge}
+                    <span className="sr-only"> unread</span>
+                  </span>
+                ) : null}
+              </span>
               <span className="max-w-full truncate">{label}</span>
             </button>
           ))}

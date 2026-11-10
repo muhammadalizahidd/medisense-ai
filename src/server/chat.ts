@@ -112,18 +112,18 @@ export async function sendMessage(user: UserDoc, id: ObjectId, body: string) {
     readBy: [user._id],
   };
   await messages.insertOne(doc);
-  const [, names] = await Promise.all([
+  // The message reaches the other person first; the conversation preview updates alongside.
+  const others = conversation.memberIds.filter((m) => !m.equals(user._id));
+  const message = toDto(doc, new Map([[user._id.toHexString(), user.name]]), others);
+  await Promise.all([
+    publish(conversation.memberIds, "message", { message }),
     conversations.updateOne(
       { _id: id },
       {
         $set: { lastMessage: { body: body.slice(0, 140), senderId: user._id, at: doc.createdAt } },
       },
     ),
-    memberNames(conversation),
   ]);
-  const others = conversation.memberIds.filter((m) => !m.equals(user._id));
-  const message = toDto(doc, names, others);
-  await publish(conversation.memberIds, "message", { message });
   return message;
 }
 
@@ -135,6 +135,19 @@ export async function markRead(user: UserDoc, id: ObjectId) {
     { $addToSet: { readBy: user._id } },
   );
   if (result.modifiedCount > 0) {
-    await publish(conversation.memberIds, "read", { conversationId: id.toHexString() });
+    await publish(conversation.memberIds, "read", {
+      conversationId: id.toHexString(),
+      readerId: user._id.toHexString(),
+    });
   }
+}
+
+/** Tells the other person someone is typing. Nothing is stored except the short-lived event. */
+export async function signalTyping(user: UserDoc, id: ObjectId) {
+  const conversation = await myConversation(user, id);
+  const others = conversation.memberIds.filter((m) => !m.equals(user._id));
+  await publish(others, "typing", {
+    conversationId: id.toHexString(),
+    name: user.name.split(" ")[0] ?? user.name,
+  });
 }

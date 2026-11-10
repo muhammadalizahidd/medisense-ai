@@ -182,7 +182,8 @@ export type LiveEvent =
   | { type: "notification"; payload: { title: string } }
   | { type: "message"; payload: { message: MessageDto } }
   | { type: "care"; payload: { clientId?: string } }
-  | { type: "read"; payload: { conversationId: string } }
+  | { type: "read"; payload: { conversationId: string; readerId?: string } }
+  | { type: "typing"; payload: { conversationId: string; name: string } }
   | { type: "connected"; payload: Record<string, never> };
 
 export type LiveOverviewDto = {

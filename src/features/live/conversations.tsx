@@ -15,6 +15,12 @@ export function useConversations(enabled = true) {
   );
 }
 
+/** Unread messages across all of this person's conversations, kept live. */
+export function useUnreadMessages(enabled = true) {
+  const { data } = useConversations(enabled);
+  return (data?.conversations ?? []).reduce((sum, c) => sum + c.unread, 0);
+}
+
 export function ConversationList({
   conversations,
   error,

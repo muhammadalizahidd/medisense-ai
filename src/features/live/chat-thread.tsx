@@ -1,6 +1,6 @@
 "use client";
 
-import { SendHorizontal } from "lucide-react";
+import { AlertCircle, Check, CheckCheck, Clock, SendHorizontal } from "lucide-react";
 import {
   useCallback,
   useEffect,
@@ -15,9 +15,31 @@ import type { MessageDto } from "@/lib/live/types";
 import { cn } from "@/lib/cn";
 import { ErrorNote, Skeleton } from "./bits";
 
-type Pending = { tempId: string; body: string; failed: boolean };
+type Pending = { tempId: string; body: string; at: string; failed: boolean };
 
-/** A live conversation: history, new messages as they arrive, and a composer. */
+const TYPING_SHOWS_FOR = 4_000;
+const TYPING_SENDS_EVERY = 2_500;
+
+/** Who is typing in a conversation right now, from live events. Clears itself after a pause. */
+export function useTypingIndicator(conversationId: string) {
+  const [typing, setTyping] = useState<string | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useLiveEvents((event) => {
+    if (event.type === "typing" && event.payload.conversationId === conversationId) {
+      setTyping(event.payload.name);
+      clearTimeout(timer.current);
+      timer.current = setTimeout(() => setTyping(null), TYPING_SHOWS_FOR);
+    }
+    // Their message arriving ends the typing.
+    if (event.type === "message" && event.payload.message.conversationId === conversationId) {
+      setTyping(null);
+    }
+  });
+  useEffect(() => () => clearTimeout(timer.current), []);
+  return typing;
+}
+
+/** A live conversation: history, new messages as they arrive, typing and read receipts. */
 export function ChatThread({
   conversationId,
   myId,
@@ -31,7 +53,16 @@ export function ChatThread({
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<Pending[]>([]);
   const [draft, setDraft] = useState("");
+  const typing = useTypingIndicator(conversationId);
   const bottom = useRef<HTMLDivElement>(null);
+  const lastTypingSent = useRef(0);
+  const markRead = useCallback(
+    () =>
+      void api(`/api/conversations/${conversationId}/read`, { method: "POST" }).catch(
+        () => undefined,
+      ),
+    [conversationId],
+  );
 
   const load = useCallback(async () => {
     try {
@@ -40,13 +71,11 @@ export function ChatThread({
       );
       setMessages(data.messages);
       setError(null);
-      void api(`/api/conversations/${conversationId}/read`, { method: "POST" }).catch(
-        () => undefined,
-      );
+      markRead();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't load messages.");
     }
-  }, [conversationId]);
+  }, [conversationId, markRead]);
 
   useEffect(() => {
     let cancelled = false;
@@ -54,9 +83,7 @@ export function ChatThread({
       .then((data) => {
         if (cancelled) return;
         setMessages(data.messages);
-        void api(`/api/conversations/${conversationId}/read`, { method: "POST" }).catch(
-          () => undefined,
-        );
+        markRead();
       })
       .catch((e: unknown) => {
         if (!cancelled) setError(e instanceof Error ? e.message : "Couldn't load messages.");
@@ -64,36 +91,43 @@ export function ChatThread({
     return () => {
       cancelled = true;
     };
-  }, [conversationId]);
+  }, [conversationId, markRead]);
 
   useLiveEvents((event) => {
     if (event.type === "connected") void load();
-    if (event.type === "read" && event.payload.conversationId === conversationId) void load();
+    if (
+      event.type === "read" &&
+      event.payload.conversationId === conversationId &&
+      event.payload.readerId !== myId
+    ) {
+      // The other person has read everything; mark ours as seen without reloading.
+      setMessages(
+        (list) => list?.map((m) => (m.senderId === myId ? { ...m, seen: true } : m)) ?? list,
+      );
+    }
     if (event.type === "message" && event.payload.message.conversationId === conversationId) {
       const incoming = event.payload.message;
       setMessages((list) =>
         list?.some((m) => m.id === incoming.id) ? list : [...(list ?? []), incoming],
       );
-      if (incoming.senderId !== myId) {
-        void api(`/api/conversations/${conversationId}/read`, { method: "POST" }).catch(
-          () => undefined,
-        );
-      }
+      if (incoming.senderId !== myId) markRead();
     }
   });
 
   useEffect(() => {
-    bottom.current?.scrollIntoView({ block: "end" });
-  }, [messages, pending]);
+    bottom.current?.scrollIntoView({ block: "end", behavior: "smooth" });
+  }, [messages, pending, typing]);
 
   async function send(body: string, tempId = crypto.randomUUID()) {
-    setPending((p) => [...p.filter((x) => x.tempId !== tempId), { tempId, body, failed: false }]);
+    const at = new Date().toISOString();
+    setPending((p) => [
+      ...p.filter((x) => x.tempId !== tempId),
+      { tempId, body, at, failed: false },
+    ]);
     try {
       const { message } = await api<{ message: MessageDto }>(
         `/api/conversations/${conversationId}/messages`,
-        {
-          body: { body },
-        },
+        { body: { body } },
       );
       setMessages((list) =>
         list?.some((m) => m.id === message.id) ? list : [...(list ?? []), message],
@@ -109,7 +143,19 @@ export function ChatThread({
     const body = draft.trim();
     if (!body) return;
     setDraft("");
+    lastTypingSent.current = 0;
     void send(body);
+  }
+
+  function onType(value: string) {
+    setDraft(value);
+    const now = Date.now();
+    if (value.trim() && now - lastTypingSent.current > TYPING_SENDS_EVERY) {
+      lastTypingSent.current = now;
+      void api(`/api/conversations/${conversationId}/typing`, { method: "POST" }).catch(
+        () => undefined,
+      );
+    }
   }
 
   function onKey(event: KeyboardEvent<HTMLTextAreaElement>) {
@@ -119,7 +165,8 @@ export function ChatThread({
     }
   }
 
-  const lastMine = [...(messages ?? [])].reverse().find((m) => m.senderId === myId);
+  const list = messages ?? [];
+  const lastMine = [...list].reverse().find((m) => m.senderId === myId);
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -127,7 +174,10 @@ export function ChatThread({
         role="log"
         aria-live="polite"
         aria-label="Messages"
-        className={cn("min-h-0 flex-1 overflow-y-auto", compact ? "px-3 py-3" : "px-5 py-4")}
+        className={cn(
+          "min-h-0 flex-1 overflow-y-auto bg-canvas/60",
+          compact ? "px-3 py-3" : "px-5 py-4",
+        )}
       >
         {error && !messages ? (
           <ErrorNote message={error} onRetry={() => void load()} />
@@ -136,45 +186,75 @@ export function ChatThread({
             <Skeleton className="h-10 w-2/3" />
             <Skeleton className="ml-auto h-10 w-1/2" />
           </div>
-        ) : messages.length === 0 && pending.length === 0 ? (
-          <p className="py-10 text-center text-small text-ink-500">
-            No messages yet. Say hello to get things started.
-          </p>
+        ) : list.length === 0 && pending.length === 0 ? (
+          <div className="flex h-full flex-col items-center justify-center gap-1 py-10 text-center">
+            <p className="text-small font-semibold">Start the conversation</p>
+            <p className="text-caption text-ink-500">
+              Messages arrive the moment they&apos;re sent.
+            </p>
+          </div>
         ) : (
-          <ol className="flex flex-col gap-2">
-            {messages.map((m, i) => {
+          <ol className="flex flex-col">
+            {list.map((m, i) => {
               const mine = m.senderId === myId;
-              const newDay =
-                i === 0 ||
-                shortDate(messages[i - 1]?.createdAt ?? m.createdAt) !== shortDate(m.createdAt);
+              const prev = list[i - 1];
+              const newDay = !prev || shortDate(prev.createdAt) !== shortDate(m.createdAt);
+              const grouped = !newDay && prev?.senderId === m.senderId;
               return (
-                <li key={m.id} className="flex flex-col">
+                <li
+                  key={m.id}
+                  className={cn("flex flex-col", grouped ? "mt-1" : "mt-3 first:mt-0")}
+                >
                   {newDay && (
-                    <span className="my-2 self-center rounded-full bg-canvas px-2.5 py-0.5 text-caption text-ink-500">
+                    <span className="mb-2 self-center rounded-full bg-surface px-2.5 py-0.5 text-caption text-ink-500 shadow-hairline">
                       {shortDate(m.createdAt)}
                     </span>
                   )}
-                  <Bubble mine={mine} body={m.body} meta={timeOfDay(m.createdAt)} />
+                  <Bubble
+                    mine={mine}
+                    body={m.body}
+                    time={timeOfDay(m.createdAt)}
+                    state={mine ? (m.seen ? "seen" : "sent") : null}
+                  />
                   {m.id === lastMine?.id && m.seen && (
-                    <span className="mt-0.5 self-end text-caption text-ink-500">Seen</span>
+                    <span className="mt-0.5 self-end text-eyebrow text-ink-500">Seen</span>
                   )}
                 </li>
               );
             })}
             {pending.map((p) => (
-              <li key={p.tempId} className="flex flex-col">
-                <Bubble mine body={p.body} meta={p.failed ? "Not sent" : "Sending…"} faded />
+              <li key={p.tempId} className="mt-1 flex flex-col">
+                <Bubble
+                  mine
+                  body={p.body}
+                  time={timeOfDay(p.at)}
+                  state={p.failed ? "failed" : "sending"}
+                />
                 {p.failed && (
                   <button
                     type="button"
                     onClick={() => void send(p.body, p.tempId)}
                     className="mt-0.5 cursor-pointer self-end text-caption font-semibold text-over"
                   >
-                    Tap to retry
+                    Not sent. Tap to retry
                   </button>
                 )}
               </li>
             ))}
+            {typing && (
+              <li className="bubble-in mt-3 flex items-end gap-2" aria-live="polite">
+                <span className="flex h-9 items-center gap-1 rounded-card rounded-bl-tag bg-surface px-3.5 shadow-hairline">
+                  {[0, 1, 2].map((d) => (
+                    <i
+                      key={d}
+                      aria-hidden="true"
+                      className="typing-dot size-1.5 rounded-full bg-ink-500"
+                    />
+                  ))}
+                </span>
+                <span className="text-caption text-ink-500">{typing} is typing…</span>
+              </li>
+            )}
           </ol>
         )}
         <div ref={bottom} />
@@ -183,61 +263,85 @@ export function ChatThread({
         onSubmit={submit}
         className={cn(
           "flex items-end gap-2 border-t border-border bg-surface",
-          compact ? "p-2" : "p-3",
+          compact ? "p-2.5" : "p-3",
         )}
       >
         <textarea
           value={draft}
-          onChange={(e) => setDraft(e.target.value)}
+          onChange={(e) => onType(e.target.value)}
           onKeyDown={onKey}
           rows={1}
           maxLength={2000}
           aria-label="Write a message"
-          placeholder="Write a message"
-          className="max-h-32 min-h-10 flex-1 resize-none rounded-control border border-border-strong bg-surface-raised px-3 py-2 text-small outline-none focus:border-accent focus:shadow-focus"
+          placeholder="Write a message…"
+          className="max-h-32 min-h-11 flex-1 resize-none rounded-card border border-border-strong bg-canvas px-4 py-2.5 text-small outline-none focus:border-accent focus:bg-surface focus:shadow-focus"
         />
         <button
           type="submit"
           aria-label="Send message"
           disabled={!draft.trim()}
-          className="flex size-10 flex-none cursor-pointer items-center justify-center rounded-control bg-accent-fill text-on-accent hover:bg-accent-fill-hover disabled:cursor-not-allowed disabled:opacity-45"
+          className="flex size-11 flex-none cursor-pointer items-center justify-center rounded-full bg-accent-fill text-on-accent shadow-hairline transition-transform duration-150 enabled:hover:scale-105 enabled:active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          <SendHorizontal className="size-4.5" aria-hidden="true" />
+          <SendHorizontal className="size-5" aria-hidden="true" />
         </button>
       </form>
     </div>
   );
 }
 
+type BubbleState = "sending" | "sent" | "seen" | "failed" | null;
+
 function Bubble({
   mine,
   body,
-  meta,
-  faded,
+  time,
+  state,
 }: {
   mine: boolean;
   body: string;
-  meta: string;
-  faded?: boolean;
+  time: string;
+  state: BubbleState;
 }) {
+  const Icon =
+    state === "sending"
+      ? Clock
+      : state === "seen"
+        ? CheckCheck
+        : state === "failed"
+          ? AlertCircle
+          : Check;
   return (
     <div
       className={cn(
-        "max-w-4/5 rounded-card px-3.5 py-2 text-small",
+        "bubble-in max-w-4/5 px-3.5 py-2 text-small shadow-hairline",
         mine
-          ? "self-end rounded-br-tag bg-accent-fill text-on-accent"
-          : "self-start rounded-bl-tag bg-canvas text-ink-900",
-        faded && "opacity-70",
+          ? "self-end rounded-card rounded-br-tag bg-accent-fill text-on-accent"
+          : "self-start rounded-card rounded-bl-tag bg-surface text-ink-900",
       )}
     >
       <p className="break-words whitespace-pre-wrap">{body}</p>
       <p
         className={cn(
-          "mt-0.5 text-right text-eyebrow",
+          "mt-0.5 flex items-center justify-end gap-1 text-eyebrow",
           mine ? "text-on-accent/80" : "text-ink-500",
         )}
       >
-        {meta}
+        {time}
+        {state && (
+          <Icon
+            aria-label={
+              state === "seen"
+                ? "Seen"
+                : state === "sending"
+                  ? "Sending"
+                  : state === "failed"
+                    ? "Not sent"
+                    : "Sent"
+            }
+            className="size-3.5"
+            strokeWidth={2.25}
+          />
+        )}
       </p>
     </div>
   );

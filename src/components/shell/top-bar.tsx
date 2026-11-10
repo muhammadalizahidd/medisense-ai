@@ -11,6 +11,7 @@ import { api, useResource, useSession } from "@/lib/live/client";
 import { relativeTime } from "@/lib/live/time";
 import type { NotificationDto } from "@/lib/live/types";
 import { isStandalone, routeMeta } from "@/lib/navigation";
+import { useUnreadMessages } from "@/features/live/conversations";
 import { useDemoStore } from "@/state/demo-store";
 import { AssistantPanel } from "./assistant-panel";
 import { AuditDrawer } from "./audit-drawer";
@@ -30,7 +31,8 @@ function Notifications() {
   );
   const liveNotes = user ? (live.data?.notifications ?? []) : [];
   const liveUnread = liveNotes.filter((n) => !n.read).length;
-  const unread = notices.filter((n) => !n.read).length + liveUnread;
+  const unreadMessages = useUnreadMessages(user?.role === "therapist");
+  const unread = notices.filter((n) => !n.read).length + liveUnread + unreadMessages;
   const [open, setOpen] = useState(false);
   const button = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
@@ -74,11 +76,11 @@ function Notifications() {
       >
         <Bell className="size-4 text-ink-700" strokeWidth={1.5} aria-hidden="true" />
         {unread > 0 && (
-          <span
-            aria-hidden="true"
-            className="absolute -top-1.5 -right-1.5 flex size-4.5 items-center justify-center rounded-full bg-over-dot text-eyebrow font-semibold text-surface-raised"
-          >
-            {unread}
+          <span aria-hidden="true" className="absolute -top-1.5 -right-1.5 flex size-4.5">
+            <span className="absolute inset-0 rounded-full bg-over-dot opacity-60 motion-safe:animate-ping" />
+            <span className="relative flex size-4.5 items-center justify-center rounded-full bg-over-dot text-eyebrow font-semibold text-surface-raised">
+              {unread > 9 ? "9+" : unread}
+            </span>
           </span>
         )}
       </button>
@@ -88,6 +90,16 @@ function Notifications() {
           className="absolute top-11 right-0 z-30 w-80 overflow-hidden rounded-card border border-border bg-surface-raised shadow-overlay"
         >
           <h2 className="px-4 pt-3 pb-2 text-small font-semibold">Notifications</h2>
+          {unreadMessages > 0 && (
+            <Link
+              href="/messages"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 border-t border-border bg-accent-tint px-4 py-2.5 text-small font-semibold text-ink-900 hover:no-underline"
+            >
+              <span className="size-2 rounded-full bg-over-dot" aria-hidden="true" />
+              {unreadMessages} unread {unreadMessages === 1 ? "message" : "messages"}
+            </Link>
+          )}
           {liveNotes.length > 0 && (
             <ul className="max-h-80 overflow-y-auto">
               {liveNotes.map((n) => (
@@ -110,7 +122,8 @@ function Notifications() {
               ))}
             </ul>
           )}
-          {liveNotes.length > 0 && notices.length === 0 ? null : notices.length === 0 ? (
+          {(liveNotes.length > 0 || unreadMessages > 0) &&
+          notices.length === 0 ? null : notices.length === 0 ? (
             <p className="border-t border-border px-4 py-4 text-small text-ink-700">
               Nothing new. Reminders and escalations will appear here.
             </p>
