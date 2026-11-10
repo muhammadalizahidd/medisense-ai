@@ -77,3 +77,17 @@ export function ageFrom(dateOfBirth: string | null, now = new Date()) {
   if (beforeBirthday) age -= 1;
   return age;
 }
+
+/** "6 years", or "8 months" for children under two, or "Newborn". */
+export function ageLabel(dateOfBirth: string | null, now = new Date()) {
+  if (!dateOfBirth) return null;
+  const birth = new Date(`${dateOfBirth}T00:00:00Z`);
+  if (Number.isNaN(birth.getTime()) || birth > now) return null;
+  const years = ageFrom(dateOfBirth, now) ?? 0;
+  if (years >= 2) return `${years} years`;
+  let months =
+    (now.getUTCFullYear() - birth.getUTCFullYear()) * 12 + now.getUTCMonth() - birth.getUTCMonth();
+  if (now.getUTCDate() < birth.getUTCDate()) months -= 1;
+  if (months < 1) return "Newborn";
+  return `${months} ${months === 1 ? "month" : "months"}`;
+}

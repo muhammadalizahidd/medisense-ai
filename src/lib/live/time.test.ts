@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { safeNext } from "./routes";
-import { ageFrom, atBrisbane, brisbaneDay, brisbaneMinutes, isoWeekday } from "./time";
+import { ageFrom, ageLabel, atBrisbane, brisbaneDay, brisbaneMinutes, isoWeekday } from "./time";
 
 describe("Brisbane time", () => {
   it("puts 9 am Brisbane at 11 pm UTC the day before", () => {
@@ -39,5 +39,16 @@ describe("return path after sign-in", () => {
     expect(safeNext("https://evil.example")).toBeNull();
     expect(safeNext(String.raw`/\evil.example`)).toBeNull();
     expect(safeNext(undefined)).toBeNull();
+  });
+});
+
+describe("age label", () => {
+  const now = new Date("2026-11-10T00:00:00Z");
+  it("uses months under two and years after", () => {
+    expect(ageLabel("2026-11-06", now)).toBe("Newborn");
+    expect(ageLabel("2026-03-14", now)).toBe("7 months");
+    expect(ageLabel("2025-10-01", now)).toBe("13 months");
+    expect(ageLabel("2019-03-14", now)).toBe("7 years");
+    expect(ageLabel("2030-01-01", now)).toBeNull();
   });
 });

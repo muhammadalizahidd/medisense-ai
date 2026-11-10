@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { createHash, randomBytes, randomInt } from "node:crypto";
 import type { ObjectId } from "mongodb";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 import { collections } from "./db";
 import type { UserDoc, UserRole } from "./models";
 
@@ -49,6 +50,8 @@ export async function endSession() {
 
 /** The signed-in person, or null. */
 export async function currentUser(): Promise<UserDoc | null> {
+  // A session depends on this request and this moment, so it can never be part of a pre-built page.
+  await connection();
   const jar = await cookies();
   const token = jar.get(SESSION_COOKIE)?.value;
   if (!token) return null;

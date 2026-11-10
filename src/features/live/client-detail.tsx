@@ -6,7 +6,7 @@ import { Button, ButtonLink } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page";
 import { Tag } from "@/components/ui/tag";
 import { api, useNow, useResource } from "@/lib/live/client";
-import { ageFrom, relativeTime, shortDate, slotLabel } from "@/lib/live/time";
+import { ageLabel, relativeTime, shortDate, slotLabel } from "@/lib/live/time";
 import type { AssignmentDto, ClientDetailDto, NeedDto } from "@/lib/live/types";
 import {
   EmptyNote,
@@ -41,7 +41,7 @@ export function ClientDetail({ clientId }: { clientId: string }) {
     );
   }
   const client = data.client;
-  const age = ageFrom(client.dateOfBirth);
+  const age = now ? ageLabel(client.dateOfBirth, new Date(now)) : null;
 
   return (
     <>
@@ -53,7 +53,7 @@ export function ClientDetail({ clientId }: { clientId: string }) {
           </ButtonLink>
         }
         title={client.name}
-        description={`${age !== null ? `${age} years · ` : ""}${client.suburb}, ${client.region} · ${client.funding}`}
+        description={`${age ? `${age} · ` : ""}${client.suburb}, ${client.region} · ${client.funding}`}
         actions={
           <div className="flex items-center gap-3">
             <LiveBadge />

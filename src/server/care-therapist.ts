@@ -2,7 +2,7 @@ import "server-only";
 import { ObjectId } from "mongodb";
 import { z } from "zod";
 import { caseloadStatus, declineReasons, practitioner } from "@/lib/live/catalogue";
-import { ageFrom, slotLabel } from "@/lib/live/time";
+import { ageLabel, slotLabel } from "@/lib/live/time";
 import type { TherapistHomeDto } from "@/lib/live/types";
 import { collections } from "./db";
 import { appointmentDto, assignmentDto, nameMap, seriesLookup } from "./dto";
@@ -207,7 +207,7 @@ export async function therapistHome(user: UserDoc): Promise<TherapistHomeDto> {
       return [
         {
           ...assignmentDto(a, visit.start, clientNames, me),
-          age: ageFrom(client.dateOfBirth),
+          age: ageLabel(client.dateOfBirth),
           suburb: client.suburb,
           funding: client.funding,
           frequency: need?.frequency ?? "Weekly",

@@ -103,7 +103,8 @@ export type MatchDto = {
 };
 
 export type RequestDto = AssignmentDto & {
-  age: number | null;
+  /** "6 years", or months for children under two. */
+  age: string | null;
   suburb: string;
   funding: FundingStream;
   frequency: Frequency;
