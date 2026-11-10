@@ -1,5 +1,6 @@
 "use client";
 
+import { Star } from "lucide-react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Tag, type TagTone } from "@/components/ui/tag";
@@ -33,6 +34,7 @@ export const stageTone: Record<ClientStage, TagTone> = {
   "Needs a therapist": "over",
   "Waiting for therapist": "monitor",
   Active: "healthy",
+  Discharged: "neutral",
 };
 
 export function StageTag({ stage }: { stage: ClientStage }) {
@@ -120,5 +122,57 @@ export function Panel({
       </div>
       {children}
     </section>
+  );
+}
+
+/** A rating out of five. With `onChange` it becomes a keyboard-friendly radio group. */
+export function Stars({
+  value,
+  onChange,
+  size = "sm",
+}: {
+  value: number;
+  onChange?: (value: number) => void;
+  size?: "sm" | "lg";
+}) {
+  const icon = size === "lg" ? "size-8" : "size-4";
+  if (!onChange) {
+    return (
+      <span role="img" aria-label={`${value} out of 5`} className="inline-flex gap-0.5">
+        {[1, 2, 3, 4, 5].map((n) => (
+          <Star
+            key={n}
+            aria-hidden="true"
+            className={cn(
+              icon,
+              n <= Math.round(value) ? "fill-monitor-dot text-monitor-dot" : "text-border-strong",
+            )}
+          />
+        ))}
+      </span>
+    );
+  }
+  return (
+    <span role="radiogroup" aria-label="Rating" className="inline-flex gap-1">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <button
+          key={n}
+          type="button"
+          role="radio"
+          aria-checked={value === n}
+          aria-label={`${n} out of 5`}
+          onClick={() => onChange(n)}
+          className="cursor-pointer rounded-control p-0.5"
+        >
+          <Star
+            aria-hidden="true"
+            className={cn(
+              icon,
+              n <= value ? "fill-monitor-dot text-monitor-dot" : "text-border-strong",
+            )}
+          />
+        </button>
+      ))}
+    </span>
   );
 }

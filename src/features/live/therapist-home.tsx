@@ -12,9 +12,11 @@ import { api, useResource } from "@/lib/live/client";
 import { relativeTime, slotLabel } from "@/lib/live/time";
 import type { RequestDto, TherapistHomeDto } from "@/lib/live/types";
 import { CaseloadTag, EmptyNote, ErrorNote, LiveBadge, Panel, Skeleton } from "./bits";
+import { DischargeSheet } from "./care-sheets";
 import { VisitList } from "./visit-list";
 
 export function TherapistHome() {
+  const [discharging, setDischarging] = useState<TherapistHomeDto["clients"][number] | null>(null);
   const { data, error, loading, reload } = useResource<TherapistHomeDto>(
     "/api/care/therapist",
     (event) => event.type === "care" || event.type === "notification",
@@ -29,7 +31,7 @@ export function TherapistHome() {
       </div>
     );
   }
-  const { therapist, requests, clients, upcoming, toRecord } = data;
+  const { therapist, requests, clients, upcoming, toRecord, notesToWrite } = data;
 
   return (
     <>
@@ -75,6 +77,19 @@ export function TherapistHome() {
               />
             </Panel>
           )}
+          {notesToWrite.length > 0 && (
+            <Panel
+              title="Notes to write"
+              action={<Tag tone="monitor">{notesToWrite.length} to write</Tag>}
+            >
+              <VisitList
+                visits={notesToWrite}
+                show="client"
+                onChanged={reload}
+                emptyText="Every completed visit has its note."
+              />
+            </Panel>
+          )}
           <Panel title="Coming up">
             <VisitList
               visits={upcoming.filter((v) => v.status === "booked")}
@@ -115,6 +130,13 @@ export function TherapistHome() {
                         Message
                       </ButtonLink>
                     )}
+                    {c.discharged ? (
+                      <Tag tone="neutral">Discharged</Tag>
+                    ) : (
+                      <Button size="sm" variant="ghost" onClick={() => setDischarging(c)}>
+                        Discharge
+                      </Button>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -122,6 +144,17 @@ export function TherapistHome() {
           </Panel>
         </div>
       </div>
+      {discharging && (
+        <DischargeSheet
+          clientId={discharging.id}
+          name={discharging.name}
+          upcoming={
+            upcoming.filter((v) => v.clientId === discharging.id && v.status === "booked").length
+          }
+          onClose={() => setDischarging(null)}
+          onDone={reload}
+        />
+      )}
     </>
   );
 }

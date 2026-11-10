@@ -13,6 +13,7 @@ import { ErrorNote, Skeleton } from "./bits";
 import { CancelVisitPanel } from "./cancel-visit";
 import { ChatOverlay } from "./chat-overlay";
 import { ClientVisits } from "./client-visits";
+import { PatientDetailsCard, RateVisitPanel } from "./patient-panels";
 import { ConversationList, useConversations } from "./conversations";
 import { SignInForm } from "./sign-in-form";
 
@@ -40,6 +41,7 @@ export function ClientApp() {
   const [tab, setTab] = useState("home");
   const [chat, setChat] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState<AppointmentDto | null>(null);
+  const [rating, setRating] = useState<AppointmentDto | null>(null);
   const signedIn = user?.role === "client";
 
   if (loading) {
@@ -79,10 +81,19 @@ export function ClientApp() {
         setTab(id);
         setChat(null);
         setCancelling(null);
+        setRating(null);
       }}
       overlay={
         chat ? (
           <ChatOverlay conversationId={chat} myId={user.id} onBack={() => setChat(null)} />
+        ) : rating ? (
+          <AppSheet title="How was your visit?" onClose={() => setRating(null)}>
+            <RateVisitPanel
+              visit={rating}
+              onClose={() => setRating(null)}
+              onDone={() => undefined}
+            />
+          </AppSheet>
         ) : cancelling ? (
           <AppSheet title="Cancel or change" onClose={() => setCancelling(null)}>
             <CancelVisitPanel
@@ -100,6 +111,7 @@ export function ClientApp() {
         user={user}
         onChat={setChat}
         onCancel={setCancelling}
+        onRate={setRating}
         onSignedOut={reload}
       />
     </PhoneFrame>
@@ -111,12 +123,14 @@ function ClientTabs({
   user,
   onChat,
   onCancel,
+  onRate,
   onSignedOut,
 }: {
   tab: string;
   user: SessionUser;
   onChat: (id: string) => void;
   onCancel: (visit: AppointmentDto) => void;
+  onRate: (visit: AppointmentDto) => void;
   onSignedOut: () => void;
 }) {
   const home = useResource<ClientHomeDto>(
@@ -134,7 +148,7 @@ function ClientTabs({
     );
   const data = home.data;
 
-  if (tab === "visits") return <ClientVisits onCancel={onCancel} />;
+  if (tab === "visits") return <ClientVisits onCancel={onCancel} onRate={onRate} />;
 
   if (tab === "messages") {
     return (
@@ -166,6 +180,13 @@ function ClientTabs({
             <p className="text-caption text-ink-500">Signed in as</p>
             <p className="text-small font-semibold break-all">{user.email}</p>
           </AppCard>
+          {data && (
+            <PatientDetailsCard
+              key={JSON.stringify([data.phone, data.emergencyContact])}
+              home={data}
+              onSaved={home.reload}
+            />
+          )}
           <Button
             className="w-full"
             onClick={async () => {
@@ -187,6 +208,24 @@ function ClientTabs({
     <>
       <AppHeader eyebrow="Welcome back" title={`Hi ${first}`} />
       <div className="p-4">
+        {data?.discharged && (
+          <AppCard title="Your care has finished">
+            <p className="text-small text-ink-700">
+              {data.discharged.reason}. Thank you for choosing Medisense. Your visit history stays
+              here, and you can still rate your visits.
+            </p>
+          </AppCard>
+        )}
+        {data?.toRate.map((v) => (
+          <AppCard key={v.id} title="How was your visit?">
+            <p className="mb-2 text-small text-ink-700">
+              {v.discipline} with {v.therapistName}, {slotLabel(v.start)}
+            </p>
+            <Button size="sm" variant="primary" onClick={() => onRate(v)}>
+              Rate this visit
+            </Button>
+          </AppCard>
+        ))}
         {!data ? (
           <Skeleton className="h-32" />
         ) : (

@@ -1,4 +1,6 @@
 import {
+  CircleUserRound,
+  Stethoscope,
   UserPlus,
   MessagesSquare,
   BellRing,
@@ -72,8 +74,10 @@ export const navigation: { group: string; items: NavItem[] }[] = [
     group: "Live care",
     items: [
       { href: "/care", label: "Patient onboarding", icon: UserPlus, roles: [L, A] },
+      { href: "/care/therapists", label: "Therapists", icon: Stethoscope, roles: [L, A] },
       { href: "/therapist", label: "My new patients", icon: BellRing, roles: [C] },
       { href: "/messages", label: "Messages", icon: MessagesSquare, roles: [C] },
+      { href: "/profile", label: "My profile", icon: CircleUserRound, roles: [L, A, S, C] },
     ],
   },
   {
@@ -200,6 +204,11 @@ type RouteMeta = { section: string; page: string; role: Role };
 
 const routes: { prefix: string; meta: RouteMeta }[] = [
   {
+    prefix: "/care/therapists",
+    meta: { section: "Patient onboarding", page: "Therapists", role: "Admin" },
+  },
+  { prefix: "/profile", meta: { section: "Live care", page: "My profile", role: "Clinician" } },
+  {
     prefix: "/care/new",
     meta: { section: "Patient onboarding", page: "Add a patient", role: "Admin" },
   },
@@ -304,12 +313,17 @@ export function isStandalone(pathname: string) {
 /** Detail pages that belong to a differently named sidebar entry. */
 const activeAliases: Record<string, string[]> = { "/reports": ["/progress-reports"] };
 
+const under = (pathname: string, prefix: string) =>
+  pathname === prefix || pathname.startsWith(`${prefix}/`);
+
 export function isActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
   const section = href.split("/").slice(0, 2).join("/");
-  return [section, ...(activeAliases[section] ?? [])].some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
-  );
+  const inSection = [section, ...(activeAliases[section] ?? [])].some((p) => under(pathname, p));
+  if (!inSection) return false;
+  // A more specific entry wins, so "/care/therapists" doesn't also light up "/care".
+  const hrefs = navigation.flatMap((g) => g.items.map((i) => i.href));
+  return !hrefs.some((h) => h !== href && h.startsWith(`${href}/`) && under(pathname, h));
 }
 
 export const roleHome: Record<Role, string> = {

@@ -18,10 +18,13 @@ import {
   Skeleton,
   StageTag,
 } from "./bits";
+import { DischargeSheet } from "./care-sheets";
 import { MatchPicker } from "./match-picker";
 import { VisitList } from "./visit-list";
 
 export function ClientDetail({ clientId }: { clientId: string }) {
+  const [discharging, setDischarging] = useState(false);
+  const [now] = useState(() => Date.now());
   const { data, error, loading, reload } = useResource<{ client: ClientDetailDto }>(
     `/api/care/clients/${clientId}`,
     (event) =>
@@ -55,9 +58,37 @@ export function ClientDetail({ clientId }: { clientId: string }) {
           <div className="flex items-center gap-3">
             <LiveBadge />
             <StageTag stage={client.stage} />
+            {!client.discharged && (
+              <Button size="sm" onClick={() => setDischarging(true)}>
+                Discharge
+              </Button>
+            )}
           </div>
         }
       />
+      {client.discharged && (
+        <p
+          role="status"
+          className="mb-6 rounded-control border border-border bg-canvas px-4 py-3 text-small"
+        >
+          <strong>Discharged</strong> {shortDate(client.discharged.at)} by{" "}
+          {client.discharged.byName}: {client.discharged.reason}. Their visit history, notes and
+          feedback stay on record below.
+        </p>
+      )}
+      {discharging && (
+        <DischargeSheet
+          clientId={client.id}
+          name={client.name}
+          upcoming={
+            client.appointments.filter(
+              (a) => a.status === "booked" && new Date(a.start).getTime() > now,
+            ).length
+          }
+          onClose={() => setDischarging(false)}
+          onDone={reload}
+        />
+      )}
       <div className="grid gap-6 xl:grid-cols-12">
         <div className="flex flex-col gap-6 xl:col-span-8">
           {client.needs.map((need) => (
@@ -101,6 +132,12 @@ export function ClientDetail({ clientId }: { clientId: string }) {
               </dd>
               <dt className="text-ink-500">Funding</dt>
               <dd>{client.funding}</dd>
+              <dt className="text-ink-500">Emergency</dt>
+              <dd>
+                {client.emergencyContact
+                  ? `${client.emergencyContact.name} (${client.emergencyContact.relationship}), ${client.emergencyContact.phone}`
+                  : "Not given yet"}
+              </dd>
             </dl>
             {client.notes && (
               <p className="mt-4 border-t border-border pt-3 text-small whitespace-pre-line text-ink-700">

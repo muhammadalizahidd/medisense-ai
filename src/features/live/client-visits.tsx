@@ -8,11 +8,17 @@ import { CANCELLATION_NOTICE_HOURS } from "@/lib/live/catalogue";
 import { useResource } from "@/lib/live/client";
 import { shortDate, timeOfDay } from "@/lib/live/time";
 import type { AppointmentDto } from "@/lib/live/types";
-import { ErrorNote, Skeleton } from "./bits";
+import { ErrorNote, Skeleton, Stars } from "./bits";
 import { visitNote, visitStatus } from "./visit-list";
 
 /** The client's visits: upcoming ones can be cancelled or moved, past ones show what happened. */
-export function ClientVisits({ onCancel }: { onCancel: (visit: AppointmentDto) => void }) {
+export function ClientVisits({
+  onCancel,
+  onRate,
+}: {
+  onCancel: (visit: AppointmentDto) => void;
+  onRate: (visit: AppointmentDto) => void;
+}) {
   const { data, error, reload } = useResource<{ visits: AppointmentDto[] }>(
     "/api/visits",
     (e) => e.type === "care",
@@ -79,6 +85,22 @@ export function ClientVisits({ onCancel }: { onCancel: (visit: AppointmentDto) =
                       </div>
                       <Tag tone={visitStatus[v.status].tone}>{visitStatus[v.status].label}</Tag>
                     </div>
+                    {v.note && (
+                      <p className="mt-2 rounded-control bg-canvas px-3 py-2 text-small">
+                        {v.note.forPatient}
+                      </p>
+                    )}
+                    {v.feedback ? (
+                      <p className="mt-2 flex items-center gap-2 text-caption text-ink-700">
+                        Your rating <Stars value={v.feedback.rating} />
+                      </p>
+                    ) : (
+                      v.status === "completed" && (
+                        <Button size="sm" className="mt-2" onClick={() => onRate(v)}>
+                          Rate this visit
+                        </Button>
+                      )
+                    )}
                   </AppCard>
                 ))}
               </>

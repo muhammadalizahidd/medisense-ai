@@ -106,6 +106,15 @@ export function WorkspaceMenu() {
                   >
                     My workspace
                   </Link>
+                  {account.role !== "client" && (
+                    <Link
+                      href="/profile"
+                      onClick={() => setOpen(false)}
+                      className="rounded-control border border-border-strong px-2.5 py-1.5 text-caption font-semibold text-ink-900 hover:bg-canvas hover:no-underline"
+                    >
+                      My profile
+                    </Link>
+                  )}
                   <button
                     type="button"
                     onClick={async () => {

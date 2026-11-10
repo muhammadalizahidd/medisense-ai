@@ -1,6 +1,7 @@
 "use client";
 
-import { Send } from "lucide-react";
+import { CalendarClock, CalendarOff, Send } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/premium";
@@ -102,7 +103,24 @@ export function MatchPicker({
                 </p>
                 <p className="text-caption text-ink-500">
                   {m.seniority} · {m.activeClients} of {m.capacity} patients · {m.sessionMinutes}{" "}
-                  min sessions
+                  min sessions · <Link href={`/care/therapists/${m.therapistId}`}>Profile</Link>
+                </p>
+                <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-caption text-ink-700">
+                  <span className="inline-flex items-center gap-1">
+                    <CalendarClock className="size-3.5 text-ink-500" aria-hidden="true" />
+                    Works {m.availability.pattern}
+                  </span>
+                  {m.availability.away.map((a) => (
+                    <span
+                      key={`${a.from}-${a.to}`}
+                      className="inline-flex items-center gap-1 text-monitor"
+                    >
+                      <CalendarOff className="size-3.5" aria-hidden="true" />
+                      Away {shortDate(`${a.from}T00:00:00+10:00`)}
+                      {a.to !== a.from && `–${shortDate(`${a.to}T00:00:00+10:00`)}`} (
+                      {a.reason.toLowerCase()})
+                    </span>
+                  ))}
                 </p>
                 <ul className="mt-2 flex flex-wrap gap-1.5">
                   {m.reasons.map((r) => (
