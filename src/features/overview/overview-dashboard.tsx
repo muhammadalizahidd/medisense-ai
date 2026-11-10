@@ -27,14 +27,6 @@ const statusColour: Record<CaseloadStatus, string> = {
 
 const percent = (v: number) => `${v}%`;
 
-/** The other headline figures are already at the top of the Overview. */
-const teamDetailFigures = [
-  "Active clinicians",
-  "Active clients",
-  "Average caseload",
-  "Clinicians near capacity",
-];
-
 export function OverviewDashboard() {
   const [site, setSite] = useState<"all" | Site>("all");
   const [discipline, setDiscipline] = useState<"all" | Discipline>("all");
@@ -187,10 +179,7 @@ export function OverviewDashboard() {
         </FilterField>
       </FilterBar>
 
-      <KpiGrid
-        kpis={s.kpis.filter((k) => teamDetailFigures.includes(k.label))}
-        label="Organisation indicators"
-      />
+      <KpiGrid kpis={s.kpis} label="Organisation indicators" />
       <TrendCards cards={cards} periodLabel={periodLabel} />
 
       <div className="mt-6">
