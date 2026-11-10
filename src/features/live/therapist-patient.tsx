@@ -85,9 +85,9 @@ export function TherapistPatient({ clientId }: { clientId: string }) {
           label="Visit figures"
           metrics={[
             { label: "Upcoming", value: upcoming.length },
-            { label: "Completed", value: visits.filter((v) => v.status === "completed").length },
+            { label: "Attended", value: visits.filter((v) => v.status === "completed").length },
             {
-              label: "No-shows",
+              label: "Did not attend",
               value: visits.filter((v) => v.status === "no-show").length,
               tone: visits.some((v) => v.status === "no-show") ? "over" : undefined,
             },

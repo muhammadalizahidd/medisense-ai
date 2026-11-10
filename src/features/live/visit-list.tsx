@@ -14,17 +14,17 @@ import { NoteSheet } from "./care-sheets";
 export const visitStatus: Record<VisitStatus, { label: string; tone: TagTone }> = {
   tentative: { label: "Held", tone: "monitor" },
   booked: { label: "Booked", tone: "available" },
-  completed: { label: "Completed", tone: "healthy" },
+  completed: { label: "Attended", tone: "healthy" },
   cancelled: { label: "Cancelled", tone: "neutral" },
   "late-cancelled": { label: "Late cancellation", tone: "over" },
-  "no-show": { label: "No-show", tone: "over" },
+  "no-show": { label: "Did not attend", tone: "over" },
 };
 
 /** What a visit says about itself: series position and, if called off, why and with what notice. */
 export function visitNote(v: AppointmentDto) {
   if (v.cancellation) {
     const c = v.cancellation;
-    if (v.status === "no-show") return "Patient wasn't there. May be charged.";
+    if (v.status === "no-show") return "Did not attend, with no notice. May be charged.";
     return `${c.reason}. ${c.by === "client" ? "Patient" : "Medisense"} cancelled with ${c.noticeHours} hours' notice${c.chargeable ? ", may be charged" : ""}.`;
   }
   return v.series ? `Visit ${v.series.index} of ${v.series.total}` : "One-off visit";
@@ -117,10 +117,10 @@ export function VisitList({
                     disabled={busy === v.id}
                     onClick={() => record(v, "completed")}
                   >
-                    Completed
+                    Attended
                   </Button>
                   <Button size="sm" disabled={busy === v.id} onClick={() => record(v, "no-show")}>
-                    No-show
+                    Did not attend
                   </Button>
                 </span>
               )}

@@ -117,7 +117,7 @@ export interface Cancellation {
   reason: string;
   /** Whole hours between the cancellation and the visit. */
   noticeHours: number;
-  /** True for a late cancellation or no-show, which may be charged under the 48-hour policy. */
+  /** True for a late cancellation or a visit the patient did not attend; may be charged. */
   chargeable: boolean;
   actorName: string;
   at: Date;

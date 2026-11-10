@@ -41,7 +41,7 @@ export function TherapistRecord({
           { label: "Upcoming visits", value: t.stats.upcoming },
           { label: "Visits completed", value: t.stats.completed },
           {
-            label: "Late cancellations and no-shows",
+            label: "Late cancellations and non-attendance",
             value: t.stats.lateCancellations + t.stats.noShows,
             tone: t.stats.lateCancellations + t.stats.noShows ? "monitor" : undefined,
           },

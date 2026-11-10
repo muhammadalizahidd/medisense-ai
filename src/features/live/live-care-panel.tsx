@@ -131,9 +131,9 @@ function LiveFigures() {
             caption={`${visits.week.reduce((s, d) => s + d.booked, 0)} booked this week`}
           />
           <Stat
-            label="Late cancellations, 30 days"
+            label="Missed visits, 30 days"
             value={cancellations.late + cancellations.noShows}
-            caption={`${cancellations.late} late · ${cancellations.noShows} no-shows · ${cancellations.total} cancellations in all`}
+            caption={`${cancellations.late} late cancellations · ${cancellations.noShows} did not attend · ${cancellations.total} cancellations in all`}
             tone={cancellations.late + cancellations.noShows ? "over" : undefined}
           />
         </div>

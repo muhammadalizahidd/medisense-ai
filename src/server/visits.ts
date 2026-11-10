@@ -311,7 +311,7 @@ export async function recordOutcome(
         cancellation: noShow
           ? {
               by: "client",
-              reason: "No-show",
+              reason: "Did not attend",
               noticeHours: 0,
               chargeable: true,
               actorName: user.name,
@@ -324,7 +324,7 @@ export async function recordOutcome(
   const { client, therapist } = await partiesOf(visit);
   await audit(
     user,
-    `${noShow ? "Recorded a no-show for" : "Completed"} the visit on ${slotLabel(visit.start)}`,
+    `Recorded the visit on ${slotLabel(visit.start)} as ${noShow ? "did not attend" : "attended"}`,
     client._id,
   );
   await publish([...(await adminIds()), therapist.userId], "care", {

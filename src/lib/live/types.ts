@@ -131,7 +131,7 @@ export type TherapistHomeDto = {
     discharged: boolean;
   }[];
   upcoming: AppointmentDto[];
-  /** Past visits still waiting for "Completed" or "No-show". */
+  /** Past visits still waiting for "Attended" or "Did not attend". */
   toRecord: AppointmentDto[];
   /** Completed visits in the last 30 days without a session note. */
   notesToWrite: AppointmentDto[];
