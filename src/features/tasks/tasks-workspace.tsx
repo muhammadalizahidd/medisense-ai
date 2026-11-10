@@ -1,15 +1,12 @@
 "use client";
 
 import { dt } from "@/lib/clock";
-import { Check, CircleAlert } from "lucide-react";
+import { Check } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { BarList } from "@/components/charts/bar-list";
-import { colour } from "@/components/charts/chart-kit";
-import { StackedColumns } from "@/components/charts/stacked-columns";
 import { PenNib } from "@/components/ai/provenance";
 import { Button } from "@/components/ui/button";
-import { Caption, Card, CardTitle } from "@/components/ui/card";
+import { Caption, Card } from "@/components/ui/card";
 import { FilterChips } from "@/components/ui/filter-chips";
 import { SearchField } from "@/components/ui/search-field";
 import { FilterBar, FilterField, Segmented, SelectField } from "@/components/ui/segmented";
@@ -79,25 +76,6 @@ export function TasksWorkspace() {
     .filter((t) => `${t.title} ${t.client}`.toLowerCase().includes(query.trim().toLowerCase()))
     .sort((a, b) => Number(a.done) - Number(b.done) || b.daysOverdue - a.daysOverdue);
 
-  const byOwner = owners
-    .map((o) => ({
-      owner: o,
-      overdue: open.filter((t) => t.owner === o && t.daysOverdue > 0).length,
-      onTrack: open.filter((t) => t.owner === o && t.daysOverdue <= 0).length,
-    }))
-    .filter((r) => r.overdue + r.onTrack > 0)
-    .sort((a, b) => b.overdue + b.onTrack - (a.overdue + a.onTrack));
-
-  const byType = taskTypes
-    .map((t) => ({
-      id: t,
-      label: t,
-      value: open.filter((x) => x.type === t).length,
-      colour: colour.accent,
-    }))
-    .filter((d) => d.value > 0)
-    .sort((a, b) => b.value - a.value);
-
   const metrics = [
     { label: "Open tasks", value: open.length, caption: `${done.length} completed` },
     { label: "Overdue", value: overdue.length, caption: "Past their due date", tone: "over" },
@@ -132,79 +110,6 @@ export function TasksWorkspace() {
           </div>
         ))}
       </section>
-
-      {/* <div className="mt-6 grid items-stretch gap-6 lg:grid-cols-12">
-        <Card aria-labelledby="by-owner" className="flex flex-col px-6 pt-5 pb-4 lg:col-span-5">
-          <CardTitle
-            id="by-owner"
-            title="Open tasks by owner"
-            description="Overdue work sits with a few people"
-          />
-          <div className="mt-3">
-            <StackedColumns
-              label="Open tasks by owner"
-              layout="vertical"
-              height={byOwner.length * 30 + 30}
-              labelWidth={112}
-              data={byOwner}
-              xKey="owner"
-              series={[
-                { key: "overdue", label: "Overdue", colour: colour.over },
-                { key: "onTrack", label: "On track", colour: colour.series1 },
-              ]}
-            />
-          </div>
-        </Card>
-
-        <Card aria-labelledby="by-type" className="flex flex-col px-6 pt-5 pb-4 lg:col-span-3">
-          <CardTitle id="by-type" title="By type" description="Click a bar to filter" />
-          <div className="mt-3">
-            <BarList
-              label="Open tasks by type"
-              data={byType}
-              labelWidth={112}
-              unit="open tasks"
-              selected={type === "all" ? null : type}
-              onSelect={(id) => setType((id as TaskType | null) ?? "all")}
-            />
-          </div>
-        </Card>
-
-        <Card aria-labelledby="escalations" className="flex flex-col lg:col-span-4">
-          <div className="px-5 pt-5 pb-3">
-            <CardTitle
-              id="escalations"
-              title="Escalations"
-              description={`Overdue by more than ${ESCALATE_AFTER_DAYS} days, sent to ${escalationOwner}`}
-            />
-          </div>
-          {escalated.length === 0 ? (
-            <p className="px-5 pb-5 text-small text-ink-500">Nothing escalated.</p>
-          ) : (
-            escalated
-              .sort((a, b) => b.daysOverdue - a.daysOverdue)
-              .slice(0, 6)
-              .map((t) => (
-                <div
-                  key={t.id}
-                  className="flex items-start gap-2.5 border-t border-border px-5 py-2.5"
-                >
-                  <CircleAlert
-                    className="mt-0.5 size-4 flex-none text-over"
-                    strokeWidth={1.5}
-                    aria-hidden="true"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-small font-semibold">{t.title}</div>
-                    <Caption>
-                      {t.client} · {t.owner} · {t.daysOverdue} days late
-                    </Caption>
-                  </div>
-                </div>
-              ))
-          )}
-        </Card>
-      </div> */}
 
       <div className="mt-6">
         <FilterBar aside={`Showing ${rows.length} of ${tasks.length}`}>

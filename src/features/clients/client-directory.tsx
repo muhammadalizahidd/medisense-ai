@@ -3,10 +3,7 @@
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { colour } from "@/components/charts/chart-kit";
-import { DonutChart } from "@/components/charts/donut-chart";
-import { StackedColumns } from "@/components/charts/stacked-columns";
-import { Caption, Card, CardTitle } from "@/components/ui/card";
+import { Caption, Card } from "@/components/ui/card";
 import { FilterChips } from "@/components/ui/filter-chips";
 import { SearchField } from "@/components/ui/search-field";
 import { FilterBar, FilterField, Segmented, SelectField } from "@/components/ui/segmented";
@@ -30,11 +27,6 @@ const COLUMNS =
 type StateFilter = "all" | DirectoryClient["state"] | "review-soon";
 
 const stateTone = { Active: "healthy", Paused: "monitor", New: "available" } as const;
-
-const fundingSeries = [
-  { key: "ndis", label: "NDIS", colour: colour.series1 },
-  { key: "agedCare", label: "Aged care", colour: colour.series2 },
-];
 
 export function ClientDirectory() {
   const [funding, setFunding] = useState<"all" | Funding>("all");
@@ -106,70 +98,6 @@ export function ClientDirectory() {
           </div>
         ))}
       </section>
-
-      {/* <div className="mt-6 grid items-stretch gap-6 lg:grid-cols-12">
-        <Card aria-labelledby="funding-mix" className="flex flex-col px-6 pt-5 pb-5 lg:col-span-4">
-          <CardTitle id="funding-mix" title="Funding mix" description="Click a slice to filter" />
-          <div className="mt-5">
-            <DonutChart
-              label="Clients by funding"
-              size={156}
-              centre={
-                funding === "all"
-                  ? clientTotals.all
-                  : funding === "NDIS"
-                    ? clientTotals.ndis
-                    : clientTotals.agedCare
-              }
-              centreCaption={funding === "all" ? "clients" : funding.toLowerCase()}
-              selected={funding === "all" ? null : funding}
-              onSelect={(id) => setFunding((id as Funding | null) ?? "all")}
-              slices={[
-                { id: "NDIS", label: "NDIS", value: clientTotals.ndis, colour: colour.series1 },
-                {
-                  id: "Aged care",
-                  label: "Aged care",
-                  value: clientTotals.agedCare,
-                  colour: colour.series2,
-                },
-              ]}
-            />
-          </div>
-        </Card>
-
-        <Card aria-labelledby="by-region" className="flex flex-col px-6 pt-5 pb-4 lg:col-span-3">
-          <CardTitle id="by-region" title="By region" description="Home visits & telehealth" />
-          <div className="mt-3 flex flex-1 flex-col">
-            <StackedColumns
-              label="Clients by region and funding"
-              height="fill"
-              data={clientsByRegion.map((r) => ({
-                ...r,
-                region: r.region.replace("Brisbane ", ""),
-              }))}
-              xKey="region"
-              series={fundingSeries}
-            />
-          </div>
-        </Card>
-
-        <Card aria-labelledby="plan-reviews" className="flex flex-col px-6 pt-5 pb-4 lg:col-span-5">
-          <CardTitle
-            id="plan-reviews"
-            title="Plan reviews ahead"
-            description="All 184 clients · next six months"
-          />
-          <div className="mt-3 flex flex-1 flex-col">
-            <StackedColumns
-              label="Plan reviews by month"
-              height="fill"
-              data={planReviewsByMonth}
-              xKey="month"
-              series={fundingSeries}
-            />
-          </div>
-        </Card>
-      </div> */}
 
       <div className="mt-6">
         <FilterBar aside={`Showing ${rows.length} of ${directoryClients.length} sample records`}>
