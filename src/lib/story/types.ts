@@ -28,7 +28,7 @@ export type ProposedTask = {
   title: string;
   owner: string;
   dueInWorkingDays: number;
-  type: "Client follow-up" | "Document request" | "Communication" | "Scheduling" | "Supervision";
+  type: "Patient follow-up" | "Document request" | "Communication" | "Scheduling" | "Supervision";
   sentenceId: string;
 };
 

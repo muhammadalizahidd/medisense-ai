@@ -75,7 +75,7 @@ export default function SarahSupervisionPage() {
               <div key={c.client} className="border-t border-border px-5 py-3 last:pb-3.5">
                 {clientProfileById(c.client.toLowerCase().replace(" ", "-")) ? (
                   <Link
-                    href={`/clients/${c.client.toLowerCase().replace(" ", "-")}`}
+                    href={`/patients/${c.client.toLowerCase().replace(" ", "-")}`}
                     className="font-semibold text-ink-900 hover:text-accent"
                   >
                     {c.client}

@@ -1,6 +1,6 @@
 import { dt, wd } from "@/lib/clock";
 export type FieldSource =
-  "Client profile" | "Approved note" | "Referral" | "NDIS plan" | "Documents" | "Medisense policy";
+  "Patient profile" | "Approved note" | "Referral" | "NDIS plan" | "Documents" | "Medisense policy";
 
 export type FormField = {
   id: string;
@@ -37,23 +37,23 @@ export const formDrafts: FormDraft[] = [
     fields: [
       {
         id: "name",
-        label: "Client name",
+        label: "Patient name",
         value: "Ruth Hallam",
-        source: "Client profile",
+        source: "Patient profile",
         required: true,
       },
       {
         id: "dob",
         label: "Date of birth",
         value: "03/07/1948",
-        source: "Client profile",
+        source: "Patient profile",
         required: true,
       },
       {
         id: "address",
         label: "Home address",
         value: "14 Kitchener Rd, Ascot QLD 4007",
-        source: "Client profile",
+        source: "Patient profile",
         required: true,
       },
       {
@@ -110,7 +110,7 @@ export const formDrafts: FormDraft[] = [
       { id: "quote", label: "Builder quote", value: "", source: null, required: true },
       {
         id: "consent",
-        label: "Client consent",
+        label: "Patient consent",
         value: `Signed ${dt("6 Oct 2026")}`,
         source: "Documents",
         required: true,
@@ -129,14 +129,14 @@ export const formDrafts: FormDraft[] = [
         id: "name",
         label: "Participant name",
         value: "Ava Mitchell",
-        source: "Client profile",
+        source: "Patient profile",
         required: true,
       },
       {
         id: "dob",
         label: "Date of birth",
         value: "21/08/2015",
-        source: "Client profile",
+        source: "Patient profile",
         required: true,
       },
       {

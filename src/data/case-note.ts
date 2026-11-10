@@ -50,7 +50,7 @@ export const caseNotes: CaseNoteSample[] = [
     enteredAt: `${dt("13 Oct")}, 4:12 pm`,
     context: "Mia Robinson, 7, paediatric occupational therapy (NDIS), focus on daily routines",
     rawLines: [
-      "Client struggling with morning routine.",
+      "Patient struggling with morning routine.",
       "Parent reports increased anxiety before school.",
       "Visual schedule helping slightly.",
       "Difficulty transitioning from breakfast to getting dressed.",
@@ -62,7 +62,7 @@ export const caseNotes: CaseNoteSample[] = [
     minutesSaved: 8,
     draft: {
       summary:
-        "Client continues to experience difficulty with morning transitions, particularly between breakfast and dressing. Parent reports increased school-related anxiety. Visual scheduling has provided some improvement.",
+        "Patient continues to experience difficulty with morning transitions, particularly between breakfast and dressing. Parent reports increased school-related anxiety. Visual scheduling has provided some improvement.",
       subjective: [
         "Parent reports increased anxiety before school",
         "Morning routine described as a daily struggle",
@@ -92,7 +92,7 @@ export const caseNotes: CaseNoteSample[] = [
         title: "Check in with parent after the 7-day strategy trial",
         owner: "Sarah Thompson",
         due: dt("Tue 27 Oct"),
-        type: "Client follow-up",
+        type: "Patient follow-up",
         priority: "Medium",
       },
       {
@@ -146,13 +146,13 @@ export const caseNotes: CaseNoteSample[] = [
         "Review grip and endurance at the next session",
       ],
       missingInformation: [
-        "External paediatrician report not yet uploaded to the client record",
+        "External paediatrician report not yet uploaded to the patient record",
         "Endurance not measured with a standard tool",
       ],
     },
     suggestedTasks: [
       {
-        title: `Upload paediatrician report (${dt("14 Oct")}) to client record`,
+        title: `Upload paediatrician report (${dt("14 Oct")}) to patient record`,
         owner: "Admin team",
         due: dt("Wed 21 Oct"),
         type: "Document request",
@@ -200,7 +200,7 @@ export const caseNotes: CaseNoteSample[] = [
       interventions: [
         "Bathroom access assessment",
         "Observed shower transfer",
-        "Discussed equipment options with client and daughter",
+        "Discussed equipment options with patient and daughter",
       ],
       observations: [
         "18 cm step into the shower",
@@ -229,7 +229,7 @@ export const caseNotes: CaseNoteSample[] = [
         title: "Call Ruth's daughter about living arrangements",
         owner: "Sarah Thompson",
         due: dt("Tue 3 Nov"),
-        type: "Client follow-up",
+        type: "Patient follow-up",
         priority: "Medium",
       },
     ],
@@ -338,7 +338,7 @@ export const caseNotes: CaseNoteSample[] = [
       ],
       missingInformation: [
         "Typing speed not compared with an age-based norm",
-        "Teacher's contact details missing from the client record",
+        "Teacher's contact details missing from the patient record",
       ],
     },
     suggestedTasks: [

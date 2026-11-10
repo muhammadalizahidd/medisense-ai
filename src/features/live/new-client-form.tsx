@@ -66,7 +66,7 @@ export function NewClientForm() {
         }),
       );
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Couldn't add the client.");
+      setError(e instanceof Error ? e.message : "Couldn't add the patient.");
     } finally {
       setBusy(false);
     }
@@ -84,13 +84,13 @@ export function NewClientForm() {
   return (
     <form onSubmit={submit} noValidate>
       <PageHeader
-        eyebrow="Client onboarding"
-        title="Add a client"
+        eyebrow="Patient onboarding"
+        title="Add a patient"
         description="Their details, the therapy they need and how often. Next you'll choose a therapist by availability."
       />
       <div className="grid gap-6 xl:grid-cols-12">
         <div className="flex flex-col gap-6 xl:col-span-8">
-          <Panel title="Client">
+          <Panel title="Patient">
             <div className="grid gap-4 md:grid-cols-2">
               <Field label="Full name">
                 <input
@@ -110,8 +110,8 @@ export function NewClientForm() {
                 />
               </Field>
               <Field
-                label="Email for the client app"
-                hint="The client or their guardian signs in with this."
+                label="Email for the patient app"
+                hint="The patient or their guardian signs in with this."
               >
                 <input
                   type="email"
@@ -239,7 +239,7 @@ export function NewClientForm() {
           )}
           <div className="flex flex-wrap gap-2">
             <Button type="submit" variant="primary" disabled={busy}>
-              {busy ? "Adding client…" : "Add client and find therapists"}
+              {busy ? "Adding patient…" : "Add patient and find therapists"}
             </Button>
             <ButtonLink href="/care">Cancel</ButtonLink>
           </div>
@@ -264,7 +264,7 @@ function ClientCreated({
       <Panel title={`${name} has been added`}>
         <p className="text-small text-ink-700">
           Give this invite code to {name.split(" ")[0]} or their guardian. They open the Medisense
-          client app, choose <strong>I have an invite code</strong>, and set a password. This code
+          patient app, choose <strong>I have an invite code</strong>, and set a password. This code
           is shown only once.
         </p>
         <div className="my-5 flex items-center justify-between gap-3 rounded-control border border-border bg-canvas px-4 py-3">

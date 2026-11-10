@@ -11,7 +11,7 @@ export const sarahProfile = {
 };
 
 export const sarahMetrics = [
-  { label: "Active clients", value: "27", caption: "2 above capacity", tone: "over" },
+  { label: "Active patients", value: "27", caption: "2 above capacity", tone: "over" },
   { label: "Recommended capacity", value: "25", caption: "Configured for 1.0 FTE" },
   { label: "High-complexity", value: "6", caption: "Weighted 2.5 units each" },
   { label: "Notes overdue", value: "4", caption: "Oldest 14 days" },
@@ -23,7 +23,7 @@ export const sarahMetrics = [
 
 export const sarahScoreFactors: ScoreFactor[] = [
   { label: "Utilisation vs capacity", detail: "27 of 25 · 108%", points: 34, max: 40 },
-  { label: "Complexity mix", detail: "6 high-complexity clients", points: 17, max: 20 },
+  { label: "Complexity mix", detail: "6 high-complexity patients", points: 17, max: 20 },
   { label: "Overdue documentation", detail: "4 notes overdue", points: 12, max: 15 },
   { label: "Pending / overdue follow-ups", detail: "5 due, 3 overdue", points: 8, max: 10 },
   { label: "Supervision status", detail: "Due in 2 days · 2 actions open", points: 7, max: 10 },

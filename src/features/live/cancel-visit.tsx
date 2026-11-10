@@ -110,7 +110,7 @@ export function CancelVisitPanel({
                 value={by}
                 onChange={setBy}
                 options={[
-                  { id: "client", label: "The client" },
+                  { id: "client", label: "The patient" },
                   { id: "medisense", label: "Medisense" },
                 ]}
               />

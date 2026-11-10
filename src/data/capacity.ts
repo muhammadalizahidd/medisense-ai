@@ -44,12 +44,12 @@ export const rebalanceScenario = {
 
 export const capacityRecommendation = {
   generatedAt: `${dt("19 Oct")}, 15:02`,
-  text: "Sarah is above configured capacity and has six complex cases. Emma currently has capacity for approximately four additional clients of comparable complexity. Leadership must review any redistribution. The system will not reassign clients automatically.",
+  text: "Sarah is above configured capacity and has six complex cases. Emma currently has capacity for approximately four additional patients of comparable complexity. Leadership must review any redistribution. The system will not reassign patients automatically.",
   from: { name: "Sarah", load: "27 / 25", note: "+2 over · 42.0 / 37.5 units" },
   to: { name: "Emma", load: "18 / 24", note: "≈4 available · 6.5 units free" },
   continuity: [
-    "Established and high-complexity clients stay with Sarah.",
-    `${moved} newer clients (under 3 months, no open flags) could be reviewed for transfer.`,
-    "Emma is an OT covering the same region (Brisbane North), so clients keep their discipline and travel area.",
+    "Established and high-complexity patients stay with Sarah.",
+    `${moved} newer patients (under 3 months, no open flags) could be reviewed for transfer.`,
+    "Emma is an OT covering the same region (Brisbane North), so patients keep their discipline and travel area.",
   ],
 };

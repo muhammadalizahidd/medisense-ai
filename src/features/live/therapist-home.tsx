@@ -36,7 +36,7 @@ export function TherapistHome() {
       <PageHeader
         eyebrow={`${therapist.discipline} · ${therapist.region}`}
         title={`Hello, ${therapist.name.split(" ")[0]}`}
-        description={`${therapist.activeClients} of ${therapist.capacity} clients on your caseload.`}
+        description={`${therapist.activeClients} of ${therapist.capacity} patients on your caseload.`}
         actions={
           <div className="flex items-center gap-3">
             <LiveBadge />
@@ -47,12 +47,12 @@ export function TherapistHome() {
       <div className="grid gap-6 xl:grid-cols-12">
         <div className="flex flex-col gap-6 xl:col-span-8">
           <Panel
-            title="New client requests"
+            title="New patient requests"
             action={requests.length > 0 && <Tag tone="monitor">{requests.length} waiting</Tag>}
           >
             {requests.length === 0 ? (
               <EmptyNote title="No new requests.">
-                When the care team asks you to take a client, it appears here straight away.
+                When the care team asks you to take a patient, it appears here straight away.
               </EmptyNote>
             ) : (
               <ul className="flex flex-col gap-3">
@@ -80,13 +80,13 @@ export function TherapistHome() {
               visits={upcoming.filter((v) => v.status === "booked")}
               show="client"
               onChanged={reload}
-              emptyText="No booked visits yet. They appear when you accept a client."
+              emptyText="No booked visits yet. They appear when you accept a patient."
             />
           </Panel>
         </div>
         <div className="flex flex-col gap-6 xl:col-span-4">
           <Panel
-            title="My new clients"
+            title="My new patients"
             action={
               <ButtonLink href="/messages" size="sm">
                 All messages
@@ -94,7 +94,7 @@ export function TherapistHome() {
             }
           >
             {clients.length === 0 ? (
-              <EmptyNote title="No clients accepted here yet." />
+              <EmptyNote title="No patients accepted here yet." />
             ) : (
               <ul className="divide-y divide-border">
                 {clients.map((c) => (
@@ -209,7 +209,7 @@ export function RequestCard({
             </select>
           </label>
           <Button disabled={busy} onClick={() => answer({ decision: "decline", reason })}>
-            {busy ? "Sending…" : "Decline client"}
+            {busy ? "Sending…" : "Decline patient"}
           </Button>
           <Button variant="ghost" onClick={() => setDeclining(false)}>
             Back
@@ -218,7 +218,7 @@ export function RequestCard({
       ) : (
         <div className="mt-3 flex flex-wrap gap-2">
           <Button variant="primary" disabled={busy} onClick={() => answer({ decision: "accept" })}>
-            {busy ? "Accepting…" : "Accept client"}
+            {busy ? "Accepting…" : "Accept patient"}
           </Button>
           <Button disabled={busy} onClick={() => setDeclining(true)}>
             Decline

@@ -13,14 +13,14 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const profile = clientProfileById((await params).clientId);
-  return { title: `${profile?.name ?? "Client"} · Client profile · Medisense` };
+  return { title: `${profile?.name ?? "Patient"} · Patient profile · Medisense` };
 }
 
 /** Reading the URL's client id must sit inside Suspense so navigation stays instant. */
 export default function ClientProfilePage({ params }: Params) {
   return (
     <PageContainer>
-      <Suspense fallback={<p className="text-small text-ink-500">Loading client…</p>}>
+      <Suspense fallback={<p className="text-small text-ink-500">Loading patient…</p>}>
         <Profile params={params} />
       </Suspense>
     </PageContainer>

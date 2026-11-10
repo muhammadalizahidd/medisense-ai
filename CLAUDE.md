@@ -92,6 +92,7 @@ Read these before changing data, UI or copy:
 - The §8 admin breakdown is **org-wide**. Sarah's own ~24% admin is a separate figure.
 - The overview impact band is a **projection**, never presented as pilot results (Neil has not run a pilot).
 - The proposal's client names (James Thompson, Daniel Lee) are kept as written, a deliberate choice recorded in the dataset doc. Don't rename them unless asked.
+- Say **patient**, never "client", in anything a person reads (decided 10 Nov 2026). Routes are `/patients`, `/patients-requiring-attention` and `/mobile/patient`; old `/clients…` links redirect. Code names, API paths and stored values such as the `client` role keep their names.
 - Australian English (organisation, utilisation, summarise). Dates as `Thu 22 Oct`. Demo "today" is **Tue 20 Oct 2026**.
 
 **AI guardrails**

@@ -97,7 +97,7 @@ export function VisitDetailSheet({
               Open video call
             </ButtonLink>
           )}
-          {client && <ButtonLink href={`/clients/${client.id}`}>Open client</ButtonLink>}
+          {client && <ButtonLink href={`/patients/${client.id}`}>Open patient</ButtonLink>}
           <Button variant="ghost" onClick={onClose}>
             Close
           </Button>
@@ -146,7 +146,7 @@ export function VisitDetailSheet({
       )}
 
       {client && (
-        <Section title="Client">
+        <Section title="Patient">
           <Details
             rows={[
               ["Age", client.age === null ? "Not recorded" : `${client.age}`],
@@ -255,13 +255,13 @@ export function TaskDetailSheet({
             Mark done
           </Button>
           {task.href && <ButtonLink href={task.href}>Go to the work</ButtonLink>}
-          {client && <ButtonLink href={`/clients/${client.id}`}>Open client</ButtonLink>}
+          {client && <ButtonLink href={`/patients/${client.id}`}>Open patient</ButtonLink>}
         </>
       }
     >
       <Details
         rows={[
-          ["Client", task.client],
+          ["Patient", task.client],
           ["Owner", task.owner],
           ["Due", due],
           [

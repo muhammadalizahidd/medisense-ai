@@ -273,7 +273,7 @@ export function AdminQueue() {
           <div className="min-w-280">
             <TableHeader columns={COLUMNS}>
               <div role="columnheader">Task and source</div>
-              <div role="columnheader">Client</div>
+              <div role="columnheader">Patient</div>
               <div role="columnheader">Owner</div>
               <div role="columnheader">Due</div>
               <div role="columnheader">Priority</div>

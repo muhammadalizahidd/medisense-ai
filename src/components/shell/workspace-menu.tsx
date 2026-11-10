@@ -17,7 +17,11 @@ const workspaces: { id: Role; label: string }[] = [
   { id: "Supervisor", label: "Supervisor" },
 ];
 
-const accountLabel = { admin: "Administration", therapist: "Therapist", client: "Client" } as const;
+const accountLabel = {
+  admin: "Administration",
+  therapist: "Therapist",
+  client: "Patient",
+} as const;
 
 /** The signed-in person, and the way to move between the four workspaces. */
 export function WorkspaceMenu() {

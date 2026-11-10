@@ -228,7 +228,7 @@ export function ReportsLibrary() {
           </SelectField>
           <SearchField
             label="Search reports"
-            placeholder="Search clients or report types"
+            placeholder="Search patients or report types"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -240,7 +240,7 @@ export function ReportsLibrary() {
           <div className="overflow-x-auto" role="table" aria-label="Reports">
             <div className="min-w-180">
               <TableHeader columns={COLUMNS}>
-                <div>Client</div>
+                <div>Patient</div>
                 <div>Report</div>
                 <div>Clinician</div>
                 <div>Due</div>

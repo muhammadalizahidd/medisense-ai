@@ -33,11 +33,11 @@ export function CaseloadMix({ clients }: { clients: CaseloadClient[] }) {
         <CardTitle
           id="complexity-mix"
           title="Complexity mix"
-          description="Clients and weighted units by complexity"
+          description="Patients and weighted units by complexity"
         />
         <div className="mt-4 mb-4">
           <DonutChart
-            label="Clients by complexity"
+            label="Patients by complexity"
             centre={totalUnits.toFixed(1)}
             centreCaption="weighted units"
             size={150}
@@ -65,7 +65,7 @@ export function CaseloadMix({ clients }: { clients: CaseloadClient[] }) {
           />
         </div>
         <Caption className="mt-auto border-t border-border pt-3">
-          {count("High")} high-complexity clients carry{" "}
+          {count("High")} high-complexity patients carry{" "}
           {Math.round((units("High") / totalUnits) * 100)}% of the weighted load.
         </Caption>
       </Card>
@@ -74,13 +74,13 @@ export function CaseloadMix({ clients }: { clients: CaseloadClient[] }) {
         <CardTitle
           id="funding-mix"
           title="Funding streams"
-          description="Active clients by funder"
+          description="Active patients by funder"
         />
         <div className="mt-4 mb-4">
           <DonutChart
-            label="Clients by funding stream"
+            label="Patients by funding stream"
             centre={clients.length}
-            centreCaption="active clients"
+            centreCaption="active patients"
             size={150}
             slices={[
               { id: "ndis", label: "NDIS", value: ndis, colour: colour.series1 },
@@ -94,7 +94,7 @@ export function CaseloadMix({ clients }: { clients: CaseloadClient[] }) {
           />
         </div>
         <Caption className="mt-auto border-t border-border pt-3">
-          Aged care clients are home modifications, falls prevention and equipment.
+          Aged care patients are home modifications, falls prevention and equipment.
         </Caption>
       </Card>
 
@@ -102,18 +102,18 @@ export function CaseloadMix({ clients }: { clients: CaseloadClient[] }) {
         <CardTitle
           id="continuity"
           title="Continuity of care"
-          description="How long each client has been with Sarah"
+          description="How long each patient has been with Sarah"
         />
         <div className="mt-3 mb-4">
           <BarList
-            label="Clients by time with clinician"
+            label="Patients by time with clinician"
             data={tenure}
             labelWidth={112}
             unit="clients"
           />
         </div>
         <Caption className="mt-auto border-t border-border pt-3">
-          Newer clients are the least disruptive to review if work is rebalanced.
+          Newer patients are the least disruptive to review if work is rebalanced.
         </Caption>
       </Card>
     </div>

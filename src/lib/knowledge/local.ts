@@ -49,7 +49,7 @@ const guide: Record<string, Guide> = {
   practice: {
     label: "See the whole practice",
     detail:
-      "Caseload health, team capacity and clients at risk of slipping through gaps, updated daily.",
+      "Caseload health, team capacity and patients at risk of slipping through gaps, updated daily.",
     href: "/",
   },
   notes: {
@@ -88,7 +88,7 @@ const guide: Record<string, Guide> = {
   safety: {
     label: "Safe by design",
     detail:
-      "A person approves every AI output, AI never contacts clients, and every action is logged.",
+      "A person approves every AI output, AI never contacts patients, and every action is logged.",
     href: "/settings",
   },
 };
@@ -126,7 +126,7 @@ export function smallTalk(question: string, state: LiveState): Answer | null {
   if (isThanks) {
     return {
       title: "You're welcome.",
-      intro: "Ask me anything else about clients, the team, the schedule, reports or compliance.",
+      intro: "Ask me anything else about patients, the team, the schedule, reports or compliance.",
       items: suggestions.slice(0, 3),
       sources: [],
     };
@@ -134,7 +134,7 @@ export function smallTalk(question: string, state: LiveState): Answer | null {
   return {
     title: isHow ? "All good, and ready to help." : "Hello! I'm Ask Medisense.",
     intro:
-      "I answer questions about your clients, team capacity, schedule, reports, tasks and compliance, using Medisense's own records, and link you to the screen where you can act. Try one of these, or ask your own:",
+      "I answer questions about your patients, team capacity, schedule, reports, tasks and compliance, using Medisense's own records, and link you to the screen where you can act. Try one of these, or ask your own:",
     items: suggestions,
     sources: [],
   };
@@ -266,7 +266,7 @@ function topicCall(
           kind: has(q, /staff|clinician|blue card|screening|registration|first aid|insurance/)
             ? "Staff"
             : has(q, /client|plan|agreement|consent/)
-              ? "Client"
+              ? "Patient"
               : undefined,
           within_days: f.within,
         },

@@ -658,10 +658,10 @@ export const useDemoStore = create<DemoState & DemoActions>()(
           addedClients: [client, ...s.addedClients],
           audit: [
             entry(
-              "client-created",
+              "patient-created",
               "10:21",
               roleUsers[s.role].name,
-              "Created client record",
+              "Created patient record",
               client.name,
             ),
             ...s.audit,
@@ -675,10 +675,10 @@ export const useDemoStore = create<DemoState & DemoActions>()(
             clientEdits: { ...s.clientEdits, [id]: { ...s.clientEdits[id], ...patch } },
             audit: [
               entry(
-                "client-edited",
+                "patient-edited",
                 "10:22",
                 roleUsers[s.role].name,
-                "Updated client details",
+                "Updated patient details",
                 name,
               ),
               ...s.audit,
@@ -817,7 +817,7 @@ export const useDemoStore = create<DemoState & DemoActions>()(
                 "referral-verified",
                 demoActionTimes.referralVerified,
                 "Admin team",
-                "Verified AI-extracted referral details and created client profile",
+                "Verified AI-extracted referral details and created patient profile",
                 `Referral · ${referral.client}`,
               ),
               ...s.audit,
@@ -849,7 +849,7 @@ export const useDemoStore = create<DemoState & DemoActions>()(
                 "referral-merged",
                 demoActionTimes.referralVerified,
                 "Admin team",
-                "Added requested service to the existing client profile (duplicate avoided)",
+                "Added requested service to the existing patient profile (duplicate avoided)",
                 `Referral · ${referral?.client ?? id}`,
               ),
               ...s.audit,

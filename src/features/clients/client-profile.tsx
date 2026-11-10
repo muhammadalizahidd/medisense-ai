@@ -125,7 +125,7 @@ export function ClientProfileView({ profile }: { profile: ClientProfile }) {
       )}
 
       <section
-        aria-label="Client summary"
+        aria-label="Patient summary"
         className="stat-band grid grid-cols-2 gap-px overflow-hidden rounded-card border border-border bg-border lg:grid-cols-5"
       >
         {metrics.map((m) => (
@@ -148,7 +148,7 @@ export function ClientProfileView({ profile }: { profile: ClientProfile }) {
       <div className="mt-6 grid items-stretch gap-6 lg:grid-cols-12">
         <div className={cn(draftSurface(reviewed), "flex flex-col gap-3 px-5 py-5 lg:col-span-5")}>
           {reviewed ? (
-            <ApprovedLabel meta="Reviewed by clinician">Client summary</ApprovedLabel>
+            <ApprovedLabel meta="Reviewed by clinician">Patient summary</ApprovedLabel>
           ) : (
             <DraftLabel meta="From approved notes, goals and plan">
               AI summary — check before relying on it

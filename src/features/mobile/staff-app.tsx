@@ -54,7 +54,7 @@ const OWNER = sarah.name;
 const tabs = [
   { id: "home", label: "Home", icon: House },
   { id: "schedule", label: "Schedule", icon: CalendarDays },
-  { id: "clients", label: "Clients", icon: Users },
+  { id: "clients", label: "Patients", icon: Users },
   { id: "inbox", label: "Inbox", icon: Inbox },
   { id: "tasks", label: "Tasks", icon: ListChecks },
   { id: "me", label: "Me", icon: CircleUserRound },
@@ -395,7 +395,7 @@ function ClientForm({
       <div className="flex flex-col gap-3">
         <Field
           label="Full name"
-          error={tried && !form.name.trim() ? "Enter the client's name" : undefined}
+          error={tried && !form.name.trim() ? "Enter the patient's name" : undefined}
         >
           <input
             className={inputClass}
@@ -585,9 +585,9 @@ function ClientsTab() {
     <>
       <AppHeader
         eyebrow={`${mine.length} on your caseload`}
-        title="Clients"
+        title="Patients"
         aside={
-          <Button variant="secondary" aria-label="Add client" onClick={() => setPanel("add")}>
+          <Button variant="secondary" aria-label="Add patient" onClick={() => setPanel("add")}>
             <Plus className="size-4" strokeWidth={2} aria-hidden="true" />
             Add
           </Button>
@@ -600,8 +600,8 @@ function ClientsTab() {
             aria-hidden="true"
           />
           <input
-            aria-label="Search clients"
-            placeholder="Search clients"
+            aria-label="Search patients"
+            placeholder="Search patients"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="h-9 w-full rounded-control bg-surface pr-3 pl-9 text-small text-ink-900 outline-none"
@@ -630,7 +630,7 @@ function ClientsTab() {
         ))}
         {mine.length === 0 && (
           <AppCard>
-            <p className="text-small text-ink-700">No clients match your search.</p>
+            <p className="text-small text-ink-700">No patients match your search.</p>
           </AppCard>
         )}
       </div>
@@ -685,8 +685,8 @@ function ClientsTab() {
       )}
       {panel === "add" && (
         <ClientForm
-          title="Add client"
-          submit="Create client"
+          title="Add patient"
+          submit="Create patient"
           initial={blank}
           onClose={() => setPanel(null)}
           onSave={(next) => {
@@ -699,7 +699,7 @@ function ClientsTab() {
       )}
       {panel === "edit" && client && (
         <ClientForm
-          title="Edit client"
+          title="Edit patient"
           submit="Save changes"
           initial={client}
           onClose={() => setPanel(null)}
@@ -804,7 +804,7 @@ function MeTab({
   const notices = useDemoStore((s) => s.story.notices).filter((n) => n.to === "Clinician");
   const me = clinicianById(sarah.id) ?? sarah;
   const facts = [
-    ["Active clients", `${me.active} of ${me.capacity}`],
+    ["Active patients", `${me.active} of ${me.capacity}`],
     ["Notes overdue", String(me.notesOverdue)],
     ["Next supervision", me.nextSupervision],
   ];
@@ -1037,13 +1037,13 @@ export function StaffApp() {
   return (
     <PhoneFrame
       name="Staff app"
-      description="Everything a therapist needs between home visits, from the car or the client's lounge room."
+      description="Everything a therapist needs between home visits, from the car or the patient's lounge room."
       features={[
         "Today's visits, directions and when to leave",
         "Talk through the visit and AI writes the note",
-        "Add clients and book visits on the go",
+        "Add patients and book visits on the go",
         "Tasks and notifications in one place",
-        "New client requests and live chat with clients",
+        "New patient requests and live chat with patients",
       ]}
       tabs={tabs}
       active={tab}

@@ -10,8 +10,8 @@ import { BookVisitSheet } from "@/features/schedule/book-visit";
 const actions = [
   {
     id: "client",
-    label: "Add client",
-    detail: "Add a client and match a therapist",
+    label: "Add patient",
+    detail: "Add a patient and match a therapist",
     icon: UserPlus,
   },
   {

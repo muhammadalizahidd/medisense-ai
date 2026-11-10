@@ -94,7 +94,7 @@ function suggestionsFor(
     title: action,
     owner: sample.clinician,
     due: dt("Tue 27 Oct"),
-    type: "Client follow-up",
+    type: "Patient follow-up",
     priority: "Medium",
   }));
 }

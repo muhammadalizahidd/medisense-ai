@@ -108,7 +108,7 @@ export function AttentionWorkspace() {
         className="stat-band grid grid-cols-2 gap-px overflow-hidden rounded-card border border-border bg-border lg:grid-cols-[repeat(5,minmax(0,1fr))_minmax(0,1.6fr)]"
       >
         <div className="flex flex-col gap-1 bg-surface px-5 py-4">
-          <span className="eyebrow">Clients</span>
+          <span className="eyebrow">Patients</span>
           <span className="headline text-stat font-normal">{attentionClients.length}</span>
         </div>
         {priorities.map((p) => (
@@ -155,7 +155,7 @@ export function AttentionWorkspace() {
           />
           <div className="mt-3">
             <BarList
-              label="Clients requiring review by reason"
+              label="Patients requiring review by reason"
               data={byReason}
               labelWidth={150}
               unit="clients"
@@ -168,11 +168,11 @@ export function AttentionWorkspace() {
           <CardTitle
             id="by-clinician"
             title="By clinician"
-            description="Clay marks a high-priority client"
+            description="Clay marks a high-priority patient"
           />
           <div className="mt-3">
             <BarList
-              label="Clients requiring review by clinician"
+              label="Patients requiring review by clinician"
               data={byClinician}
               labelWidth={120}
               unit="clients"
@@ -189,7 +189,7 @@ export function AttentionWorkspace() {
           />
           <div className="mt-3">
             <BarList
-              label="Clients by days since last contact"
+              label="Patients by days since last contact"
               data={byContact}
               labelWidth={84}
               unit="clients"
@@ -230,7 +230,7 @@ export function AttentionWorkspace() {
         </div>
       )}
 
-      <Card aria-label="Clients requiring attention" className="mt-6">
+      <Card aria-label="Patients requiring attention" className="mt-6">
         <div className="flex flex-col gap-3 border-b border-border px-4 pt-4 pb-3.5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
@@ -275,8 +275,8 @@ export function AttentionWorkspace() {
               </SelectField>
             </div>
             <SearchField
-              label="Search clients"
-              placeholder="Search clients"
+              label="Search patients"
+              placeholder="Search patients"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
@@ -307,10 +307,10 @@ export function AttentionWorkspace() {
           </div>
         </div>
 
-        <div className="max-xl:overflow-x-auto" role="table" aria-label="Clients requiring review">
+        <div className="max-xl:overflow-x-auto" role="table" aria-label="Patients requiring review">
           <div className="max-xl:min-w-260">
             <TableHeader columns={COLUMNS} className="gap-x-3.5">
-              <div>Client</div>
+              <div>Patient</div>
               <div>Clinician</div>
               <div>Funding</div>
               <div>Priority</div>
@@ -391,7 +391,7 @@ export function AttentionWorkspace() {
               );
             })}
             {rows.length === 0 && (
-              <p className="px-4 py-6 text-small text-ink-500">No clients match these filters.</p>
+              <p className="px-4 py-6 text-small text-ink-500">No patients match these filters.</p>
             )}
           </div>
         </div>

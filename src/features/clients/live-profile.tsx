@@ -37,7 +37,7 @@ export function LiveProfile({ profile: seed }: { profile: ClientProfile }) {
   return (
     <>
       <PageHeader
-        eyebrow={`Client profile · ${profile.funding} · client since ${profile.clientSince}`}
+        eyebrow={`Patient profile · ${profile.funding} · patient since ${profile.clientSince}`}
         title={profile.name}
         description={`${profile.age} yrs · ${profile.service} · ${profile.clinician} · ${profile.suburb}, ${profile.region} · ${profile.visitType}`}
         leading={
@@ -47,9 +47,9 @@ export function LiveProfile({ profile: seed }: { profile: ClientProfile }) {
         }
         actions={
           <>
-            <ButtonLink href="/clients">
+            <ButtonLink href="/patients">
               <ArrowLeft className="size-4" strokeWidth={1.5} aria-hidden="true" />
-              All clients
+              All patients
             </ButtonLink>
             <ClientActions id={seed.id} />
             {profile.links.map((l, i) => (

@@ -28,11 +28,12 @@ export function StaffInbox({ onChat }: { onChat: (conversationId: string) => voi
   if (!isTherapist) {
     return (
       <>
-        <AppHeader eyebrow="Inbox" title="New clients and messages" />
+        <AppHeader eyebrow="Inbox" title="New patients and messages" />
         <div className="p-4">
           <AppCard>
             <p className="mb-3 text-small text-ink-700">
-              Sign in with your therapist account to see new client requests and chat with clients.
+              Sign in with your therapist account to see new patient requests and chat with
+              patients.
             </p>
             <ButtonLink href="/login?next=/mobile/staff" variant="primary" size="sm">
               Sign in
@@ -46,11 +47,11 @@ export function StaffInbox({ onChat }: { onChat: (conversationId: string) => voi
   const requests = home.data?.requests ?? [];
   return (
     <>
-      <AppHeader eyebrow="Inbox" title="New clients and messages" />
+      <AppHeader eyebrow="Inbox" title="New patients and messages" />
       <div className="p-4">
         {home.error && !home.data && <ErrorNote message={home.error} onRetry={home.reload} />}
         <h3 className="mb-2 text-small font-semibold">
-          New client requests{requests.length ? ` (${requests.length})` : ""}
+          New patient requests{requests.length ? ` (${requests.length})` : ""}
         </h3>
         {!home.data ? (
           <Skeleton className="mb-3 h-24" />
@@ -74,7 +75,7 @@ export function StaffInbox({ onChat }: { onChat: (conversationId: string) => voi
             onRetry={chats.reload}
             selected={null}
             onSelect={onChat}
-            emptyText="A conversation opens when you accept a client."
+            emptyText="A conversation opens when you accept a patient."
           />
         </AppCard>
       </div>

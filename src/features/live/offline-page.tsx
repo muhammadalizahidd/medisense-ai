@@ -10,7 +10,7 @@ export function OfflinePage() {
       >
         <h1 className="headline text-h2">We can&apos;t reach the database</h1>
         <p className="mt-2 text-small text-ink-700">
-          Live clients, requests and messages need the database. Check the connection and reload
+          Live patients, requests and messages need the database. Check the connection and reload
           this page.
         </p>
       </div>

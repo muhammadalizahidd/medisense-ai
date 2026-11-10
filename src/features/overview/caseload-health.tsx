@@ -55,7 +55,7 @@ export function CaseloadHealth({
           description={
             <span className="block max-w-140 text-small font-normal text-ink-700">
               Scored from configured operational indicators: capacity, complexity, documentation,
-              follow-ups, supervision and admin load. Not just the number of clients.
+              follow-ups, supervision and admin load. Not just the number of patients.
             </span>
           }
           aside={<Caption className="pt-1.5">Sorted by score</Caption>}

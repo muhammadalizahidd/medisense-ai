@@ -261,10 +261,10 @@ export function NoteDraft({ sample }: { sample: CaseNoteSample }) {
               Added to clinical record · Audit entry created
             </span>
             <Link
-              href={nextCase ? `/case-notes/${nextCase.id}` : "/clients-requiring-attention"}
+              href={nextCase ? `/case-notes/${nextCase.id}` : "/patients-requiring-attention"}
               className="inline-flex items-center gap-1.5 text-small font-semibold text-accent"
             >
-              {nextCase ? `Next note: ${nextCase.client}` : "Next: clients requiring attention"}
+              {nextCase ? `Next note: ${nextCase.client}` : "Next: patients requiring attention"}
               <ArrowRight className="size-4" strokeWidth={1.5} aria-hidden="true" />
             </Link>
           </>

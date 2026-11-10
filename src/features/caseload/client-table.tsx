@@ -111,24 +111,24 @@ export function ClientTable({ clients }: { clients: CaseloadClient[] }) {
     .sort(sorters[sort]);
 
   return (
-    <Card aria-labelledby="client-list" className="col-span-12 overflow-hidden">
+    <Card aria-labelledby="patient-list" className="col-span-12 overflow-hidden">
       <div className="flex flex-col gap-3.5 px-5 pt-5 pb-4">
         <CardTitle
-          id="client-list"
+          id="patient-list"
           className="items-end"
-          title="Clients"
+          title="Patients"
           description={`${clients.length} active · ${clients.filter((c) => c.funding === "NDIS").length} NDIS · ${clients.filter((c) => c.funding === "Aged care").length} aged care`}
           aside={
             <SearchField
-              label="Search Sarah’s clients"
-              placeholder="Search clients"
+              label="Search Sarah’s patients"
+              placeholder="Search patients"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
           }
         />
         <FilterChips
-          label="Filter clients"
+          label="Filter patients"
           value={filter}
           onChange={setFilter}
           options={[
@@ -155,7 +155,7 @@ export function ClientTable({ clients }: { clients: CaseloadClient[] }) {
           </div>
           <SelectField label="Sort by" value={sort} onChange={(v) => setSort(v as Sort)}>
             <option value="attention">Attention, then next appointment</option>
-            <option value="name">Client name</option>
+            <option value="name">Patient name</option>
             <option value="complexity">Complexity, highest first</option>
             <option value="tenure-asc">Time with Sarah, newest first</option>
             <option value="tenure-desc">Time with Sarah, longest first</option>
@@ -166,11 +166,11 @@ export function ClientTable({ clients }: { clients: CaseloadClient[] }) {
       <div
         className="max-h-140 overflow-auto border-t border-border"
         role="table"
-        aria-label="Sarah Thompson’s clients"
+        aria-label="Sarah Thompson’s patients"
       >
         <div className="min-w-268">
           <TableHeader columns={COLUMNS} className="sticky top-0 z-1">
-            <div>Client</div>
+            <div>Patient</div>
             <div>Service</div>
             <div>Funding</div>
             <div>With Sarah</div>
@@ -220,7 +220,7 @@ export function ClientTable({ clients }: { clients: CaseloadClient[] }) {
             </TableRow>
           ))}
           {rows.length === 0 && (
-            <p className="px-4 py-6 text-small text-ink-500">No clients match this filter.</p>
+            <p className="px-4 py-6 text-small text-ink-500">No patients match this filter.</p>
           )}
         </div>
       </div>

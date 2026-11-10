@@ -37,11 +37,11 @@ export function AttentionPanel({
     });
   }
   items.push({
-    eyebrow: "Clients",
-    title: `${attention.length} clients require review.`,
+    eyebrow: "Patients",
+    title: `${attention.length} patients require review.`,
     detail: `${countByPriority(attention, "High")} high priority · continuity of care`,
     action: "Open queue",
-    href: "/clients-requiring-attention",
+    href: "/patients-requiring-attention",
   });
   const overdue = list.reduce((sum, c) => sum + c.notesOverdue, 0);
   const drafts = list.reduce((sum, c) => sum + c.draftsAwaiting, 0);
@@ -55,10 +55,10 @@ export function AttentionPanel({
   });
   items.push({
     eyebrow: "Follow-ups",
-    title: `${followUps} client follow-ups are overdue.`,
-    detail: "Surfaced from scheduling data before clients slip through gaps",
+    title: `${followUps} patient follow-ups are overdue.`,
+    detail: "Surfaced from scheduling data before patients slip through gaps",
     action: "Assign owners",
-    href: "/clients-requiring-attention",
+    href: "/patients-requiring-attention",
   });
   items.push({
     eyebrow: "Supervision",

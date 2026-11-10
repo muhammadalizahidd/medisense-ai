@@ -27,9 +27,9 @@ export const roleQuestions: Record<Role, string[]> = {
     "How does Medisense work?",
     "How is Medisense doing this week?",
     "Which clinicians are at risk of burnout?",
-    "Which clients might slip through the gaps?",
+    "Which patients might slip through the gaps?",
     "How much time could AI give back to our clinicians?",
-    "Who has capacity for a new client?",
+    "Who has capacity for a new patient?",
     "What compliance is expiring soon?",
     "Which reports are due in the next two weeks?",
   ],
@@ -48,7 +48,7 @@ export const roleQuestions: Record<Role, string[]> = {
     "Which tasks have been escalated to me?",
     "Which notes are still outstanding?",
     "Which clinicians are at risk of burnout?",
-    "Which clients might slip through the gaps?",
+    "Which patients might slip through the gaps?",
     "Which reports are due in the next two weeks?",
   ],
   Clinician: [
@@ -107,11 +107,11 @@ const intents: Intent[] = [
       const notesOnTime = weeklyMeasures.notesOnTime;
       return {
         title: "Medisense this week",
-        intro: `${clinicians.length} clinicians are seeing ${clientTotals.all} clients (${clientTotals.ndis} NDIS, ${clientTotals.agedCare} aged care). Demand is rising faster than capacity: ${nearCapacity.length} clinicians are near or over capacity, and notes approved on time fell from ${notesOnTime[0]}% to ${notesOnTime.at(-1)}% over 12 weeks.`,
+        intro: `${clinicians.length} clinicians are seeing ${clientTotals.all} patients (${clientTotals.ndis} NDIS, ${clientTotals.agedCare} aged care). Demand is rising faster than capacity: ${nearCapacity.length} clinicians are near or over capacity, and notes approved on time fell from ${notesOnTime[0]}% to ${notesOnTime.at(-1)}% over 12 weeks.`,
         items: [
           ...atRisk.map((c) => ({
             label: `${c.name} is At Risk`,
-            detail: `${c.active} clients for a capacity of ${c.capacity} · score ${c.score}`,
+            detail: `${c.active} patients for a capacity of ${c.capacity} · score ${c.score}`,
             href: c.id === "sarah-thompson" ? "/caseloads/sarah-thompson" : "/team-capacity",
           })),
           {
@@ -120,12 +120,12 @@ const intents: Intent[] = [
             href: "/case-notes/mia-robinson",
           },
           {
-            label: `${followUps} follow-ups overdue · ${attentionClients.length} clients need review`,
+            label: `${followUps} follow-ups overdue · ${attentionClients.length} patients need review`,
             detail: "No visit, cancellations or plan reviews approaching",
-            href: "/clients-requiring-attention",
+            href: "/patients-requiring-attention",
           },
           {
-            label: `${openReferrals} referrals waiting to become clients`,
+            label: `${openReferrals} referrals waiting to become patients`,
             detail: "Details already extracted by AI",
             href: "/intake",
           },
@@ -193,7 +193,7 @@ const intents: Intent[] = [
           {
             label: "Open Ruth's profile",
             detail: "Goals, alerts and timeline",
-            href: "/clients/ruth-hallam",
+            href: "/patients/ruth-hallam",
           },
         ],
         sources: ["Case notes", "Smart forms", "Tasks"],
@@ -215,12 +215,12 @@ const intents: Intent[] = [
           ...profile.goals.map((g) => ({
             label: `${g.text} · ${g.progress}%`,
             detail: `${g.status} · ${g.baseline} → ${g.current} (target ${g.target})`,
-            href: `/clients/${profile.id}`,
+            href: `/patients/${profile.id}`,
           })),
           ...profile.alerts.map((a) => ({
             label: a.text,
             detail: "Alert",
-            href: `/clients/${profile.id}`,
+            href: `/patients/${profile.id}`,
           })),
           {
             label: `Next: ${profile.nextAppointment}`,
@@ -237,7 +237,7 @@ const intents: Intent[] = [
     answer: () => ({
       title: `Sarah Thompson's supervision · ${dt("Thu 22 Oct")}, 2:00 pm`,
       intro:
-        "Caseload is At Risk (score 83, 27 clients for a capacity of 25). The AI brief groups the session into these points; you can add, remove and approve them.",
+        "Caseload is At Risk (score 83, 27 patients for a capacity of 25). The AI brief groups the session into these points; you can add, remove and approve them.",
       items: [
         ...suggestedAgenda.slice(0, 5).map((a) => ({
           label: a.text,
@@ -292,7 +292,7 @@ const intents: Intent[] = [
               .map((a) => ({
                 label: `${a.time} · ${a.client}`,
                 detail: a.detail,
-                href: a.client === "Emily Carter" ? "/clients/emily-carter" : "/my-day",
+                href: a.client === "Emily Carter" ? "/patients/emily-carter" : "/my-day",
               })),
             ...hannahDay.drafts.map((d) => ({
               label: `Approve note: ${d.client}`,
@@ -367,7 +367,7 @@ const intents: Intent[] = [
       return {
         title: "Capacity and burnout risk",
         intro:
-          "Capacity is weighted by client complexity, overdue work and admin hours. Suggestions need leadership review.",
+          "Capacity is weighted by patient complexity, overdue work and admin hours. Suggestions need leadership review.",
         items: [
           ...atRisk.map((c) => ({
             label: `${c.name} · ${c.status === "at-risk" ? "At Risk" : "Watch"}`,
@@ -395,7 +395,7 @@ const intents: Intent[] = [
       );
       return {
         title: "Referrals needing action",
-        intro: `${open.length} of ${referrals.length} referrals this week are not yet a client profile.`,
+        intro: `${open.length} of ${referrals.length} referrals this week are not yet a patient profile.`,
         items: open.map((r) => ({
           label: `${r.client}, ${r.age} · ${ctx.referralStatus[r.id] ?? r.status}`,
           detail: `${r.source} · ${r.services} · ${r.suburb}`,
@@ -440,7 +440,7 @@ const intents: Intent[] = [
         title: "Schedule this week",
         intro: `${pending.length} of ${scheduleSuggestions.length} AI suggestions are waiting for a decision. They fill cancelled slots and shorten routes.`,
         items: pending.map((s) => ({ label: s.title, detail: s.benefit, href: "/schedule" })),
-        sources: ["Schedule", "Tasks", "Clients requiring attention"],
+        sources: ["Schedule", "Tasks", "Patients requiring attention"],
       };
     },
   },
@@ -450,7 +450,7 @@ const intents: Intent[] = [
       const due = expiryItems.filter((i) => i.daysLeft <= 30);
       return {
         title: "Expiring in the next 30 days",
-        intro: `${due.length} items: client plans, agreements and consents, plus staff checks. ${ctx.reminders.length} reminders sent today.`,
+        intro: `${due.length} items: patient plans, agreements and consents, plus staff checks. ${ctx.reminders.length} reminders sent today.`,
         items: due.slice(0, 7).map((i) => ({
           label: `${i.category} · ${i.subject}`,
           detail:
@@ -466,17 +466,17 @@ const intents: Intent[] = [
   {
     match: /follow|attention|gap|missed|slip/i,
     answer: (ctx) => ({
-      title: "Clients at risk of slipping through gaps",
-      intro: `${attentionClients.length} clients meet a configured review indicator; ${ctx.tasks.filter(isOverdue).length} tasks are overdue.`,
+      title: "Patients at risk of slipping through gaps",
+      intro: `${attentionClients.length} patients meet a configured review indicator; ${ctx.tasks.filter(isOverdue).length} tasks are overdue.`,
       items: attentionClients
         .filter((c) => c.priority !== "Review")
         .slice(0, 6)
         .map((c) => ({
           label: `${c.name} · ${c.priority}`,
           detail: c.reason,
-          href: "/clients-requiring-attention",
+          href: "/patients-requiring-attention",
         })),
-      sources: ["Clients requiring attention", "Tasks"],
+      sources: ["Patients requiring attention", "Tasks"],
     }),
   },
 ];

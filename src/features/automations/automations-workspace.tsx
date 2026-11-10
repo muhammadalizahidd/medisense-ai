@@ -365,7 +365,7 @@ export function AutomationsWorkspace() {
         {[
           {
             title: "People approve",
-            body: "Rules prepare drafts, tasks and reminders. Nothing reaches a client or the clinical record until a person approves it.",
+            body: "Rules prepare drafts, tasks and reminders. Nothing reaches a patient or the clinical record until a person approves it.",
           },
           {
             title: "Every run is logged",

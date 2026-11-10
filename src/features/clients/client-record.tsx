@@ -44,8 +44,8 @@ export function ClientVisits({ name }: { name: string }) {
   const open: ScheduleItem | undefined = visits.find((v) => v.id === openId);
 
   return (
-    <Card aria-labelledby="client-visits" className="px-5 py-5">
-      <CardTitle id="client-visits" title="Visits this week" />
+    <Card aria-labelledby="patient-visits" className="px-5 py-5">
+      <CardTitle id="patient-visits" title="Visits this week" />
       {visits.length === 0 ? (
         <p className="mt-3 text-small text-ink-700">
           No visits booked this week. Use Book visit to add one.
@@ -99,10 +99,10 @@ export function ClientRecordView({ id }: { id: string }) {
       <>
         <PageHeader
           eyebrow="Clinical"
-          title="Client not found"
-          description="This client isn't in the list. Clients added in a demo session are cleared when it's reset."
+          title="Patient not found"
+          description="This patient isn't in the list. Patients added in a demo session are cleared when it's reset."
         />
-        <Link href="/clients">Back to all clients</Link>
+        <Link href="/patients">Back to all patients</Link>
       </>
     );
   }
@@ -121,23 +121,23 @@ export function ClientRecordView({ id }: { id: string }) {
   return (
     <>
       <PageHeader
-        eyebrow={`Client · ${client.funding}`}
+        eyebrow={`Patient · ${client.funding}`}
         title={client.name}
         description={`${client.service} · ${client.clinician}`}
         actions={
           <>
-            <ButtonLink href="/clients">
+            <ButtonLink href="/patients">
               <ArrowLeft className="size-4" strokeWidth={1.5} aria-hidden="true" />
-              All clients
+              All patients
             </ButtonLink>
             <ClientActions id={id} />
           </>
         }
       />
       <div className="grid items-start gap-6 lg:grid-cols-12">
-        <Card aria-labelledby="client-details" className="px-5 py-5 lg:col-span-7">
+        <Card aria-labelledby="patient-details" className="px-5 py-5 lg:col-span-7">
           <CardTitle
-            id="client-details"
+            id="patient-details"
             title="Details"
             aside={<Tag tone={stateTone[client.state]}>{client.state}</Tag>}
           />

@@ -13,7 +13,7 @@ import { isSlotFree, rankTherapists } from "./matching";
 import type { AppointmentDoc, ClientDoc, UserDoc } from "./models";
 
 export const newClientSchema = z.object({
-  name: z.string().trim().min(2, "Enter the client's full name").max(120),
+  name: z.string().trim().min(2, "Enter the patient's full name").max(120),
   dateOfBirth: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
@@ -62,7 +62,7 @@ export async function createClient(admin: UserDoc, input: z.infer<typeof newClie
     createdAt: now,
   };
   await clients.insertOne(client);
-  await audit(admin, "Added client", clientId);
+  await audit(admin, "Added patient", clientId);
   await publish(await adminIds(), "care", { clientId: clientId.toHexString() });
   return { id: clientId.toHexString(), inviteCode: code, inviteExpires: invite.expiresAt };
 }
@@ -80,7 +80,7 @@ export async function listClients() {
 async function loadClient(id: ObjectId) {
   const { clients } = await collections();
   const client = await clients.findOne({ _id: id });
-  if (!client) throw new UserFacingError("Client not found.", 404);
+  if (!client) throw new UserFacingError("Patient not found.", 404);
   return client;
 }
 
@@ -135,7 +135,7 @@ export async function matchesFor(clientId: ObjectId, discipline: string): Promis
   const { therapists, appointments } = await collections();
   const client = await loadClient(clientId);
   const need = client.needs.find((n) => n.discipline === discipline);
-  if (!need) throw new UserFacingError("This client doesn't need that therapy.");
+  if (!need) throw new UserFacingError("This patient doesn't need that therapy.");
   const candidates = await therapists.find({ discipline: need.discipline }).toArray();
   const ids = candidates.map((c) => c._id);
   const upcoming = await appointments
@@ -237,7 +237,7 @@ export async function requestTherapist(
   }
 
   await notify([therapist.userId], {
-    title: `New client: ${client.name}`,
+    title: `New patient: ${client.name}`,
     body: `${input.discipline}, ${need.frequency.toLowerCase()}. First visit ${slotLabel(start)}. Accept or decline.`,
     href: "/therapist",
   });
@@ -284,7 +284,7 @@ export async function reissueInvite(admin: UserDoc, clientId: ObjectId) {
   const { users } = await collections();
   const client = await loadClient(clientId);
   const account = await users.findOne({ _id: client.userId });
-  if (account?.passwordHash) throw new UserFacingError("This client has already activated.", 409);
+  if (account?.passwordHash) throw new UserFacingError("This patient has already activated.", 409);
   const { code, invite } = newInviteCode();
   await users.updateOne({ _id: client.userId }, { $set: { invite } });
   await audit(admin, "Created a new app invite code", clientId);

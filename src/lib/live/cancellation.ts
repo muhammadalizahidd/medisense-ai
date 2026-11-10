@@ -30,7 +30,7 @@ export function classifyCancellation(start: Date, now: Date, by: CancelledBy): C
 export function noticeSummary(outcome: CancellationOutcome, by: CancelledBy) {
   const hours = `${outcome.noticeHours} ${outcome.noticeHours === 1 ? "hour" : "hours"}`;
   if (by === "medisense")
-    return `Cancelled by Medisense with ${hours}' notice. The client isn't charged.`;
+    return `Cancelled by Medisense with ${hours}' notice. The patient isn't charged.`;
   if (outcome.late) {
     return `Only ${hours}' notice, less than ${CANCELLATION_NOTICE_HOURS}. This is a late cancellation and may be charged.`;
   }

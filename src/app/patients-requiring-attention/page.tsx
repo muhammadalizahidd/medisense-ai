@@ -5,7 +5,7 @@ import { PageContainer, PageHeader } from "@/components/ui/page";
 import { clinicians } from "@/data/clinicians";
 import { AttentionWorkspace } from "@/features/attention/attention-table";
 
-export const metadata: Metadata = { title: "Clients requiring attention · Medisense" };
+export const metadata: Metadata = { title: "Patients requiring attention · Medisense" };
 
 export default function ClientsRequiringAttentionPage() {
   const activeClients = clinicians.reduce((sum, c) => sum + c.active, 0);
@@ -13,8 +13,8 @@ export default function ClientsRequiringAttentionPage() {
   return (
     <PageContainer>
       <PageHeader
-        eyebrow={`Organisation · ${activeClients} active clients · continuity of care`}
-        title="Clients requiring attention"
+        eyebrow={`Organisation · ${activeClients} active patients · continuity of care`}
+        title="Patients requiring attention"
         description="Requires review based on configured indicators: long appointment gaps, repeated cancellations, overdue follow-ups and pending reports."
         actions={
           <Button variant="ghost">

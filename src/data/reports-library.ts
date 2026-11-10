@@ -48,7 +48,7 @@ export const reportStatuses: ReportStatus[] = [
 
 const sectionsFor: Record<ReportType, string[]> = {
   "Progress report": [
-    "Client details",
+    "Patient details",
     "Goals and progress",
     "Interventions",
     "Outcome measures",

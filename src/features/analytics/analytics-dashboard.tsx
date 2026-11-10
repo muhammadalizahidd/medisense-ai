@@ -204,7 +204,7 @@ export function AnalyticsDashboard() {
         <Card aria-labelledby="goal-status" className="flex flex-col px-6 pt-5 pb-5 lg:col-span-4">
           <CardTitle
             id="goal-status"
-            title="Client goals"
+            title="Patient goals"
             description="All 428 active goals, by status"
           />
           <div className="mt-5">
@@ -360,7 +360,7 @@ export function AnalyticsDashboard() {
               <div>Clinician</div>
               <div>Discipline</div>
               <div>Region</div>
-              <div>Clients</div>
+              <div>Patients</div>
               <div>Utilisation</div>
               <div>Sessions</div>
               <div>Cancelled</div>

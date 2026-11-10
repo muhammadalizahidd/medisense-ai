@@ -51,14 +51,14 @@ export async function extractReferral(lines: string[]) {
 ${GUARDRAILS}
 
 Extract only what the referral states. Use an empty string, or null for age, when it isn't stated. Never guess.
-- client: the person receiving services, not the person referring them.
+- patient: the person receiving services, not the person referring them.
 - age: a whole number of years if stated. If only a date of birth is given, leave age null and record the date as a field.
 - funding: "NDIS", "Aged care" or "Unknown". Use "Aged care" only for aged care funding such as a home care package.
 - services: the services requested, in a few words.
-- suburb: the client's home suburb.
+- suburb: the patient's home suburb.
 - contactName and contactPhone: the main family or carer contact.
 - fields: each useful detail as a short label and value, with the numbered line it came from. Use confidence "Check" when the wording is unclear or a person should confirm it, otherwise "High".
-- missing: what the provider would need before a first visit that the referral doesn't state, as short plain items, such as funding details, contact details, consent, or the reason for referral. For an NDIS client, always check for the participant number, date of birth and plan dates, and list any that aren't stated. Empty only if nothing is missing.
+- missing: what the provider would need before a first visit that the referral doesn't state, as short plain items, such as funding details, contact details, consent, or the reason for referral. For an NDIS patient, always check for the participant number, date of birth and plan dates, and list any that aren't stated. Empty only if nothing is missing.
 - requestEmail: if anything is missing, a short polite email to the person who referred, asking only for those items, signed "Medisense intake team". Otherwise an empty string.`,
     user: `Referral, numbered by line:\n${lines.map((l, i) => `${i + 1}. ${l}`).join("\n")}`,
     schema: obj({
@@ -120,7 +120,7 @@ export async function writeNote(lines: string[], context = oliverContext) {
 ${GUARDRAILS}
 
 Sections:
-- subjective: what the client, family or others reported.
+- subjective: what the patient, family or others reported.
 - objective: what the clinician did and observed in the session.
 - assessment: only the clinician's own stated interpretation. If they stated none, return an empty list. Never write your own assessment.
 - plan: agreed next steps and who does them.
@@ -128,7 +128,7 @@ Rewrite every sentence in the third person, in the register of a clinical record
 For example, "Mum says he slept badly" becomes "Mother reports poor sleep", and "I think grip is improving" becomes "Clinician's impression is that grip is improving".
 Set "line" to the dictated line number each sentence came from.
 - missing: things a reviewer would expect in the record that the dictation raises but doesn't resolve, as short plain statements. Empty if nothing is missing. Don't invent the missing content.`,
-    user: `Client: ${context}\n\nDictated lines:\n${lines.map((l, i) => `${i + 1}. ${l}`).join("\n")}`,
+    user: `Patient: ${context}\n\nDictated lines:\n${lines.map((l, i) => `${i + 1}. ${l}`).join("\n")}`,
     schema: obj({
       subjective: sentences,
       objective: sentences,
@@ -176,7 +176,7 @@ export async function prepareFromNote(note: SessionNote) {
   const ids = new Set(sentences.map((s) => s.id));
   const owners = ["Admin team", "Sarah Thompson"];
   const types = [
-    "Client follow-up",
+    "Patient follow-up",
     "Document request",
     "Communication",
     "Scheduling",
@@ -202,7 +202,7 @@ Produce:
   - type: one of the allowed values.
   - sentenceId: the id of the one note sentence that calls for it.
 Don't make a task for something the family does at home.`,
-    user: `Client: ${oliverContext}
+    user: `Patient: ${oliverContext}
 
 Approved note sentences:
 ${sentences.map((s) => `${s.id}: ${s.text}`).join("\n")}`,
@@ -258,7 +258,7 @@ ${sentences.map((s) => `${s.id}: ${s.text}`).join("\n")}`,
         dueInWorkingDays: Math.min(5, Math.max(1, Number(t.dueInWorkingDays) || 2)),
         type: (types.includes(text(t.type))
           ? text(t.type)
-          : "Client follow-up") as Prepared["tasks"][number]["type"],
+          : "Patient follow-up") as Prepared["tasks"][number]["type"],
         sentenceId: text(t.sentenceId),
       })),
   };
@@ -327,7 +327,7 @@ ${GUARDRAILS}
 export const writeBriefing = (facts: Record<string, unknown>) =>
   shortText(
     "story-briefing",
-    "Write a director's morning briefing for an allied health provider: two or three plain sentences saying who needs attention and why, and what changed if a change is listed. It is a recommendation only. A clinician approves notes; clients never do.",
+    "Write a director's morning briefing for an allied health provider: two or three plain sentences saying who needs attention and why, and what changed if a change is listed. It is a recommendation only. A clinician approves notes; patients never do.",
     facts,
   );
 
@@ -341,7 +341,7 @@ export const writeClaimsSummary = (facts: Record<string, unknown>) =>
 export const writeChangeSummary = (facts: Record<string, unknown>) =>
   shortText(
     "story-change",
-    "Write two plain sentences for a director. Say what caused the changes, then what hasn't changed and why that matters. Don't list every figure, because they're shown in a table beside your summary. Don't celebrate. A clinician approves notes; clients never do.",
+    "Write two plain sentences for a director. Say what caused the changes, then what hasn't changed and why that matters. Don't list every figure, because they're shown in a table beside your summary. Don't celebrate. A clinician approves notes; patients never do.",
     facts,
   );
 

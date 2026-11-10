@@ -8,7 +8,7 @@ import type { UserDoc } from "./models";
 export async function clientHome(user: UserDoc): Promise<ClientHomeDto> {
   const db = await collections();
   const client = user.clientId ? await db.clients.findOne({ _id: user.clientId }) : null;
-  if (!client) throw new UserFacingError("No client record is linked to this account.", 404);
+  if (!client) throw new UserFacingError("No patient record is linked to this account.", 404);
   const [team, visits, conversations] = await Promise.all([
     db.therapists.find({}, { projection: { name: 1 } }).toArray(),
     db.appointments.find({ clientId: client._id }).sort({ start: 1 }).toArray(),

@@ -9,7 +9,7 @@ import type { Funding, Site } from "@/data/types";
 import { useDemoStore } from "@/state/demo-store";
 import { Select } from "@/components/ui/select";
 
-const FORM_ID = "client-form";
+const FORM_ID = "patient-form";
 
 export const blankClient: ClientRecord = {
   id: "",
@@ -53,7 +53,7 @@ export function ClientFormSheet({
     const name = form.name.trim();
     const ageNumber = age.trim() === "" ? null : Number(age);
     const problems = {
-      name: name ? undefined : "Enter the client's name",
+      name: name ? undefined : "Enter the patient's name",
       service: form.service.trim() ? undefined : "Enter the service",
       age:
         ageNumber !== null && (!Number.isInteger(ageNumber) || ageNumber < 0 || ageNumber > 120)

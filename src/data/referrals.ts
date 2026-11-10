@@ -72,7 +72,7 @@ export const referrals: Referral[] = [
       "Kind regards, Tom Ellis, Support Coordinator, Brightpath",
     ],
     fields: [
-      { label: "Client name", value: "Leila Haddad", line: 2, confidence: "High" },
+      { label: "Patient name", value: "Leila Haddad", line: 2, confidence: "High" },
       { label: "Date of birth", value: "02/05/2020 (6 yrs)", line: 2, confidence: "High" },
       {
         label: "Services requested",
@@ -153,7 +153,7 @@ export const referrals: Referral[] = [
       "Regards, Dr S. Patel, Nundah Medical Centre",
     ],
     fields: [
-      { label: "Client name", value: "Arthur Bennett", line: 2, confidence: "High" },
+      { label: "Patient name", value: "Arthur Bennett", line: 2, confidence: "High" },
       { label: "Date of birth", value: "14/09/1945 (81 yrs)", line: 2, confidence: "High" },
       {
         label: "Address",
@@ -223,7 +223,7 @@ export const referrals: Referral[] = [
       "Concern: speech clarity, gets frustrated when not understood",
     ],
     fields: [
-      { label: "Client name", value: "Isla Murphy", line: 1, confidence: "High" },
+      { label: "Patient name", value: "Isla Murphy", line: 1, confidence: "High" },
       { label: "Date of birth", value: "14/03/2021 (5 yrs)", line: 2, confidence: "High" },
       {
         label: "Primary contact",
@@ -242,7 +242,7 @@ export const referrals: Referral[] = [
     ],
     missing: [],
     duplicate: {
-      client: "Isla Murphy (existing client, OT with Sarah Thompson)",
+      client: "Isla Murphy (existing patient, OT with Sarah Thompson)",
       reason: "Same name, date of birth and parent phone number",
     },
     suggestedClinician: "Liam Patel (Speech, Brisbane North)",
@@ -269,7 +269,7 @@ export const referrals: Referral[] = [
       "Concern: limited words for his age; early childhood partner recommended therapy",
     ],
     fields: [
-      { label: "Client name", value: "Hamza Ali", line: 1, confidence: "High" },
+      { label: "Patient name", value: "Hamza Ali", line: 1, confidence: "High" },
       { label: "Date of birth", value: "19/06/2022 (4 yrs)", line: 2, confidence: "High" },
       {
         label: "Primary contact",
@@ -312,7 +312,7 @@ export const referrals: Referral[] = [
       "Prefers telehealth first, then home visits",
     ],
     fields: [
-      { label: "Client name", value: "Tom Reyes", line: 1, confidence: "High" },
+      { label: "Patient name", value: "Tom Reyes", line: 1, confidence: "High" },
       { label: "Date of birth", value: "30/11/1991 (34 yrs)", line: 2, confidence: "High" },
       { label: "Funding", value: "NDIS, plan-managed", line: 3, confidence: "High" },
       { label: "NDIS number", value: "430 556 201", line: 3, confidence: "High" },
@@ -351,7 +351,7 @@ export const referrals: Referral[] = [
       "Daughter Jane Kemp is the contact, 0407 118 450.",
     ],
     fields: [
-      { label: "Client name", value: "Doris Kemp", line: 1, confidence: "High" },
+      { label: "Patient name", value: "Doris Kemp", line: 1, confidence: "High" },
       { label: "Date of birth", value: "02/02/1952 (74 yrs)", line: 1, confidence: "High" },
       { label: "Services requested", value: "Equipment prescription", line: 2, confidence: "High" },
       {
@@ -383,7 +383,7 @@ export const referrals: Referral[] = [
       "NDIS plan in place; family will provide details.",
     ],
     fields: [
-      { label: "Client name", value: "Oscar Lin", line: 1, confidence: "High" },
+      { label: "Patient name", value: "Oscar Lin", line: 1, confidence: "High" },
       {
         label: "Presenting needs",
         value: "Handwriting speed and legibility",
@@ -460,7 +460,7 @@ export const preparedSampleExtraction: ReferralExtraction = {
   contactName: "Paul Marsden",
   contactPhone: "0400 555 217",
   fields: [
-    { label: "Client name", value: "Theo Marsden", line: 2, confidence: "High" },
+    { label: "Patient name", value: "Theo Marsden", line: 2, confidence: "High" },
     { label: "Age", value: "7", line: 2, confidence: "High" },
     { label: "Suburb", value: "Nundah", line: 2, confidence: "High" },
     { label: "Funding", value: "NDIS, self-managed", line: 3, confidence: "High" },

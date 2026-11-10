@@ -44,7 +44,7 @@ export function useBriefing() {
           ? {
               noteApproved:
                 story.stage === "approved"
-                  ? "Sarah Thompson, the treating clinician, approved her session note for her client Oliver Grant"
+                  ? "Sarah Thompson, the treating clinician, approved her session note for her patient Oliver Grant"
                   : null,
               daysPassed: story.dayOffset > 0,
             }

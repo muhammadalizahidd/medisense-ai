@@ -25,7 +25,7 @@ export function SignInScreen({ next, offline }: { next: string | null; offline: 
         <section className="rounded-card border border-border bg-surface p-6 surface-lift">
           <h1 className="headline text-h2">Welcome back</h1>
           <p className="mt-1 mb-5 text-small text-ink-700">
-            Staff, therapists and clients all sign in here.
+            Staff, therapists and patients all sign in here.
           </p>
           {offline && (
             <p

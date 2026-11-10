@@ -96,7 +96,7 @@ export function FormsWorkspace() {
               <CardTitle
                 id="drafts"
                 title="Form drafts"
-                description="Pre-filled from verified client data"
+                description="Pre-filled from verified patient data"
               />
             </div>
             <ul>
@@ -141,7 +141,7 @@ export function FormsWorkspace() {
             <CardTitle
               id="templates"
               title="Template library"
-              description="Reusable forms; fields map to client data"
+              description="Reusable forms; fields map to patient data"
             />
             <ul className="mt-3 flex flex-col">
               {formTemplates.map((t) => (

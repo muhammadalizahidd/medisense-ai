@@ -132,11 +132,11 @@ function orgSummary(state: LiveState): ToolResult {
   const n = weeklyMeasures;
   return {
     title: "Medisense at a glance",
-    summary: `${clinicians.length} clinicians across ${new Set(clinicians.map((c) => c.discipline)).size} disciplines (Brisbane North and South, home visits and telehealth) see ${clientTotals.all} clients: ${clientTotals.ndis} NDIS and ${clientTotals.agedCare} aged care. ${atRisk.length} clinician At Risk, ${monitor.length} Monitor. ${notes} notes overdue and ${drafts} AI drafts waiting; ${followUps} follow-ups overdue; ${attentionClients.length} clients need review. Notes approved on time fell from ${n.notesOnTime[0]}% to ${n.notesOnTime.at(-1)}% over 12 weeks; sessions per week rose from ${n.sessions[0]} to ${n.sessions.at(-1)}. Estimated time AI could return: ${automationTotal.hours} ${automationTotal.fte}.`,
+    summary: `${clinicians.length} clinicians across ${new Set(clinicians.map((c) => c.discipline)).size} disciplines (Brisbane North and South, home visits and telehealth) see ${clientTotals.all} patients: ${clientTotals.ndis} NDIS and ${clientTotals.agedCare} aged care. ${atRisk.length} clinician At Risk, ${monitor.length} Monitor. ${notes} notes overdue and ${drafts} AI drafts waiting; ${followUps} follow-ups overdue; ${attentionClients.length} patients need review. Notes approved on time fell from ${n.notesOnTime[0]}% to ${n.notesOnTime.at(-1)}% over 12 weeks; sessions per week rose from ${n.sessions[0]} to ${n.sessions.at(-1)}. Estimated time AI could return: ${automationTotal.hours} ${automationTotal.fte}.`,
     items: [
       ...atRisk.map((c) => ({
         label: `${c.name} · At Risk`,
-        detail: `${c.active}/${c.capacity} clients · score ${c.score}`,
+        detail: `${c.active}/${c.capacity} patients · score ${c.score}`,
         href: "/team-capacity",
       })),
       {
@@ -159,10 +159,10 @@ function getClient(state: LiveState, input: Input): ToolResult {
   const id = findClientId(name);
   if (!id) {
     return {
-      title: "Client not found",
-      summary: `No client matches "${name}". Try search_records.`,
+      title: "Patient not found",
+      summary: `No patient matches "${name}". Try search_records.`,
       items: [],
-      source: "Clients",
+      source: "Patients",
     };
   }
   const dir = directoryClients.find((c) => c.id === id);
@@ -184,17 +184,17 @@ function getClient(state: LiveState, input: Input): ToolResult {
       ...profile.goals.map((g) => ({
         label: `Goal: ${g.text} · ${g.progress}% · ${g.status}`,
         detail: `${g.baseline} → ${g.current}, target ${g.target} (${g.measure})`,
-        href: `/clients/${id}`,
+        href: `/patients/${id}`,
       })),
       ...profile.alerts.map((a) => ({
         label: `Alert: ${a.text}`,
         detail: "",
-        href: `/clients/${id}`,
+        href: `/patients/${id}`,
       })),
       {
         label: `Funding: ${Math.round((profile.budget.spent / profile.budget.total) * 100)}% used`,
         detail: `$${profile.budget.spent.toLocaleString("en-AU")} of $${profile.budget.total.toLocaleString("en-AU")} · ${profile.budget.insight}`,
-        href: `/clients/${id}`,
+        href: `/patients/${id}`,
       },
       ...profile.contacts.map((c) => ({
         label: `Contact: ${c.role}, ${c.name}`,
@@ -213,7 +213,7 @@ function getClient(state: LiveState, input: Input): ToolResult {
     items.push({
       label: `Requires review (${attention.priority}): ${attention.reason}`,
       detail: `${attention.daysSinceContact} days since contact`,
-      href: "/clients-requiring-attention",
+      href: "/patients-requiring-attention",
     });
   }
   if (referral) {
@@ -278,7 +278,7 @@ function getClient(state: LiveState, input: Input): ToolResult {
     title: clientName,
     summary: [facts.join(" · "), profile?.summary].filter(Boolean).join(". "),
     items: items.slice(0, MAX_ITEMS),
-    source: "Client records, tasks, reports, schedule",
+    source: "Patient records, tasks, reports, schedule",
   };
 }
 
@@ -298,19 +298,19 @@ function listClients(_state: LiveState, input: Input): ToolResult {
     .filter((c) => within === undefined || c.planReviewDays <= within)
     .sort((a, b) => a.planReviewDays - b.planReviewDays);
   return {
-    title: "Clients",
+    title: "Patients",
     summary: `${rows.length} matching records in the ${directoryClients.length}-record sample (organisation total ${clientTotals.all}: ${clientTotals.ndis} NDIS, ${clientTotals.agedCare} aged care).`,
     items: rows.slice(0, MAX_ITEMS).map((c) => ({
       label: `${c.name}${c.age ? `, ${c.age}` : ""} · ${c.funding}${c.priority ? ` · ${c.priority} priority` : ""}`,
       detail: `${c.clinician} · ${c.region} · ${c.service} · ${c.state} · plan review in ${c.planReviewDays} days`,
-      href: c.hasProfile ? `/clients/${c.id}` : "/clients",
+      href: c.hasProfile ? `/patients/${c.id}` : "/patients",
     })),
-    source: "Client directory",
+    source: "Patient directory",
   };
 }
 
 function clinicianLine(c: Clinician) {
-  return `${c.role} · ${c.site} · ${c.fte} FTE · ${c.active}/${c.capacity} clients (${c.utilisation}%) · ${statusLabel[c.status]} (score ${c.score}) · ${c.notesOverdue} notes overdue · ${c.followUpsOverdue} follow-ups overdue · admin ${c.adminHours}h vs ${c.adminTarget}h target`;
+  return `${c.role} · ${c.site} · ${c.fte} FTE · ${c.active}/${c.capacity} patients (${c.utilisation}%) · ${statusLabel[c.status]} (score ${c.score}) · ${c.notesOverdue} notes overdue · ${c.followUpsOverdue} follow-ups overdue · admin ${c.adminHours}h vs ${c.adminTarget}h target`;
 }
 
 function getClinician(state: LiveState, input: Input): ToolResult {
@@ -329,7 +329,7 @@ function getClinician(state: LiveState, input: Input): ToolResult {
   const reports = libraryReports.filter((r) => r.clinician === c.name);
   return {
     title: c.name,
-    summary: `${clinicianLine(c)}. Next supervision ${c.nextSupervision}. ${c.available ? "Has room for new clients." : "No spare capacity."} This week: ${sessions.length} sessions, ${(week.reduce((s, i) => s + i.travel, 0) / 60).toFixed(1)} h driving.`,
+    summary: `${clinicianLine(c)}. Next supervision ${c.nextSupervision}. ${c.available ? "Has room for new patients." : "No spare capacity."} This week: ${sessions.length} sessions, ${(week.reduce((s, i) => s + i.travel, 0) / 60).toFixed(1)} h driving.`,
     items: [
       ...tasks.map(taskItem),
       ...reports.map((r) => ({
@@ -505,7 +505,7 @@ function listCompliance(state: LiveState, input: Input): ToolResult {
     .filter((e) => e.daysLeft <= within);
   return {
     title: "Compliance and expiries",
-    summary: `${rows.length} items due within ${within} days or expired (client plans, agreements and consents; staff registration, Blue Card, NDIS Worker Screening, first aid, vehicle insurance). ${state.reminders.length} reminders sent today.`,
+    summary: `${rows.length} items due within ${within} days or expired (patient plans, agreements and consents; staff registration, Blue Card, NDIS Worker Screening, first aid, vehicle insurance). ${state.reminders.length} reminders sent today.`,
     items: rows.map((e) => ({
       label: `${e.category} · ${e.subject} · ${stateFor(e.daysLeft)}`,
       detail: `${e.expires} · owner ${e.owner}${state.reminders.includes(e.id) ? " · reminder sent" : ""}`,
@@ -539,7 +539,7 @@ function listAutomations(state: LiveState, input: Input): ToolResult {
     .filter((r) => typeof only !== "boolean" || r.on === only);
   return {
     title: "Automation rules",
-    summary: `${rows.filter((r) => r.on).length} of ${rows.length} rules on. Rules prepare drafts, tasks and reminders; people approve before anything reaches a client.`,
+    summary: `${rows.filter((r) => r.on).length} of ${rows.length} rules on. Rules prepare drafts, tasks and reminders; people approve before anything reaches a patient.`,
     items: rows.map((r) => ({
       label: `${r.name} · ${r.on ? "on" : "off"}`,
       detail: `When ${r.trigger.toLowerCase()}, if ${r.condition.toLowerCase()}, then ${r.action.toLowerCase()} · ${r.runs30d} runs and ${r.hoursSaved30d} h returned in 30 days`,
@@ -569,8 +569,8 @@ const screens = [
   ["Team Capacity", "/team-capacity", "capacity weighted units transfer recommendation workload"],
   ["Analytics", "/analytics", "trends outcomes sessions cancellations billable hours goals"],
   [
-    "Clients Requiring Attention",
-    "/clients-requiring-attention",
+    "Patients Requiring Attention",
+    "/patients-requiring-attention",
     "attention review gaps follow up no visit",
   ],
   ["Referrals & Intake", "/intake", "referral intake extraction duplicate missing information"],
@@ -582,7 +582,7 @@ const screens = [
     "compliance expiries blue card screening reminders queues",
   ],
   ["Automations", "/automations", "automation rules triggers"],
-  ["Clients", "/clients", "client directory profiles goals funding"],
+  ["Patients", "/patients", "patient directory profiles goals funding"],
   ["Schedule", "/schedule", "calendar appointments visits driving travel slots"],
   ["Caseloads", "/caseloads/sarah-thompson", "caseload score sarah"],
   ["Supervision", "/supervision/sarah-thompson", "supervision brief agenda grace"],
@@ -737,9 +737,9 @@ function getSupervision(): ToolResult {
 function searchRecords(state: LiveState, input: Input): ToolResult {
   const pool: (AnswerItem & { text: string })[] = [
     ...clientProfiles.map((c) => ({
-      label: `Client profile: ${c.name}`,
+      label: `Patient profile: ${c.name}`,
       detail: c.summary,
-      href: `/clients/${c.id}`,
+      href: `/patients/${c.id}`,
       text: `${c.name} ${c.service} ${c.summary} ${c.goals.map((g) => g.text).join(" ")} ${c.alerts.map((x) => x.text).join(" ")}`,
     })),
     ...caseNotes.map((c) => ({
@@ -755,9 +755,9 @@ function searchRecords(state: LiveState, input: Input): ToolResult {
       text: `${f.template} ${f.client} ${f.purpose} ${f.fields.map((x) => `${x.label} ${x.value}`).join(" ")}`,
     })),
     ...directoryClients.map((c) => ({
-      label: `Client: ${c.name}`,
+      label: `Patient: ${c.name}`,
       detail: `${c.funding} · ${c.clinician} · ${c.service}`,
-      href: c.hasProfile ? `/clients/${c.id}` : "/clients",
+      href: c.hasProfile ? `/patients/${c.id}` : "/patients",
       text: `${c.name} ${c.service} ${c.clinician} ${c.funding} ${c.region}`,
     })),
     ...clinicians.map((c) => ({
@@ -831,27 +831,27 @@ export const toolDefs: ToolDef[] = [
   {
     name: "get_org_summary",
     description:
-      "Organisation-wide picture: clinicians, clients, overdue work, trends and where time goes. Use for overall or 'how are we doing' questions.",
+      "Organisation-wide picture: clinicians, patients, overdue work, trends and where time goes. Use for overall or 'how are we doing' questions.",
     properties: {},
     run: orgSummary,
   },
   {
     name: "get_client",
     description:
-      "Everything about one client: profile, goals, funding, alerts, tasks, reports, forms, visits this week, referral and expiries.",
-    properties: { name: s("Client name, full or partial") },
+      "Everything about one patient: profile, goals, funding, alerts, tasks, reports, forms, visits this week, referral and expiries.",
+    properties: { name: s("Patient name, full or partial") },
     run: getClient,
   },
   {
     name: "list_clients",
-    description: "List clients with optional filters. All filters are optional.",
+    description: "List patients with optional filters. All filters are optional.",
     properties: {
       funding: s("Funding type", ["NDIS", "Aged care"]),
       region: s("Region", ["Brisbane North", "Brisbane South"]),
       clinician: s("Treating clinician name"),
       priority: s("Review priority", ["High", "Medium", "Review"]),
-      state: s("Client state", ["Active", "New", "Paused"]),
-      plan_review_within_days: n("Only clients whose plan review is within this many days"),
+      state: s("Patient state", ["Active", "New", "Paused"]),
+      plan_review_within_days: n("Only patients whose plan review is within this many days"),
     },
     run: listClients,
   },
@@ -876,10 +876,10 @@ export const toolDefs: ToolDef[] = [
   {
     name: "list_tasks",
     description:
-      "Tasks and follow-ups. Filter by owner, client, type and status (open, overdue, escalated, done, all). Defaults to open.",
+      "Tasks and follow-ups. Filter by owner, patient, type and status (open, overdue, escalated, done, all). Defaults to open.",
     properties: {
       owner: s("Task owner name"),
-      client: s("Client name"),
+      client: s("Patient name"),
       type: s("Task type"),
       status: s("Status", ["open", "overdue", "escalated", "done", "all"]),
     },
@@ -897,7 +897,7 @@ export const toolDefs: ToolDef[] = [
     properties: {
       status: s("Report status", ["Not started", "AI draft", "In review", "Approved", "Sent"]),
       clinician: s("Clinician name"),
-      client: s("Client name"),
+      client: s("Patient name"),
       due_within_days: n("Only reports due within this many days (overdue included)"),
     },
     run: listReports,
@@ -920,10 +920,10 @@ export const toolDefs: ToolDef[] = [
   {
     name: "list_compliance",
     description:
-      "Expiring or expired client documents (plans, agreements, consents) and staff checks (registration, Blue Card, NDIS Worker Screening, first aid, vehicle insurance).",
+      "Expiring or expired patient documents (plans, agreements, consents) and staff checks (registration, Blue Card, NDIS Worker Screening, first aid, vehicle insurance).",
     properties: {
-      kind: s("Kind", ["Client", "Staff"]),
-      person: s("Client or staff member name"),
+      kind: s("Kind", ["Patient", "Staff"]),
+      person: s("Patient or staff member name"),
       within_days: n("Due within this many days; default 60"),
     },
     run: listCompliance,
@@ -959,7 +959,7 @@ export const toolDefs: ToolDef[] = [
   {
     name: "search_records",
     description:
-      "Keyword search across clients, clinicians, tasks, referrals, reports, expiries, automations and screens. Use when unsure which tool fits.",
+      "Keyword search across patients, clinicians, tasks, referrals, reports, expiries, automations and screens. Use when unsure which tool fits.",
     properties: { query: s("Search words") },
     run: searchRecords,
   },

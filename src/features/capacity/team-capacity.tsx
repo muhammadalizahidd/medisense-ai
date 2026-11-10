@@ -87,7 +87,7 @@ export function TeamCapacity() {
         value: scenario ? scenario.after.utilisation : c.utilisation,
         ghost: previewing ? (scenario ? c.utilisation : undefined) : undefined,
         colour: scenario ? colour.series2 : barColour(c),
-        detail: `${scenario ? scenario.after.active : c.active} of ${c.capacity} clients · ${c.discipline} · ${c.site}`,
+        detail: `${scenario ? scenario.after.active : c.active} of ${c.capacity} patients · ${c.discipline} · ${c.site}`,
       };
     });
 
@@ -121,7 +121,7 @@ export function TeamCapacity() {
       <PageHeader
         eyebrow={`Organisation · ${active} of ${capacity} places · ${capacity ? Math.round((active / capacity) * 100) : 0}%`}
         title="Team capacity"
-        description="Utilisation against configured capacity, weighted by client complexity. Continuity of care is part of every recommendation."
+        description="Utilisation against configured capacity, weighted by patient complexity. Continuity of care is part of every recommendation."
       />
 
       <FilterBar
@@ -161,7 +161,7 @@ export function TeamCapacity() {
             id="utilisation"
             className="mb-3 items-end"
             title="Utilisation by clinician"
-            description="Active clients as a share of configured capacity · dashed line at 100%"
+            description="Active patients as a share of configured capacity · dashed line at 100%"
             aside={
               <ul className="flex flex-wrap gap-4 text-caption font-medium text-ink-500">
                 <Legend fill={colour.accent} label="Within capacity" />
@@ -209,7 +209,7 @@ export function TeamCapacity() {
           </div>
           <Caption className="mt-auto border-t border-border pt-3">
             Emma has 6 open places but ≈6.5 free units, enough for about four medium-complexity
-            clients. That is why the suggestion says four, not six.
+            patients. That is why the suggestion says four, not six.
           </Caption>
         </Card>
 
@@ -369,10 +369,10 @@ export function TeamCapacity() {
           <div className="flex flex-wrap items-end justify-between gap-3 px-5 pt-4.5 pb-3.5">
             <div>
               <h2 id="candidates" className="headline text-h2">
-                Clients a supervisor could review for transfer
+                Patients a supervisor could review for transfer
               </h2>
               <Caption className="mt-1">
-                Sarah’s clients seen for under 3 months, not high complexity, with no open flags.
+                Sarah’s patients seen for under 3 months, not high complexity, with no open flags.
                 Established relationships stay with Sarah.
               </Caption>
             </div>
@@ -380,7 +380,7 @@ export function TeamCapacity() {
           </div>
           <div role="table" aria-label="Transfer candidates">
             <TableHeader columns={CANDIDATE_COLUMNS} className="px-5">
-              <div>Client</div>
+              <div>Patient</div>
               <div>Service</div>
               <div>Complexity</div>
               <div>With Sarah</div>

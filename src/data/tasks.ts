@@ -1,6 +1,6 @@
 import { dt } from "@/lib/clock";
 export type TaskType =
-  | "Client follow-up"
+  | "Patient follow-up"
   | "Documentation"
   | "Document request"
   | "Communication"
@@ -32,7 +32,7 @@ export type Task = {
 export type SuggestedTask = Pick<Task, "title" | "owner" | "due" | "type" | "priority">;
 
 export const taskTypes: TaskType[] = [
-  "Client follow-up",
+  "Patient follow-up",
   "Documentation",
   "Document request",
   "Communication",
@@ -57,7 +57,7 @@ export const seedTasks: Task[] = [
     type: "Scheduling",
     source: "Automation",
     done: false,
-    href: "/clients-requiring-attention",
+    href: "/patients-requiring-attention",
   },
   {
     id: "t-kai-plan-review",
@@ -92,7 +92,7 @@ export const seedTasks: Task[] = [
     due: dt("Tue 20 Oct"),
     daysOverdue: 0,
     priority: "Medium",
-    type: "Client follow-up",
+    type: "Patient follow-up",
     source: "AI from note",
     done: false,
     href: "/my-day",
@@ -129,7 +129,7 @@ export const seedTasks: Task[] = [
     due: dt("Wed 14 Oct"),
     daysOverdue: 6,
     priority: "Medium",
-    type: "Client follow-up",
+    type: "Patient follow-up",
     source: "Manual",
     done: false,
   },
@@ -214,7 +214,7 @@ export const seedTasks: Task[] = [
     due: dt("Thu 15 Oct"),
     daysOverdue: 3,
     priority: "Medium",
-    type: "Client follow-up",
+    type: "Patient follow-up",
     source: "Manual",
     done: false,
   },

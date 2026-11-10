@@ -248,7 +248,7 @@ export function AssistantPanel({
             </button>
           </div>
           <p className="mt-3 text-small text-sidebar-muted">
-            Your practice, in plain English. Ask about clients, the team, the schedule, reports or
+            Your practice, in plain English. Ask about patients, the team, the schedule, reports or
             compliance.
           </p>
           <form
@@ -262,7 +262,7 @@ export function AssistantPanel({
               ref={inputRef}
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
-              placeholder="e.g. Which NDIS clients have a plan review this month?"
+              placeholder="e.g. Which NDIS patients have a plan review this month?"
               aria-label="Question"
               className="h-9 min-w-0 flex-1 bg-transparent px-2.5 text-small text-sidebar-ink outline-none placeholder:text-sidebar-faint focus-visible:shadow-none focus-visible:outline-none"
             />
@@ -308,7 +308,7 @@ export function AssistantPanel({
                   const name = {
                     patient: "Patient journey",
                     therapist: "Therapist workflow",
-                    try: "Try it: new client to finished visit",
+                    try: "Try it: new patient to finished visit",
                   }[g.id];
                   return (
                     <button

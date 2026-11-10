@@ -24,6 +24,14 @@ const previewHomes = [
   ["/future-finance", "/billing"],
 ] as const;
 
+/** "Client" became "patient" across the product on 10 Nov 2026; old links still work. */
+const renamed = [
+  ["/clients", "/patients"],
+  ["/clients/:id", "/patients/:id"],
+  ["/clients-requiring-attention", "/patients-requiring-attention"],
+  ["/mobile/client", "/mobile/patient"],
+] as const;
+
 const nextConfig: NextConfig = {
   cacheComponents: true,
   devIndicators: false,
@@ -37,11 +45,14 @@ const nextConfig: NextConfig = {
     },
   },
   async redirects() {
-    return [...sectionHomes, ...previewHomes].map(([source, destination]) => ({
-      source,
-      destination,
-      permanent: false,
-    }));
+    return [
+      ...[...sectionHomes, ...previewHomes].map(([source, destination]) => ({
+        source,
+        destination,
+        permanent: false,
+      })),
+      ...renamed.map(([source, destination]) => ({ source, destination, permanent: true })),
+    ];
   },
 };
 

@@ -99,7 +99,7 @@ export function Recommendation({
       </Button>
       {previewing && (
         <p className="rounded-control bg-accent-tint px-3.5 py-2.5 text-small text-accent">
-          Preview only: moving {rebalanceScenario.moved} newer clients would take Sarah from{" "}
+          Preview only: moving {rebalanceScenario.moved} newer patients would take Sarah from{" "}
           {sarah.before.utilisation}% to {sarah.after.utilisation}% and Emma from{" "}
           {emma.before.utilisation}% to {emma.after.utilisation}%. Nothing has changed.
         </p>
@@ -141,7 +141,7 @@ export function Recommendation({
       )}
 
       <Caption className="border-t border-border pt-3">
-        Recommendation only. Requires leadership review. No clients are reassigned automatically.
+        Recommendation only. Requires leadership review. No patients are reassigned automatically.
       </Caption>
     </Card>
   );

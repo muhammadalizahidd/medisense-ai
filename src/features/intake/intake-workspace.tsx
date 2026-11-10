@@ -530,10 +530,10 @@ function ReferralDetail({
               )}
               {client && (
                 <Link
-                  href={`/clients/${client.id}`}
+                  href={`/patients/${client.id}`}
                   className="inline-flex items-center gap-1 text-small font-semibold"
                 >
-                  Open client
+                  Open patient
                   <ArrowRight className="size-3.5" strokeWidth={1.5} aria-hidden="true" />
                 </Link>
               )}
@@ -552,7 +552,7 @@ function ReferralDetail({
           <div className="flex flex-wrap items-center gap-3 border-t border-border pt-3">
             <Button variant="primary" disabled={!canVerify} onClick={() => setSheet("verify")}>
               <Copy className="size-4" strokeWidth={1.5} aria-hidden="true" />
-              Verify &amp; create client profile
+              Verify &amp; create patient profile
             </Button>
             <Caption>
               {canVerify
@@ -566,10 +566,10 @@ function ReferralDetail({
       </div>
       {sheet === "verify" && (
         <ClientFormSheet
-          title="Check details and create client"
+          title="Check details and create patient"
           description="AI filled this in from the referral. Correct anything that's wrong."
           initial={draftClient}
-          submitLabel="Create client"
+          submitLabel="Create patient"
           onClose={() => setSheet(null)}
           onSubmit={(next) => {
             verify(referral.id, next.id ? next : { ...next, id: newClientId(next.name, added) });

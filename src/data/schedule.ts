@@ -125,7 +125,7 @@ function clinicianWeek(c: Clinician): ScheduleItem[] {
         start,
         duration: sessionLength,
         type: telehealth ? "Telehealth" : "Home visit",
-        title: names[n % names.length] ?? "Client",
+        title: names[n % names.length] ?? "Patient",
         suburb: telehealth ? undefined : places[n % places.length],
         travel: telehealth ? 0 : 14 + (n % 4) * 6,
         status: cancelled ? "cancelled" : statusAt(day, start),
@@ -236,7 +236,7 @@ export const scheduleSuggestions: ScheduleSuggestion[] = [
     title: `Telehealth check-in with Ruth Hallam's daughter, ${wd("Fri")} 3:30 pm`,
     detail:
       "Appointments are paused while the family decides on living arrangements. The approved note asks for a call within two weeks; Zara Ahmed's telehealth slot is free.",
-    benefit: "Keeps a paused client from slipping · no travel",
+    benefit: "Keeps a paused patient from slipping · no travel",
     clinicianId: "sarah-thompson",
     day: 4,
     slotId: "sarah-thompson-4-4",

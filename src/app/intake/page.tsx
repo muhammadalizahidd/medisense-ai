@@ -10,7 +10,7 @@ export default function IntakePage() {
       <PageHeader
         eyebrow="Intake & admin"
         title="Referrals & intake"
-        description="Referrals arrive by email, web form and letter. AI reads each one, extracts the client details, flags gaps and duplicates, and a person verifies before a profile is created."
+        description="Referrals arrive by email, web form and letter. AI reads each one, extracts the patient details, flags gaps and duplicates, and a person verifies before a profile is created."
       />
       <IntakeWorkspace />
     </PageContainer>

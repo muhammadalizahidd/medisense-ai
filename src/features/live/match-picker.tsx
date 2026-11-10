@@ -101,8 +101,8 @@ export function MatchPicker({
                   )}
                 </p>
                 <p className="text-caption text-ink-500">
-                  {m.seniority} · {m.activeClients} of {m.capacity} clients · {m.sessionMinutes} min
-                  sessions
+                  {m.seniority} · {m.activeClients} of {m.capacity} patients · {m.sessionMinutes}{" "}
+                  min sessions
                 </p>
                 <ul className="mt-2 flex flex-wrap gap-1.5">
                   {m.reasons.map((r) => (
@@ -168,7 +168,7 @@ export function MatchPicker({
       {choice && (
         <div className="sticky bottom-4 mt-4 flex flex-wrap items-center justify-between gap-3 rounded-control border border-accent bg-surface-raised px-4 py-3 shadow-overlay">
           <p className="text-small">
-            Ask <strong>{choice.therapist.name}</strong> to take this client, first visit{" "}
+            Ask <strong>{choice.therapist.name}</strong> to take this patient, first visit{" "}
             <strong>{slotLabel(choice.start)}</strong>. The time is held until they reply.
           </p>
           <Button variant="primary" onClick={send} disabled={sending}>

@@ -17,13 +17,13 @@ export const permissions: Permission[] = [
   {
     id: "view-all",
     label: "See all caseloads",
-    detail: "Every clinician's clients and workload",
+    detail: "Every clinician's patients and workload",
     roles: { Leadership: true, Admin: true, Supervisor: true, Clinician: false },
   },
   {
     id: "view-own",
     label: "See own caseload",
-    detail: "Clients the person treats",
+    detail: "Patients the person treats",
     roles: { Leadership: true, Admin: true, Supervisor: true, Clinician: true },
     locked: true,
   },
@@ -88,7 +88,7 @@ export const aiGuardrails = [
   },
   {
     id: "no-send",
-    label: "AI never contacts clients or families",
+    label: "AI never contacts patients or families",
     detail: "Messages are drafted for staff to review and send.",
     on: true,
     locked: true,
@@ -107,7 +107,7 @@ export const aiGuardrails = [
   },
   {
     id: "no-training",
-    label: "Client data is never used to train AI models",
+    label: "Patient data is never used to train AI models",
     detail: "Covered by the AI provider's commercial terms.",
     on: true,
     locked: true,
@@ -134,7 +134,7 @@ export const integrations: Integration[] = [
   {
     id: "pms",
     name: "Practice management system",
-    detail: "Clients, appointments, notes and invoices",
+    detail: "Patients, appointments, notes and invoices",
     status: "Connected",
     lastSync: "Synced 4 min ago",
     direction: "Reads and writes approved records",

@@ -110,7 +110,7 @@ export const seriesPlan: Record<Frequency, { visits: number; everyDays: number }
 };
 
 export const cancelReasons = [
-  "Client unwell",
+  "Patient unwell",
   "Family or carer unavailable",
   "Clinician unwell or unavailable",
   "Appointment clash",

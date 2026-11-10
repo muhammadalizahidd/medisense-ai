@@ -87,17 +87,17 @@ export function OverviewDashboard() {
       format: percent,
       unit: "utilisation",
       upIsGood: false,
-      caption: `${s.active} active clients · ${s.capacity} places`,
+      caption: `${s.active} active patients · ${s.capacity} places`,
     },
     {
       id: "follow-ups",
       eyebrow: "Follow-up risk",
-      title: "Client follow-ups overdue",
+      title: "Patient follow-ups overdue",
       values: s.series.followUps.slice(-n),
       labels,
       unit: "overdue",
       upIsGood: false,
-      caption: `${s.attention.length} clients in the review queue`,
+      caption: `${s.attention.length} patients in the review queue`,
     },
     {
       id: "supervision",
@@ -125,7 +125,7 @@ export function OverviewDashboard() {
       label: c.name,
       value: c.score,
       colour: statusColour[c.status],
-      detail: `${c.active} / ${c.capacity} clients · ${c.highComplexity} high-complexity`,
+      detail: `${c.active} / ${c.capacity} patients · ${c.highComplexity} high-complexity`,
     }));
 
   const backlog = [...s.list]
@@ -140,7 +140,7 @@ export function OverviewDashboard() {
   return (
     <>
       <FilterBar
-        aside={`Showing ${s.list.length} clinicians · ${s.active} clients · ${s.fte.toFixed(1)} FTE`}
+        aside={`Showing ${s.list.length} clinicians · ${s.active} patients · ${s.fte.toFixed(1)} FTE`}
       >
         <FilterField label="Site">
           <Segmented
@@ -194,8 +194,8 @@ export function OverviewDashboard() {
         >
           <CardTitle
             id="caseload-trend"
-            title="Active clients against capacity"
-            description={`Weekly active clients · ${labels[0]} – ${labels[labels.length - 1]}`}
+            title="Active patients against capacity"
+            description={`Weekly active patients · ${labels[0]} – ${labels[labels.length - 1]}`}
             aside={
               <span className="headline text-stat-sm text-over">
                 {Math.round((s.active / Math.max(s.capacity, 1)) * 100)}%
@@ -204,12 +204,12 @@ export function OverviewDashboard() {
           />
           <div className="mt-3 flex min-h-0 flex-1 flex-col">
             <TrendChart
-              label="Active clients against configured capacity"
+              label="Active patients against configured capacity"
               data={caseloadTrend}
               xKey="week"
               height="fill"
               series={[
-                { key: "active", label: "Active clients", colour: colour.accent, kind: "area" },
+                { key: "active", label: "Active patients", colour: colour.accent, kind: "area" },
               ]}
               references={[{ y: s.capacity, label: `Capacity ${s.capacity}` }]}
               tooltipTitle={(w) => `Week of ${w}`}
@@ -217,17 +217,17 @@ export function OverviewDashboard() {
           </div>
         </Card>
 
-        <Card aria-labelledby="client-mix" className="px-6 pt-5 pb-5 lg:col-span-5">
+        <Card aria-labelledby="patient-mix" className="px-6 pt-5 pb-5 lg:col-span-5">
           <CardTitle
-            id="client-mix"
-            title="Client mix"
-            description="Funding stream and complexity of active clients"
+            id="patient-mix"
+            title="Patient mix"
+            description="Funding stream and complexity of active patients"
           />
           <div className="mt-4">
             <DonutChart
-              label="Clients by funding stream"
+              label="Patients by funding stream"
               centre={s.active}
-              centreCaption="active clients"
+              centreCaption="active patients"
               slices={[
                 { id: "ndis", label: "NDIS", value: s.ndis, colour: colour.series1 },
                 { id: "aged", label: "Aged care", value: s.agedCare, colour: colour.series2 },

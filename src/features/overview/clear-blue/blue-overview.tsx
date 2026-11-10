@@ -210,8 +210,8 @@ function ReviewAlerts({ className }: { className?: string }) {
   return (
     <Panel
       className={className}
-      title="Clients to review"
-      action={{ href: "/clients-requiring-attention", label: "View all" }}
+      title="Patients to review"
+      action={{ href: "/patients-requiring-attention", label: "View all" }}
     >
       <ul className="flex flex-1 flex-col gap-2">
         {shown.map((a) => {

@@ -91,7 +91,7 @@ export function summarise(scope: ClinicianScope, adjust?: (c: Clinician) => Clin
       caption: `${fte.toFixed(1)} FTE · ${disciplineCount} ${disciplineCount === 1 ? "discipline" : "disciplines"}`,
     },
     {
-      label: "Active clients",
+      label: "Active patients",
       value: String(active),
       caption: `${ndis} NDIS · ${active - ndis} aged care`,
     },
@@ -118,7 +118,7 @@ export function summarise(scope: ClinicianScope, adjust?: (c: Clinician) => Clin
     },
     { label: "Supervision due", value: String(supervisionDue), caption: "Next 14 days" },
     {
-      label: "Clients requiring review",
+      label: "Patients requiring review",
       value: String(attention.length),
       caption: `${countByPriority(attention, "High")} high · ${countByPriority(attention, "Medium")} medium · ${countByPriority(attention, "Review")} review`,
       flagged: attention.length > 0,

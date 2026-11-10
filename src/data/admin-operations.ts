@@ -6,7 +6,7 @@ export type ComplianceState = "Expired" | "Due ≤30 days" | "Due ≤60 days" | 
 
 export type ExpiryItem = {
   id: string;
-  kind: "Client" | "Staff";
+  kind: "Patient" | "Staff";
   category: string;
   subject: string;
   owner: string;
@@ -129,7 +129,7 @@ const clientDue: ExpiryItem[] = [
   ["chloe-agreement", "Service agreement", "Chloe Nash", "Admin team", dt("3 Dec 2026"), 44],
 ].map(([id, category, subject, owner, expires, daysLeft]) => ({
   id: id as string,
-  kind: "Client" as const,
+  kind: "Patient" as const,
   category: category as string,
   subject: subject as string,
   owner: owner as string,

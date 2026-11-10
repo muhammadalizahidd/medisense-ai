@@ -206,7 +206,7 @@ export const followUpDueOptions = [
 export const followUpDefaults = {
   supervisor: "Grace Liu",
   due: dt("Thu 22 Oct"),
-  note: "Contact client to confirm next steps",
+  note: "Contact patient to confirm next steps",
   notes: {
     "james-thompson": "Contact family to rebook; review appointment frequency",
   } as Record<string, string>,

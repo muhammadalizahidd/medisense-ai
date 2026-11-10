@@ -62,7 +62,7 @@ function toReferral(
       contactName: data.contactName,
       contactPhone: data.contactPhone,
       duplicate: duplicateOf
-        ? { client: duplicateOf, reason: "Same name as an existing client" }
+        ? { client: duplicateOf, reason: "Same name as an existing patient" }
         : undefined,
       suggestedClinician: suggestClinician(data.services, region),
       requestEmail: data.requestEmail,

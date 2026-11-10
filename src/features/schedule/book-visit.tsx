@@ -107,7 +107,7 @@ export function BookVisitSheet({
   return (
     <Sheet
       title="Book visit"
-      description={client ? client.name : "Choose the client, the time and who is visiting."}
+      description={client ? client.name : "Choose the patient, the time and who is visiting."}
       onClose={onClose}
       footer={
         <>
@@ -121,7 +121,7 @@ export function BookVisitSheet({
       <div className="grid gap-4 sm:grid-cols-2">
         {!client && (
           <div className="sm:col-span-2">
-            <Field label="Client" error={missingClient ? "Choose a client" : undefined}>
+            <Field label="Patient" error={missingClient ? "Choose a patient" : undefined}>
               <Select
                 className={inputClass}
                 value={clientId}
@@ -133,7 +133,7 @@ export function BookVisitSheet({
                   if (owner) refit({ clinician: owner });
                 }}
               >
-                <option value="">Choose a client</option>
+                <option value="">Choose a patient</option>
                 {directory.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}

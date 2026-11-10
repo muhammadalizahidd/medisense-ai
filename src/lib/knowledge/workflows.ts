@@ -19,12 +19,12 @@ export const workflowGuides: WorkflowGuide[] = [
     answer: {
       title: "The patient journey, from referral to discharge",
       intro:
-        "Every client follows the same path. AI reads and drafts at each step, rules handle the routine, and a person approves before anything is sent or saved. Open any step to go to its screen.",
+        "Every patient follows the same path. AI reads and drafts at each step, rules handle the routine, and a person approves before anything is sent or saved. Open any step to go to its screen.",
       items: [
         {
           label: "Referral arrives",
           detail:
-            "An email, GP letter or coordinator form is pasted into New referral. AI reads it and pulls out the client, funding, contacts and needs, each linked to its source line.",
+            "An email, GP letter or coordinator form is pasted into New referral. AI reads it and pulls out the patient, funding, contacts and needs, each linked to its source line.",
           href: "/intake",
         },
         {
@@ -34,10 +34,10 @@ export const workflowGuides: WorkflowGuide[] = [
           href: "/intake",
         },
         {
-          label: "Duplicate check and client created",
+          label: "Duplicate check and patient created",
           detail:
-            "Medisense checks for an existing profile. Admin verifies the details and creates the client record.",
-          href: "/clients",
+            "Medisense checks for an existing profile. Admin verifies the details and creates the patient record.",
+          href: "/patients",
         },
         {
           label: "Therapist assigned",
@@ -60,8 +60,8 @@ export const workflowGuides: WorkflowGuide[] = [
         {
           label: "Assessment and goals",
           detail:
-            "The therapist runs the first assessment and sets goals with the family. They're saved to the client record.",
-          href: "/clients/emily-carter",
+            "The therapist runs the first assessment and sets goals with the family. They're saved to the patient record.",
+          href: "/patients/emily-carter",
         },
         {
           label: "Therapy sessions and notes",
@@ -97,7 +97,7 @@ export const workflowGuides: WorkflowGuide[] = [
     answer: {
       title: "A therapist's day in Medisense",
       intro:
-        "Medisense handles the admin around each visit so therapists spend their time with clients. AI prepares and drafts; the therapist checks and approves. Open any step to go to its screen.",
+        "Medisense handles the admin around each visit so therapists spend their time with patients. AI prepares and drafts; the therapist checks and approves. Open any step to go to its screen.",
       items: [
         {
           label: "Start with My day",
@@ -108,19 +108,19 @@ export const workflowGuides: WorkflowGuide[] = [
         {
           label: "Prepare before each visit",
           detail:
-            "Open the client record for a summary of the last session, current goals, risks and family notes.",
-          href: "/clients/emily-carter",
+            "Open the patient record for a summary of the last session, current goals, risks and family notes.",
+          href: "/patients/emily-carter",
         },
         {
           label: "On the road with the Staff app",
           detail:
-            "The schedule, client details, directions and quick bookings on a phone, for home visits.",
+            "The schedule, patient details, directions and quick bookings on a phone, for home visits.",
           href: "/mobile/staff",
         },
         {
           label: "Run the session",
           detail:
-            "In the home or by telehealth. A telehealth visit opens from the booking with the client's details beside the call.",
+            "In the home or by telehealth. A telehealth visit opens from the booking with the patient's details beside the call.",
           href: "/telehealth",
         },
         {
@@ -164,24 +164,24 @@ export const workflowGuides: WorkflowGuide[] = [
   },
   {
     id: "try",
-    question: "How do I take a new client through to a finished visit?",
-    blurb: "Create a client, assign a therapist, then finish the visit as that therapist",
+    question: "How do I take a new patient through to a finished visit?",
+    blurb: "Create a patient, assign a therapist, then finish the visit as that therapist",
     answer: {
-      title: "New client to a finished visit",
+      title: "New patient to a finished visit",
       intro:
-        "Try the whole path yourself in a few minutes. The Therapist view is signed in as Sarah Thompson, so assign the client to Sarah to see the visit on her side.",
+        "Try the whole path yourself in a few minutes. The Therapist view is signed in as Sarah Thompson, so assign the patient to Sarah to see the visit on her side.",
       items: [
         {
-          label: "Create the client",
+          label: "Create the patient",
           detail:
-            "Use + New, then Add client (or Clients, then Add client). Enter the full name and service, then choose Sarah Thompson as the clinician and create the client.",
-          href: "/clients",
+            "Use + New, then Add patient (or Patients, then Add patient). Enter the full name and service, then choose Sarah Thompson as the clinician and create the patient.",
+          href: "/patients",
         },
         {
           label: "Book the first visit for today",
           detail:
-            "On the new client's page, choose Book visit. The clinician fills in from the client; keep the day as today.",
-          href: "/clients",
+            "On the new patient's page, choose Book visit. The clinician fills in from the patient; keep the day as today.",
+          href: "/patients",
         },
         {
           label: "Switch to the Therapist view",

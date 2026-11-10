@@ -91,7 +91,7 @@ export const sarahDay: Visit[] = [
 ];
 
 export const visitDetails = [
-  { label: "Client", value: "Oliver Grant, 6" },
+  { label: "Patient", value: "Oliver Grant, 6" },
   { label: "Visit", value: "Today, 9:30 to 10:15 am" },
   { label: "Service", value: "Paediatric OT, NDIS" },
   { label: "Place", value: "Home, Kedron" },
@@ -223,12 +223,12 @@ export const formTitle = "Further assessment request";
 
 /** Fields filled straight from verified records, with no AI involved in the values. */
 export const formRecordFields = [
-  { label: "Client name", value: "Oliver Grant", from: "Client record" },
-  { label: "Date of birth", value: "12/03/2020", from: "Client record" },
+  { label: "Patient name", value: "Oliver Grant", from: "Patient record" },
+  { label: "Date of birth", value: "12/03/2020", from: "Patient record" },
   { label: "NDIS number", value: "430 118 276", from: "NDIS plan" },
   { label: "Plan dates", value: `${dt("1 Aug 2026")} to ${dt("31 Jul 2027")}`, from: "NDIS plan" },
-  { label: "Parent or guardian", value: "Claire Grant", from: "Client record" },
-  { label: "Contact number", value: "0400 555 014", from: "Client record" },
+  { label: "Parent or guardian", value: "Claire Grant", from: "Patient record" },
+  { label: "Contact number", value: "0400 555 014", from: "Patient record" },
   { label: "Treating clinician", value: "Sarah Thompson, OT", from: "Staff record" },
   { label: "Paediatrician report date", value: dt("14 October 2026"), from: "This note" },
 ];
@@ -272,14 +272,14 @@ export function preparedBrief(facts: BriefFacts): Brief {
         heading: "Complex cases",
         text: facts.noteApproved
           ? `Oliver Grant has a new paediatrician report recommending further assessment.${facts.uploadOwned ? " The admin team is uploading it to his record." : ""}`
-          : "Two complex clients have recent changes requiring discussion: Oliver Grant and Ruth Hallam.",
+          : "Two complex patients have recent changes requiring discussion: Oliver Grant and Ruth Hallam.",
         source: facts.noteApproved ? "Approved note, Plan" : "Caseload",
       },
       {
         heading: "Pending follow-ups",
         text: facts.escalated.length
           ? `${facts.escalated.join(" and ")} escalated to you for being more than 3 days late.`
-          : "Five client follow-ups are due, three of them overdue.",
+          : "Five patient follow-ups are due, three of them overdue.",
         source: "Tasks",
       },
       {
@@ -291,14 +291,14 @@ export function preparedBrief(facts: BriefFacts): Brief {
     points: [
       "What would make Oliver's further assessment easier to organise?",
       "Which of Sarah's remaining notes needs clinical input rather than time?",
-      "Would moving some clients help more than clearing the backlog?",
+      "Would moving some patients help more than clearing the backlog?",
     ],
   };
 }
 
 export const preparedBriefing = {
   start:
-    "Sarah Thompson is the one to look at today. She's at 108% of capacity with 6 high-complexity clients, and her notes to write are the part that can change this week.",
+    "Sarah Thompson is the one to look at today. She's at 108% of capacity with 6 high-complexity patients, and her notes to write are the part that can change this week.",
   changed:
     "Sarah has approved Oliver Grant's note, so she has one fewer note to write. She's still At Risk because her caseload hasn't changed.",
 };
@@ -311,14 +311,14 @@ export const preparedDaySummary = {
 
 export const aiQuestions = [
   "Why is Sarah At Risk?",
-  "Who has room for more clients?",
+  "Who has room for more patients?",
   "What should I look at first?",
 ];
 
 export const roadmap = [
   {
     phase: "In the field",
-    why: "Therapists work from cars and client homes, so this comes first.",
+    why: "Therapists work from cars and patient homes, so this comes first.",
     modules: [
       {
         name: "Staff mobile app",

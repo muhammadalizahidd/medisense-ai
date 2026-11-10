@@ -51,7 +51,7 @@ export const automationOpportunities = [
   },
   {
     label: "Follow-up identification",
-    description: "Surfaces overdue follow-ups and unbooked clients from scheduling data.",
+    description: "Surfaces overdue follow-ups and unbooked patients from scheduling data.",
     hours: 3,
     live: true,
   },

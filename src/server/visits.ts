@@ -141,7 +141,7 @@ async function notifyParties(
   const isActor = (id: ObjectId) => id.equals(user._id);
   const admins = (await adminIds()).filter((id) => !isActor(id));
   const { client, therapist } = parties;
-  if (!isActor(client.userId)) await notify([client.userId], { ...note, href: "/mobile/client" });
+  if (!isActor(client.userId)) await notify([client.userId], { ...note, href: "/mobile/patient" });
   if (!isActor(therapist.userId)) await notify([therapist.userId], { ...note, href: "/therapist" });
   await notify(admins, { ...note, href: `/care/${client._id.toHexString()}` });
 }

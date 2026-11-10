@@ -101,7 +101,7 @@ function LiveFigures() {
           <LiveBadge />
         </div>
         <Link href="/care" className="inline-flex items-center gap-1 text-caption font-medium">
-          Client onboarding
+          Patient onboarding
           <ArrowRight className="size-3.5" aria-hidden="true" />
         </Link>
       </div>
@@ -110,7 +110,7 @@ function LiveFigures() {
           <Stat
             label="Need a therapist"
             value={onboarding.needsTherapist}
-            caption={`${onboarding.active} clients fully matched`}
+            caption={`${onboarding.active} patients fully matched`}
             tone={onboarding.needsTherapist ? "over" : undefined}
             href="/care"
           />

@@ -98,8 +98,8 @@ export function WorkloadPanel({
         <div className="flex items-baseline justify-between gap-3">
           <span className="eyebrow">Admin hours / week · {adminTarget}h target</span>
           <Caption>
-            {weeksOver} of {rows.length} weeks above target · active clients {first.activeClients} →{" "}
-            {last.activeClients}
+            {weeksOver} of {rows.length} weeks above target · active patients {first.activeClients}{" "}
+            → {last.activeClients}
           </Caption>
         </div>
         <div className="mt-2 h-32">

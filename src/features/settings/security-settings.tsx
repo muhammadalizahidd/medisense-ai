@@ -110,8 +110,8 @@ export function SecuritySettings() {
             </div>
           </div>
           <Caption className="px-5 py-3">
-            Clinicians see only their own clients. Leadership sees workload and status, not clinical
-            note content. Every change is written to the audit trail.
+            Clinicians see only their own patients. Leadership sees workload and status, not
+            clinical note content. Every change is written to the audit trail.
           </Caption>
         </Card>
 
@@ -120,7 +120,7 @@ export function SecuritySettings() {
             <CardTitle
               id="guardrails"
               title="AI guardrails"
-              description="How AI is allowed to work with client data"
+              description="How AI is allowed to work with patient data"
             />
           </div>
           {aiGuardrails.map((g) => (

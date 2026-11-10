@@ -134,7 +134,7 @@ export function TasksWorkspace() {
           </SelectField>
           <SearchField
             label="Search tasks"
-            placeholder="Search tasks or clients"
+            placeholder="Search tasks or patients"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -158,7 +158,7 @@ export function TasksWorkspace() {
           <div className="min-w-290">
             <TableHeader columns={COLUMNS}>
               <div>Task</div>
-              <div>Client</div>
+              <div>Patient</div>
               <div>Owner</div>
               <div>Due</div>
               <div>Type</div>

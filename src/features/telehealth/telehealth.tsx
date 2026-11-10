@@ -209,8 +209,11 @@ function ClientPanel({ visit }: { visit: ScheduleItem }) {
         ))}
       </dl>
       {client && (
-        <Link href={`/clients/${client.id}`} className="mt-3 inline-block text-small font-semibold">
-          Open client record
+        <Link
+          href={`/patients/${client.id}`}
+          className="mt-3 inline-block text-small font-semibold"
+        >
+          Open patient record
         </Link>
       )}
     </div>
@@ -392,7 +395,7 @@ function Room({ visit, onLeave }: { visit: ScheduleItem; onLeave: () => void }) 
             onChange={setPanel}
             options={[
               { id: "note", label: "Note" },
-              { id: "client", label: "Client" },
+              { id: "client", label: "Patient" },
               { id: "chat", label: "Chat" },
             ]}
           />

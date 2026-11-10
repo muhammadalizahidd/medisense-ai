@@ -24,9 +24,9 @@ const tabs = [
 ];
 
 const frame = {
-  name: "Client app",
+  name: "Patient app",
   description:
-    "For clients and families: who their therapist is, when they're coming, and a direct line to them.",
+    "For patients and families: who their therapist is, when they're coming, and a direct line to them.",
   features: [
     "Activate with the code from the care team",
     "See your therapist as soon as they accept",
@@ -59,7 +59,7 @@ export function ClientApp() {
         <div className="p-4">
           {user && (
             <p className="mb-3 rounded-control bg-monitor-bg px-3 py-2 text-small text-monitor">
-              You&apos;re signed in as staff. Sign in with a client account to use this app.
+              You&apos;re signed in as staff. Sign in with a patient account to use this app.
             </p>
           )}
           <AppCard>

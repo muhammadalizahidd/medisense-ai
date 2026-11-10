@@ -22,8 +22,8 @@ export const visitStatus: Record<VisitStatus, { label: string; tone: TagTone }> 
 export function visitNote(v: AppointmentDto) {
   if (v.cancellation) {
     const c = v.cancellation;
-    if (v.status === "no-show") return "Client wasn't there. May be charged.";
-    return `${c.reason}. ${c.by === "client" ? "Client" : "Medisense"} cancelled with ${c.noticeHours} hours' notice${c.chargeable ? ", may be charged" : ""}.`;
+    if (v.status === "no-show") return "Patient wasn't there. May be charged.";
+    return `${c.reason}. ${c.by === "client" ? "Patient" : "Medisense"} cancelled with ${c.noticeHours} hours' notice${c.chargeable ? ", may be charged" : ""}.`;
   }
   return v.series ? `Visit ${v.series.index} of ${v.series.total}` : "One-off visit";
 }
@@ -118,7 +118,7 @@ export function VisitList({
       {cancelling && (
         <Sheet
           title="Cancel or change a visit"
-          description="The client, therapist and care team are told straight away."
+          description="The patient, therapist and care team are told straight away."
           onClose={() => setCancelling(null)}
         >
           <CancelVisitPanel

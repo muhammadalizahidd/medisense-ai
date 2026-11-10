@@ -21,8 +21,8 @@ export function MessagesPage({ myId }: { myId: string }) {
     <>
       <PageHeader
         eyebrow="Messages"
-        title="Client messages"
-        description="Chat with your clients and their families. Messages arrive as they're sent."
+        title="Patient messages"
+        description="Chat with your patients and their families. Messages arrive as they're sent."
         actions={<LiveBadge />}
       />
       <div className="grid h-[min(70dvh,720px)] overflow-hidden rounded-card border border-border bg-surface surface-lift md:grid-cols-[320px_1fr]">
@@ -40,7 +40,7 @@ export function MessagesPage({ myId }: { myId: string }) {
             onRetry={reload}
             selected={selected}
             onSelect={open}
-            emptyText="A conversation opens when you accept a new client."
+            emptyText="A conversation opens when you accept a new patient."
           />
         </aside>
         <section

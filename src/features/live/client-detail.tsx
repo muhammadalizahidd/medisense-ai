@@ -46,7 +46,7 @@ export function ClientDetail({ clientId }: { clientId: string }) {
         eyebrow={
           <ButtonLink href="/care" variant="ghost" size="sm">
             <ArrowLeft className="size-3.5" aria-hidden="true" />
-            Client onboarding
+            Patient onboarding
           </ButtonLink>
         }
         title={client.name}
@@ -200,8 +200,8 @@ function NeedPanel({
       {current?.status === "accepted" && (
         <p className="rounded-control border border-healthy-bg bg-healthy-bg px-4 py-3 text-small">
           <strong>{current.therapistName}</strong> accepted. First visit{" "}
-          <strong>{slotLabel(current.firstVisit)}</strong>. The client and therapist can now message
-          each other.
+          <strong>{slotLabel(current.firstVisit)}</strong>. The patient and therapist can now
+          message each other.
         </p>
       )}
       {error && (
@@ -228,7 +228,7 @@ function AppAccess({
   const [busy, setBusy] = useState(false);
   return (
     <Panel
-      title="Client app"
+      title="Patient app"
       action={
         <Tag tone={account === "Active" ? "healthy" : account === "Invited" ? "monitor" : "over"}>
           {account}
@@ -251,7 +251,7 @@ function AppAccess({
             {account === "Invited"
               ? "Invite sent, not activated yet."
               : "The invite code has expired."}{" "}
-            Create a new code if the client lost theirs.
+            Create a new code if the patient lost theirs.
           </p>
           <Button
             size="sm"

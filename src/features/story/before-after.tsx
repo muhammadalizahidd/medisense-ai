@@ -52,7 +52,7 @@ const fromDay: Row[] = [
   {
     measure: "Follow-ups overdue",
     key: "followUps",
-    why: "A client follow-up was due yesterday and is still open.",
+    why: "A patient follow-up was due yesterday and is still open.",
     time: "08:00",
   },
 ];
@@ -107,7 +107,7 @@ export function BeforeAfter() {
         changes,
         cause: "Sarah Thompson, the treating clinician, approved Oliver Grant's session note",
         stillTrue:
-          "Sarah has 27 active clients against a capacity of 25, including 6 high-complexity clients",
+          "Sarah has 27 active patients against a capacity of 25, including 6 high-complexity patients",
       },
     },
     preparedBriefing.changed,
@@ -182,8 +182,8 @@ export function BeforeAfter() {
             What hasn&apos;t changed
           </h2>
           <p className="mt-2 text-small leading-5.5 text-ink-700">
-            Sarah still has 27 active clients against a capacity of 25, including 6 high-complexity
-            clients. That needs a caseload decision, not a tidier backlog.
+            Sarah still has 27 active patients against a capacity of 25, including 6 high-complexity
+            patients. That needs a caseload decision, not a tidier backlog.
           </p>
           <ButtonLink href="/team-capacity" className="mt-3.5">
             Open team capacity

@@ -33,7 +33,7 @@ export function adjustClinician(live: Live) {
 
   const followUpChange = (name: string) =>
     live.tasks.reduce((sum, t) => {
-      if (t.owner !== name || t.type !== "Client follow-up") return sum;
+      if (t.owner !== name || t.type !== "Patient follow-up") return sum;
       const seed = seedById.get(t.id);
       if (!seed) return sum;
       const wasOverdue = !seed.done && seed.daysOverdue > 0;

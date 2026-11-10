@@ -116,11 +116,11 @@ export async function respond(
     await notify([client.userId], {
       title: `${therapist.name} is your ${assignment.discipline.toLowerCase()} therapist`,
       body: `Your first visit is ${slotLabel(visit.start)}.${plan} You can message ${therapist.name.split(" ")[0]} in the app.`,
-      href: "/mobile/client",
+      href: "/mobile/patient",
     });
     await notify(admins, {
       title: `${therapist.name} accepted ${client.name}`,
-      body: `${assignment.discipline}. First visit ${slotLabel(visit.start)}.${plan}${schedule.skipped ? ` ${schedule.skipped} could not be booked; choose times on the client page.` : ""}`,
+      body: `${assignment.discipline}. First visit ${slotLabel(visit.start)}.${plan}${schedule.skipped ? ` ${schedule.skipped} could not be booked; choose times on the patient page.` : ""}`,
       href: `/care/${client._id.toHexString()}`,
     });
   } else {

@@ -84,7 +84,7 @@ export function appointmentDto(
     end: a.end.toISOString(),
     status: a.status,
     discipline: a.discipline,
-    clientName: nameOf(clients, a.clientId) ?? "Client",
+    clientName: nameOf(clients, a.clientId) ?? "Patient",
     therapistName: nameOf(therapists, a.therapistId) ?? "Therapist",
     series: series.get(a._id.toHexString()) ?? null,
     cancellation: a.cancellation
@@ -108,7 +108,7 @@ export function assignmentDto(
   return {
     id: a._id.toHexString(),
     clientId: a.clientId.toHexString(),
-    clientName: nameOf(clients, a.clientId) ?? "Client",
+    clientName: nameOf(clients, a.clientId) ?? "Patient",
     therapistName: nameOf(therapists, a.therapistId) ?? "Therapist",
     discipline: a.discipline,
     status: a.status,

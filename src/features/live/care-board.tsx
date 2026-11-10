@@ -36,15 +36,15 @@ export function CareBoard() {
   return (
     <>
       <PageHeader
-        eyebrow="Client onboarding"
-        title="New clients and therapist matching"
-        description="Add a client, choose a therapist by availability, and follow each request until it's accepted."
+        eyebrow="Patient onboarding"
+        title="New patients and therapist matching"
+        description="Add a patient, choose a therapist by availability, and follow each request until it's accepted."
         actions={
           <div className="flex items-center gap-3">
             <LiveBadge />
             <ButtonLink href="/care/new" variant="primary">
               <Plus className="size-4" aria-hidden="true" />
-              Add client
+              Add patient
             </ButtonLink>
           </div>
         }
@@ -69,7 +69,7 @@ export function CareBoard() {
             label: "Added this week",
             value: clients.filter((c) => new Date(c.createdAt).getTime() > weekAgo).length,
           },
-          { label: "All clients", value: clients.length },
+          { label: "All patients", value: clients.length },
         ]}
       />
 
@@ -90,7 +90,7 @@ export function CareBoard() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            aria-label="Search clients"
+            aria-label="Search patients"
             placeholder="Search name, suburb or therapy"
             className="min-w-0 flex-1 bg-transparent text-small outline-none placeholder:text-ink-500"
           />
@@ -106,11 +106,11 @@ export function CareBoard() {
           ))}
         </div>
       ) : rows.length === 0 ? (
-        <EmptyNote title={clients.length ? "No clients match." : "No clients yet."}>
+        <EmptyNote title={clients.length ? "No patients match." : "No patients yet."}>
           {clients.length ? (
             "Try another filter or search."
           ) : (
-            <Link href="/care/new">Add the first client</Link>
+            <Link href="/care/new">Add the first patient</Link>
           )}
         </EmptyNote>
       ) : (
@@ -118,7 +118,7 @@ export function CareBoard() {
           <table className="w-full min-w-200 text-left text-small">
             <thead className="border-b border-border text-caption text-ink-500">
               <tr>
-                <th className="px-4 py-3 font-medium">Client</th>
+                <th className="px-4 py-3 font-medium">Patient</th>
                 <th className="px-4 py-3 font-medium">Therapies</th>
                 <th className="px-4 py-3 font-medium">Funding</th>
                 <th className="px-4 py-3 font-medium">Added</th>

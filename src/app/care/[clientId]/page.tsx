@@ -4,7 +4,7 @@ import { ClientDetail } from "@/features/live/client-detail";
 import { OfflinePage } from "@/features/live/offline-page";
 import { requirePageUser } from "@/server/page-auth";
 
-export const metadata: Metadata = { title: "Client · Medisense" };
+export const metadata: Metadata = { title: "Patient · Medisense" };
 
 export default async function CareClientPage({
   params,

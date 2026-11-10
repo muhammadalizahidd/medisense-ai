@@ -7,11 +7,11 @@ const SYSTEM = `You draft structured session notes for allied health clinicians 
 Turn the therapist's raw session note into a structured draft. The clinician reviews and approves every draft, so:
 - Use only what the note says. Never add facts, scores, diagnoses, risk ratings or treatment decisions that are not in the note.
 - If the note gives nothing for a section, return an empty list for it.
-- Write in Australian English, in the plain, professional register of a clinical record. Refer to the person as "client" and family members by their role.
+- Write in Australian English, in the plain, professional register of a clinical record. Refer to the person as "patient" and family members by their role.
 
 Sections:
 - summary: two or three sentences. The first sentence states the main focus of the session.
-- subjective: what the client, family or other people reported, as short phrases.
+- subjective: what the patient, family or other people reported, as short phrases.
 - interventions: what the clinician did in the session, as short phrases.
 - observations: progress and observations reported or seen, as short phrases.
 - nextActions: agreed next steps and who does them, as short phrases.
@@ -81,7 +81,7 @@ export async function summariseNote(lines: string[], context: string) {
   const numbered = lines.map((l, i) => `${i + 1}. ${l}`).join("\n");
   const output = await generateJson("summarise", {
     system: SYSTEM,
-    user: `Client: ${context}\n\nTherapist's raw session note, one observation per line:\n${numbered}`,
+    user: `Patient: ${context}\n\nTherapist's raw session note, one observation per line:\n${numbered}`,
     schema: SCHEMA,
     schemaName: "structured_note",
   });

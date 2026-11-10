@@ -121,7 +121,7 @@ export function VisitSheet({ visit, onClose }: { visit: ScheduleItem; onClose: (
         {visit.type === "Telehealth" && status !== "cancelled" && canComplete && (
           <Link href={`/telehealth?visit=${visit.id}`}>Start video visit</Link>
         )}
-        {client && <Link href={`/clients/${client.id}`}>Open client</Link>}
+        {client && <Link href={`/patients/${client.id}`}>Open patient</Link>}
         {status === "completed" && note && (
           <Link href={`/case-notes/${note.id}`}>Write note with AI</Link>
         )}

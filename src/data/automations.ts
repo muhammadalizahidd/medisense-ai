@@ -69,7 +69,7 @@ export const automationRules: AutomationRule[] = [
   },
   {
     id: "no-visit",
-    name: "Rebook clients with no recent visit",
+    name: "Rebook patients with no recent visit",
     category: "Follow-ups",
     trigger: "Daily caseload check",
     condition: "No appointment for 21 days and nothing booked",
@@ -87,7 +87,7 @@ export const automationRules: AutomationRule[] = [
     category: "Intake",
     trigger: "Referral arrives by email, web form or upload",
     condition: "Always",
-    action: "Extract client details, check for duplicates and list missing information",
+    action: "Extract patient details, check for duplicates and list missing information",
     output: "Draft for review",
     enabled: true,
     runs30d: 29,
@@ -171,7 +171,7 @@ export const automationRules: AutomationRule[] = [
     category: "Follow-ups",
     trigger: "Appointment cancelled",
     condition: "Second cancellation within 30 days",
-    action: "Add the client to Clients Requiring Attention for review",
+    action: "Add the patient to Patients Requiring Attention for review",
     output: "Notifies a person",
     enabled: false,
     runs30d: 0,
@@ -199,7 +199,7 @@ export const automationRules: AutomationRule[] = [
 export const builderTriggers = [
   { id: "note", label: "A session note is not approved", matches: 17, category: "Documentation" },
   { id: "plan", label: "An NDIS plan is ending", matches: 9, category: "Reports" },
-  { id: "visit", label: "A client has no upcoming visit", matches: 6, category: "Follow-ups" },
+  { id: "visit", label: "A patient has no upcoming visit", matches: 6, category: "Follow-ups" },
   { id: "referral", label: "A referral arrives", matches: 7, category: "Intake" },
   { id: "expiry", label: "A staff check is expiring", matches: 4, category: "Compliance" },
 ] as const;
@@ -208,7 +208,7 @@ export const builderConditions = [
   "after 2 days",
   "within 30 days",
   "within 60 days",
-  "and the client is High priority",
+  "and the patient is High priority",
   "and the clinician is At Risk",
 ];
 
@@ -252,7 +252,7 @@ export const recentRuns = [
   },
   {
     time: "07:00",
-    rule: "Rebook clients with no recent visit",
+    rule: "Rebook patients with no recent visit",
     object: "James Thompson",
     outcome: "Task created for Sarah Thompson",
   },

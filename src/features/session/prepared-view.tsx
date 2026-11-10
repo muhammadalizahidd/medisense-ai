@@ -650,7 +650,7 @@ export function PreparedView() {
       <div className="mb-6 flex flex-wrap items-center gap-x-2 gap-y-1 text-small text-ink-700">
         <AiMark>AI read</AiMark>
         <span>
-          Oliver&apos;s approved note, 5 earlier notes, his NDIS plan and his client record.
+          Oliver&apos;s approved note, 5 earlier notes, his NDIS plan and his patient record.
         </span>
       </div>
 

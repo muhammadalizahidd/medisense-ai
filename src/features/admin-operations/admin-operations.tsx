@@ -43,7 +43,7 @@ export function AdminOperations() {
   const referralStatus = useDemoStore((s) => s.referrals);
   const forms = useDemoStore((s) => s.forms);
   const tasks = useDemoStore((s) => s.tasks);
-  const [kind, setKind] = useState<"all" | "Client" | "Staff">("all");
+  const [kind, setKind] = useState<"all" | "Patient" | "Staff">("all");
   const [state, setState] = useState<StateFilter>("all");
 
   const urgent = expiryItems.filter((i) => i.daysLeft <= 30);
@@ -88,7 +88,7 @@ export function AdminOperations() {
     {
       label: "Due in 30 days",
       value: expiryItems.filter((i) => i.daysLeft >= 0 && i.daysLeft <= 30).length,
-      caption: "Client and staff",
+      caption: "Patient and staff",
     },
     {
       label: "Due in 31–60 days",
@@ -148,7 +148,7 @@ export function AdminOperations() {
           <CardTitle
             id="expiries-month"
             title="Expiries ahead"
-            description="Plans, agreements, consents and staff checks · all clients and staff"
+            description="Plans, agreements, consents and staff checks · all patients and staff"
           />
           <div className="mt-3 flex flex-1 flex-col">
             <StackedColumns
@@ -157,7 +157,7 @@ export function AdminOperations() {
               data={expiriesByMonth}
               xKey="month"
               series={[
-                { key: "client", label: "Client documents", colour: colour.series1 },
+                { key: "client", label: "Patient documents", colour: colour.series1 },
                 { key: "staff", label: "Staff checks", colour: colour.series2 },
               ]}
             />
@@ -253,7 +253,7 @@ export function AdminOperations() {
               onChange={setKind}
               options={[
                 { id: "all", label: "All" },
-                { id: "Client", label: "Client documents" },
+                { id: "Patient", label: "Patient documents" },
                 { id: "Staff", label: "Staff checks" },
               ]}
             />
@@ -294,7 +294,7 @@ export function AdminOperations() {
                 >
                   <div className="py-2">
                     <span className="block font-semibold">{i.category}</span>
-                    <Caption>{i.kind === "Client" ? "Client document" : "Staff check"}</Caption>
+                    <Caption>{i.kind === "Patient" ? "Patient document" : "Staff check"}</Caption>
                   </div>
                   <div className="text-ink-700">{i.subject}</div>
                   <div className="text-ink-700">{i.owner}</div>
@@ -332,8 +332,8 @@ export function AdminOperations() {
           </div>
         </div>
         <Caption className="px-4 pt-3 pb-3.5">
-          Reminders go to the owner shown. Messages to clients or families are drafted for the admin
-          team to review before sending.
+          Reminders go to the owner shown. Messages to patients or families are drafted for the
+          admin team to review before sending.
         </Caption>
       </Card>
     </>

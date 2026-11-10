@@ -60,7 +60,7 @@ export function ClientDirectory() {
   const reviewsNext30 = planReviewsByMonth[0];
   const metrics = [
     {
-      label: "Active clients",
+      label: "Active patients",
       value: clientTotals.all + added.length,
       caption: `${clientTotals.ndis + added.filter((c) => c.funding === "NDIS").length} NDIS · ${clientTotals.agedCare + added.filter((c) => c.funding === "Aged care").length} aged care`,
     },
@@ -85,7 +85,7 @@ export function ClientDirectory() {
   return (
     <>
       <section
-        aria-label="Client summary"
+        aria-label="Patient summary"
         className="stat-band grid grid-cols-2 gap-px overflow-hidden rounded-card border border-border bg-border lg:grid-cols-5"
       >
         {metrics.map((m) => (
@@ -126,8 +126,8 @@ export function ClientDirectory() {
             ))}
           </SelectField>
           <SearchField
-            label="Search clients"
-            placeholder="Search clients or services"
+            label="Search patients"
+            placeholder="Search patients or services"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -139,7 +139,7 @@ export function ClientDirectory() {
             value={state}
             onChange={setState}
             options={[
-              { id: "all" as const, label: "All clients" },
+              { id: "all" as const, label: "All patients" },
               { id: "Active" as const, label: "Active" },
               { id: "New" as const, label: "New" },
               { id: "Paused" as const, label: "Paused" },
@@ -153,11 +153,11 @@ export function ClientDirectory() {
         </div>
       </div>
 
-      <Card aria-label="Clients" className="overflow-hidden">
-        <div className="overflow-x-auto" role="table" aria-label="Clients">
+      <Card aria-label="Patients" className="overflow-hidden">
+        <div className="overflow-x-auto" role="table" aria-label="Patients">
           <div className="min-w-280">
             <TableHeader columns={COLUMNS}>
-              <div>Client</div>
+              <div>Patient</div>
               <div>Funding</div>
               <div>Clinician</div>
               <div>Region</div>
@@ -171,7 +171,7 @@ export function ClientDirectory() {
               <TableRow key={c.id} columns={COLUMNS}>
                 <div className="min-w-0 py-2">
                   <Link
-                    href={`/clients/${c.id}`}
+                    href={`/patients/${c.id}`}
                     className="font-semibold text-ink-900 hover:text-accent"
                   >
                     {c.name}
@@ -199,7 +199,7 @@ export function ClientDirectory() {
                 </div>
                 <div className="text-right">
                   <Link
-                    href={`/clients/${c.id}`}
+                    href={`/patients/${c.id}`}
                     className="inline-flex items-center gap-1 text-small font-semibold text-accent"
                   >
                     Open
@@ -209,13 +209,13 @@ export function ClientDirectory() {
               </TableRow>
             ))}
             {rows.length === 0 && (
-              <p className="px-4 py-6 text-small text-ink-500">No clients match these filters.</p>
+              <p className="px-4 py-6 text-small text-ink-500">No patients match these filters.</p>
             )}
           </div>
         </div>
         <Caption className="px-4 pt-3 pb-3.5">
-          Client records stay in your practice management system; Medisense reads them to spot gaps
-          and builds a full profile for each client.
+          Patient records stay in your practice management system; Medisense reads them to spot gaps
+          and builds a full profile for each patient.
         </Caption>
       </Card>
     </>

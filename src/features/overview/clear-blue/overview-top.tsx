@@ -258,10 +258,10 @@ export function KpiCards() {
       className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4"
     >
       <KpiCard
-        href="/clients"
+        href="/patients"
         icon={UsersRound}
-        title="Active clients"
-        value={changed("Active clients")}
+        title="Active patients"
+        value={changed("Active patients")}
         footer={
           <Delta
             now={last(live.series.active)}
@@ -270,7 +270,7 @@ export function KpiCards() {
             since="last week"
           />
         }
-        visual={spark(live.series.active, weeks, "active clients")}
+        visual={spark(live.series.active, weeks, "active patients")}
       />
       <KpiCard
         href="/schedule"
@@ -335,10 +335,10 @@ type Action = { label: string; icon: LucideIcon } & (
 );
 
 const actions: Action[] = [
-  { label: "New client", icon: UserPlus, href: "/care/new" },
+  { label: "New patient", icon: UserPlus, href: "/care/new" },
   { label: "Book appointment", icon: CalendarPlus, sheet: "visit" },
   { label: "Add clinical note", icon: FileCheck2, href: "/case-notes/mia-robinson" },
-  { label: "Create care plan", icon: Layers, href: "/clients" },
+  { label: "Create care plan", icon: Layers, href: "/patients" },
   { label: "Log session", icon: CirclePlay, href: "/sessions/oliver-grant" },
   { label: "Generate report", icon: ChartColumn, href: "/reports" },
 ];
@@ -462,15 +462,15 @@ export function ClientStatus({ className }: { className?: string }) {
   return (
     <Panel
       className={className}
-      title="Client status"
-      action={{ href: "/clients-requiring-attention", label: "View all" }}
+      title="Patient status"
+      action={{ href: "/patients-requiring-attention", label: "View all" }}
     >
       <div className="flex flex-1 items-center">
         <DonutChart
-          label="Active clients by status"
+          label="Active patients by status"
           size={150}
           centre={live.active}
-          centreCaption="Clients"
+          centreCaption="Patients"
           slices={[
             {
               id: "active",

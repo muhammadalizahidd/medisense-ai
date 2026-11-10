@@ -16,7 +16,7 @@ export const hannahDay = {
   tiles: [
     { label: "Today’s appointments", value: "5", caption: "First 8:30 am · last 3:30 pm" },
     { label: "Notes awaiting approval", value: "2", caption: `AI drafts from ${dt("19 Oct")}` },
-    { label: "Client follow-ups", value: "1", caption: "Poppy Shaw" },
+    { label: "Patient follow-ups", value: "1", caption: "Poppy Shaw" },
     { label: "Progress report due", value: "1", caption: `Emily Carter, ${wd("Fri")}` },
   ],
   supervision: "11:00 am with Grace Liu",
@@ -58,7 +58,7 @@ export const hannahDay = {
   shortcuts: [
     { label: "Summarise today’s notes" },
     { label: "Prepare my supervision" },
-    { label: "Show clients needing follow-up", href: "/clients-requiring-attention" },
+    { label: "Show patients needing follow-up", href: "/patients-requiring-attention" },
     { label: "Draft Emily’s progress report", href: "/progress-reports/emily-carter" },
   ] as { label: string; href?: string }[],
   drafts: [

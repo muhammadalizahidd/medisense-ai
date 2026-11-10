@@ -61,8 +61,8 @@ export const suggestedAgenda: AgendaItem[] = [
   },
   {
     section: "Complex cases",
-    text: "Two complex clients have recent changes requiring discussion.",
-    evidence: "View 2 client records",
+    text: "Two complex patients have recent changes requiring discussion.",
+    evidence: "View 2 patient records",
     href: "/caseloads/sarah-thompson",
     details: [
       { client: "Oliver Grant", change: `new external report received ${dt("14 Oct")}` },
@@ -71,9 +71,9 @@ export const suggestedAgenda: AgendaItem[] = [
   },
   {
     section: "Pending follow-ups",
-    text: "Five client follow-ups are due, three of them overdue.",
-    evidence: "View clients requiring attention",
-    href: "/clients-requiring-attention",
+    text: "Five patient follow-ups are due, three of them overdue.",
+    evidence: "View patients requiring attention",
+    href: "/patients-requiring-attention",
     details: [
       { client: "James Thompson", change: "no appointment for 21 days" },
       { client: "Isla Murphy", change: "parent call-back overdue" },
@@ -136,7 +136,7 @@ export const sarahSessions = [
     outcome: "rescheduled",
     note: `Moved to ${dt("6 Aug")}: urgent home visit`,
   },
-  { date: dt("Thu 27 Aug"), outcome: "cancelled", note: "Cancelled: client crisis visit" },
+  { date: dt("Thu 27 Aug"), outcome: "cancelled", note: "Cancelled: patient crisis visit" },
   { date: dt("Thu 24 Sep"), outcome: "held", note: "Held · 60 min" },
 ] as const;
 

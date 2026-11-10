@@ -40,7 +40,7 @@ type Line = { visit: ScheduleItem; funding: Funding; amount: number; needsNote: 
 function downloadCsv(lines: Line[]) {
   const quote = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`;
   const rows = [
-    ["Client", "Day", "Time", "Clinician", "Funding", "Minutes", "Amount", "Status"],
+    ["Patient", "Day", "Time", "Clinician", "Funding", "Minutes", "Amount", "Status"],
     ...lines.map((l) => [
       l.visit.title,
       scheduleDays[l.visit.day]?.label ?? "",
@@ -264,7 +264,7 @@ export function Billing() {
               />
               <input
                 aria-label="Search claim lines"
-                placeholder="Search client or clinician"
+                placeholder="Search patient or clinician"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 className="h-9 w-64 max-w-full rounded-control border border-border bg-surface pr-3 pl-9 text-small outline-none focus:border-accent"
@@ -275,7 +275,7 @@ export function Billing() {
         <div className="overflow-x-auto" role="table" aria-label="Claim lines">
           <div className="min-w-220">
             <TableHeader columns={COLUMNS}>
-              <div>Client</div>
+              <div>Patient</div>
               <div>When</div>
               <div>Clinician</div>
               <div>Funding</div>

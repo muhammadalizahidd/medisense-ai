@@ -60,8 +60,8 @@ export const navigation: { group: string; items: NavItem[] }[] = [
       { href: "/team-capacity", label: "Team capacity", icon: Users, roles: [L, S] },
       { href: "/analytics", label: "AI insights", icon: ChartLine, roles: [L, S] },
       {
-        href: "/clients-requiring-attention",
-        label: "Clients to review",
+        href: "/patients-requiring-attention",
+        label: "Patients to review",
         icon: Flag,
         badge: 14,
         roles: [L, A, S],
@@ -71,8 +71,8 @@ export const navigation: { group: string; items: NavItem[] }[] = [
   {
     group: "Live care",
     items: [
-      { href: "/care", label: "Client onboarding", icon: UserPlus, roles: [L, A] },
-      { href: "/therapist", label: "My new clients", icon: BellRing, roles: [C] },
+      { href: "/care", label: "Patient onboarding", icon: UserPlus, roles: [L, A] },
+      { href: "/therapist", label: "My new patients", icon: BellRing, roles: [C] },
       { href: "/messages", label: "Messages", icon: MessagesSquare, roles: [C] },
     ],
   },
@@ -92,7 +92,7 @@ export const navigation: { group: string; items: NavItem[] }[] = [
     items: [
       { href: "/my-day", label: "My day", icon: CalendarDays, roles: [C] },
       { href: "/sessions/oliver-grant", label: "AI session note", icon: Mic, roles: [C] },
-      { href: "/clients", label: "Clients", icon: Contact, roles: [L, A, S, C] },
+      { href: "/patients", label: "Patients", icon: Contact, roles: [L, A, S, C] },
       { href: "/schedule", label: "Schedule", icon: CalendarClock, roles: [L, A, S, C] },
       { href: "/telehealth", label: "Telehealth", icon: Video, roles: [L, S, C] },
       { href: "/caseloads/sarah-thompson", label: "Caseloads", icon: Briefcase, roles: [L, S] },
@@ -126,7 +126,7 @@ export const navigation: { group: string; items: NavItem[] }[] = [
     items: [
       { href: "/mobile/staff", label: "Staff app", icon: Tablet, roles: [L, C] },
       { href: "/mobile/family", label: "Family app", icon: Smartphone, roles: [L, C] },
-      { href: "/mobile/client", label: "Client app", icon: Smartphone, roles: [L, A, C] },
+      { href: "/mobile/patient", label: "Patient app", icon: Smartphone, roles: [L, A, C] },
     ],
   },
   {
@@ -143,13 +143,13 @@ const roleLayouts: Partial<Record<Role, { group: string; hrefs: string[] }[]>> =
   Clinician: [
     { group: "My work", hrefs: ["/my-day", "/sessions/oliver-grant", "/tasks"] },
     { group: "AI workspace", hrefs: ["/case-notes/mia-robinson", "/reports"] },
-    { group: "Clinical", hrefs: ["/clients", "/schedule", "/telehealth"] },
+    { group: "Clinical", hrefs: ["/patients", "/schedule", "/telehealth"] },
     { group: "Platform", hrefs: ["/portal"] },
     { group: "Mobile apps", hrefs: ["/mobile/staff", "/mobile/family"] },
   ],
   Admin: [
     { group: "Admin", hrefs: ["/admin-queue", "/intake", "/forms", "/tasks", "/admin-operations"] },
-    { group: "Clinical", hrefs: ["/clients-requiring-attention", "/clients", "/schedule"] },
+    { group: "Clinical", hrefs: ["/patients-requiring-attention", "/patients", "/schedule"] },
     { group: "AI workspace", hrefs: ["/reports"] },
     { group: "Business", hrefs: ["/billing"] },
   ],
@@ -164,10 +164,10 @@ const roleLayouts: Partial<Record<Role, { group: string; hrefs: string[] }[]>> =
         "/team-capacity",
         "/caseloads/sarah-thompson",
         "/analytics",
-        "/clients-requiring-attention",
+        "/patients-requiring-attention",
       ],
     },
-    { group: "Clinical", hrefs: ["/clients", "/schedule", "/telehealth", "/tasks"] },
+    { group: "Clinical", hrefs: ["/patients", "/schedule", "/telehealth", "/tasks"] },
   ],
 };
 
@@ -201,13 +201,13 @@ type RouteMeta = { section: string; page: string; role: Role };
 const routes: { prefix: string; meta: RouteMeta }[] = [
   {
     prefix: "/care/new",
-    meta: { section: "Client onboarding", page: "Add a client", role: "Admin" },
+    meta: { section: "Patient onboarding", page: "Add a patient", role: "Admin" },
   },
-  { prefix: "/care/", meta: { section: "Client onboarding", page: "Client", role: "Admin" } },
-  { prefix: "/care", meta: { section: "Live care", page: "Client onboarding", role: "Admin" } },
+  { prefix: "/care/", meta: { section: "Patient onboarding", page: "Patient", role: "Admin" } },
+  { prefix: "/care", meta: { section: "Live care", page: "Patient onboarding", role: "Admin" } },
   {
     prefix: "/therapist",
-    meta: { section: "Live care", page: "My new clients", role: "Clinician" },
+    meta: { section: "Live care", page: "My new patients", role: "Clinician" },
   },
   { prefix: "/messages", meta: { section: "Live care", page: "Messages", role: "Clinician" } },
   { prefix: "/sessions", meta: { section: "AI notes", page: "Oliver Grant", role: "Clinician" } },
@@ -258,8 +258,8 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
     meta: { section: "Organisation", page: "Team capacity", role: "Leadership" },
   },
   {
-    prefix: "/clients-requiring-attention",
-    meta: { section: "Organisation", page: "Clients to review", role: "Leadership" },
+    prefix: "/patients-requiring-attention",
+    meta: { section: "Organisation", page: "Patients to review", role: "Leadership" },
   },
   {
     prefix: "/caseloads",
@@ -284,10 +284,10 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
   },
   // Last, so "/clients-requiring-attention" matches its own entry first.
   {
-    prefix: "/clients/",
-    meta: { section: "Clinical · Clients", page: "Client profile", role: "Clinician" },
+    prefix: "/patients/",
+    meta: { section: "Clinical · Patients", page: "Patient profile", role: "Clinician" },
   },
-  { prefix: "/clients", meta: { section: "Clinical", page: "Clients", role: "Leadership" } },
+  { prefix: "/patients", meta: { section: "Clinical", page: "Patients", role: "Leadership" } },
 ];
 
 const overview: RouteMeta = { section: "Organisation", page: "Overview", role: "Leadership" };

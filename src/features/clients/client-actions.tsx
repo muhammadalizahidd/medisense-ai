@@ -17,18 +17,18 @@ export function AddClientButton() {
     <>
       <Button variant="primary" onClick={() => setOpen(true)}>
         <UserPlus className="size-4" strokeWidth={1.5} aria-hidden="true" />
-        Add client
+        Add patient
       </Button>
       {open && (
         <ClientFormSheet
-          title="Add client"
+          title="Add patient"
           initial={blankClient}
-          submitLabel="Create client"
+          submitLabel="Create patient"
           onClose={() => setOpen(false)}
           onSubmit={(client) => {
             addClient(client);
             setOpen(false);
-            router.push(`/clients/${client.id}`);
+            router.push(`/patients/${client.id}`);
           }}
         />
       )}
@@ -49,7 +49,7 @@ export function ClientActions({ id }: { id: string }) {
     <>
       <Button onClick={() => setOpen("edit")}>
         <Pencil className="size-4" strokeWidth={1.5} aria-hidden="true" />
-        Edit client
+        Edit patient
       </Button>
       <Button onClick={() => setOpen("book")}>
         <CalendarPlus className="size-4" strokeWidth={1.5} aria-hidden="true" />
@@ -57,7 +57,7 @@ export function ClientActions({ id }: { id: string }) {
       </Button>
       {open === "edit" && (
         <ClientFormSheet
-          title="Edit client"
+          title="Edit patient"
           description={client.name}
           initial={client}
           submitLabel="Save changes"

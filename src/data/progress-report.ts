@@ -14,7 +14,7 @@ export const emilyReport = {
     { label: "Previous report", detail: dt("Apr 2026") },
   ],
   details: [
-    { label: "Client", value: "Emily Carter" },
+    { label: "Patient", value: "Emily Carter" },
     { label: "Age", value: "8 years" },
     { label: "Service", value: "Paediatric Occupational Therapy" },
     { label: "Clinician", value: "Hannah Wright, OT" },
