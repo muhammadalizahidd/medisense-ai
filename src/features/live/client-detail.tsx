@@ -272,23 +272,21 @@ function AppAccess({
         </Tag>
       }
     >
-      {account === "Active" ? (
-        <p className="text-small text-ink-700">{name.split(" ")[0]} has signed in to the app.</p>
-      ) : code ? (
+      {code ? (
         <div>
           <p className="text-small text-ink-700">New invite code, shown only once:</p>
           <p className="my-2 font-mono text-h2 tracking-widest">{code.inviteCode}</p>
           <p className="text-caption text-ink-500">
-            Valid until {shortDate(code.inviteExpires)}. Earlier codes no longer work.
+            Valid until {shortDate(code.inviteExpires)}. Earlier codes and any old password no
+            longer work.
           </p>
         </div>
       ) : (
         <>
           <p className="mb-3 text-small text-ink-700">
-            {account === "Invited"
-              ? "Invite sent, not activated yet."
-              : "The invite code has expired."}{" "}
-            Create a new code if the patient lost theirs.
+            {account === "Active"
+              ? `${name.split(" ")[0]} has signed in to the app. If they've forgotten their password or lost their phone, reset their access: they'll be signed out and get a new invite code.`
+              : `${account === "Invited" ? "Invite sent, not activated yet." : "The invite code has expired."} Create a new code if the patient lost theirs.`}
           </p>
           <Button
             size="sm"
@@ -305,7 +303,7 @@ function AppAccess({
               }
             }}
           >
-            Create new invite code
+            {account === "Active" ? "Reset app access" : "Create new invite code"}
           </Button>
           {error && (
             <p role="alert" className="mt-2 text-small text-over">

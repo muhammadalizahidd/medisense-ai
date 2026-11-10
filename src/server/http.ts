@@ -1,5 +1,5 @@
 import "server-only";
-import { ObjectId } from "mongodb";
+import { MongoNetworkError, MongoServerSelectionError, ObjectId } from "mongodb";
 import { NextResponse } from "next/server";
 import { z, ZodError, type ZodType } from "zod";
 import { AuthError } from "./auth";
@@ -53,6 +53,13 @@ export async function handle<T>(run: () => Promise<T>) {
       return NextResponse.json(
         { error: where ? `Check ${where}: ${first?.message}` : "Some details are missing." },
         { status: 400 },
+      );
+    }
+    if (error instanceof MongoNetworkError || error instanceof MongoServerSelectionError) {
+      serverLog(`Database connection dropped: ${error.message}`);
+      return NextResponse.json(
+        { error: "The connection dropped for a moment and nothing was saved. Try again." },
+        { status: 503 },
       );
     }
     if (error instanceof DatabaseUnavailable) {

@@ -288,13 +288,22 @@ export async function withdrawRequest(admin: UserDoc, assignmentId: ObjectId) {
   });
 }
 
+/**
+ * A fresh invite code. If the patient had already activated, this also resets their app access:
+ * the old password stops working and they are signed out everywhere.
+ */
 export async function reissueInvite(admin: UserDoc, clientId: ObjectId) {
-  const { users } = await collections();
+  const { users, sessions } = await collections();
   const client = await loadClient(clientId);
   const account = await users.findOne({ _id: client.userId });
-  if (account?.passwordHash) throw new UserFacingError("This patient has already activated.", 409);
+  const wasActive = Boolean(account?.passwordHash);
   const { code, invite } = newInviteCode();
-  await users.updateOne({ _id: client.userId }, { $set: { invite } });
-  await audit(admin, "Created a new app invite code", clientId);
+  await users.updateOne({ _id: client.userId }, { $set: { invite, passwordHash: null } });
+  if (wasActive) await sessions.deleteMany({ userId: client.userId });
+  await audit(
+    admin,
+    wasActive ? "Reset app access with a new invite code" : "Created a new app invite code",
+    clientId,
+  );
   return { inviteCode: code, inviteExpires: invite.expiresAt };
 }

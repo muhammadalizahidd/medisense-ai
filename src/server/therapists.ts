@@ -1,10 +1,11 @@
 import "server-only";
-import { randomUUID } from "node:crypto";
+import { randomInt, randomUUID } from "node:crypto";
 import type { ObjectId } from "mongodb";
 import { z } from "zod";
 import { caseloadStatus, CLOSE_MINUTES, OPEN_MINUTES } from "@/lib/live/catalogue";
 import { brisbaneDay, brisbaneMinutes, isoWeekday, slotLabel } from "@/lib/live/time";
 import type { TherapistCardDto, TherapistDetailDto } from "@/lib/live/types";
+import { hashPassword } from "./auth";
 import { collections } from "./db";
 import { UserFacingError } from "./http";
 import { adminIds, audit, publish } from "./live";
@@ -229,4 +230,20 @@ export async function therapistDetail(id: ObjectId): Promise<TherapistDetailDto>
 
 export async function myTherapistDetail(user: UserDoc) {
   return therapistDetail((await therapistFor(user))._id);
+}
+
+/** A one-off password the admin passes on; the therapist changes it in My profile. */
+export async function resetStaffPassword(admin: UserDoc, therapistId: ObjectId) {
+  const { therapists, users, sessions } = await collections();
+  const t = await therapists.findOne({ _id: therapistId });
+  if (!t) throw new UserFacingError("Therapist not found.", 404);
+  const alphabet = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+  const temporary = Array.from({ length: 14 }, () => alphabet[randomInt(alphabet.length)]).join("");
+  await users.updateOne(
+    { _id: t.userId },
+    { $set: { passwordHash: await hashPassword(temporary) } },
+  );
+  await sessions.deleteMany({ userId: t.userId });
+  await audit(admin, `Reset the password for ${t.name}`, null);
+  return { temporaryPassword: temporary };
 }

@@ -1,7 +1,7 @@
 import "server-only";
 import { ObjectId } from "mongodb";
 import { z } from "zod";
-import { caseloadStatus, declineReasons } from "@/lib/live/catalogue";
+import { caseloadStatus, declineReasons, practitioner } from "@/lib/live/catalogue";
 import { ageFrom, slotLabel } from "@/lib/live/time";
 import type { TherapistHomeDto } from "@/lib/live/types";
 import { collections } from "./db";
@@ -114,7 +114,7 @@ export async function respond(
         ? ` ${schedule.booked} visits are booked, ${frequency.toLowerCase()}.`
         : "";
     await notify([client.userId], {
-      title: `${therapist.name} is your ${assignment.discipline.toLowerCase()} therapist`,
+      title: `${therapist.name} is your ${practitioner[assignment.discipline].toLowerCase()}`,
       body: `Your first visit is ${slotLabel(visit.start)}.${plan} You can message ${therapist.name.split(" ")[0]} in the app.`,
       href: "/mobile/patient",
     });
