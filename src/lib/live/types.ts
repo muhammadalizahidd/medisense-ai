@@ -24,7 +24,7 @@ export type SessionUser = {
   staffRoles: StaffRole[];
 };
 
-export type NeedStatus = "needs-therapist" | "waiting" | "assigned";
+export type NeedStatus = "needs-therapist" | "waiting" | "assigned" | "completed";
 
 export type NeedDto = {
   id: string;
@@ -51,7 +51,7 @@ export type ClientSummaryDto = {
 };
 
 export type VisitStatus =
-  "tentative" | "booked" | "completed" | "cancelled" | "late-cancelled" | "no-show";
+  "tentative" | "booked" | "completed" | "cancelled" | "late-cancelled" | "no-show" | "aborted";
 
 export type AppointmentDto = {
   id: string;
@@ -71,8 +71,29 @@ export type AppointmentDto = {
     chargeable: boolean;
     actorName: string;
   } | null;
-  /** `text` is the clinical note, sent to staff only; `forPatient` is the plain summary. */
-  note: { text: string | null; forPatient: string; byName: string; at: string } | null;
+  /** `text` and SOAP are the clinical note, sent to staff only; `forPatient` is the plain summary. */
+  note: {
+    text: string | null;
+    soap: { subjective: string; objective: string; assessment: string; plan: string } | null;
+    forPatient: string;
+    status: "Draft" | "Pending Signature" | "Final" | "Amended";
+    aiDrafted: boolean;
+    signedAt: string | null;
+    amendments: { reason: string; text: string; byName: string; at: string }[];
+    byName: string;
+    at: string;
+  } | null;
+  checkIn: { at: string; attendees: string; safe: boolean; notes: string; byName: string } | null;
+  checkOut: { at: string; minutes: number; byName: string } | null;
+  session: {
+    goals: { goalId: string; value: string; note: string }[];
+    interventions: string;
+    response: string;
+    incidents: string;
+    followUp: string;
+  } | null;
+  aborted: { reason: string; remaining: string; byName: string; at: string } | null;
+  invoiced: boolean;
   feedback: { rating: number; comment: string; at: string } | null;
 };
 
@@ -102,7 +123,15 @@ export type ClientDetailDto = ClientSummaryDto & {
   precautions: string | null;
   documents: DocumentDto[];
   referrals: { id: string; reference: string }[];
-  discharged: { at: string; reason: string; byName: string } | null;
+  discharged: {
+    at: string;
+    reason: string;
+    byName: string;
+    outcomes: string | null;
+    outstandingRisks: string | null;
+    advice: string | null;
+    handover: string | null;
+  } | null;
   emergencyContact: { name: string; relationship: string; phone: string } | null;
   dateOfBirth: string | null;
   email: string;
@@ -189,6 +218,38 @@ export type ClientHomeDto = {
   needs: NeedDto[];
   team: { therapistName: string; discipline: Discipline; conversationId: string | null }[];
   upcoming: AppointmentDto[];
+  /** P04: approved plans' goals and released reports, nothing else clinical. */
+  progress: {
+    plans: {
+      id: string;
+      support: string;
+      status: string;
+      therapistName: string;
+      reviewDate: string;
+      goals: {
+        id: string;
+        description: string;
+        baseline: string;
+        target: string;
+        current: string;
+        status: string;
+      }[];
+    }[];
+    reports: { id: string; support: string; summary: string; byName: string; at: string }[];
+  };
+  /** P05: invoices issued for this participant's services. */
+  invoices: {
+    id: string;
+    number: string;
+    status: string;
+    payer: string;
+    total: number;
+    paid: number;
+    issuedAt: string | null;
+    lines: { date: string; description: string; amount: number }[];
+  }[];
+  /** Discharge advice from the clinician, once care has finished. */
+  dischargeAdvice: string | null;
 };
 
 export type NotificationDto = {
@@ -224,7 +285,7 @@ export type MessageDto = {
 export type LiveEvent =
   | { type: "notification"; payload: { title: string } }
   | { type: "message"; payload: { message: MessageDto } }
-  | { type: "care"; payload: { clientId?: string; referralId?: string } }
+  | { type: "care"; payload: { clientId?: string; referralId?: string; invoiceId?: string } }
   | { type: "read"; payload: { conversationId: string; readerId?: string } }
   | { type: "typing"; payload: { conversationId: string; name: string } }
   | { type: "connected"; payload: Record<string, never> };

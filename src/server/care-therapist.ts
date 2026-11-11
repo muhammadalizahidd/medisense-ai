@@ -168,7 +168,7 @@ export async function therapistHome(user: UserDoc): Promise<TherapistHomeDto> {
       .find({
         therapistId: therapist._id,
         status: "completed",
-        note: { $in: [null] },
+        $or: [{ note: { $in: [null] } }, { "note.status": "Draft" }],
         start: { $gte: new Date(Date.now() - 30 * 86_400_000) },
       })
       .sort({ start: 1 })

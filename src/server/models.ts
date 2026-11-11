@@ -9,6 +9,16 @@ import type {
   StaffRole,
   Support,
 } from "@/lib/live/catalogue";
+import type {
+  ActivityRecord,
+  AssessmentStatus,
+  GoalStatus,
+  InvoiceStatus,
+  PlanStatus,
+  Recommendation,
+  ReviewDecision,
+  SectionEntry,
+} from "@/lib/live/clinical";
 import type { Gap, ReferralInput, ReferralStatus } from "@/lib/live/referral";
 
 export type UserRole = "admin" | "therapist" | "client";
@@ -78,7 +88,7 @@ export interface TherapistDoc {
   userId: ObjectId;
 }
 
-export type NeedStatus = "needs-therapist" | "waiting" | "assigned";
+export type NeedStatus = "needs-therapist" | "waiting" | "assigned" | "completed";
 
 /** A service request: one per support asked for, under the one participant record. */
 export interface ClientNeed {
@@ -108,7 +118,24 @@ export interface ClientDoc {
   emergencyContact?: { name: string; relationship: string; phone: string } | null;
   /** From clinical triage: what every therapist must know before a visit. */
   precautions?: string | null;
-  discharged?: { at: Date; reason: string; byName: string } | null;
+  /** Payer details from the referral, for invoicing. Finance sees these, not clinical notes. */
+  fundingDetails?: {
+    payer: string;
+    payerEmail: string;
+    ndisNumber: string;
+    planEndDate: string;
+    planType: string;
+  } | null;
+  discharged?: {
+    at: Date;
+    reason: string;
+    byName: string;
+    outcomes?: string;
+    outstandingRisks?: string;
+    advice?: string;
+    handover?: string;
+    signedBy?: string | null;
+  } | null;
   userId: ObjectId;
   createdBy: ObjectId;
   createdAt: Date;
@@ -132,7 +159,33 @@ export interface AssignmentDoc {
 }
 
 export type AppointmentStatus =
-  "tentative" | "booked" | "completed" | "cancelled" | "late-cancelled" | "no-show";
+  "tentative" | "booked" | "completed" | "cancelled" | "late-cancelled" | "no-show" | "aborted";
+
+/** Session delivery (section 10): what happened in the visit, against the plan's goals. */
+export interface SessionRecord {
+  goals: { goalId: string; value: string; note: string }[];
+  interventions: string;
+  response: string;
+  incidents: string;
+  followUp: string;
+}
+
+export interface SessionNote {
+  /** SOAP: Subjective, Objective, Assessment, Plan. */
+  subjective?: string;
+  objective?: string;
+  assessment?: string;
+  plan?: string;
+  /** The whole clinical note as one text, for lists and earlier notes. */
+  text: string;
+  forPatient: string;
+  status?: "Draft" | "Pending Signature" | "Final" | "Amended";
+  aiDrafted?: boolean;
+  signedAt?: Date | null;
+  amendments?: { reason: string; text: string; byName: string; at: Date }[];
+  byName: string;
+  at: Date;
+}
 
 export interface Cancellation {
   /** Who called it off. Only a client-side cancellation can count as late. */
@@ -161,8 +214,15 @@ export interface AppointmentDoc {
   /** The visit this one was booked to replace. */
   replaces?: ObjectId | null;
   cancellation?: Cancellation | null;
-  /** Written by the therapist after a completed visit. */
-  note?: { text: string; forPatient: string; byName: string; at: Date } | null;
+  /** Written by the therapist after a completed visit; signed notes change only by amendment. */
+  note?: SessionNote | null;
+  checkIn?: { at: Date; attendees: string; safe: boolean; notes: string; byName: string } | null;
+  checkOut?: { at: Date; minutes: number; byName: string } | null;
+  session?: SessionRecord | null;
+  /** An incomplete visit: why, and what remains to do. */
+  aborted?: { reason: string; remaining: string; byName: string; at: Date } | null;
+  /** Set once the service is verified and on an invoice. */
+  invoiceId?: ObjectId | null;
   /** Left by the patient after a completed visit, once. */
   feedback?: { rating: number; comment: string; at: Date } | null;
   createdAt: Date;
@@ -281,4 +341,90 @@ export interface DocumentDoc {
   data: Binary;
   uploadedBy: string;
   at: Date;
+}
+
+export interface AssessmentDoc {
+  _id: ObjectId;
+  clientId: ObjectId;
+  needId: string;
+  therapistId: ObjectId;
+  therapistName: string;
+  support: Support;
+  discipline: Discipline;
+  kind: "Initial" | "Reassessment";
+  status: AssessmentStatus;
+  consent: { obtained: boolean; notes: string };
+  sections: Record<string, SectionEntry>;
+  activities: ActivityRecord[];
+  findings: string;
+  limitations: string;
+  recommendation: { decision: Recommendation | ""; notes: string };
+  released: { summary: string; byName: string; at: Date } | null;
+  signed: { byName: string; at: Date } | null;
+  amendments: { reason: string; text: string; byName: string; at: Date }[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface GoalDoc {
+  id: string;
+  description: string;
+  domain: string;
+  measure: string;
+  baseline: string;
+  target: string;
+  current: string;
+  status: GoalStatus;
+  rationale: string;
+  history: { value: string; note: string; at: Date; byName: string; visitId: ObjectId | null }[];
+}
+
+export interface PlanDoc {
+  _id: ObjectId;
+  clientId: ObjectId;
+  needId: string;
+  therapistId: ObjectId;
+  therapistName: string;
+  support: Support;
+  status: PlanStatus;
+  version: number;
+  indication: string;
+  goals: GoalDoc[];
+  interventions: string;
+  precautions: string;
+  frequency: string;
+  duration: string;
+  reviewDate: string;
+  approved: { byName: string; at: Date } | null;
+  reviews: { decision: ReviewDecision; notes: string; byName: string; at: Date }[];
+  progressSummary: { text: string; at: Date; model: string } | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface InvoiceLine {
+  id: string;
+  kind: "service" | "cancellation" | "adjustment";
+  visitId: ObjectId | null;
+  date: Date;
+  description: string;
+  itemCode: string;
+  minutes: number;
+  rate: number;
+  amount: number;
+}
+
+export interface InvoiceDoc {
+  _id: ObjectId;
+  number: string;
+  clientId: ObjectId;
+  funding: FundingStream;
+  payer: string;
+  status: InvoiceStatus;
+  lines: InvoiceLine[];
+  payments: { amount: number; reference: string; byName: string; at: Date }[];
+  history: { status: InvoiceStatus; byName: string; note: string; at: Date }[];
+  issuedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
 }

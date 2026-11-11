@@ -2,14 +2,17 @@ import "server-only";
 import { MongoClient, type Db } from "mongodb";
 import type {
   AppointmentDoc,
+  AssessmentDoc,
   AssignmentDoc,
   AuditDoc,
   ClientDoc,
   ConversationDoc,
   DocumentDoc,
   EventDoc,
+  InvoiceDoc,
   MessageDoc,
   NotificationDoc,
+  PlanDoc,
   ReferralDoc,
   SessionDoc,
   TherapistDoc,
@@ -62,6 +65,10 @@ async function prepare(client: MongoClient) {
     db.collection("referrals").createIndex({ status: 1, createdAt: -1 }),
     db.collection("documents").createIndex({ referralId: 1 }),
     db.collection("documents").createIndex({ clientId: 1 }),
+    db.collection("assessments").createIndex({ clientId: 1, needId: 1, createdAt: -1 }),
+    db.collection("plans").createIndex({ clientId: 1, needId: 1, createdAt: -1 }),
+    db.collection("invoices").createIndex({ number: 1 }, { unique: true }),
+    db.collection("invoices").createIndex({ clientId: 1, status: 1 }),
   ]);
   await seedIfEmpty(db);
   await migrate(db);
@@ -102,5 +109,8 @@ export async function collections() {
     audit: db.collection<AuditDoc>("audit"),
     referrals: db.collection<ReferralDoc>("referrals"),
     documents: db.collection<DocumentDoc>("documents"),
+    assessments: db.collection<AssessmentDoc>("assessments"),
+    plans: db.collection<PlanDoc>("plans"),
+    invoices: db.collection<InvoiceDoc>("invoices"),
   };
 }

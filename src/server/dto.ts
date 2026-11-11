@@ -81,6 +81,37 @@ export function seriesLookup(visits: AppointmentDoc[]): SeriesLookup {
   return lookup;
 }
 
+/** Notes written before signing existed count as final. */
+export const noteStatusOf = (a: AppointmentDoc) => a.note?.status ?? "Final";
+
+function noteDto(a: AppointmentDoc, viewer: "staff" | "patient"): AppointmentDto["note"] {
+  const n = a.note;
+  if (!n) return null;
+  const status = noteStatusOf(a);
+  // Patients see only the plain summary, and only once the clinician has signed the note.
+  if (viewer === "patient" && status !== "Final" && status !== "Amended") return null;
+  const staff = viewer === "staff";
+  return {
+    text: staff ? n.text : null,
+    soap:
+      staff && n.subjective !== undefined
+        ? {
+            subjective: n.subjective ?? "",
+            objective: n.objective ?? "",
+            assessment: n.assessment ?? "",
+            plan: n.plan ?? "",
+          }
+        : null,
+    forPatient: n.forPatient,
+    status,
+    aiDrafted: Boolean(n.aiDrafted),
+    signedAt: n.signedAt?.toISOString() ?? (status === "Final" ? n.at.toISOString() : null),
+    amendments: staff ? (n.amendments ?? []).map((m) => ({ ...m, at: m.at.toISOString() })) : [],
+    byName: n.byName,
+    at: n.at.toISOString(),
+  };
+}
+
 export function appointmentDto(
   a: AppointmentDoc,
   clients: NameLookup,
@@ -108,14 +139,12 @@ export function appointmentDto(
           actorName: a.cancellation.actorName,
         }
       : null,
-    note: a.note
-      ? {
-          text: viewer === "staff" ? a.note.text : null,
-          forPatient: a.note.forPatient,
-          byName: a.note.byName,
-          at: a.note.at.toISOString(),
-        }
-      : null,
+    note: noteDto(a, viewer),
+    checkIn: a.checkIn ? { ...a.checkIn, at: a.checkIn.at.toISOString() } : null,
+    checkOut: a.checkOut ? { ...a.checkOut, at: a.checkOut.at.toISOString() } : null,
+    session: viewer === "staff" ? (a.session ?? null) : null,
+    aborted: a.aborted ? { ...a.aborted, at: a.aborted.at.toISOString() } : null,
+    invoiced: Boolean(a.invoiceId),
     feedback: a.feedback
       ? { rating: a.feedback.rating, comment: a.feedback.comment, at: a.feedback.at.toISOString() }
       : null,

@@ -736,6 +736,26 @@ export async function referralAction(admin: UserDoc, id: ObjectId, action: Refer
   return result;
 }
 
+/** Who the invoices go to, from the referral's funding answers. */
+function fundingDetailsOf(input: ReferralInput) {
+  const f = input.funding;
+  const payer =
+    f.source !== "NDIS"
+      ? f.otherDetails.split(/[,;\n]/)[0]?.trim() || f.source
+      : f.planType === "Plan Managed"
+        ? f.planManagerCompany || "Plan manager"
+        : f.planType === "Agency Managed"
+          ? "NDIA"
+          : `${input.signatory.name || fullName(input)} (self-managed)`;
+  return {
+    payer,
+    payerEmail: f.planType === "Plan Managed" ? f.planManagerEmail : input.signatory.email,
+    ndisNumber: f.ndisNumber,
+    planEndDate: f.planEndDate,
+    planType: f.planType,
+  };
+}
+
 /** Why a referral can't be accepted yet, or an empty list when it can. */
 export function acceptBlockers(r: ReferralDoc): string[] {
   const out: string[] = [];
@@ -859,6 +879,7 @@ async function accept(
       needs,
       notes,
       precautions: precaution || null,
+      fundingDetails: fundingDetailsOf(input),
       emergencyContact: null,
       userId,
       createdBy: admin._id,

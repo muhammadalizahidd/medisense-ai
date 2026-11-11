@@ -7,7 +7,14 @@ import { UserFacingError } from "./http";
 import { adminIds, audit, notify, publish } from "./live";
 import type { UserDoc } from "./models";
 
-export const dischargeSchema = z.object({ reason: z.enum(dischargeReasons) });
+export const dischargeSchema = z.object({
+  reason: z.enum(dischargeReasons),
+  outcomes: z.string().trim().min(10, "Summarise the outcomes").max(3000),
+  outstandingRisks: z.string().trim().max(2000),
+  advice: z.string().trim().max(2000),
+  handover: z.string().trim().max(2000),
+  signed: z.literal(true, "Sign the discharge summary"),
+});
 
 /**
  * Ends a patient's care: future visits are cancelled by Medisense (never charged), open requests
@@ -82,7 +89,36 @@ export async function dischargePatient(
       }
       await db.clients.updateOne(
         { _id: clientId },
-        { $set: { discharged: { at: now, reason: input.reason, byName: user.name } } },
+        {
+          $set: {
+            discharged: {
+              at: now,
+              reason: input.reason,
+              byName: user.name,
+              outcomes: input.outcomes,
+              outstandingRisks: input.outstandingRisks,
+              advice: input.advice,
+              handover: input.handover,
+              signedBy: user.name,
+            },
+            needs: client.needs.map((n) =>
+              n.status === "assigned" ? { ...n, status: "completed" as const } : n,
+            ),
+          },
+        },
+        { session },
+      );
+      await db.plans.updateMany(
+        { clientId, status: { $in: ["Active", "Under Review", "Revised", "Draft"] } },
+        { $set: { status: "Completed", updatedAt: now } },
+        { session },
+      );
+      await db.referrals.updateMany(
+        { clientId, status: "Accepted" },
+        {
+          $set: { status: "Closed", updatedAt: now },
+          $push: { history: { status: "Closed", byName: user.name, note: "Discharged", at: now } },
+        },
         { session },
       );
     });
@@ -93,7 +129,7 @@ export async function dischargePatient(
   const cancelled = future.length ? `${future.length} upcoming visits were cancelled. ` : "";
   await notify([client.userId], {
     title: "Your care with Medisense has finished",
-    body: `${input.reason}. ${cancelled}You can still rate your visits and read your history in the app.`,
+    body: `${input.reason}. ${cancelled}${input.advice ? `Advice: ${input.advice.slice(0, 120)} ` : ""}You can still rate your visits and read your history in the app.`,
     href: "/mobile/patient",
   });
   await notify(

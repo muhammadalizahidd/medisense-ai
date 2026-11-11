@@ -20,6 +20,7 @@ import {
   StageTag,
 } from "./bits";
 import { DischargeSheet } from "./care-sheets";
+import { ClinicalPanel } from "./clinical-panel";
 import { MatchPicker } from "./match-picker";
 import { VisitList } from "./visit-list";
 
@@ -75,6 +76,12 @@ export function ClientDetail({ clientId }: { clientId: string }) {
           <strong>Discharged</strong> {shortDate(client.discharged.at)} by{" "}
           {client.discharged.byName}: {client.discharged.reason}. Their visit history, notes and
           feedback stay on record below.
+          {client.discharged.outcomes && (
+            <span className="mt-1 block whitespace-pre-line text-ink-700">
+              Outcomes: {client.discharged.outcomes}
+              {client.discharged.handover ? `\nHandover: ${client.discharged.handover}` : ""}
+            </span>
+          )}
         </p>
       )}
       {discharging && (
@@ -117,6 +124,7 @@ export function ClientDetail({ clientId }: { clientId: string }) {
               onChange={reload}
             />
           ))}
+          <ClinicalPanel clientId={client.id} needs={client.needs} mode="admin" />
           <Panel
             title="Visits"
             action={

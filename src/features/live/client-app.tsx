@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, House, LogOut, MessageCircle, UserRound, X } from "lucide-react";
+import { CalendarDays, HeartPulse, House, LogOut, MessageCircle, UserRound, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/premium";
@@ -14,11 +14,13 @@ import { ClientVisits } from "./client-visits";
 import { PatientDetailsCard, RateVisitPanel } from "./patient-panels";
 import { ConversationList, useConversations, useUnreadMessages } from "./conversations";
 import { PatientHome } from "./patient-home";
+import { PatientProgress } from "./patient-progress";
 import { SignInForm } from "./sign-in-form";
 
 const tabs = [
   { id: "home", label: "Home", icon: House },
   { id: "visits", label: "Visits", icon: CalendarDays },
+  { id: "care", label: "My care", icon: HeartPulse },
   { id: "messages", label: "Messages", icon: MessageCircle },
   { id: "me", label: "Me", icon: UserRound },
 ];
@@ -175,6 +177,7 @@ function ClientTabs({
   const data = home.data;
 
   if (tab === "visits") return <ClientVisits onCancel={onCancel} onRate={onRate} />;
+  if (tab === "care") return <PatientProgress data={data ?? null} />;
 
   if (tab === "messages") {
     return (

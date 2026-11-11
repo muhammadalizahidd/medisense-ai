@@ -68,7 +68,7 @@ export function TherapistHome() {
           </Panel>
           {toRecord.length > 0 && (
             <Panel
-              title="Record what happened"
+              title="Visits to record"
               action={<Tag tone="monitor">{toRecord.length} to record</Tag>}
             >
               <VisitList
@@ -81,7 +81,7 @@ export function TherapistHome() {
           )}
           {notesToWrite.length > 0 && (
             <Panel
-              title="Notes to write"
+              title="Notes to write or sign"
               action={<Tag tone="monitor">{notesToWrite.length} to write</Tag>}
             >
               <VisitList

@@ -4,12 +4,13 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet } from "@/components/ui/sheet";
 import { Tag, type TagTone } from "@/components/ui/tag";
-import { api, useNow } from "@/lib/live/client";
+import { api, useNow, useSession } from "@/lib/live/client";
 import { shortDate, timeOfDay } from "@/lib/live/time";
 import type { AppointmentDto, VisitStatus } from "@/lib/live/types";
 import { Stars } from "./bits";
 import { CancelVisitPanel } from "./cancel-visit";
 import { NoteSheet } from "./care-sheets";
+import { VisitSheet } from "./visit-sheet";
 
 export const visitStatus: Record<VisitStatus, { label: string; tone: TagTone }> = {
   tentative: { label: "Held", tone: "monitor" },
@@ -18,10 +19,12 @@ export const visitStatus: Record<VisitStatus, { label: string; tone: TagTone }> 
   cancelled: { label: "Cancelled", tone: "neutral" },
   "late-cancelled": { label: "Late cancellation", tone: "over" },
   "no-show": { label: "Did not attend", tone: "over" },
+  aborted: { label: "Incomplete", tone: "monitor" },
 };
 
 /** What a visit says about itself: series position and, if called off, why and with what notice. */
 export function visitNote(v: AppointmentDto) {
+  if (v.aborted) return `Ended early: ${v.aborted.reason}`;
   if (v.cancellation) {
     const c = v.cancellation;
     if (v.status === "no-show") return "Did not attend, with no notice. May be charged.";
@@ -29,6 +32,10 @@ export function visitNote(v: AppointmentDto) {
   }
   return v.series ? `Visit ${v.series.index} of ${v.series.total}` : "One-off visit";
 }
+
+const sameDay = (iso: string, now: number) =>
+  new Date(new Date(iso).getTime() + 36e6).toISOString().slice(0, 10) ===
+  new Date(now + 36e6).toISOString().slice(0, 10);
 
 /** Visits for the care team: cancel or change upcoming ones, record what happened to past ones. */
 export function VisitList({
@@ -44,18 +51,18 @@ export function VisitList({
 }) {
   const [cancelling, setCancelling] = useState<AppointmentDto | null>(null);
   const [noting, setNoting] = useState<AppointmentDto | null>(null);
+  const [visiting, setVisiting] = useState<AppointmentDto | null>(null);
+  const role = useSession().user?.role;
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const now = useNow() ?? 0;
 
-  async function record(visit: AppointmentDto, outcome: "completed" | "no-show") {
+  async function record(visit: AppointmentDto, outcome: "no-show") {
     setBusy(visit.id);
     setError(null);
     try {
       await api(`/api/visits/${visit.id}/outcome`, { body: { outcome } });
       onChanged();
-      // A completed visit goes straight on to its note, while it's fresh.
-      if (outcome === "completed") setNoting({ ...visit, status: "completed" });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't record that.");
     } finally {
@@ -90,9 +97,16 @@ export function VisitList({
                   {show === "client" ? v.clientName : `${v.discipline} · ${v.therapistName}`}
                 </span>
                 <span className="block text-caption text-ink-500">{visitNote(v)}</span>
+                {v.checkOut && (
+                  <span className="block text-caption text-ink-500">
+                    {v.checkOut.minutes} minutes · with {v.checkIn?.attendees}
+                  </span>
+                )}
                 {v.note && (
                   <span className="mt-1 block text-caption text-ink-700">
-                    <strong className="font-semibold">Note:</strong>{" "}
+                    <strong className="font-semibold">
+                      {v.note.status === "Draft" ? "Draft note:" : "Note:"}
+                    </strong>{" "}
                     {v.note.text ?? v.note.forPatient}
                   </span>
                 )}
@@ -103,34 +117,32 @@ export function VisitList({
                   </span>
                 )}
               </span>
-              <Tag tone={status.tone}>{status.label}</Tag>
-              {v.status === "booked" && !past && (
+              <Tag tone={v.checkIn && v.status === "booked" ? "live" : status.tone}>
+                {v.checkIn && v.status === "booked" ? "Checked in" : status.label}
+              </Tag>
+              {v.invoiced && <Tag tone="neutral">Invoiced</Tag>}
+              {role === "therapist" && v.status === "booked" && (past || sameDay(v.start, now)) && (
+                <Button size="sm" variant="primary" onClick={() => setVisiting(v)}>
+                  {v.checkIn ? "Continue visit" : "Start visit"}
+                </Button>
+              )}
+              {v.status === "booked" && !past && !v.checkIn && (
                 <Button size="sm" onClick={() => setCancelling(v)}>
                   Cancel or change
                 </Button>
               )}
-              {v.status === "booked" && past && (
-                <span className="flex gap-1.5">
-                  <Button
-                    size="sm"
-                    variant="primary"
-                    disabled={busy === v.id}
-                    onClick={() => record(v, "completed")}
-                  >
-                    Attended
-                  </Button>
-                  <Button size="sm" disabled={busy === v.id} onClick={() => record(v, "no-show")}>
-                    Did not attend
-                  </Button>
-                </span>
+              {v.status === "booked" && past && !v.checkIn && (
+                <Button size="sm" disabled={busy === v.id} onClick={() => record(v, "no-show")}>
+                  Did not attend
+                </Button>
               )}
               {v.status === "completed" && (
                 <Button
                   size="sm"
-                  variant={v.note ? "secondary" : "primary"}
+                  variant={!v.note || v.note.status === "Draft" ? "primary" : "secondary"}
                   onClick={() => setNoting(v)}
                 >
-                  {v.note ? "Edit note" : "Write note"}
+                  {!v.note ? "Write note" : v.note.status === "Draft" ? "Finish note" : "View note"}
                 </Button>
               )}
             </li>
@@ -138,6 +150,18 @@ export function VisitList({
         })}
       </ol>
       {noting && <NoteSheet visit={noting} onClose={() => setNoting(null)} onSaved={onChanged} />}
+      {visiting && (
+        <VisitSheet
+          visit={visiting}
+          onClose={() => setVisiting(null)}
+          onChanged={onChanged}
+          onCheckedOut={(v) => {
+            setVisiting(null);
+            // Straight on to the note, while the visit is fresh.
+            setNoting(v);
+          }}
+        />
+      )}
       {cancelling && (
         <Sheet
           title="Cancel or change a visit"

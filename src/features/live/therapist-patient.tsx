@@ -5,11 +5,12 @@ import { useState } from "react";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { MetricBand } from "@/components/ui/metric-band";
 import { PageHeader } from "@/components/ui/page";
-import { useNow, useResource } from "@/lib/live/client";
+import { useNow, useResource, useSession } from "@/lib/live/client";
 import { ageLabel, relativeTime, shortDate } from "@/lib/live/time";
 import type { ClientDetailDto } from "@/lib/live/types";
 import { ErrorNote, LiveBadge, Panel, Skeleton, StageTag, Stars } from "./bits";
 import { DischargeSheet } from "./care-sheets";
+import { ClinicalPanel } from "./clinical-panel";
 import { DocumentList } from "./client-detail";
 import { useConversations } from "./conversations";
 import { VisitList } from "./visit-list";
@@ -28,6 +29,7 @@ export function TherapistPatient({ clientId }: { clientId: string }) {
   const chats = useConversations();
   const conversationId = chats.data?.conversations.find((c) => c.clientId === clientId)?.id ?? null;
   const [discharging, setDischarging] = useState(false);
+  const me = useSession().user?.name;
 
   if (error && !data) return <ErrorNote message={error} onRetry={reload} />;
   if (loading || !data) return <Skeleton className="h-96" />;
@@ -79,6 +81,11 @@ export function TherapistPatient({ clientId }: { clientId: string }) {
         >
           <strong>Discharged</strong> {shortDate(p.discharged.at)} by {p.discharged.byName}:{" "}
           {p.discharged.reason}.
+          {p.discharged.outcomes && (
+            <span className="mt-1 block whitespace-pre-line text-ink-700">
+              Outcomes: {p.discharged.outcomes}
+            </span>
+          )}
         </p>
       )}
       {p.precautions && (
@@ -120,6 +127,7 @@ export function TherapistPatient({ clientId }: { clientId: string }) {
       </div>
       <div className="grid gap-6 xl:grid-cols-12">
         <div className="flex flex-col gap-6 xl:col-span-8">
+          <ClinicalPanel clientId={p.id} needs={p.needs} mode="therapist" myName={me} />
           <Panel title="Coming up">
             <VisitList
               visits={upcoming}

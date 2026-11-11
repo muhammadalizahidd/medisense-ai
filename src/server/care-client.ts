@@ -1,5 +1,7 @@
 import "server-only";
 import type { ClientHomeDto } from "@/lib/live/types";
+import { patientInvoices } from "./billing";
+import { patientProgress } from "./clinical";
 import { collections } from "./db";
 import { appointmentDto, nameMap, needDtos, seriesLookup } from "./dto";
 import { UserFacingError } from "./http";
@@ -9,10 +11,12 @@ export async function clientHome(user: UserDoc): Promise<ClientHomeDto> {
   const db = await collections();
   const client = user.clientId ? await db.clients.findOne({ _id: user.clientId }) : null;
   if (!client) throw new UserFacingError("No patient record is linked to this account.", 404);
-  const [team, visits, conversations] = await Promise.all([
+  const [team, visits, conversations, progress, invoices] = await Promise.all([
     db.therapists.find({}, { projection: { name: 1 } }).toArray(),
     db.appointments.find({ clientId: client._id }).sort({ start: 1 }).toArray(),
     db.conversations.find({ clientId: client._id }).toArray(),
+    patientProgress(client._id),
+    patientInvoices(client._id),
   ]);
   const names = nameMap(team);
   const series = seriesLookup(visits);
@@ -52,5 +56,8 @@ export async function clientHome(user: UserDoc): Promise<ClientHomeDto> {
         : [],
     ),
     upcoming: upcoming.map((v) => appointmentDto(v, nameMap([client]), names, series, "patient")),
+    progress,
+    invoices,
+    dischargeAdvice: client.discharged?.advice || null,
   };
 }

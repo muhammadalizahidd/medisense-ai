@@ -1,4 +1,5 @@
 import "server-only";
+import { billVisit } from "./billing";
 import { MongoServerError, ObjectId } from "mongodb";
 import { z } from "zod";
 import { classifyCancellation } from "@/lib/live/cancellation";
@@ -110,7 +111,7 @@ export async function bookSeries(
 
 type Access = { visit: AppointmentDoc; actsFor: "client" | "therapist" | "admin" };
 
-async function visitFor(user: UserDoc, id: ObjectId): Promise<Access> {
+export async function visitFor(user: UserDoc, id: ObjectId): Promise<Access> {
   const { appointments } = await collections();
   const visit = await appointments.findOne({ _id: id });
   const owns =
@@ -122,7 +123,7 @@ async function visitFor(user: UserDoc, id: ObjectId): Promise<Access> {
   return { visit, actsFor: user.role === "admin" ? "admin" : user.role };
 }
 
-async function partiesOf(visit: AppointmentDoc) {
+export async function partiesOf(visit: AppointmentDoc) {
   const { clients, therapists } = await collections();
   const [client, therapist] = await Promise.all([
     clients.findOne({ _id: visit.clientId }),
@@ -192,6 +193,10 @@ export async function cancelVisit(
   );
   if (updated.modifiedCount !== 1)
     throw new UserFacingError("This visit has already changed.", 409);
+  if (outcome.late) {
+    const charged = await appointments.findOne({ _id: id });
+    if (charged) await billVisit(charged, "cancellation");
+  }
 
   const { client, therapist } = await partiesOf(visit);
   const when = slotLabel(visit.start);
@@ -287,7 +292,8 @@ export async function rebookVisit(
 
 /* ------------------------------------------------------------ outcome */
 
-export const outcomeSchema = z.object({ outcome: z.enum(["completed", "no-show"]) });
+/** Attendance is recorded by checking in and out; this records a visit the patient missed. */
+export const outcomeSchema = z.object({ outcome: z.literal("no-show") });
 
 /** After the visit time, the therapist or admin records whether it happened. */
 export async function recordOutcome(
@@ -302,6 +308,7 @@ export async function recordOutcome(
     throw new UserFacingError("This visit has already been recorded.", 409);
   if (visit.start > new Date()) throw new UserFacingError("This visit hasn't happened yet.", 409);
   const noShow = input.outcome === "no-show";
+  if (visit.checkIn) throw new UserFacingError("The therapist checked in to this visit.", 409);
   await appointments.updateOne(
     { _id: id, status: "booked" },
     {
@@ -321,6 +328,8 @@ export async function recordOutcome(
       },
     },
   );
+  const missed = await appointments.findOne({ _id: id });
+  if (missed) await billVisit(missed, "cancellation");
   const { client, therapist } = await partiesOf(visit);
   await audit(
     user,

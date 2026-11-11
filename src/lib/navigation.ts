@@ -76,6 +76,7 @@ export const navigation: { group: string; items: NavItem[] }[] = [
       { href: "/care/referrals", label: "Referrals and intake", icon: FileInput, roles: [L, A] },
       { href: "/care", label: "Patient onboarding", icon: UserPlus, roles: [L, A] },
       { href: "/care/therapists", label: "Therapists", icon: Stethoscope, roles: [L, A] },
+      { href: "/care/billing", label: "Billing", icon: Receipt, roles: [L, A] },
       { href: "/therapist", label: "My new patients", icon: BellRing, roles: [C] },
       { href: "/messages", label: "Messages", icon: MessagesSquare, roles: [C] },
       { href: "/profile", label: "My profile", icon: CircleUserRound, roles: [L, A, S, C] },
@@ -154,7 +155,10 @@ const roleLayouts: Partial<Record<Role, { group: string; hrefs: string[] }[]>> =
     { group: "Mobile apps", hrefs: ["/mobile/staff", "/mobile/family", "/mobile/patient"] },
   ],
   Admin: [
-    { group: "Live care", hrefs: ["/care/referrals", "/care", "/care/therapists", "/profile"] },
+    {
+      group: "Live care",
+      hrefs: ["/care/referrals", "/care", "/care/therapists", "/care/billing", "/profile"],
+    },
     { group: "Admin", hrefs: ["/admin-queue", "/intake", "/forms", "/tasks", "/admin-operations"] },
     { group: "Clinical", hrefs: ["/patients-requiring-attention", "/patients", "/schedule"] },
     { group: "AI workspace", hrefs: ["/reports"] },
@@ -207,6 +211,22 @@ export const roleUsers: Record<Role, { name: string; initials: string; title: st
 type RouteMeta = { section: string; page: string; role: Role };
 
 const routes: { prefix: string; meta: RouteMeta }[] = [
+  {
+    prefix: "/therapist/assessments",
+    meta: { section: "My new patients", page: "Assessment", role: "Clinician" },
+  },
+  {
+    prefix: "/therapist/plans",
+    meta: { section: "My new patients", page: "Treatment plan", role: "Clinician" },
+  },
+  {
+    prefix: "/care/billing/",
+    meta: { section: "Billing", page: "Invoice", role: "Admin" },
+  },
+  {
+    prefix: "/care/billing",
+    meta: { section: "Live care", page: "Billing", role: "Admin" },
+  },
   {
     prefix: "/therapist/patients",
     meta: { section: "My new patients", page: "Patient", role: "Clinician" },

@@ -69,6 +69,10 @@ export async function clientDetail(id: ObjectId): Promise<ClientDetailDto> {
           at: client.discharged.at.toISOString(),
           reason: client.discharged.reason,
           byName: client.discharged.byName,
+          outcomes: client.discharged.outcomes ?? null,
+          outstandingRisks: client.discharged.outstandingRisks ?? null,
+          advice: client.discharged.advice ?? null,
+          handover: client.discharged.handover ?? null,
         }
       : null,
     emergencyContact: client.emergencyContact ?? null,

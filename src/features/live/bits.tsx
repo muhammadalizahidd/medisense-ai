@@ -46,12 +46,14 @@ export const needLabel: Record<NeedStatus, string> = {
   "needs-therapist": "Approved · awaiting clinician",
   waiting: "Clinician suggested",
   assigned: "Active",
+  completed: "Completed",
 };
 
 export const needTone: Record<NeedStatus, TagTone> = {
   "needs-therapist": "over",
   waiting: "monitor",
   assigned: "healthy",
+  completed: "neutral",
 };
 
 const caseloadTone: Record<CaseloadStatus, TagTone> = {
