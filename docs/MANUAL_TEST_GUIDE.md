@@ -344,6 +344,28 @@ Go to **Billing** and open the draft invoice.
 
 ---
 
+---
+
+## Part H: Adding and removing a therapist (module A04)
+
+1. **Jo → Therapists → Add therapist.** Fill in a fictional physiotherapist:
+   - Riley Sample, `riley.sample@medisense.test`, Brisbane South
+   - Mon, Wed, Fri
+   - Registration PHY0009999, expiring next year; screening expiring in two years
+
+   Try a registration expiry in the past first. **Expect:** it's refused.
+2. Click **Add therapist**. **Expect:** the email and a temporary password, shown once. Copy the
+   password.
+3. In a private window, sign in as Riley with that password. **Expect:** an empty *My new
+   patients*. Under **My profile**, change the password and set working hours.
+4. **Jo:** open any physiotherapy service request. **Expect:** Riley appears in the ranked list.
+5. **Jo → Therapists → Riley → Deactivate.** **Expect:**
+   - Riley's window is signed out, and signing in again is refused.
+   - Riley shows **Inactive** in the list and is no longer offered in matching.
+   - **Reactivate** brings Riley back.
+
+---
+
 ## Privacy checks (E2E-15, E2E-18)
 
 | Try | Expect |
