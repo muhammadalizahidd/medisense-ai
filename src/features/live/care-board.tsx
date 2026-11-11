@@ -10,7 +10,7 @@ import { Segmented } from "@/components/ui/segmented";
 import { Tag } from "@/components/ui/tag";
 import { useNow, useResource } from "@/lib/live/client";
 import { relativeTime } from "@/lib/live/time";
-import type { ClientStage, ClientSummaryDto } from "@/lib/live/types";
+import type { ClientStage, ClientSummaryDto, ReferralSummaryDto } from "@/lib/live/types";
 import { EmptyNote, ErrorNote, LiveBadge, needTone, Skeleton, StageTag } from "./bits";
 
 type Filter = "all" | ClientStage;
@@ -19,6 +19,13 @@ export function CareBoard() {
   const { data, error, loading, reload } = useResource<{ clients: ClientSummaryDto[] }>(
     "/api/care/clients",
     (event) => event.type === "care",
+  );
+  const referrals = useResource<{ referrals: ReferralSummaryDto[] }>(
+    "/api/care/referrals",
+    (event) => event.type === "care",
+  );
+  const waiting = (referrals.data?.referrals ?? []).filter(
+    (r) => r.status === "Under Admin Review" || r.status === "Submitted",
   );
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
@@ -51,6 +58,32 @@ export function CareBoard() {
         }
       />
 
+      {waiting.length > 0 && (
+        <Link
+          href="/care/referrals"
+          className="mb-6 flex items-center justify-between gap-3 rounded-card border border-accent bg-accent-tint px-5 py-4 text-small hover:no-underline"
+        >
+          <span className="flex items-center gap-3">
+            <span className="relative flex size-2.5">
+              <span className="absolute inline-flex size-full animate-ping rounded-full bg-accent-fill opacity-60 motion-reduce:animate-none" />
+              <span className="relative inline-flex size-2.5 rounded-full bg-accent-fill" />
+            </span>
+            <span className="text-ink-900">
+              <strong>
+                {waiting.length} new referral{waiting.length === 1 ? "" : "s"}
+              </strong>{" "}
+              waiting for intake
+              {waiting[0] && (
+                <span className="text-ink-700">
+                  {" "}
+                  · latest {waiting[0].name}, {relativeTime(waiting[0].createdAt)}
+                </span>
+              )}
+            </span>
+          </span>
+          <span className="font-semibold text-accent">Review →</span>
+        </Link>
+      )}
       <MetricBand
         label="Onboarding figures"
         metrics={[

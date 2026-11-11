@@ -38,7 +38,12 @@ const stages = [
   { label: "Ready for matching", statuses: ["Accepted", "Closed"] },
 ];
 
-type Invite = { inviteCode?: string; inviteExpires?: string; clientId?: string };
+type Invite = {
+  inviteCode?: string;
+  inviteExpires?: string;
+  clientId?: string;
+  usesReferralCode?: boolean;
+};
 
 /** One referral's workspace: what was asked for, the checks, and the decision for its stage. */
 export function ReferralDetail({ id }: { id: string }) {
@@ -340,6 +345,13 @@ function NextStep({
     case "Accepted":
       return (
         <Panel title="Accepted: ready for matching">
+          {invite?.usesReferralCode && (
+            <p className="mb-4 rounded-control border border-healthy-bg bg-healthy-bg px-4 py-3 text-small">
+              The family already has their app code from the referral. They sign in to the patient
+              app with their email and that code, then choose a password. If they&apos;ve lost it,
+              create a new one from the patient&apos;s record.
+            </p>
+          )}
           {invite?.inviteCode && (
             <div className="mb-4 rounded-control border border-border bg-canvas px-4 py-3">
               <p className="text-small text-ink-700">

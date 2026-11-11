@@ -179,6 +179,7 @@ export async function submitReferral(raw: unknown, files: IncomingFile[], staff:
   const { referrals } = await collections();
   const _id = new ObjectId();
   const token = randomBytes(24).toString("base64url");
+  const appCode = newInviteCode();
   const now = new Date();
   const stored = await storeFiles(files, { referralId: _id, clientId: null }, input.submitter.name);
   const gaps = completenessGaps(input, stored);
@@ -188,6 +189,10 @@ export async function submitReferral(raw: unknown, files: IncomingFile[], staff:
     _id,
     reference: newReference(),
     trackingHash: sha256(token),
+    access: {
+      codeHash: appCode.invite.codeHash,
+      expiresAt: new Date(Date.now() + 90 * 86_400_000),
+    },
     status: "Under Admin Review",
     data: input,
     region: regionForPostcode(
@@ -239,7 +244,13 @@ export async function submitReferral(raw: unknown, files: IncomingFile[], staff:
       gaps.length ? `${gaps.length} to confirm.` : "Complete."
     }${duplicates.length ? " Possible duplicate." : ""}`,
   });
-  return { id: _id.toHexString(), reference: doc.reference, trackingToken: token };
+  return {
+    id: _id.toHexString(),
+    reference: doc.reference,
+    trackingToken: token,
+    appCode: appCode.code,
+    appEmail: (input.participant.email || input.booking.email).toLowerCase(),
+  };
 }
 
 async function byToken(token: string) {
@@ -251,7 +262,10 @@ async function byToken(token: string) {
 
 /** What the tracking link shows: the status and anything asked for, never the referral's content. */
 export async function trackReferral(token: string): Promise<PublicReferralDto> {
-  const r = await byToken(token);
+  return publicView(await byToken(token));
+}
+
+function publicView(r: ReferralDoc): PublicReferralDto {
   const open = r.infoRequests.find((q) => !q.answeredAt);
   return {
     reference: r.reference,
@@ -517,7 +531,12 @@ export type ReferralAction = z.infer<typeof referralActionSchema>;
 export async function referralAction(admin: UserDoc, id: ObjectId, action: ReferralAction) {
   const { referrals } = await collections();
   let r = await loadReferral(id);
-  const result: { inviteCode?: string; inviteExpires?: Date; clientId?: string } = {};
+  const result: {
+    inviteCode?: string;
+    inviteExpires?: Date;
+    clientId?: string;
+    usesReferralCode?: boolean;
+  } = {};
 
   switch (action.type) {
     case "take-ownership": {
@@ -821,7 +840,12 @@ async function accept(
     .filter(Boolean)
     .join("\n");
 
-  const result: { inviteCode?: string; inviteExpires?: Date; clientId?: string } = {};
+  const result: {
+    inviteCode?: string;
+    inviteExpires?: Date;
+    clientId?: string;
+    usesReferralCode?: boolean;
+  } = {};
   let clientId: ObjectId;
   const existingId = r.duplicateDecision?.clientId ?? null;
 
@@ -856,8 +880,17 @@ async function accept(
     }
     clientId = new ObjectId();
     const userId = new ObjectId();
-    const { code, invite } = newInviteCode();
     const now = new Date();
+    const fresh = newInviteCode();
+    const reuse = r.access && r.access.expiresAt > now;
+    const invite = reuse
+      ? {
+          codeHash: r.access!.codeHash,
+          expiresAt: new Date(
+            Math.max(r.access!.expiresAt.getTime(), now.getTime() + 14 * 86_400_000),
+          ),
+        }
+      : fresh.invite;
     await db.users.insertOne({
       _id: userId,
       email,
@@ -888,7 +921,8 @@ async function accept(
       createdAt: now,
     };
     await db.clients.insertOne(client);
-    result.inviteCode = code;
+    if (reuse) result.usesReferralCode = true;
+    else result.inviteCode = fresh.code;
     result.inviteExpires = invite.expiresAt;
   }
 
@@ -1002,4 +1036,24 @@ export async function aiReferralReview(id: ObjectId) {
       throw new UserFacingError(`AI isn't available: ${error.message}`, 409);
     throw new UserFacingError("The AI answer couldn't be read. Try again.", 409);
   }
+}
+
+/**
+ * The app code before acceptance: with the email from the referral, it shows the referral's
+ * progress in the patient app. Nothing personal is shown, as with the tracking link.
+ */
+export async function referralByCode(email: string, code: string) {
+  const { referrals } = await collections();
+  const hash = sha256(code.trim().toUpperCase());
+  const e = email.trim().toLowerCase();
+  const r = await referrals.findOne({
+    "access.codeHash": hash,
+    "access.expiresAt": { $gt: new Date() },
+    $or: [
+      { "data.participant.email": e },
+      { "data.booking.email": e },
+      { "data.submitter.email": e },
+    ],
+  });
+  return r ? publicView(r) : null;
 }

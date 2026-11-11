@@ -88,7 +88,20 @@ const steps: Step[] = [
 ];
 
 type Attached = { id: string; file: File; kind: DocumentKind };
-type Sent = { id: string; reference: string; trackingToken: string };
+type Sent = {
+  id: string;
+  reference: string;
+  trackingToken: string;
+  appCode: string;
+  appEmail: string;
+};
+
+type Props = {
+  mode: "public" | "staff";
+  staffName?: string;
+  /** Inside the patient app: tells the app when it's sent, and offers a way back. */
+  embedded?: boolean;
+};
 
 /** Sets a value deep inside the form by its dotted path, without mutating the original. */
 function setIn<T>(obj: T, path: string, value: unknown): T {
@@ -104,7 +117,7 @@ function setIn<T>(obj: T, path: string, value: unknown): T {
  * The participant referral (requirements phases 1–2). Works without an account; staff use the same
  * form to enter a referral they received by phone or email. A draft stays on this device.
  */
-export function ReferralForm(props: { mode: "public" | "staff"; staffName?: string }) {
+export function ReferralForm(props: Props) {
   // The draft lives in this browser, so the form is drawn once the page is running there.
   if (useNow() === null) return <Skeleton className="h-150" />;
   return <ReferralFormBody {...props} />;
@@ -127,8 +140,8 @@ function readDraft(key: string): Draft | null {
   }
 }
 
-function ReferralFormBody({ mode, staffName }: { mode: "public" | "staff"; staffName?: string }) {
-  const draftKey = `medisense-referral-draft-${mode}`;
+function ReferralFormBody({ mode, staffName, embedded = false }: Props) {
+  const draftKey = `medisense-referral-draft-${embedded ? "app" : mode}`;
   const [draft] = useState(() => readDraft(draftKey));
   const [form, setForm] = useState<ReferralInput>(() => {
     if (draft) return draft.form;
@@ -250,6 +263,17 @@ function ReferralFormBody({ mode, staffName }: { mode: "public" | "staff"; staff
       if (!response.ok) throw new Error(json.error ?? "The referral couldn't be sent.");
       window.localStorage.removeItem(draftKey);
       setSent(json);
+      if (embedded) {
+        window.parent.postMessage(
+          {
+            type: "medisense-referral",
+            reference: json.reference,
+            appCode: json.appCode,
+            appEmail: json.appEmail,
+          },
+          window.location.origin,
+        );
+      }
       window.scrollTo({ top: 0 });
     } catch (e) {
       setSubmitError(e instanceof Error ? e.message : "The referral couldn't be sent. Try again.");
@@ -266,7 +290,11 @@ function ReferralFormBody({ mode, staffName }: { mode: "public" | "staff"; staff
     [errors],
   );
 
-  if (sent) return <ReferralSent sent={sent} mode={mode} name={form.participant.firstName} />;
+  if (sent) {
+    return (
+      <ReferralSent sent={sent} mode={mode} embedded={embedded} name={form.participant.firstName} />
+    );
+  }
 
   const current = steps[step]!;
   const ndis = form.funding.source === "NDIS";
@@ -1038,12 +1066,15 @@ function ReferralSent({
   sent,
   mode,
   name,
+  embedded,
 }: {
   sent: Sent;
   mode: "public" | "staff";
   name: string;
+  embedded: boolean;
 }) {
   const [copied, setCopied] = useState(false);
+  const [codeCopied, setCodeCopied] = useState(false);
   const link =
     typeof window === "undefined"
       ? `/refer/track/${sent.trackingToken}`
@@ -1060,6 +1091,34 @@ function ReferralSent({
           is
         </p>
         <p className="my-3 font-mono text-h1 tracking-widest">{sent.reference}</p>
+        <div className="mt-5 rounded-card border-2 border-accent bg-accent-tint p-4 text-left">
+          <p className="text-small font-semibold">
+            {mode === "staff" ? "The family's app code" : "Your app code"}
+          </p>
+          <div className="mt-2 flex items-center gap-2">
+            <span className="flex-1 font-mono text-h2 tracking-[0.2em]">{sent.appCode}</span>
+            <Button
+              size="sm"
+              onClick={() => {
+                void navigator.clipboard?.writeText(sent.appCode);
+                setCodeCopied(true);
+              }}
+            >
+              {codeCopied ? (
+                <Check className="size-3.5" aria-hidden="true" />
+              ) : (
+                <Copy className="size-3.5" aria-hidden="true" />
+              )}
+              {codeCopied ? "Copied" : "Copy"}
+            </Button>
+          </div>
+          <p className="mt-2 text-caption text-ink-700">
+            {mode === "staff" ? "Give this to the family. They" : "Keep this code. You"} open the
+            Medisense patient app, choose <strong>I have a code</strong>, and enter{" "}
+            <strong>{sent.appEmail}</strong> with this code. Until the referral is accepted it shows
+            progress; once accepted, the same code sets up the app account.
+          </p>
+        </div>
         <div className="mt-5 rounded-control border border-border bg-canvas p-4 text-left">
           <p className="text-small font-semibold">Your private tracking link</p>
           <p className="mt-1 text-caption text-ink-500">
@@ -1087,7 +1146,19 @@ function ReferralSent({
           </div>
         </div>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
-          {mode === "staff" ? (
+          {embedded ? (
+            <Button
+              variant="primary"
+              onClick={() =>
+                window.parent.postMessage(
+                  { type: "medisense-referral-close" },
+                  window.location.origin,
+                )
+              }
+            >
+              Back to the app
+            </Button>
+          ) : mode === "staff" ? (
             <ButtonLink href={`/care/referrals/${sent.id}`} variant="primary">
               Open in intake
             </ButtonLink>

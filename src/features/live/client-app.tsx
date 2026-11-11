@@ -1,12 +1,28 @@
 "use client";
 
-import { CalendarDays, HeartPulse, House, LogOut, MessageCircle, UserRound, X } from "lucide-react";
+import {
+  CalendarDays,
+  ClipboardPlus,
+  HeartPulse,
+  House,
+  LogOut,
+  MessageCircle,
+  UserRound,
+  X,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/premium";
 import { AppCard, AppHeader, AppSheet, PhoneFrame } from "@/features/mobile/phone-frame";
-import { signOut, useLiveEvents, useResource, useSession } from "@/lib/live/client";
-import type { AppointmentDto, ClientHomeDto, MessageDto, SessionUser } from "@/lib/live/types";
+import { api, signOut, useLiveEvents, useResource, useSession } from "@/lib/live/client";
+import type {
+  AppointmentDto,
+  ClientHomeDto,
+  MessageDto,
+  PublicReferralDto,
+  SessionUser,
+} from "@/lib/live/types";
+import { PendingReferral, ReferralOverlay, SentCard, type SentReferral } from "./app-referral";
 import { ErrorNote, Skeleton } from "./bits";
 import { CancelVisitPanel } from "./cancel-visit";
 import { ChatOverlay } from "./chat-overlay";
@@ -43,7 +59,25 @@ export function ClientApp() {
   const [chat, setChat] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState<AppointmentDto | null>(null);
   const [rating, setRating] = useState<AppointmentDto | null>(null);
+  const [referring, setReferring] = useState(false);
+  const [sent, setSent] = useState<SentReferral | null>(null);
+  const [pending, setPending] = useState<{
+    referral: PublicReferralDto;
+    email: string;
+    code: string;
+  } | null>(null);
+  const [formKey, setFormKey] = useState(0);
   const signedIn = user?.role === "client";
+  const referralOverlay = referring ? (
+    <ReferralOverlay
+      onClose={() => setReferring(false)}
+      onSent={(s) => {
+        setSent(s);
+        setReferring(false);
+        setFormKey((k) => k + 1);
+      }}
+    />
+  ) : undefined;
   const unread = useUnreadMessages(signedIn);
   const [banner, setBanner] = useState<MessageDto | null>(null);
   const bannerTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -72,7 +106,13 @@ export function ClientApp() {
 
   if (!signedIn) {
     return (
-      <PhoneFrame {...frame} tabs={tabs} active="home" onTab={() => undefined}>
+      <PhoneFrame
+        {...frame}
+        tabs={tabs}
+        active="home"
+        onTab={() => undefined}
+        overlay={referralOverlay}
+      >
         <AppHeader eyebrow="Medisense" title="Welcome" />
         <div className="p-4">
           {user && (
@@ -80,9 +120,50 @@ export function ClientApp() {
               You&apos;re signed in as staff. Sign in with a patient account to use this app.
             </p>
           )}
-          <AppCard>
-            <SignInForm initialMode="activate" onSignedIn={() => reload()} />
-          </AppCard>
+          {pending ? (
+            <PendingReferral
+              referral={pending.referral}
+              onBack={() => setPending(null)}
+              onRefresh={async () => {
+                const r = await api<{ pending?: boolean; referral?: PublicReferralDto }>(
+                  "/api/auth/activate",
+                  { body: { email: pending.email, code: pending.code } },
+                ).catch(() => null);
+                if (r?.referral) setPending({ ...pending, referral: r.referral });
+                else setPending(null);
+              }}
+            />
+          ) : (
+            <>
+              {sent ? (
+                <SentCard sent={sent} onUseCode={() => setFormKey((k) => k + 1)} />
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setReferring(true)}
+                  className="mb-3 flex w-full cursor-pointer items-center gap-3 rounded-card bg-accent-fill p-4 text-left text-on-accent shadow-overlay active:scale-99"
+                >
+                  <ClipboardPlus className="size-6 flex-none" aria-hidden="true" />
+                  <span>
+                    <span className="block text-body font-semibold">New to Medisense?</span>
+                    <span className="block text-caption text-on-accent/85">
+                      Make a referral. No account needed.
+                    </span>
+                  </span>
+                </button>
+              )}
+              <AppCard>
+                <SignInForm
+                  key={formKey}
+                  initialMode="activate"
+                  initialEmail={sent?.appEmail ?? ""}
+                  initialCode={sent?.appCode ?? ""}
+                  onSignedIn={() => reload()}
+                  onPending={(referral, c) => setPending({ referral, ...c })}
+                />
+              </AppCard>
+            </>
+          )}
         </div>
       </PhoneFrame>
     );
@@ -100,7 +181,8 @@ export function ClientApp() {
         setRating(null);
       }}
       overlay={
-        banner && !chat ? (
+        referralOverlay ??
+        (banner && !chat ? (
           <MessageBanner
             message={banner}
             onOpen={() => {
@@ -128,7 +210,7 @@ export function ClientApp() {
               onChanged={() => undefined}
             />
           </AppSheet>
-        ) : undefined
+        ) : undefined)
       }
     >
       <ClientTabs
@@ -139,6 +221,8 @@ export function ClientApp() {
         onRate={setRating}
         onOpenVisits={() => setTab("visits")}
         onSignedOut={reload}
+        onRefer={() => setReferring(true)}
+        sent={sent}
       />
     </PhoneFrame>
   );
@@ -152,6 +236,8 @@ function ClientTabs({
   onRate,
   onOpenVisits,
   onSignedOut,
+  onRefer,
+  sent,
 }: {
   tab: string;
   user: SessionUser;
@@ -160,6 +246,8 @@ function ClientTabs({
   onRate: (visit: AppointmentDto) => void;
   onOpenVisits: () => void;
   onSignedOut: () => void;
+  onRefer: () => void;
+  sent: SentReferral | null;
 }) {
   const home = useResource<ClientHomeDto>(
     "/api/care/me",
@@ -216,6 +304,22 @@ function ClientTabs({
               onSaved={home.reload}
             />
           )}
+          <AppCard title="Need another service?">
+            {sent ? (
+              <p className="text-small text-ink-700">
+                Referral <strong>{sent.reference}</strong> sent. The care team will be in touch;
+                it&apos;s added to your record once accepted.
+              </p>
+            ) : (
+              <p className="mb-3 text-small text-ink-700">
+                Ask for another therapy or assessment, for you or someone you care for.
+              </p>
+            )}
+            <Button className="mt-2 w-full" onClick={onRefer}>
+              <ClipboardPlus className="size-4" aria-hidden="true" />
+              Request another service
+            </Button>
+          </AppCard>
           <Button
             className="w-full"
             onClick={async () => {

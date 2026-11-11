@@ -322,6 +322,11 @@ export interface ReferralDoc {
   reference: string;
   /** SHA-256 of the secret tracking token in the submitter's link. */
   trackingHash: string;
+  /**
+   * The family's app code, given on submission. With their email it shows progress in the app;
+   * once accepted, the same code activates the patient's account.
+   */
+  access?: { codeHash: string; expiresAt: Date } | null;
   status: ReferralStatus;
   data: ReferralInput;
   /** Set during intake review; used for matching. */

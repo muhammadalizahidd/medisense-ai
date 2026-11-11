@@ -5,7 +5,7 @@ import { useState, type FormEvent, type KeyboardEvent, type ReactNode } from "re
 import { Button } from "@/components/ui/button";
 import { Segmented } from "@/components/ui/segmented";
 import { api } from "@/lib/live/client";
-import type { SessionUser } from "@/lib/live/types";
+import type { PublicReferralDto, SessionUser } from "@/lib/live/types";
 import { cn } from "@/lib/cn";
 
 type Mode = "sign-in" | "activate";
@@ -48,17 +48,22 @@ const inputBare =
 /** Sign in, or set a password with the invite code the care team gave a patient. */
 export function SignInForm({
   onSignedIn,
+  onPending,
   initialMode = "sign-in",
   initialEmail = "",
+  initialCode = "",
 }: {
   onSignedIn: (user: SessionUser) => void;
+  /** A referral code whose referral isn't accepted yet: show its progress instead. */
+  onPending?: (referral: PublicReferralDto, credentials: { email: string; code: string }) => void;
   initialMode?: Mode;
   initialEmail?: string;
+  initialCode?: string;
 }) {
   const [mode, setMode] = useState<Mode>(initialMode);
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
-  const [code, setCode] = useState("");
+  const [code, setCode] = useState(initialCode);
   const [confirm, setConfirm] = useState("");
   const [show, setShow] = useState(false);
   const [capsLock, setCapsLock] = useState(false);
@@ -76,17 +81,25 @@ export function SignInForm({
       setError("Enter the email address for your account.");
       return;
     }
-    if (activating && password !== confirm) {
+    if (activating && password && password !== confirm) {
       setError("The two passwords don't match.");
       return;
     }
     setBusy(true);
     try {
-      const { user } = await api<{ user: SessionUser }>(
-        activating ? "/api/auth/activate" : "/api/auth/login",
-        { body: activating ? { email, code, password } : { email, password } },
-      );
-      onSignedIn(user);
+      const result = await api<{
+        user?: SessionUser;
+        pending?: boolean;
+        referral?: PublicReferralDto;
+      }>(activating ? "/api/auth/activate" : "/api/auth/login", {
+        body: activating ? { email, code, password } : { email, password },
+      });
+      if (result.pending && result.referral) {
+        onPending?.(result.referral, { email, code });
+        setBusy(false);
+        return;
+      }
+      if (result.user) onSignedIn(result.user);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't sign in. Try again.");
       setBusy(false);
@@ -120,13 +133,14 @@ export function SignInForm({
         }}
         options={[
           { id: "sign-in", label: "Sign in" },
-          { id: "activate", label: "I have an invite code" },
+          { id: "activate", label: "I have a code" },
         ]}
       />
       {activating && (
         <p className="rounded-control bg-accent-tint px-3 py-2 text-caption text-ink-700">
-          First time here? Use the email your care team has on file and the 8-character code they
-          gave you, then choose your own password.
+          Use your email and the 8-character code from your referral (or from your care team). Leave
+          the password blank to see your referral&apos;s progress; once it&apos;s accepted, choose a
+          password to set up your account.
         </p>
       )}
       <IconField id="email" label="Email" icon={<Mail className="size-4" />}>
@@ -143,7 +157,7 @@ export function SignInForm({
         />
       </IconField>
       {activating && (
-        <IconField id="code" label="Invite code" icon={<KeyRound className="size-4" />}>
+        <IconField id="code" label="Code" icon={<KeyRound className="size-4" />}>
           <input
             id="code"
             required
@@ -165,14 +179,14 @@ export function SignInForm({
           capsLock ? (
             <span className="text-monitor">Caps Lock is on.</span>
           ) : activating ? (
-            "At least 10 characters."
+            "At least 10 characters. Leave blank to check a referral."
           ) : undefined
         }
       >
         <input
           id="password"
           type={show ? "text" : "password"}
-          required
+          required={!activating}
           autoComplete={activating ? "new-password" : "current-password"}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -186,7 +200,6 @@ export function SignInForm({
           <input
             id="confirm"
             type={show ? "text" : "password"}
-            required
             autoComplete="new-password"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
@@ -207,7 +220,13 @@ export function SignInForm({
         {busy && (
           <Loader2 className="size-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
         )}
-        {busy ? "Signing in…" : activating ? "Activate and sign in" : "Sign in"}
+        {busy
+          ? "Signing in…"
+          : activating
+            ? password
+              ? "Activate and sign in"
+              : "Continue"
+            : "Sign in"}
       </Button>
     </form>
   );
