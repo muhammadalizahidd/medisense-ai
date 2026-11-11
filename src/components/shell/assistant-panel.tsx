@@ -6,8 +6,11 @@ import {
   CornerDownLeft,
   Lock,
   PlayCircle,
+  Receipt,
   Route,
+  ShieldCheck,
   Stethoscope,
+  Video,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -18,7 +21,8 @@ import type { KeyStatus } from "@/lib/ai/engine";
 import { answerQuestion, roleQuestions } from "@/lib/assistant";
 import { answerLocally, smallTalk } from "@/lib/knowledge/local";
 import type { Answer, LiveState } from "@/lib/knowledge/state";
-import { matchWorkflow, workflowGuides } from "@/lib/knowledge/workflows";
+import { findTopics, liveWords } from "@/lib/knowledge/product";
+import { fromTopic, matchWorkflow, workflowGuides } from "@/lib/knowledge/workflows";
 import { useDemoStore } from "@/state/demo-store";
 
 type Exchange = {
@@ -128,6 +132,12 @@ export async function resolveQuestion(question: string): Promise<Resolved> {
     } catch {
       notice = "Live AI unreachable. Answered from records instead.";
     }
+  }
+
+  // How-to questions about the live product fall back to the written product guide.
+  const topic = liveWords.test(question) ? findTopics(question, 1)[0] : undefined;
+  if (topic) {
+    return { answer: fromTopic(topic), engine: GUIDE, toolCalls: [], notice };
   }
 
   const local = answerLocally(question, state);
@@ -304,12 +314,15 @@ export function AssistantPanel({
               <div className="mt-6 mb-2 eyebrow">Workflow guides</div>
               <div className="grid gap-2.5 sm:grid-cols-2">
                 {workflowGuides.map((g) => {
-                  const Icon = { patient: Route, therapist: Stethoscope, try: PlayCircle }[g.id];
-                  const name = {
-                    patient: "Patient journey",
-                    therapist: "Therapist workflow",
-                    try: "Try it: new patient to finished visit",
+                  const Icon = {
+                    patient: Route,
+                    therapist: Stethoscope,
+                    telehealth: Video,
+                    billing: Receipt,
+                    privacy: ShieldCheck,
+                    try: PlayCircle,
                   }[g.id];
+                  const name = g.name;
                   return (
                     <button
                       key={g.id}

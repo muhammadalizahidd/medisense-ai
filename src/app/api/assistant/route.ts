@@ -6,6 +6,10 @@ import { plan } from "@/lib/knowledge/local";
 import type { Answer, LiveState } from "@/lib/knowledge/state";
 import { aiTools } from "@/lib/knowledge/tools";
 import { dt } from "@/lib/clock";
+import { liveWords } from "@/lib/knowledge/product";
+import { currentUser } from "@/server/auth";
+import { liveRecords, mentionsLivePatient } from "@/server/assistant-live";
+import type { UserDoc } from "@/server/models";
 
 const MAX_QUESTION = 500;
 const MAX_BODY = 300_000;
@@ -21,6 +25,26 @@ How to answer:
 - items: up to 8 supporting facts, most important first. label is the fact; detail adds context; href is the screen link copied from the tool result, or "" when there is none.
 - sources: the record types you used, e.g. "Tasks", "Schedule".
 - You only read records. Never claim to have changed, sent or booked anything; say which screen the user can act on instead.`;
+
+/** For questions about the live product: how it works, and what's in the live records. */
+const LIVE_SYSTEM = `You are Ask Medisense, the assistant inside Medisense's care platform for an allied health provider in Brisbane. The live product runs the full patient lifecycle from the functional requirements: referral (public form, tracking link), completeness check, intake review, clinical triage by a Clinical Lead, funding and consent, matching with credential checks, booking, assessment, clinical recommendation, treatment plans and goals, visits (check-in, session, check-out), SOAP notes signed by the clinician, telehealth video visits with consent-controlled recording, invoicing by Finance, plan review and signed discharge, plus the patient app.
+
+How to answer:
+- Use only the records and product guide given with the question. Never invent people, numbers, dates or features. If something isn't covered, say so.
+- For how-to questions, give the steps in order with the screen to use (copy href from the guide).
+- For questions about current work, give the live numbers and the most important rows first.
+- Respect privacy: if a record says clinical content is limited, don't speculate about it.
+- Reply in the language of the question, in plain, professional words.
+- title: a short headline that answers the question. intro: two or three sentences with the direct answer. items: up to 8 supporting facts or steps (label, detail, href or ""). sources: the record types or guide topics used.
+- You only read records. Never claim to have changed, sent or booked anything; say which screen the user can act on.`;
+
+async function signedIn(): Promise<UserDoc | null> {
+  try {
+    return await currentUser();
+  } catch {
+    return null;
+  }
+}
 
 const SCHEMA = {
   type: "object",
@@ -111,7 +135,55 @@ export async function POST(request: Request) {
   const tools = aiTools(state);
   const header = `Viewing as: ${state.role}
 Question: ${question}`;
+
   const route = plan(question, state, { curated: false });
+  // Questions about the sample-data people stay with the sample records.
+  const aboutSamplePerson =
+    route.kind === "tools" &&
+    route.calls.some((c) => ["get_client", "get_clinician", "get_supervision"].includes(c.name));
+
+  // The live product: how it works, and the signed-in person's own records.
+  const user = aboutSamplePerson ? null : await signedIn();
+  if (
+    !aboutSamplePerson &&
+    (liveWords.test(question) || (await mentionsLivePatient(user, question)))
+  ) {
+    try {
+      const records = await liveRecords(user, question);
+      const output = await generateJson("assistant", {
+        system: LIVE_SYSTEM,
+        user: `Signed in as: ${user ? `${user.name} (${user.role}${user.staffRoles?.length ? `: ${user.staffRoles.join(", ")}` : ""})` : "not signed in"}
+Today: ${new Date().toLocaleDateString("en-AU", { timeZone: "Australia/Brisbane", weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+Question: ${question}
+
+Records and guide fetched for this question:
+${JSON.stringify(records)}`,
+        schema: SCHEMA,
+        schemaName: "assistant_answer",
+        maxTokens: 4000,
+      });
+      return respond({
+        ok: true,
+        answer: parseAnswer(output.text),
+        provider: output.provider,
+        model: output.model,
+        toolCalls: records.map((r) => r.tool),
+        mode: "records-first",
+        latencyMs: output.latencyMs,
+      });
+    } catch (error) {
+      if (!(error instanceof AiError)) {
+        aiLog.error(`assistant (live): ${error instanceof Error ? error.message : String(error)}`);
+      }
+      return respond(
+        {
+          ok: false,
+          error: error instanceof AiError ? error.message : "The answer could not be prepared",
+        },
+        503,
+      );
+    }
+  }
 
   // Small talk needs no records and no model.
   if (route.kind === "small-talk") {

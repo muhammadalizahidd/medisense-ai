@@ -1,211 +1,172 @@
+import { productTopics, type ProductTopic } from "./product";
 import type { Answer } from "./state";
 
 /**
- * Standard Medisense workflows, written once and shown as guides in Ask Medisense. They are fixed
- * reference text, not AI answers, so they open instantly and are labelled as guides.
+ * Standard Medisense workflows, shown as guides in Ask Medisense. They're built from the product
+ * knowledge base (`product.ts`), open instantly, and are labelled as guides, not AI answers.
  */
 export type WorkflowGuide = {
-  id: "patient" | "therapist" | "try";
+  id: "patient" | "therapist" | "telehealth" | "billing" | "privacy" | "try";
+  name: string;
   question: string;
   blurb: string;
   answer: Answer;
 };
 
+const topic = (id: string) => productTopics.find((t) => t.id === id) as ProductTopic;
+
+export function fromTopic(t: ProductTopic, intro?: string): Answer {
+  return {
+    title: t.title,
+    intro: intro ?? t.summary,
+    items: [
+      ...t.steps.map((s) => ({
+        label: s.label,
+        detail: s.detail,
+        ...(s.href ? { href: s.href } : {}),
+      })),
+      ...t.rules.map((r) => ({ label: "Rule", detail: r })),
+    ],
+    sources: ["Medisense workflow", "Functional requirements"],
+  };
+}
+
 export const workflowGuides: WorkflowGuide[] = [
   {
     id: "patient",
+    name: "Patient lifecycle",
     question: "What is the patient journey, from referral to discharge?",
-    blurb: "Referral, intake, first visit, therapy, reports and discharge",
-    answer: {
-      title: "The patient journey, from referral to discharge",
-      intro:
-        "Every patient follows the same path. AI reads and drafts at each step, rules handle the routine, and a person approves before anything is sent or saved. Open any step to go to its screen.",
-      items: [
-        {
-          label: "Referral arrives",
-          detail:
-            "An email, GP letter or coordinator form is pasted into New referral. AI reads it and pulls out the patient, funding, contacts and needs, each linked to its source line.",
-          href: "/intake",
-        },
-        {
-          label: "Missing details are requested",
-          detail:
-            "AI lists what's missing, such as the NDIS number, date of birth or plan dates, and drafts the request email. Admin checks it and sends it.",
-          href: "/intake",
-        },
-        {
-          label: "Duplicate check and patient created",
-          detail:
-            "Medisense checks for an existing profile. Admin verifies the details and creates the patient record.",
-          href: "/patients",
-        },
-        {
-          label: "Therapist assigned",
-          detail:
-            "A therapist is suggested by region, discipline and spare capacity. The team lead confirms the choice.",
-          href: "/team-capacity",
-        },
-        {
-          label: "First visit booked",
-          detail:
-            "The visit is booked at home or by telehealth. The clash rule stops double bookings and finds the next free slot.",
-          href: "/schedule",
-        },
-        {
-          label: "Family invited to the portal",
-          detail:
-            "The family signs in to see upcoming visits, goals and progress, and to message the team.",
-          href: "/portal",
-        },
-        {
-          label: "Assessment and goals",
-          detail:
-            "The therapist runs the first assessment and sets goals with the family. They're saved to the patient record.",
-          href: "/patients/emily-carter",
-        },
-        {
-          label: "Therapy sessions and notes",
-          detail:
-            "After each visit, AI drafts the case note from the therapist's dictation. The therapist edits and approves it.",
-          href: "/sessions/oliver-grant",
-        },
-        {
-          label: "Claim prepared",
-          detail:
-            "A visit can be claimed once its note is approved. Billing builds the NDIS or aged care claim for admin to submit.",
-          href: "/billing",
-        },
-        {
-          label: "Progress reports and plan review",
-          detail:
-            "AI drafts progress and NDIS plan review reports from the approved notes. The therapist reviews them and the supervisor signs off.",
-          href: "/reports",
-        },
-        {
-          label: "Discharge and family feedback",
-          detail:
-            "Once the goals are met, the therapist writes a discharge summary, the family leaves feedback and the file is closed.",
-        },
-      ],
-      sources: ["Medisense workflow"],
-    },
+    blurb: "The 12 steps: referral, intake, triage, funding, matching, care, billing, discharge",
+    answer: fromTopic(topic("lifecycle")),
   },
   {
     id: "therapist",
+    name: "Therapist workflow",
     question: "What does a therapist's day look like in Medisense?",
-    blurb: "From the morning plan through visits and notes to reports and supervision",
+    blurb: "Requests, assessments, plans, visits, signed notes and reviews",
     answer: {
-      title: "A therapist's day in Medisense",
+      title: "A therapist's work in Medisense",
       intro:
-        "Medisense handles the admin around each visit so therapists spend their time with patients. AI prepares and drafts; the therapist checks and approves. Open any step to go to its screen.",
+        "Everything starts from My new patients. Rules and AI prepare and draft; the therapist checks, decides and signs. Only the treating therapist edits a patient's clinical record.",
       items: [
         {
-          label: "Start with My day",
+          label: "Answer new requests",
           detail:
-            "Today's visits, travel and priorities in one place, plus a short AI briefing on what needs attention first.",
-          href: "/my-day",
+            "Each request shows the service, frequency, location, funding and any precaution from clinical triage. Accept books the series; decline gives a reason.",
+          href: "/therapist",
         },
         {
-          label: "Prepare before each visit",
+          label: "Assess",
           detail:
-            "Open the patient record for a summary of the last session, current goals, risks and family notes.",
-          href: "/patients/emily-carter",
+            "Patient record → Clinical work → Start assessment. Fill each section, run the AI consistency check, ask the Clinical Lead to review if needed, then sign.",
         },
         {
-          label: "On the road with the Staff app",
+          label: "Plan",
           detail:
-            "The schedule, patient details, directions and quick bookings on a phone, for home visits.",
-          href: "/mobile/staff",
+            "A Treatment recommendation drafts the plan: add measured goals, interventions, frequency and a review date, then approve.",
         },
         {
-          label: "Run the session",
+          label: "Visit",
           detail:
-            "In the home or by telehealth. A telehealth visit opens from the booking with the patient's details beside the call.",
-          href: "/telehealth",
+            "Start visit: pre-visit summary and AI briefing, check-in with a safety check, goal measures, check-out with actual minutes.",
         },
         {
-          label: "Dictate the session note",
+          label: "Video visits",
           detail:
-            "Speak or type a few lines after the visit. AI drafts the case note in the clinic's format.",
-          href: "/sessions/oliver-grant",
+            "Video room: confirm suitability, send the one-time link, admit from the waiting room, record only with consent and permission.",
+          href: "/telehealth/recordings",
         },
         {
-          label: "Review and approve the note",
+          label: "Notes",
           detail:
-            "The therapist edits the draft and approves it. Only approved notes go into the record and can be billed.",
-          href: "/case-notes/mia-robinson",
+            "Draft the SOAP note with AI from rough notes, mark it ready, then sign. Signing shows the patient the summary and sends the visit to billing.",
         },
         {
-          label: "Follow-ups and tasks",
+          label: "Review and discharge",
           detail:
-            "Requests to the family, equipment quotes and referrals become tasks with owners and due dates. Overdue tasks escalate.",
-          href: "/tasks",
+            "Start review on the plan, decide continue, revise, transfer or discharge, then sign the discharge summary.",
         },
         {
-          label: "Reports",
-          detail:
-            "AI drafts progress and NDIS reports from the approved notes. The therapist reviews them before they go to the supervisor.",
-          href: "/reports",
-        },
-        {
-          label: "Keep the family updated",
-          detail: "Progress, upcoming visits and messages are shared through the Family Portal.",
-          href: "/portal",
-        },
-        {
-          label: "Supervision",
-          detail:
-            "The supervisor gets an AI brief on caseload, outstanding notes and wellbeing ahead of each supervision session.",
-          href: "/supervision/sarah-thompson",
+          label: "Stay in touch",
+          detail: "Live chat with the patient and family, with read receipts.",
+          href: "/messages",
         },
       ],
-      sources: ["Medisense workflow"],
+      sources: ["Medisense workflow", "Functional requirements"],
     },
   },
   {
+    id: "telehealth",
+    name: "Telehealth",
+    question: "How do telehealth video visits work?",
+    blurb: "Suitability, one-time link, consents, waiting room, recording rules",
+    answer: fromTopic(topic("telehealth")),
+  },
+  {
+    id: "billing",
+    name: "Billing",
+    question: "How does billing work?",
+    blurb: "Verified services to draft invoices, review, issue and payment",
+    answer: fromTopic(topic("billing")),
+  },
+  {
+    id: "privacy",
+    name: "Roles and privacy",
+    question: "Who can see what in Medisense?",
+    blurb: "Least privilege for clinical records, documents, recordings and invoices",
+    answer: fromTopic(topic("roles")),
+  },
+  {
     id: "try",
-    question: "How do I take a new patient through to a finished visit?",
-    blurb: "Create a patient, assign a therapist, then finish the visit as that therapist",
+    name: "Try it: one patient through every workflow",
+    question: "How do I take a referral all the way to discharge?",
+    blurb: "The manual test path, step by step, with the accounts to use",
     answer: {
-      title: "New patient to a finished visit",
+      title: "One patient through every workflow",
       intro:
-        "Try the whole path yourself in a few minutes. The Therapist view is signed in as Sarah Thompson, so assign the patient to Sarah to see the visit on her side.",
+        "Use three windows: Jo Marsh (intake and finance), Neil Hensley (Clinical Lead) and the therapist, plus a private window for the referrer and patient. The full checklist with expected results is in docs/MANUAL_TEST_GUIDE.md.",
       items: [
         {
-          label: "Create the patient",
+          label: "Send a referral",
           detail:
-            "Use + New, then Add patient (or Patients, then Add patient). Enter the full name and service, then choose Sarah Thompson as the clinician and create the patient.",
-          href: "/patients",
+            "Public form at /refer, with an NDIS plan, FCA and OT, and Unknown risk. Keep the tracking link.",
+          href: "/refer",
         },
         {
-          label: "Book the first visit for today",
+          label: "Intake (Jo)",
           detail:
-            "On the new patient's page, choose Book visit. The clinician fills in from the patient; keep the day as today.",
-          href: "/patients",
+            "Review with AI, request information, then the referrer answers on the tracking link.",
+          href: "/care/referrals",
+        },
+        { label: "Triage (Neil)", detail: "Accept with a risk plan and a precaution." },
+        {
+          label: "Funding and accept (Jo)",
+          detail: "Verify, record consent, accept. Copy the invite code.",
         },
         {
-          label: "Switch to the Therapist view",
-          detail: "Open the workspace menu at the top of the sidebar and choose Therapist.",
-        },
-        {
-          label: "Open the visit in My day",
-          detail: "The visit appears under New bookings. Select it to open the visit.",
-          href: "/my-day",
-        },
-        {
-          label: "Mark the session complete",
+          label: "Match",
           detail:
-            "Choose Mark session complete. Medisense adds a Write session note task to My tasks automatically.",
-          href: "/my-day",
+            "An expired registration shows as unavailable; auto-allocation is refused because of the precaution; request a therapist.",
+          href: "/care",
         },
         {
-          label: "Write and approve the note",
+          label: "Therapist",
           detail:
-            "Write the session note, then mark the task done. The approved note makes the visit ready to claim in Billing.",
-          href: "/tasks",
+            "Accept, assess, sign, release the report, approve the plan, run visits, sign notes, run a video visit.",
+        },
+        {
+          label: "Billing (Jo)",
+          detail: "Set item numbers, review, approve, issue and record payment.",
+          href: "/care/billing",
+        },
+        {
+          label: "Close",
+          detail:
+            "Plan review → Discharge, then the signed discharge. The patient app shows goals, report, invoice and advice.",
+          href: "/mobile/patient",
         },
       ],
-      sources: ["Medisense workflow"],
+      sources: ["Manual test guide"],
     },
   },
 ];
@@ -220,9 +181,9 @@ export function matchWorkflow(question: string): WorkflowGuide | null {
   const exact = workflowGuides.find((g) => g.question.toLowerCase() === q);
   if (exact) return exact;
   if (!workflowWords.test(q)) return null;
-  if (/(new client|finish(ed)?|complete)/.test(q) && /(visit|booking|session)/.test(q))
-    return workflowGuides[2] ?? null;
-  if (therapistWords.test(q)) return workflowGuides[1] ?? null;
-  if (patientWords.test(q)) return workflowGuides[0] ?? null;
+  if (/(all the way|every workflow|test)/.test(q))
+    return workflowGuides.find((g) => g.id === "try") ?? null;
+  if (therapistWords.test(q)) return workflowGuides.find((g) => g.id === "therapist") ?? null;
+  if (patientWords.test(q)) return workflowGuides.find((g) => g.id === "patient") ?? null;
   return null;
 }

@@ -25,6 +25,7 @@ export type AssistantContext = LiveState;
 export const roleQuestions: Record<Role, string[]> = {
   Leadership: [
     "How does Medisense work?",
+    "What does AI do in Medisense?",
     "How is Medisense doing this week?",
     "Which clinicians are at risk of burnout?",
     "Which patients might slip through the gaps?",
@@ -35,6 +36,9 @@ export const roleQuestions: Record<Role, string[]> = {
   ],
   Admin: [
     "How does Medisense work?",
+    "What needs my attention today?",
+    "Which referrals are waiting for clinical triage?",
+    "Which invoices are outstanding?",
     "Which referrals need action?",
     "What forms are waiting to be submitted?",
     "What paperwork is outstanding for Ruth Hallam?",
@@ -44,6 +48,7 @@ export const roleQuestions: Record<Role, string[]> = {
   ],
   Supervisor: [
     "How does Medisense work?",
+    "Which assessments are waiting for my review?",
     "Prepare me for Sarah's supervision",
     "Which tasks have been escalated to me?",
     "Which notes are still outstanding?",
@@ -53,6 +58,8 @@ export const roleQuestions: Record<Role, string[]> = {
   ],
   Clinician: [
     "How does Medisense work?",
+    "What needs my attention today?",
+    "How do I record a telehealth visit?",
     "What should I prioritise today?",
     "Summarise Emily Carter before my visit",
     "How is Mia Robinson progressing on her goals?",
