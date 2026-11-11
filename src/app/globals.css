@@ -80,17 +80,17 @@
   --color-series-3: #5a7094;
   --color-series-4: #8c8478;
 
-  --font-serif: var(--font-newsreader), Georgia, serif;
-  --font-sans: var(--font-instrument-sans), system-ui, sans-serif;
-  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+  --font-serif: var(--font-instrument-serif), Georgia, serif;
+  --font-sans: var(--font-instrument-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, monospace;
 
-  --text-display: 34px;
-  --text-display--line-height: 40px;
-  --text-h1: 28px;
+  --text-display: 40px;
+  --text-display--line-height: 42px;
+  --text-h1: 32px;
   --text-h1--line-height: 34px;
-  --text-h2: 20px;
+  --text-h2: 24px;
   --text-h2--line-height: 28px;
-  --text-kpi: 36px;
+  --text-kpi: 40px;
   --text-kpi--line-height: 40px;
   --text-h3: 15px;
   --text-h3--line-height: 22px;
@@ -104,17 +104,17 @@
   --text-eyebrow--line-height: 14px;
 
   /* Serif figure sizes used inside metric bands, tables and reports. */
-  --text-stat: 28px;
+  --text-stat: 30px;
   --text-stat--line-height: 32px;
   --text-stat-sm: 24px;
-  --text-stat-sm--line-height: 30px;
+  --text-stat-sm--line-height: 26px;
   --text-figure: 18px;
   --text-figure--line-height: 24px;
   --text-section: 16px;
   --text-section--line-height: 22px;
   --text-report-heading: 17px;
   --text-report-heading--line-height: 24px;
-  --text-report-title: 26px;
+  --text-report-title: 30px;
   --text-report-title--line-height: 32px;
 
   --radius-tag: 4px;
@@ -140,8 +140,8 @@
  * than colour.
  */
 :root {
-  --headline-weight: 500;
-  --headline-tracking: -0.01em;
+  --headline-weight: 400;
+  --headline-tracking: -0.005em;
   --eyebrow-transform: uppercase;
   --eyebrow-tracking: 0.08em;
   --surface-lift: none;
@@ -219,8 +219,8 @@ html[data-theme="clear-blue"] {
   --color-series-3: #7a5af8;
   --color-series-4: #c4679b;
 
-  --font-serif: var(--font-fraunces), Georgia, serif;
-  --font-sans: var(--font-manrope), system-ui, sans-serif;
+  --font-serif: var(--font-instrument-serif), Georgia, serif;
+  --font-sans: var(--font-instrument-sans), ui-sans-serif, system-ui, sans-serif;
 
   --radius-tag: 6px;
   --radius-control: 12px;
@@ -228,10 +228,10 @@ html[data-theme="clear-blue"] {
   --radius-sheet: 28px;
   --radius-nav: 12px;
 
-  --headline-weight: 500;
-  --headline-tracking: -0.018em;
+  --headline-weight: 400;
+  --headline-tracking: -0.005em;
   --eyebrow-transform: uppercase;
-  --eyebrow-tracking: 0.09em;
+  --eyebrow-tracking: 0.08em;
   --surface-lift: 0 1px 2px rgb(16 40 80 / 0.04), 0 8px 24px rgb(16 40 80 / 0.05);
   --nav-active-rule: 0 4px 12px rgb(21 112 239 / 0.25);
   --hero-wash: linear-gradient(115deg, #e8f1ff 0%, #f5f9ff 55%, #eafaf8 100%);
@@ -313,9 +313,9 @@ html[data-theme="clear-blue"] .page-hero .bg-accent-tint:not(.on-light *) {
 }
 
 html[data-theme="clear-blue"] .page-hero h1 {
-  font-size: clamp(30px, 3.4vw, 44px);
-  line-height: 1.1;
-  font-weight: 500;
+  font-size: clamp(34px, 3.8vw, 54px);
+  line-height: 1.02;
+  font-weight: 400;
 }
 
 html[data-theme="clear-blue"] .page-hero {
@@ -327,7 +327,6 @@ html[data-theme="clear-blue"] .page-hero {
 }
 
 html[data-theme="clear-blue"] body {
-  letter-spacing: -0.006em;
   font-variant-numeric: lining-nums tabular-nums;
 }
 
@@ -401,15 +400,15 @@ html[data-theme="clear-blue"] .stat-band > :nth-child(5n + 5) {
 }
 
 html[data-theme="clear-blue"] .stat-band .headline {
-  font-size: 34px;
-  line-height: 40px;
-  font-weight: 500;
-  letter-spacing: -0.025em;
+  font-size: 38px;
+  line-height: 1;
+  font-weight: 400;
+  letter-spacing: -0.005em;
 }
 
 html[data-theme="clear-blue"] .stat-band .headline.text-stat-sm {
-  font-size: 26px;
-  line-height: 32px;
+  font-size: 28px;
+  line-height: 1.05;
 }
 
 /* Status tags keep their colour on a white pill so they read on the dark header. */
@@ -766,6 +765,7 @@ html[data-theme="clear-blue"][data-palette="navy"]
     font-size: var(--text-body);
     line-height: var(--text-body--line-height);
     font-variant-numeric: tabular-nums;
+    font-feature-settings: "ss01";
     -webkit-font-smoothing: antialiased;
   }
 
@@ -788,6 +788,22 @@ html[data-theme="clear-blue"][data-palette="navy"]
   font-family: var(--font-serif);
   font-weight: var(--headline-weight);
   letter-spacing: var(--headline-tracking);
+  /* The display serif has one weight: never fake a bold one. */
+  font-synthesis: none;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* Small uppercase labels with wide tracking, used for table headers and tags. */
+@utility label-caps {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Figures that line up in columns. */
+@utility num {
+  font-variant-numeric: tabular-nums;
 }
 
 /* Lifts a white card off the white page. */
@@ -871,4 +887,20 @@ input:-webkit-autofill:focus {
 }
 .no-scrollbar::-webkit-scrollbar {
   display: none;
+}
+
+/* Instrument Serif has a single weight: headings set in it stay regular. */
+.font-serif {
+  font-synthesis: none;
+}
+
+/*
+ * As in the Ayre type system, the display serif is for large sizes only. Small headings (panel
+ * titles, card headings) use the interface sans, semibold.
+ */
+.headline:is(.text-section, .text-h3, .text-figure, .text-report-heading, .text-body, .text-small) {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  font-synthesis: weight;
 }

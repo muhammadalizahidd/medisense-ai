@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import { Suspense, type ReactNode } from "react";
-import { Fraunces, IBM_Plex_Mono, Instrument_Sans, Manrope, Newsreader } from "next/font/google";
+import { Instrument_Sans, Instrument_Serif, JetBrains_Mono } from "next/font/google";
 import { Sidebar } from "@/components/shell/sidebar";
 import { PresenterPanel } from "@/components/shell/presenter-panel";
 import { TabBar } from "@/components/shell/tab-bar";
@@ -10,33 +10,26 @@ import { themeInitScript } from "@/lib/theme";
 import { DemoStoreHydrator } from "@/state/demo-store-hydrator";
 import "./globals.css";
 
-const newsreader = Newsreader({
+/** Headings and large figures. */
+const instrumentSerif = Instrument_Serif({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-newsreader",
+  weight: "400",
+  style: ["normal", "italic"],
+  variable: "--font-instrument-serif",
 });
 
+/** The interface. */
 const instrumentSans = Instrument_Sans({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "500", "600", "700"],
   variable: "--font-instrument-sans",
 });
 
-const plexMono = IBM_Plex_Mono({
+/** Codes, references and keyboard hints. */
+const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   weight: ["400", "500"],
-  variable: "--font-plex-mono",
-});
-
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  axes: ["opsz", "SOFT"],
-  variable: "--font-fraunces",
-});
-
-const manrope = Manrope({
-  subsets: ["latin"],
-  variable: "--font-manrope",
+  variable: "--font-jetbrains-mono",
 });
 
 export const metadata: Metadata = {
@@ -60,7 +53,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
       lang="en-AU"
       data-theme="clear-blue"
       suppressHydrationWarning
-      className={`${newsreader.variable} ${instrumentSans.variable} ${plexMono.variable} ${fraunces.variable} ${manrope.variable}`}
+      className={`${instrumentSerif.variable} ${instrumentSans.variable} ${jetbrainsMono.variable}`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
