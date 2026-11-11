@@ -7,6 +7,7 @@ import {
   isFinal,
   needsRiskReview,
   referralSchema,
+  sampleReferral,
   type ReferralInput,
 } from "./referral";
 
@@ -158,5 +159,12 @@ describe("risk and frequency", () => {
         details: "",
       }),
     ).toBe("Assessment");
+  });
+});
+
+describe("sample referral", () => {
+  it("is always a complete, valid referral", () => {
+    for (let i = 0; i < 20; i++)
+      expect(referralSchema.safeParse(sampleReferral()).success).toBe(true);
   });
 });

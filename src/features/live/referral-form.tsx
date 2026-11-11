@@ -10,6 +10,7 @@ import {
   Lock,
   Paperclip,
   Trash2,
+  Wand2,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -34,6 +35,7 @@ import {
 } from "@/lib/live/catalogue";
 import {
   emptyReferral,
+  sampleReferral,
   referralSchema,
   supportLine,
   type ReferralInput,
@@ -919,6 +921,13 @@ function ReferralFormBody({ mode, staffName, embedded = false }: Props) {
     </div>
   );
   const isLast = step === steps.length - 1;
+  /** Fills every step with fictional details and jumps to the review, for testing and demos. */
+  const fillSample = () => {
+    setForm(sampleReferral());
+    setErrors({});
+    setStep(steps.length - 1);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
   const goBack = () => setStep((s) => Math.max(0, s - 1));
 
   // Inside the patient app: a phone-first layout with a sticky stepper and a sticky action bar.
@@ -930,9 +939,13 @@ function ReferralFormBody({ mode, staffName, embedded = false }: Props) {
             <p className="label-caps text-accent">
               Step {step + 1} of {steps.length}
             </p>
-            <p className="flex items-center gap-1 text-caption text-ink-500">
-              <Lock className="size-3" aria-hidden="true" /> Draft saved
-            </p>
+            <button
+              type="button"
+              onClick={fillSample}
+              className="flex cursor-pointer items-center gap-1 rounded-full border border-border-strong px-2.5 py-1 text-caption font-semibold text-accent hover:bg-accent-tint"
+            >
+              <Wand2 className="size-3" aria-hidden="true" /> Fill sample data
+            </button>
           </div>
           <h2 id="step-title" className="mt-1 headline text-[26px] leading-[1.1]">
             {current.title}
@@ -1036,6 +1049,13 @@ function ReferralFormBody({ mode, staffName, embedded = false }: Props) {
           <Lock className="mt-0.5 size-3.5 flex-none" aria-hidden="true" />
           Your answers are saved as a draft on this device until you send them.
         </p>
+        <button
+          type="button"
+          onClick={fillSample}
+          className="mt-3 flex w-full cursor-pointer items-center justify-center gap-2 rounded-control border border-dashed border-border-strong px-3 py-2 text-caption font-semibold text-accent hover:border-accent hover:bg-accent-tint lg:w-auto"
+        >
+          <Wand2 className="size-3.5" aria-hidden="true" /> Fill sample data (testing)
+        </button>
       </nav>
 
       <section

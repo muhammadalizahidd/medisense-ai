@@ -357,3 +357,98 @@ export function emptyReferral(): ReferralInput {
     consent: { privacy: false as unknown as true, shareWithClinicians: false as unknown as true },
   };
 }
+
+/**
+ * A complete, fictional referral for testing and demos: an NDIS plan-managed child needing an FCA
+ * and weekly OT, with an unknown risk so clinical triage has something to review. A different
+ * name each time, so repeated tests don't look like duplicates.
+ */
+export function sampleReferral(): ReferralInput {
+  const firsts = ["Ava", "Leo", "Isla", "Noah", "Mila", "Theo", "Ruby", "Finn", "Zara", "Eli"];
+  const pick = <T>(list: readonly T[]) => list[Math.floor(Math.random() * list.length)]!;
+  const first = pick(firsts);
+  const tag = Math.random().toString(36).slice(2, 6);
+  const last = `Sample${tag[0]!.toUpperCase()}${tag.slice(1)}`;
+  const year = 2012 + Math.floor(Math.random() * 8);
+  const parent = `Jordan ${last}`;
+  const email = `${first.toLowerCase()}.${last.toLowerCase()}@example.test`;
+  const nextYear = new Date().getFullYear() + 1;
+  const base = emptyReferral();
+  return {
+    ...base,
+    submitter: {
+      role: "Support coordinator",
+      name: "Casey Coordinator",
+      organisation: "Example Support Services",
+      email: "casey.coordinator@example.test",
+      phone: "0400 111 222",
+      authorityConfirmed: true,
+    },
+    participant: {
+      firstName: first,
+      lastName: last,
+      dateOfBirth: `${year}-05-20`,
+      email,
+      phone: "0400 333 444",
+      address: { street: "12 Sample Road", suburb: "Carindale", state: "QLD", postcode: "4152" },
+    },
+    funding: {
+      source: "NDIS",
+      ndisNumber: String(430_000_000 + Math.floor(Math.random() * 9_999_999)),
+      planEndDate: `${nextYear}-06-30`,
+      planType: "Plan Managed",
+      fundingPeriods: "No",
+      planManagerCompany: "Example Plan Partners",
+      planManagerEmail: "invoices@example.test",
+      otherDetails: "",
+    },
+    supportCoordinator: {
+      name: "Casey Coordinator",
+      email: "casey.coordinator@example.test",
+      phone: "0400 111 222",
+    },
+    signatory: {
+      role: "Parent or guardian",
+      name: parent,
+      email: "jordan@example.test",
+      phone: "0400 333 444",
+    },
+    booking: {
+      role: "Parent or guardian",
+      name: parent,
+      email: "jordan@example.test",
+      phone: "0400 333 444",
+      method: "Phone",
+      preferredTime: "Weekday mornings",
+    },
+    location: { ...base.location, type: "Home", sameAsHome: true },
+    clinical: {
+      diagnosis: "Developmental coordination disorder (reported)",
+      behaviours: "No",
+      behavioursDetails: "",
+      knownRisk: "Unknown",
+      riskDetails: "",
+      personPresent: true,
+      personPresentDetails: `${parent} (parent), 0400 333 444`,
+    },
+    supports: [
+      {
+        support: "Functional Capacity Assessment",
+        frequency: "Assessment",
+        frequencyOther: "",
+        nursingType: "",
+        details: "",
+      },
+      {
+        support: "Occupational Therapy",
+        frequency: "Weekly",
+        frequencyOther: "",
+        nursingType: "",
+        details: "",
+      },
+    ],
+    goals: "Dress for school independently and join in sport at school.",
+    comments: "Mornings work best. A parent will be present at every visit.",
+    consent: { privacy: true, shareWithClinicians: true },
+  };
+}
