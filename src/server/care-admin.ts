@@ -5,10 +5,11 @@ import type { ClientDetailDto, MatchDto } from "@/lib/live/types";
 import { slotLabel } from "@/lib/live/time";
 import { newInviteCode } from "./auth";
 import { collections } from "./db";
+import { needsRiskReview } from "@/lib/live/referral";
 import { appointmentDto, assignmentDto, clientSummary, nameMap, seriesLookup } from "./dto";
 import { UserFacingError } from "./http";
 import { audit, notify, publish, adminIds } from "./live";
-import { isSlotFree, rankTherapists } from "./matching";
+import { ineligibility, isSlotFree, rankTherapists } from "./matching";
 import type { AppointmentDoc, UserDoc } from "./models";
 
 export async function listClients() {
@@ -128,7 +129,47 @@ export async function matchesFor(clientId: ObjectId, needId: string): Promise<Ma
     const key = a.therapistId.toHexString();
     byTherapist.set(key, [...(byTherapist.get(key) ?? []), a]);
   }
-  return rankTherapists(candidates, byTherapist, client.region);
+  return rankTherapists(candidates, byTherapist, client.region, need.support);
+}
+
+/**
+ * Automatic allocation (section 13): for validated low-risk services only, the best eligible
+ * clinician with a time this week gets a tentative request. Anything with a reported risk, a
+ * precaution or no clear match needs a person to choose.
+ */
+export async function autoAllocate(admin: UserDoc, clientId: ObjectId, needId: string) {
+  const { referrals } = await collections();
+  const client = await loadClient(clientId);
+  const need = client.needs.find((n) => n.id === needId);
+  if (!need || need.status !== "needs-therapist")
+    throw new UserFacingError("This service isn't waiting for a therapist.", 409);
+  if (client.precautions)
+    throw new UserFacingError(
+      "Not automatic: this patient has a clinical precaution. Choose the therapist yourself.",
+      409,
+    );
+  const referral = need.referralId ? await referrals.findOne({ _id: need.referralId }) : null;
+  if (referral && needsRiskReview(referral.data)) {
+    throw new UserFacingError(
+      "Not automatic: the referral reported a risk (Yes or Unknown). Choose the therapist yourself.",
+      409,
+    );
+  }
+  const matches = await matchesFor(clientId, needId);
+  const best = matches.find((m) => m.eligible && m.slots.length && m.status !== "At Risk");
+  const soon = best?.slots[0] && new Date(best.slots[0]).getTime() - Date.now() < 7 * 86_400_000;
+  if (!best || !soon)
+    throw new UserFacingError(
+      "No eligible therapist has a time this week. Choose one yourself.",
+      409,
+    );
+  await requestTherapist(admin, clientId, {
+    needId,
+    therapistId: best.therapistId,
+    start: best.slots[0]!,
+  });
+  await audit(admin, `Automatic allocation (low-risk rule): asked ${best.name}`, clientId);
+  return { therapist: best.name, start: best.slots[0] };
 }
 
 export const requestSchema = z.object({
@@ -152,6 +193,11 @@ export async function requestTherapist(
   if (client.discharged) throw new UserFacingError("This patient has been discharged.", 409);
   if (!ObjectId.isValid(input.therapistId)) throw new UserFacingError("Therapist not found.", 404);
   const therapist = await db.therapists.findOne({ _id: new ObjectId(input.therapistId) });
+  const blocked = therapist
+    ? ineligibility(therapist, need.support, new Date(Date.now() + 36e6).toISOString().slice(0, 10))
+    : [];
+  if (blocked.length)
+    throw new UserFacingError(`${therapist!.name} can't take this: ${blocked.join(", ")}.`, 409);
   if (!therapist || therapist.discipline !== need.discipline) {
     throw new UserFacingError("Therapist not found.", 404);
   }
@@ -179,6 +225,7 @@ export async function requestTherapist(
           end: new Date(start.getTime() + therapist.sessionMinutes * 60_000),
           status: "tentative",
           holdsSlot: true,
+          modality: need.location === "Telehealth" ? "Telehealth" : "In person",
           createdAt: now,
         },
         { session },

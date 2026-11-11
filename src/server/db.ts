@@ -15,6 +15,7 @@ import type {
   PlanDoc,
   ReferralDoc,
   SessionDoc,
+  TelehealthDoc,
   TherapistDoc,
   UserDoc,
 } from "./models";
@@ -69,6 +70,8 @@ async function prepare(client: MongoClient) {
     db.collection("plans").createIndex({ clientId: 1, needId: 1, createdAt: -1 }),
     db.collection("invoices").createIndex({ number: 1 }, { unique: true }),
     db.collection("invoices").createIndex({ clientId: 1, status: 1 }),
+    db.collection("telehealth").createIndex({ appointmentId: 1 }, { unique: true }),
+    db.collection("telehealth").createIndex({ tokenHash: 1 }),
   ]);
   await seedIfEmpty(db);
   await migrate(db);
@@ -112,5 +115,6 @@ export async function collections() {
     assessments: db.collection<AssessmentDoc>("assessments"),
     plans: db.collection<PlanDoc>("plans"),
     invoices: db.collection<InvoiceDoc>("invoices"),
+    telehealth: db.collection<TelehealthDoc>("telehealth"),
   };
 }

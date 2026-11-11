@@ -20,6 +20,7 @@ import type {
   SectionEntry,
 } from "@/lib/live/clinical";
 import type { Gap, ReferralInput, ReferralStatus } from "@/lib/live/referral";
+import type { RecordingStatus } from "@/lib/live/telehealth";
 
 export type UserRole = "admin" | "therapist" | "client";
 
@@ -68,6 +69,15 @@ export interface TherapistProfile {
   languages: string[];
 }
 
+export interface TherapistCredentials {
+  registration: string;
+  /** "YYYY-MM-DD". */
+  registrationExpiry: string;
+  screeningExpiry: string;
+  /** Assessment-only supports this clinician is credentialed to deliver. */
+  assessmentScopes: Support[];
+}
+
 export interface TherapistDoc {
   _id: ObjectId;
   slug: string;
@@ -85,6 +95,8 @@ export interface TherapistDoc {
   timeOff?: TimeOff[];
   profile?: TherapistProfile;
   availabilityUpdatedAt?: Date | null;
+  /** Registration, screening and the assessments they're credentialed for (E2E-05). */
+  credentials?: TherapistCredentials;
   userId: ObjectId;
 }
 
@@ -159,7 +171,14 @@ export interface AssignmentDoc {
 }
 
 export type AppointmentStatus =
-  "tentative" | "booked" | "completed" | "cancelled" | "late-cancelled" | "no-show" | "aborted";
+  | "tentative"
+  | "booked"
+  | "completed"
+  | "cancelled"
+  | "late-cancelled"
+  | "no-show"
+  | "aborted"
+  | "rescheduled";
 
 /** Session delivery (section 10): what happened in the visit, against the plan's goals. */
 export interface SessionRecord {
@@ -223,6 +242,10 @@ export interface AppointmentDoc {
   aborted?: { reason: string; remaining: string; byName: string; at: Date } | null;
   /** Set once the service is verified and on an invoice. */
   invoiceId?: ObjectId | null;
+  /** Telehealth is an appointment modality (section 1); in person by default. */
+  modality?: "In person" | "Telehealth";
+  /** The patient confirmed they'll be there (P03). */
+  confirmedByPatient?: Date | null;
   /** Left by the patient after a completed visit, once. */
   feedback?: { rating: number; comment: string; at: Date } | null;
   createdAt: Date;
@@ -343,6 +366,14 @@ export interface DocumentDoc {
   at: Date;
 }
 
+export interface AssessmentReview {
+  requestedBy: string;
+  requestedAt: Date;
+  comment: string | null;
+  reviewedBy: string | null;
+  reviewedAt: Date | null;
+}
+
 export interface AssessmentDoc {
   _id: ObjectId;
   clientId: ObjectId;
@@ -362,6 +393,8 @@ export interface AssessmentDoc {
   released: { summary: string; byName: string; at: Date } | null;
   signed: { byName: string; at: Date } | null;
   amendments: { reason: string; text: string; byName: string; at: Date }[];
+  reviews?: AssessmentReview[];
+  cancelled?: { reason: string; byName: string; at: Date } | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -427,4 +460,42 @@ export interface InvoiceDoc {
   issuedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface TelehealthDoc {
+  _id: ObjectId;
+  appointmentId: ObjectId;
+  clientId: ObjectId;
+  therapistId: ObjectId;
+  /** SHA-256 of the one-time join token; a new link replaces the old. */
+  tokenHash: string | null;
+  linkSentAt: Date | null;
+  suitability: { ok: boolean; notes: string; byName: string; at: Date } | null;
+  guest: { name: string; relationship: string; verified: boolean; at: Date } | null;
+  consents: {
+    video: { given: boolean; by: string; at: Date } | null;
+    recording: { given: boolean; by: string; at: Date } | null;
+    transcription: { given: boolean; by: string; at: Date } | null;
+    sharing: { given: boolean; by: string; at: Date } | null;
+  };
+  device: { camera: boolean; microphone: boolean; network: "good" | "poor" } | null;
+  state: "Not started" | "Waiting" | "In call" | "Ended";
+  waitingSince: Date | null;
+  admittedAt: Date | null;
+  endedAt: Date | null;
+  participants: { name: string; role: string; joinedAt: Date }[];
+  screenShare: boolean;
+  recordingAllowed: boolean;
+  recording: {
+    status: RecordingStatus;
+    segments: { start: Date; end: Date }[];
+    availableAt: Date | null;
+    durationSec: number;
+    retentionUntil: Date | null;
+    deleted: { reason: string; byName: string; at: Date } | null;
+    restricted: boolean;
+  };
+  transcript: { at: Date; speaker: string; text: string }[];
+  accessLog: { byName: string; purpose: string; action: string; at: Date }[];
+  events: { at: Date; text: string }[];
 }

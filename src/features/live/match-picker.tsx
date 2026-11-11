@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarClock, CalendarOff, Send } from "lucide-react";
+import { CalendarClock, CalendarOff, Send, Wand2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -57,6 +57,19 @@ export function MatchPicker({
   }
   const shown = showAll ? matches : matches.slice(0, 3);
 
+  async function autoAllocate() {
+    setSending(true);
+    setSendError(null);
+    try {
+      await api(`/api/care/clients/${clientId}/auto-allocate`, { body: { needId } });
+      onSent();
+    } catch (e) {
+      setSendError(e instanceof Error ? e.message : "Couldn't allocate automatically.");
+    } finally {
+      setSending(false);
+    }
+  }
+
   async function send() {
     if (!choice) return;
     setSending(true);
@@ -77,10 +90,16 @@ export function MatchPicker({
 
   return (
     <div>
-      <p className="mb-3 text-caption text-ink-500">
-        Ranked by service region, free places, caseload health and how soon they can start. Choose a
-        time to send the request.
-      </p>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-caption text-ink-500">
+          Rules check registration, screening and scope first, then rank by region, free places,
+          caseload health and how soon they can start. Choose a time to send the request.
+        </p>
+        <Button size="sm" disabled={sending} onClick={autoAllocate}>
+          <Wand2 className="size-3.5" aria-hidden="true" />
+          Auto-allocate (low-risk rule)
+        </Button>
+      </div>
       <ul className="flex flex-col gap-3">
         {shown.map((m, index) => (
           <li
@@ -90,6 +109,7 @@ export function MatchPicker({
               choice?.therapist.therapistId === m.therapistId
                 ? "border-accent bg-accent-tint"
                 : "border-border",
+              !m.eligible && "opacity-70",
             )}
           >
             <div className="flex flex-wrap items-start gap-3">
@@ -97,7 +117,12 @@ export function MatchPicker({
               <div className="min-w-0 flex-1">
                 <p className="flex flex-wrap items-center gap-2 text-small font-semibold">
                   {m.name}
-                  {index === 0 && (
+                  {!m.eligible && (
+                    <span className="rounded-tag bg-over-bg px-1.5 py-0.5 text-eyebrow text-over">
+                      Unavailable
+                    </span>
+                  )}
+                  {index === 0 && m.eligible && (
                     <span className="rounded-tag bg-accent-fill px-1.5 py-0.5 text-eyebrow text-on-accent">
                       Best match
                     </span>
@@ -170,7 +195,11 @@ export function MatchPicker({
                 </div>
               </fieldset>
             ) : (
-              <p className="mt-3 text-caption text-ink-500">No open times in the next two weeks.</p>
+              <p className="mt-3 text-caption text-ink-500">
+                {m.eligible
+                  ? "No open times in the next two weeks."
+                  : "Can't be assigned until the credential checks pass."}
+              </p>
             )}
           </li>
         ))}

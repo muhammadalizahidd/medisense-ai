@@ -129,6 +129,15 @@ function assessmentDto(a: AssessmentDoc, clientName: string, canEdit: boolean): 
     createdAt: a.createdAt.toISOString(),
     updatedAt: a.updatedAt.toISOString(),
     canEdit: canEdit && (a.status === "Draft" || a.status === "In Progress"),
+    reviews: (a.reviews ?? []).map((r) => ({
+      requestedBy: r.requestedBy,
+      requestedAt: r.requestedAt.toISOString(),
+      comment: r.comment,
+      reviewedBy: r.reviewedBy,
+      reviewedAt: r.reviewedAt?.toISOString() ?? null,
+    })),
+    cancelled: a.cancelled ? { ...a.cancelled, at: a.cancelled.at.toISOString() } : null,
+    canReview: !canEdit && a.status === "Awaiting Review",
   };
 }
 
@@ -977,6 +986,8 @@ export const soapSchema = z.object({
   forPatient: z.string().trim().max(800),
   aiDrafted: z.boolean().default(false),
   sign: z.boolean(),
+  /** Marks the draft complete and waiting for the clinician's signature. */
+  ready: z.boolean().default(false),
 });
 
 /**
@@ -1027,7 +1038,7 @@ export async function writeSoapNote(
           plan: input.plan,
           text,
           forPatient: input.forPatient,
-          status: input.sign ? "Final" : "Draft",
+          status: input.sign ? "Final" : input.ready ? "Pending Signature" : "Draft",
           aiDrafted: input.aiDrafted || Boolean(visit.note?.aiDrafted),
           signedAt: input.sign ? now : null,
           amendments: [],
@@ -1139,4 +1150,248 @@ export async function draftSoap(user: UserDoc, id: ObjectId, input: z.infer<type
       throw new UserFacingError(`The AI draft isn't available: ${error.message}`, 409);
     throw new UserFacingError("The AI draft couldn't be read. Try again.", 409);
   }
+}
+
+/* ------------------------------------- assessment review and cancellation */
+
+/** The clinician asks a Clinical Lead to review before signing (T-modules: "request review"). */
+export async function requestAssessmentReview(user: UserDoc, id: ObjectId) {
+  const db = await collections();
+  const { a, client, canEdit } = await loadAssessment(user, id);
+  if (!canEdit || !(a.status === "Draft" || a.status === "In Progress"))
+    throw new UserFacingError("This assessment can't go for review now.", 409);
+  await db.assessments.updateOne(
+    { _id: id },
+    {
+      $set: { status: "Awaiting Review", updatedAt: new Date() },
+      $push: {
+        reviews: {
+          requestedBy: user.name,
+          requestedAt: new Date(),
+          comment: null,
+          reviewedBy: null,
+          reviewedAt: null,
+        },
+      },
+    },
+  );
+  const leads = await db.users
+    .find(
+      { role: "admin", staffRoles: { $in: ["Clinical Lead", "Super Admin"] } },
+      { projection: { _id: 1 } },
+    )
+    .toArray();
+  await notify(
+    leads.map((l) => l._id),
+    {
+      title: `Assessment review requested`,
+      body: `${user.name} asks for a review of the ${a.support} assessment.`,
+      href: `/therapist/assessments/${id.toHexString()}`,
+    },
+  );
+  await audit(user, `Requested a review of the ${a.support} assessment`, client._id);
+  await changed(client);
+}
+
+export const reviewCommentSchema = z.object({
+  comment: z.string().trim().min(3, "Write the review comment").max(2000),
+});
+
+/** A Clinical Lead returns the assessment with comments; the clinician then finishes and signs. */
+export async function completeAssessmentReview(
+  user: UserDoc,
+  id: ObjectId,
+  input: z.infer<typeof reviewCommentSchema>,
+) {
+  const db = await collections();
+  const { a, client } = await loadAssessment(user, id);
+  if (!isClinicalLead(user)) throw new UserFacingError("Only a Clinical Lead can review.", 409);
+  if (a.status !== "Awaiting Review")
+    throw new UserFacingError("Nothing is waiting for review.", 409);
+  const reviews = [...(a.reviews ?? [])];
+  const last = reviews.at(-1);
+  if (last)
+    Object.assign(last, { comment: input.comment, reviewedBy: user.name, reviewedAt: new Date() });
+  await db.assessments.updateOne(
+    { _id: id },
+    { $set: { status: "In Progress", reviews, updatedAt: new Date() } },
+  );
+  const t = await db.therapists.findOne({ _id: a.therapistId });
+  if (t)
+    await notify([t.userId], {
+      title: "Assessment reviewed",
+      body: `${user.name}: ${input.comment.slice(0, 140)}`,
+      href: `/therapist/assessments/${id.toHexString()}`,
+    });
+  await audit(user, `Reviewed the ${a.support} assessment`, client._id);
+  await changed(client);
+}
+
+export const cancelAssessmentSchema = z.object({
+  reason: z.string().trim().min(3, "Give the reason").max(500),
+});
+
+/** A draft assessment that won't go ahead is cancelled with its reason ("record reason for not assessed"). */
+export async function cancelAssessment(
+  user: UserDoc,
+  id: ObjectId,
+  input: z.infer<typeof cancelAssessmentSchema>,
+) {
+  const db = await collections();
+  const { a, client, canEdit } = await loadAssessment(user, id);
+  if (!canEdit || !["Draft", "In Progress"].includes(a.status))
+    throw new UserFacingError("Only an unsigned assessment can be cancelled.", 409);
+  await db.assessments.updateOne(
+    { _id: id },
+    {
+      $set: {
+        status: "Cancelled",
+        cancelled: { reason: input.reason, byName: user.name, at: new Date() },
+        updatedAt: new Date(),
+      },
+    },
+  );
+  await audit(user, `Cancelled the ${a.support} assessment: ${input.reason}`, client._id);
+  await changed(client);
+}
+
+/** Opens a plan's review (status Under Review) before the decision is recorded. */
+export async function startPlanReview(user: UserDoc, id: ObjectId) {
+  const { plans } = await collections();
+  const { p, client, canEdit } = await loadPlan(user, id);
+  if (!canEdit || p.status !== "Active")
+    throw new UserFacingError("Only an active plan can go under review.", 409);
+  await plans.updateOne({ _id: id }, { $set: { status: "Under Review", updatedAt: new Date() } });
+  await audit(user, `Started the review of the ${p.support} plan`, client._id);
+  await changed(client);
+}
+
+/* -------------------------------------------------------- AI (section 13) */
+
+async function ai<T>(
+  task: string,
+  system: string,
+  user: string,
+  schema: Record<string, unknown>,
+  maxTokens = 1200,
+) {
+  try {
+    const out = await generateJson(task, {
+      system,
+      user,
+      schema,
+      schemaName: task.replace(/-/g, "_"),
+      maxTokens,
+    });
+    return { ...(JSON.parse(out.text) as T), model: out.model };
+  } catch (error) {
+    if (error instanceof AiError)
+      throw new UserFacingError(`AI isn't available: ${error.message}`, 409);
+    throw new UserFacingError("The AI answer couldn't be read. Try again.", 409);
+  }
+}
+
+const SAFE =
+  "Never invent measurements, scores, diagnoses, medication, doses, eligibility or care hours. Use only the source material given, cite the source of each point, and say what is missing instead of guessing. The clinician checks and decides.";
+
+/** AI pre-visit briefing: a concise, source-linked summary. The therapist checks it. */
+export async function aiBriefing(user: UserDoc, visitId: ObjectId) {
+  const facts = await briefing(user, visitId);
+  return ai<{ points: { text: string; source: string }[]; checks: string[] }>(
+    "pre-visit-briefing",
+    `You prepare pre-visit briefings for community allied health clinicians. ${SAFE} Each point is one sentence. Sources are one of: Referral, Triage precaution, Assessment, Treatment plan, Last session note.`,
+    JSON.stringify(facts),
+    {
+      type: "object",
+      additionalProperties: false,
+      required: ["points", "checks"],
+      properties: {
+        points: {
+          type: "array",
+          items: {
+            type: "object",
+            additionalProperties: false,
+            required: ["text", "source"],
+            properties: { text: { type: "string" }, source: { type: "string" } },
+          },
+        },
+        checks: {
+          type: "array",
+          items: { type: "string" },
+          description: "Things to confirm on arrival.",
+        },
+      },
+    },
+    900,
+  );
+}
+
+/** AI assessment gap detection: unanswered essentials and values that disagree. Clinician resolves. */
+export async function aiAssessmentCheck(user: UserDoc, id: ObjectId) {
+  const { a, canEdit } = await loadAssessment(user, id);
+  if (!canEdit) throw new UserFacingError("Only the assessing therapist can run this.", 409);
+  const template = templateFor(a.support, a.discipline);
+  const content = template.sections.map((s) => ({ section: s.title, ...a.sections[s.key] }));
+  return ai<{ issues: { section: string; issue: string }[] }>(
+    "assessment-check",
+    `You review allied health assessment drafts for gaps and inconsistencies. ${SAFE} Report: essential items left blank, observed and reported findings that contradict each other, measures without a unit or method, and conclusions in the synthesis not supported by a section. Do not rewrite the assessment.`,
+    JSON.stringify({
+      support: a.support,
+      consent: a.consent.obtained,
+      sections: content,
+      activities: a.activities,
+      findings: a.findings,
+      recommendation: a.recommendation,
+    }),
+    {
+      type: "object",
+      additionalProperties: false,
+      required: ["issues"],
+      properties: {
+        issues: {
+          type: "array",
+          items: {
+            type: "object",
+            additionalProperties: false,
+            required: ["section", "issue"],
+            properties: { section: { type: "string" }, issue: { type: "string" } },
+          },
+        },
+      },
+    },
+  );
+}
+
+/** AI report draft: an evidence-linked, plain-language summary from the signed assessment. */
+export async function aiReportDraft(user: UserDoc, id: ObjectId) {
+  const { a } = await loadAssessment(user, id);
+  if (!(user.role === "therapist" && user.therapistId?.equals(a.therapistId)))
+    throw new UserFacingError("Only the assessing therapist can draft the report.", 409);
+  if (!a.signed) throw new UserFacingError("Sign the assessment first.", 409);
+  const template = templateFor(a.support, a.discipline);
+  return ai<{ summary: string; sources: string[] }>(
+    "report-draft",
+    `You draft participant-facing summaries of signed allied health assessments in plain Australian English, 120-200 words, warm and clear. ${SAFE} Leave out risk details and private clinical notes. List which sections each statement came from in sources.`,
+    JSON.stringify({
+      support: a.support,
+      findings: a.findings,
+      recommendation: a.recommendation,
+      sections: template.sections
+        .map((s) => ({
+          section: s.title,
+          observed: a.sections[s.key]?.observed,
+          measure: a.sections[s.key]?.measure,
+        }))
+        .filter((s) => s.observed),
+    }),
+    {
+      type: "object",
+      additionalProperties: false,
+      required: ["summary", "sources"],
+      properties: {
+        summary: { type: "string" },
+        sources: { type: "array", items: { type: "string" } },
+      },
+    },
+  );
 }

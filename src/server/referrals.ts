@@ -2,6 +2,8 @@ import "server-only";
 import { createHash, randomBytes, randomInt, randomUUID } from "node:crypto";
 import { Binary, ObjectId } from "mongodb";
 import { z } from "zod";
+import { generateJson } from "@/lib/ai/engine";
+import { AiError } from "@/lib/ai/types";
 import {
   disciplines,
   DOCUMENT_MAX_BYTES,
@@ -950,4 +952,54 @@ export async function documentFile(user: UserDoc, id: ObjectId) {
     at: new Date(),
   });
   return doc;
+}
+
+/** AI referral completeness review: a missing-information checklist from the referral. Admin verifies. */
+export async function aiReferralReview(id: ObjectId) {
+  const { documents } = await collections();
+  const r = await loadReferral(id);
+  const docs = await documents
+    .find({ referralId: id }, { projection: { kind: 1, name: 1 } })
+    .toArray();
+  try {
+    const out = await generateJson("referral-review", {
+      system:
+        "You check allied health referrals for completeness before intake. List information intake will need that is missing, unclear or inconsistent (for example a plan end date already passed, a location needing a contact, supports that need documents). Never infer consent, risk clearance, diagnosis or eligibility. Each item names the field or document. An admin verifies every item.",
+      user: JSON.stringify({
+        referral: r.data,
+        documents: docs.map((d) => ({ kind: d.kind, name: d.name })),
+        today: new Date().toISOString().slice(0, 10),
+      }),
+      schema: {
+        type: "object",
+        additionalProperties: false,
+        required: ["items"],
+        properties: {
+          items: {
+            type: "array",
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: ["field", "label", "why"],
+              properties: {
+                field: { type: "string" },
+                label: { type: "string" },
+                why: { type: "string" },
+              },
+            },
+          },
+        },
+      },
+      schemaName: "referral_review",
+      maxTokens: 900,
+    });
+    return {
+      ...(JSON.parse(out.text) as { items: { field: string; label: string; why: string }[] }),
+      model: out.model,
+    };
+  } catch (error) {
+    if (error instanceof AiError)
+      throw new UserFacingError(`AI isn't available: ${error.message}`, 409);
+    throw new UserFacingError("The AI answer couldn't be read. Try again.", 409);
+  }
 }

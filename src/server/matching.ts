@@ -1,5 +1,12 @@
 import "server-only";
-import { caseloadStatus, CLOSE_MINUTES, OPEN_MINUTES, type Region } from "@/lib/live/catalogue";
+import {
+  supportInfo,
+  type Support,
+  caseloadStatus,
+  CLOSE_MINUTES,
+  OPEN_MINUTES,
+  type Region,
+} from "@/lib/live/catalogue";
 import type { AvailabilitySummary, MatchDto } from "@/lib/live/types";
 import { addDays, atBrisbane, brisbaneDay, brisbaneMinutes, isoWeekday } from "@/lib/live/time";
 import type { AppointmentDoc, TherapistDoc } from "./models";
@@ -93,17 +100,45 @@ export function openSlots(
 }
 
 /** A transparent score: every point comes with a reason shown to the person choosing. */
+/**
+ * Why a clinician can't take this service: lapsed registration or screening, or an assessment
+ * they aren't credentialed for. No one is assigned if these checks fail (section 1).
+ */
+export function ineligibility(t: TherapistDoc, support: Support | null, today: string) {
+  const c = t.credentials;
+  const out: string[] = [];
+  if (!c) return ["Credentials not on file"];
+  if (c.registrationExpiry < today) out.push(`Registration expired ${c.registrationExpiry}`);
+  if (c.screeningExpiry < today) out.push(`Worker screening expired ${c.screeningExpiry}`);
+  if (
+    support &&
+    supportInfo(support).kind === "assessment" &&
+    !c.assessmentScopes.includes(support)
+  ) {
+    out.push(`Not credentialed for ${support}`);
+  }
+  return out;
+}
+
 export function rankTherapists(
   candidates: TherapistDoc[],
   appointmentsByTherapist: Map<string, AppointmentDoc[]>,
   clientRegion: Region,
+  support: Support | null = null,
 ): MatchDto[] {
+  const today = new Date(Date.now() + 10 * 3_600_000).toISOString().slice(0, 10);
   const matches = candidates.map((t): MatchDto => {
-    const slots = openSlots(t, appointmentsByTherapist.get(t._id.toHexString()) ?? []);
+    const blocked = ineligibility(t, support, today);
+    const slots = blocked.length
+      ? []
+      : openSlots(t, appointmentsByTherapist.get(t._id.toHexString()) ?? []);
     const status = caseloadStatus(t.caseloadScore);
     const free = t.capacity - t.activeClients;
-    const reasons: MatchDto["reasons"] = [];
-    let score = 0;
+    const reasons: MatchDto["reasons"] = blocked.map((label) => ({ label, tone: "warn" as const }));
+    let score = blocked.length ? -1000 : 0;
+    if (!blocked.length && t.credentials) {
+      reasons.push({ label: "Registration and screening current", tone: "good" });
+    }
 
     if (t.region === clientRegion) {
       score += 30;
@@ -153,6 +188,7 @@ export function rankTherapists(
       sessionMinutes: t.sessionMinutes,
       score,
       reasons,
+      eligible: blocked.length === 0,
       slots: slots.map((s) => s.toISOString()),
       availability: availabilitySummary(t),
     };

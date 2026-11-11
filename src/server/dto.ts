@@ -67,7 +67,7 @@ export type SeriesLookup = Map<string, { index: number; total: number }>;
 export function seriesLookup(visits: AppointmentDoc[]): SeriesLookup {
   const groups = new Map<string, AppointmentDoc[]>();
   for (const v of visits) {
-    if (!v.seriesId || v.status === "cancelled" || v.status === "late-cancelled") continue;
+    if (!v.seriesId || ["cancelled", "late-cancelled", "rescheduled"].includes(v.status)) continue;
     const key = v.seriesId.toHexString();
     groups.set(key, [...(groups.get(key) ?? []), v]);
   }
@@ -145,6 +145,8 @@ export function appointmentDto(
     session: viewer === "staff" ? (a.session ?? null) : null,
     aborted: a.aborted ? { ...a.aborted, at: a.aborted.at.toISOString() } : null,
     invoiced: Boolean(a.invoiceId),
+    modality: a.modality ?? "In person",
+    confirmedByPatient: a.confirmedByPatient?.toISOString() ?? null,
     feedback: a.feedback
       ? { rating: a.feedback.rating, comment: a.feedback.comment, at: a.feedback.at.toISOString() }
       : null,

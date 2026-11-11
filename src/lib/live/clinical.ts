@@ -371,6 +371,16 @@ export type AssessmentDto = {
   updatedAt: string;
   /** False for admins: operations see the status, not the clinical content. */
   canEdit: boolean;
+  reviews: {
+    requestedBy: string;
+    requestedAt: string;
+    comment: string | null;
+    reviewedBy: string | null;
+    reviewedAt: string | null;
+  }[];
+  cancelled: { reason: string; byName: string; at: string } | null;
+  /** True for a Clinical Lead when the assessment is waiting for their review. */
+  canReview: boolean;
 };
 
 export type GoalDto = {

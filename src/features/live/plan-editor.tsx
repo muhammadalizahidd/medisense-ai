@@ -288,9 +288,22 @@ function Plan({ p, reload }: { p: PlanDto; reload: () => void }) {
               </Button>
             </Panel>
           )}
-          {p.canEdit && (p.status === "Active" || p.status === "Under Review") && (
-            <Review p={p} busy={busy} act={act} />
+          {p.canEdit && p.status === "Active" && (
+            <Panel title="Review and reassess">
+              <p className="mb-3 text-small text-ink-700">
+                Start the review when it&apos;s due, or sooner if something changes. Reassess with a
+                new assessment from the patient page if measures need repeating.
+              </p>
+              <Button
+                variant="primary"
+                disabled={busy}
+                onClick={() => act({ action: "start-review" })}
+              >
+                Start review
+              </Button>
+            </Panel>
           )}
+          {p.canEdit && p.status === "Under Review" && <Review p={p} busy={busy} act={act} />}
           {p.canEdit && p.status === "Active" && (
             <Panel title="Progress summary">
               {p.progressSummary ? (

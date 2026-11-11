@@ -79,6 +79,7 @@ export const navigation: { group: string; items: NavItem[] }[] = [
       { href: "/care/billing", label: "Billing", icon: Receipt, roles: [L, A] },
       { href: "/therapist", label: "My new patients", icon: BellRing, roles: [C] },
       { href: "/messages", label: "Messages", icon: MessagesSquare, roles: [C] },
+      { href: "/telehealth/recordings", label: "Recordings", icon: Video, roles: [L, A, C] },
       { href: "/profile", label: "My profile", icon: CircleUserRound, roles: [L, A, S, C] },
     ],
   },
@@ -147,7 +148,10 @@ export const navigation: { group: string; items: NavItem[] }[] = [
 
 const roleLayouts: Partial<Record<Role, { group: string; hrefs: string[] }[]>> = {
   Clinician: [
-    { group: "Live care", hrefs: ["/therapist", "/messages", "/profile"] },
+    {
+      group: "Live care",
+      hrefs: ["/therapist", "/messages", "/telehealth/recordings", "/profile"],
+    },
     { group: "My work", hrefs: ["/my-day", "/sessions/oliver-grant", "/tasks"] },
     { group: "AI workspace", hrefs: ["/case-notes/mia-robinson", "/reports"] },
     { group: "Clinical", hrefs: ["/patients", "/schedule", "/telehealth"] },
@@ -157,7 +161,14 @@ const roleLayouts: Partial<Record<Role, { group: string; hrefs: string[] }[]>> =
   Admin: [
     {
       group: "Live care",
-      hrefs: ["/care/referrals", "/care", "/care/therapists", "/care/billing", "/profile"],
+      hrefs: [
+        "/care/referrals",
+        "/care",
+        "/care/therapists",
+        "/care/billing",
+        "/telehealth/recordings",
+        "/profile",
+      ],
     },
     { group: "Admin", hrefs: ["/admin-queue", "/intake", "/forms", "/tasks", "/admin-operations"] },
     { group: "Clinical", hrefs: ["/patients-requiring-attention", "/patients", "/schedule"] },
@@ -211,6 +222,14 @@ export const roleUsers: Record<Role, { name: string; initials: string; title: st
 type RouteMeta = { section: string; page: string; role: Role };
 
 const routes: { prefix: string; meta: RouteMeta }[] = [
+  {
+    prefix: "/telehealth/room",
+    meta: { section: "My new patients", page: "Video visit", role: "Clinician" },
+  },
+  {
+    prefix: "/telehealth/recordings",
+    meta: { section: "Live care", page: "Recordings", role: "Clinician" },
+  },
   {
     prefix: "/therapist/assessments",
     meta: { section: "My new patients", page: "Assessment", role: "Clinician" },
@@ -348,7 +367,8 @@ export function isStandalone(pathname: string) {
     pathname.startsWith("/mobile") ||
     pathname === "/login" ||
     pathname === "/refer" ||
-    pathname.startsWith("/refer/")
+    pathname.startsWith("/refer/") ||
+    pathname.startsWith("/join/")
   );
 }
 

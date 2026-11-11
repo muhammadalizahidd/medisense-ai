@@ -52,11 +52,13 @@ export function NoteSheet({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function save(sign: boolean) {
+  async function save(sign: boolean, ready = false) {
     setBusy(true);
     setError(null);
     try {
-      await api(`/api/visits/${visit.id}/note`, { body: { ...soap, forPatient, aiDrafted, sign } });
+      await api(`/api/visits/${visit.id}/note`, {
+        body: { ...soap, forPatient, aiDrafted, sign, ready },
+      });
       onSaved();
       onClose();
     } catch (e) {
@@ -109,7 +111,15 @@ export function NoteSheet({
 
   return (
     <Sheet
-      title={signed ? "Session note" : note ? "Finish session note" : "Write session note"}
+      title={
+        signed
+          ? "Session note"
+          : note?.status === "Pending Signature"
+            ? "Sign session note"
+            : note
+              ? "Finish session note"
+              : "Write session note"
+      }
       description={`${visit.clientName} · ${visit.discipline} · ${slotLabel(visit.start)}`}
       onClose={onClose}
       footer={
@@ -130,7 +140,10 @@ export function NoteSheet({
               <PenLine className="size-4" aria-hidden="true" />
               {busy ? "Saving…" : "Sign note"}
             </Button>
-            <Button disabled={busy} onClick={() => save(false)}>
+            <Button disabled={busy || !complete} onClick={() => save(false, true)}>
+              Ready to sign
+            </Button>
+            <Button variant="ghost" disabled={busy} onClick={() => save(false)}>
               Save draft
             </Button>
           </>

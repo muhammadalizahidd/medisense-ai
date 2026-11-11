@@ -8,6 +8,7 @@ import {
   reviewPlan,
   reviewSchema,
   savePlan,
+  startPlanReview,
 } from "@/server/clinical";
 import { handle, parseId, readJson } from "@/server/http";
 
@@ -31,6 +32,7 @@ export async function PUT(request: Request, { params }: Params) {
 const actionSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("activate") }),
   z.object({ action: z.literal("progress-summary") }),
+  z.object({ action: z.literal("start-review") }),
   reviewSchema.extend({ action: z.literal("review") }),
 ]);
 
@@ -41,6 +43,7 @@ export async function POST(request: Request, { params }: Params) {
     const input = await readJson(request, actionSchema);
     if (input.action === "activate") await activatePlan(user, id);
     else if (input.action === "progress-summary") return draftProgressSummary(user, id);
+    else if (input.action === "start-review") await startPlanReview(user, id);
     else await reviewPlan(user, id, input);
     return { ok: true };
   });

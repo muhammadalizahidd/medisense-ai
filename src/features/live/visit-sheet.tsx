@@ -6,6 +6,7 @@ import {
   LogIn,
   LogOut,
   ShieldAlert,
+  Sparkles,
   Target,
   TriangleAlert,
 } from "lucide-react";
@@ -278,6 +279,7 @@ export function VisitSheet({
                   )}
                 </dl>
               </section>
+              <AiBriefing visitId={visit.id} />
               {b.precautions && (
                 <p className="flex gap-2 rounded-control bg-over-bg px-3 py-2 text-small">
                   <ShieldAlert className="mt-0.5 size-4 flex-none text-over" aria-hidden="true" />
@@ -440,5 +442,63 @@ export function VisitSheet({
         </div>
       )}
     </Sheet>
+  );
+}
+
+/** AI pre-visit briefing (section 13): source-linked points the therapist checks. */
+function AiBriefing({ visitId }: { visitId: string }) {
+  const [data, setData] = useState<{
+    points: { text: string; source: string }[];
+    checks: string[];
+  } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [fail, setFail] = useState<string | null>(null);
+  if (!data) {
+    return (
+      <div>
+        <Button
+          size="sm"
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            setFail(null);
+            try {
+              setData(await api(`/api/visits/${visitId}/ai-briefing`, { method: "POST" }));
+            } catch (e) {
+              setFail(e instanceof Error ? e.message : "AI isn't available.");
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          <Sparkles className="size-3.5" aria-hidden="true" />
+          {busy ? "Preparing…" : "AI briefing"}
+        </Button>
+        {fail && <p className="mt-1 text-caption text-over">{fail}</p>}
+      </div>
+    );
+  }
+  return (
+    <section
+      aria-label="AI briefing"
+      className="rounded-card border border-accent/30 bg-accent-tint p-4 text-small"
+    >
+      <p className="mb-2 flex items-center gap-2 font-semibold">
+        <Sparkles className="size-4 text-accent" aria-hidden="true" /> AI briefing · check before
+        relying on it
+      </p>
+      <ul className="flex flex-col gap-1.5">
+        {data.points.map((p) => (
+          <li key={p.text}>
+            {p.text} <span className="text-caption text-ink-500">[{p.source}]</span>
+          </li>
+        ))}
+      </ul>
+      {data.checks.length > 0 && (
+        <p className="mt-2 text-caption text-ink-700">
+          Confirm on arrival: {data.checks.join("; ")}
+        </p>
+      )}
+    </section>
   );
 }

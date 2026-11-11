@@ -51,7 +51,14 @@ export type ClientSummaryDto = {
 };
 
 export type VisitStatus =
-  "tentative" | "booked" | "completed" | "cancelled" | "late-cancelled" | "no-show" | "aborted";
+  | "tentative"
+  | "booked"
+  | "completed"
+  | "cancelled"
+  | "late-cancelled"
+  | "no-show"
+  | "aborted"
+  | "rescheduled";
 
 export type AppointmentDto = {
   id: string;
@@ -94,6 +101,8 @@ export type AppointmentDto = {
   } | null;
   aborted: { reason: string; remaining: string; byName: string; at: string } | null;
   invoiced: boolean;
+  modality: "In person" | "Telehealth";
+  confirmedByPatient: string | null;
   feedback: { rating: number; comment: string; at: string } | null;
 };
 
@@ -162,6 +171,8 @@ export type MatchDto = {
   sessionMinutes: number;
   score: number;
   reasons: { label: string; tone: "good" | "neutral" | "warn" }[];
+  /** False when registration, screening or scope rules this clinician out (E2E-05). */
+  eligible: boolean;
   slots: string[];
   availability: AvailabilitySummary;
 };
@@ -285,7 +296,10 @@ export type MessageDto = {
 export type LiveEvent =
   | { type: "notification"; payload: { title: string } }
   | { type: "message"; payload: { message: MessageDto } }
-  | { type: "care"; payload: { clientId?: string; referralId?: string; invoiceId?: string } }
+  | {
+      type: "care";
+      payload: { clientId?: string; referralId?: string; invoiceId?: string; visitId?: string };
+    }
   | { type: "read"; payload: { conversationId: string; readerId?: string } }
   | { type: "typing"; payload: { conversationId: string; name: string } }
   | { type: "connected"; payload: Record<string, never> };

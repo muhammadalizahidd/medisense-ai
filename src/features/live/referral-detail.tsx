@@ -6,6 +6,7 @@ import {
   Check,
   CircleCheck,
   ShieldAlert,
+  Sparkles,
   UserRound,
   Users,
 } from "lucide-react";
@@ -365,6 +366,16 @@ function IntakeReview({ r, busy, act }: { r: ReferralDetailDto; busy: boolean; a
   return (
     <Panel title="Intake review" action={<Tag tone="available">Step 3 of the lifecycle</Tag>}>
       <div className="flex flex-col gap-5">
+        <AiReview
+          id={r.id}
+          onUse={(items) =>
+            setChosen((list) => [
+              ...list,
+              ...items.filter((i) => !list.some((c) => c.field === i.field)),
+            ])
+          }
+          onAsk={() => setAsking(true)}
+        />
         <section aria-label="Completeness check">
           <h3 className="flex items-center gap-2 text-small font-semibold">
             Completeness check
@@ -470,7 +481,10 @@ function IntakeReview({ r, busy, act }: { r: ReferralDetailDto; busy: boolean; a
         {asking ? (
           <div className="flex flex-col gap-3 rounded-control border border-border p-4">
             <p className="text-small font-semibold">What do you need from the submitter?</p>
-            {r.gapsList.map((g) => (
+            {[
+              ...r.gapsList,
+              ...chosen.filter((c) => !r.gapsList.some((g) => g.field === c.field)),
+            ].map((g) => (
               <Tick
                 key={g.field}
                 checked={chosen.some((c) => c.field === g.field)}
@@ -1002,5 +1016,87 @@ function ReasonSheet({
         maxLength={1000}
       />
     </Sheet>
+  );
+}
+
+/** AI referral review (section 13): a missing-information checklist. The admin verifies each item. */
+function AiReview({
+  id,
+  onUse,
+  onAsk,
+}: {
+  id: string;
+  onUse: (items: Gap[]) => void;
+  onAsk: () => void;
+}) {
+  const [items, setItems] = useState<{ field: string; label: string; why: string }[] | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [fail, setFail] = useState<string | null>(null);
+  return (
+    <section
+      aria-label="AI review"
+      className="rounded-card border border-accent/30 bg-accent-tint p-4"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="flex items-center gap-2 text-small font-semibold">
+          <Sparkles className="size-4 text-accent" aria-hidden="true" /> AI completeness review
+        </p>
+        <Button
+          size="sm"
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            setFail(null);
+            try {
+              setItems(
+                (
+                  await api<{ items: { field: string; label: string; why: string }[] }>(
+                    `/api/care/referrals/${id}/ai-review`,
+                    { method: "POST" },
+                  )
+                ).items,
+              );
+            } catch (e) {
+              setFail(e instanceof Error ? e.message : "AI isn't available.");
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          {busy ? "Reviewing…" : items ? "Review again" : "Review with AI"}
+        </Button>
+      </div>
+      {fail && <p className="mt-2 text-caption text-over">{fail}</p>}
+      {items && (
+        <>
+          {items.length === 0 ? (
+            <p className="mt-2 text-small">AI found nothing missing. You still verify.</p>
+          ) : (
+            <ul className="mt-3 flex flex-col gap-1.5 text-small">
+              {items.map((i) => (
+                <li key={i.field + i.label}>
+                  <strong>{i.label}</strong> <span className="text-ink-700">· {i.why}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {items.length > 0 && (
+            <Button
+              size="sm"
+              className="mt-3"
+              onClick={() => {
+                onUse(items.map((i) => ({ field: `ai:${i.field}`, label: i.label })));
+                onAsk();
+              }}
+            >
+              Add to a request for information
+            </Button>
+          )}
+          <p className="mt-2 text-caption text-ink-500">
+            Suggestions only: nothing is sent until you choose.
+          </p>
+        </>
+      )}
+    </section>
   );
 }

@@ -3,13 +3,48 @@ import { randomUUID } from "node:crypto";
 import type { Db } from "mongodb";
 import { fundingStreams, supportCatalogue, type Support } from "@/lib/live/catalogue";
 import { serverLog } from "./log";
-import type { AssignmentDoc, ClientDoc, UserDoc } from "./models";
+import type {
+  AssignmentDoc,
+  ClientDoc,
+  TherapistCredentials,
+  TherapistDoc,
+  UserDoc,
+} from "./models";
 import { seedAdmins } from "./seed";
 
 /** The support a discipline-only service request from before referrals most likely was. */
 const supportFor = (discipline: string): Support =>
   supportCatalogue.find((s) => s.discipline === discipline && s.kind === "treatment")?.name ??
   "Other";
+
+/** Fictional registration details. Seniors hold every assessment scope for their discipline. */
+export function credentialsFor(
+  t: Pick<TherapistDoc, "discipline" | "seniority" | "slug">,
+  i: number,
+  lapsed: boolean,
+): TherapistCredentials {
+  const prefix: Record<string, string> = {
+    "Occupational Therapy": "OCC",
+    "Speech Pathology": "SPA",
+    Physiotherapy: "PHY",
+    "Exercise Physiology": "AEP",
+    Psychology: "PSY",
+    "Trauma Therapy": "PSY",
+    Dietetics: "APD",
+    Podiatry: "POD",
+    Nursing: "NMW",
+  };
+  const assessments = supportCatalogue
+    .filter((s) => s.discipline === t.discipline && s.kind === "assessment")
+    .map((s) => s.name);
+  return {
+    registration: `${prefix[t.discipline] ?? "REG"}000${String(1000 + i * 37).slice(-4)}`,
+    registrationExpiry: lapsed ? "2026-10-31" : "2027-11-30",
+    screeningExpiry: "2029-03-31",
+    assessmentScopes:
+      t.seniority === "Senior" || i % 2 === 0 ? assessments : assessments.slice(0, 1),
+  };
+}
 
 /**
  * Brings records from earlier versions up to the current model. Every step is idempotent, so it
@@ -49,6 +84,26 @@ export async function migrate(db: Db) {
     changed += 1;
   }
   if (changed) serverLog(`Upgraded ${changed} patient records to service requests.`);
+
+  const therapists = db.collection<TherapistDoc>("therapists");
+  const all = await therapists
+    .find({ credentials: { $exists: false } })
+    .sort({ slug: 1 })
+    .toArray();
+  // One non-senior OT has a lapsed registration, so matching shows an unavailable clinician (E2E-05).
+  const lapsedOt = (
+    await therapists
+      .find({ discipline: "Occupational Therapy", seniority: { $ne: "Senior" } })
+      .sort({ slug: 1 })
+      .limit(1)
+      .toArray()
+  )[0]?.slug;
+  for (const [i, t] of all.entries()) {
+    await therapists.updateOne(
+      { _id: t._id },
+      { $set: { credentials: credentialsFor(t, i, t.slug === lapsedOt) } },
+    );
+  }
 
   // Requests made before service requests had ids point at the patient's need for that discipline.
   const assignments = db.collection<AssignmentDoc>("assignments");

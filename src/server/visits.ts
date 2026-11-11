@@ -93,6 +93,7 @@ export async function bookSeries(
       seriesId: first._id,
       replaces: null,
       cancellation: null,
+      modality: first.modality ?? "In person",
       createdAt: new Date(),
     };
     try {
@@ -268,8 +269,14 @@ export async function rebookVisit(
       seriesId: visit.seriesId ?? null,
       replaces: visit._id,
       cancellation: null,
+      modality: visit.modality ?? "In person",
       createdAt: new Date(),
     });
+    // The cancelled visit is now a rescheduled one (appointment status, section 3.1).
+    await appointments.updateOne(
+      { _id: visit._id, status: "cancelled" },
+      { $set: { status: "rescheduled" } },
+    );
   } catch (error) {
     if (error instanceof MongoServerError && error.code === 11000) {
       throw new UserFacingError("That time was just taken. Choose another time.", 409);
@@ -454,6 +461,58 @@ export async function leaveFeedback(
   });
   await audit(user, `Rated the visit on ${slotLabel(visit.start)} ${stars}`, client._id);
   await publish([...(await adminIds()), therapist.userId, client.userId], "care", {
+    clientId: client._id.toHexString(),
+  });
+}
+
+/* ------------------------------------------------- modality and confirmation */
+
+export const modalitySchema = z.object({ modality: z.enum(["In person", "Telehealth"]) });
+
+/** The clinician (or an admin) changes how a booked visit happens. Telehealth needs suitability. */
+export async function setModality(
+  user: UserDoc,
+  id: ObjectId,
+  input: z.infer<typeof modalitySchema>,
+) {
+  const { appointments } = await collections();
+  const { visit, actsFor } = await visitFor(user, id);
+  if (actsFor === "client") throw new UserFacingError("Ask your care team to change this.", 409);
+  if (visit.status !== "booked" || visit.checkIn) {
+    throw new UserFacingError("Only a booked visit that hasn't started can change.", 409);
+  }
+  await appointments.updateOne({ _id: id }, { $set: { modality: input.modality } });
+  const { client, therapist } = await partiesOf(visit);
+  await notifyParties(
+    user,
+    { client, therapist },
+    {
+      title: `${input.modality === "Telehealth" ? "Video visit" : "In-person visit"}: ${client.name}`,
+      body: `The visit on ${slotLabel(visit.start)} is now ${input.modality === "Telehealth" ? "by video" : "in person"}.`,
+    },
+  );
+  await audit(
+    user,
+    `Changed the visit on ${slotLabel(visit.start)} to ${input.modality.toLowerCase()}`,
+    client._id,
+  );
+  await publish([...(await adminIds()), client.userId, therapist.userId], "care", {
+    clientId: client._id.toHexString(),
+  });
+}
+
+/** The patient confirms an upcoming visit from the app (P03). */
+export async function confirmVisit(user: UserDoc, id: ObjectId) {
+  const { appointments } = await collections();
+  const { visit, actsFor } = await visitFor(user, id);
+  if (actsFor !== "client") throw new UserFacingError("Only the patient confirms.", 409);
+  if (visit.status !== "booked" || visit.start < new Date()) {
+    throw new UserFacingError("Only upcoming visits can be confirmed.", 409);
+  }
+  await appointments.updateOne({ _id: id }, { $set: { confirmedByPatient: new Date() } });
+  const { client, therapist } = await partiesOf(visit);
+  await audit(user, `Confirmed the visit on ${slotLabel(visit.start)}`, client._id);
+  await publish([...(await adminIds()), client.userId, therapist.userId], "care", {
     clientId: client._id.toHexString(),
   });
 }

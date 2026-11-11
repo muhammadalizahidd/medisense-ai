@@ -7,20 +7,32 @@ import { Tag, type TagTone } from "@/components/ui/tag";
 import { api, useNow, useSession } from "@/lib/live/client";
 import { shortDate, timeOfDay } from "@/lib/live/time";
 import type { AppointmentDto, VisitStatus } from "@/lib/live/types";
+import Link from "next/link";
+import { Video } from "lucide-react";
 import { Stars } from "./bits";
 import { CancelVisitPanel } from "./cancel-visit";
 import { NoteSheet } from "./care-sheets";
 import { VisitSheet } from "./visit-sheet";
 
+/** Appointment statuses in the requirements' words (section 3.1). */
 export const visitStatus: Record<VisitStatus, { label: string; tone: TagTone }> = {
-  tentative: { label: "Held", tone: "monitor" },
-  booked: { label: "Booked", tone: "available" },
-  completed: { label: "Attended", tone: "healthy" },
+  tentative: { label: "Requested", tone: "monitor" },
+  booked: { label: "Confirmed", tone: "available" },
+  completed: { label: "Completed (attended)", tone: "healthy" },
   cancelled: { label: "Cancelled", tone: "neutral" },
   "late-cancelled": { label: "Late cancellation", tone: "over" },
   "no-show": { label: "Did not attend", tone: "over" },
-  aborted: { label: "Incomplete", tone: "monitor" },
+  aborted: { label: "Aborted (incomplete)", tone: "monitor" },
+  rescheduled: { label: "Rescheduled", tone: "neutral" },
 };
+
+/** "Checked In" and "In Progress" are moments of a confirmed visit, shown from what's recorded. */
+export function liveLabel(v: AppointmentDto) {
+  if (v.status !== "booked" || !v.checkIn) return visitStatus[v.status];
+  return v.session
+    ? { label: "In progress", tone: "live" as const }
+    : { label: "Checked in", tone: "live" as const };
+}
 
 /** What a visit says about itself: series position and, if called off, why and with what notice. */
 export function visitNote(v: AppointmentDto) {
@@ -57,6 +69,21 @@ export function VisitList({
   const [error, setError] = useState<string | null>(null);
   const now = useNow() ?? 0;
 
+  async function switchModality(visit: AppointmentDto) {
+    setBusy(visit.id);
+    setError(null);
+    try {
+      await api(`/api/visits/${visit.id}/modality`, {
+        body: { modality: visit.modality === "Telehealth" ? "In person" : "Telehealth" },
+      });
+      onChanged();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Couldn't change the visit.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function record(visit: AppointmentDto, outcome: "no-show") {
     setBusy(visit.id);
     setError(null);
@@ -82,7 +109,6 @@ export function VisitList({
       <ol className="divide-y divide-border">
         {visits.map((v) => {
           const past = new Date(v.start).getTime() < now;
-          const status = visitStatus[v.status];
           return (
             <li
               key={v.id}
@@ -117,15 +143,48 @@ export function VisitList({
                   </span>
                 )}
               </span>
-              <Tag tone={v.checkIn && v.status === "booked" ? "live" : status.tone}>
-                {v.checkIn && v.status === "booked" ? "Checked in" : status.label}
-              </Tag>
-              {v.invoiced && <Tag tone="neutral">Invoiced</Tag>}
-              {role === "therapist" && v.status === "booked" && (past || sameDay(v.start, now)) && (
-                <Button size="sm" variant="primary" onClick={() => setVisiting(v)}>
-                  {v.checkIn ? "Continue visit" : "Start visit"}
-                </Button>
+              {v.modality === "Telehealth" && (
+                <Tag tone="outline">
+                  <Video className="size-3" aria-hidden="true" /> Telehealth
+                </Tag>
               )}
+              {v.confirmedByPatient && v.status === "booked" && (
+                <Tag tone="healthy">Patient confirmed</Tag>
+              )}
+              <Tag tone={liveLabel(v).tone}>{liveLabel(v).label}</Tag>
+              {v.invoiced && <Tag tone="neutral">Invoiced</Tag>}
+              {role === "therapist" &&
+                v.status === "booked" &&
+                v.modality === "Telehealth" &&
+                (past || sameDay(v.start, now) || !v.checkIn) && (
+                  <Link
+                    href={`/telehealth/room/${v.id}`}
+                    className="inline-flex h-7.5 items-center gap-1.5 rounded-control border border-accent-fill bg-accent-fill px-2.5 text-caption font-semibold text-on-accent"
+                  >
+                    <Video className="size-3.5" aria-hidden="true" />
+                    Video room
+                  </Link>
+                )}
+              {role === "therapist" &&
+                v.status === "booked" &&
+                v.modality !== "Telehealth" &&
+                (past || sameDay(v.start, now)) && (
+                  <Button size="sm" variant="primary" onClick={() => setVisiting(v)}>
+                    {v.checkIn ? "Continue visit" : "Start visit"}
+                  </Button>
+                )}
+              {(role === "therapist" || role === "admin") &&
+                v.status === "booked" &&
+                !v.checkIn && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    disabled={busy === v.id}
+                    onClick={() => switchModality(v)}
+                  >
+                    {v.modality === "Telehealth" ? "Make in person" : "Make telehealth"}
+                  </Button>
+                )}
               {v.status === "booked" && !past && !v.checkIn && (
                 <Button size="sm" onClick={() => setCancelling(v)}>
                   Cancel or change
@@ -139,10 +198,20 @@ export function VisitList({
               {v.status === "completed" && (
                 <Button
                   size="sm"
-                  variant={!v.note || v.note.status === "Draft" ? "primary" : "secondary"}
+                  variant={
+                    !v.note || v.note.status === "Draft" || v.note.status === "Pending Signature"
+                      ? "primary"
+                      : "secondary"
+                  }
                   onClick={() => setNoting(v)}
                 >
-                  {!v.note ? "Write note" : v.note.status === "Draft" ? "Finish note" : "View note"}
+                  {!v.note
+                    ? "Write note"
+                    : v.note.status === "Draft"
+                      ? "Finish note"
+                      : v.note.status === "Pending Signature"
+                        ? "Sign note"
+                        : "View note"}
                 </Button>
               )}
             </li>

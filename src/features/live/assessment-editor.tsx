@@ -7,6 +7,7 @@ import {
   Lock,
   Plus,
   Send,
+  Sparkles,
   Trash2,
   TriangleAlert,
 } from "lucide-react";
@@ -331,6 +332,17 @@ function Editor({ a, reload }: { a: AssessmentDto; reload: () => void }) {
                 <p className="mt-2 text-caption text-ink-500">
                   Signing locks the record. Changes after that are amendments with a reason.
                 </p>
+                <div className="mt-4 flex flex-wrap gap-2 border-t border-border pt-4">
+                  <Button
+                    size="sm"
+                    disabled={busy}
+                    onClick={() => act({ action: "request-review" })}
+                  >
+                    Request Clinical Lead review
+                  </Button>
+                  <AiCheck id={a.id} />
+                </div>
+                <CancelAssessment busy={busy} act={act} />
               </Panel>
             ) : (
               <SignedPanel a={a} busy={busy} act={act} />
@@ -359,9 +371,65 @@ function SignedPanel({
   const [reason, setReason] = useState("");
   const [text, setText] = useState("");
   const [summary, setSummary] = useState("");
+  const [comment, setComment] = useState("");
+  const [drafting, setDrafting] = useState(false);
+  const [draftNote, setDraftNote] = useState<string | null>(null);
   const signed = a.status === "Signed" || a.status === "Amended";
   return (
     <>
+      {a.status === "Cancelled" && a.cancelled && (
+        <Panel title="Cancelled">
+          <p className="text-small">
+            {a.cancelled.reason}. {a.cancelled.byName}, {relativeTime(a.cancelled.at)}.
+          </p>
+        </Panel>
+      )}
+      {a.status === "Awaiting Review" && (
+        <Panel title="Clinical Lead review">
+          {a.canReview ? (
+            <div className="flex flex-col gap-3">
+              <p className="text-small text-ink-700">
+                Requested by {a.reviews.at(-1)?.requestedBy}. Your comments go back to the
+                clinician, who finishes and signs.
+              </p>
+              <TextArea
+                label="Review comments"
+                required
+                value={comment}
+                onChange={setComment}
+                rows={4}
+              />
+              <Button
+                variant="primary"
+                disabled={busy || comment.trim().length < 3}
+                onClick={() => act({ action: "review", comment })}
+              >
+                Return with comments
+              </Button>
+            </div>
+          ) : (
+            <p className="text-small text-ink-700">
+              Waiting for a Clinical Lead. Editing resumes when they return it.
+            </p>
+          )}
+        </Panel>
+      )}
+      {a.reviews.some((r) => r.comment) && (
+        <Panel title="Review comments">
+          <ol className="flex flex-col gap-2 text-small">
+            {a.reviews
+              .filter((r) => r.comment)
+              .map((r) => (
+                <li key={r.requestedAt}>
+                  {r.comment}
+                  <span className="block text-caption text-ink-500">
+                    {r.reviewedBy} · {r.reviewedAt ? relativeTime(r.reviewedAt) : ""}
+                  </span>
+                </li>
+              ))}
+          </ol>
+        </Panel>
+      )}
       <Panel title="Record">
         <p className="flex items-center gap-2 text-small">
           <Lock className="size-4 text-accent" aria-hidden="true" />
@@ -396,6 +464,33 @@ function SignedPanel({
             </p>
           ) : (
             <>
+              <Button
+                size="sm"
+                className="mb-3"
+                disabled={drafting}
+                onClick={async () => {
+                  setDrafting(true);
+                  setDraftNote(null);
+                  try {
+                    const d = await api<{ summary: string; sources: string[] }>(
+                      `/api/clinical/assessments/${a.id}`,
+                      { body: { action: "ai-report" } },
+                    );
+                    setSummary(d.summary);
+                    setDraftNote(
+                      `AI draft from: ${d.sources.join(", ")}. Check it before releasing.`,
+                    );
+                  } catch (e) {
+                    setDraftNote(e instanceof Error ? e.message : "AI isn't available.");
+                  } finally {
+                    setDrafting(false);
+                  }
+                }}
+              >
+                <Sparkles className="size-3.5" aria-hidden="true" />
+                {drafting ? "Drafting…" : "Draft with AI"}
+              </Button>
+              {draftNote && <p className="mb-2 text-caption text-ink-700">{draftNote}</p>}
               <TextArea
                 label="Plain-language summary"
                 value={summary}
@@ -534,5 +629,91 @@ function ActivityRow({
         </Button>
       )}
     </fieldset>
+  );
+}
+
+/** AI gap detection (section 13): unanswered essentials and inconsistent values. You resolve them. */
+function AiCheck({ id }: { id: string }) {
+  const [issues, setIssues] = useState<{ section: string; issue: string }[] | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [fail, setFail] = useState<string | null>(null);
+  return (
+    <div className="w-full">
+      <Button
+        size="sm"
+        disabled={busy}
+        onClick={async () => {
+          setBusy(true);
+          setFail(null);
+          try {
+            await new Promise((r) => setTimeout(r, 900)); // let the autosave land first
+            const res = await api<{ issues: { section: string; issue: string }[] }>(
+              `/api/clinical/assessments/${id}`,
+              { body: { action: "ai-check" } },
+            );
+            setIssues(res.issues);
+          } catch (e) {
+            setFail(e instanceof Error ? e.message : "AI isn't available.");
+          } finally {
+            setBusy(false);
+          }
+        }}
+      >
+        <Sparkles className="size-3.5" aria-hidden="true" />
+        {busy ? "Checking…" : "AI consistency check"}
+      </Button>
+      {fail && <p className="mt-1 text-caption text-over">{fail}</p>}
+      {issues && (
+        <div className="mt-3 rounded-control bg-accent-tint p-3 text-small">
+          {issues.length === 0 ? (
+            <p>AI found no gaps or inconsistencies. You still decide.</p>
+          ) : (
+            <ul className="flex flex-col gap-1.5">
+              {issues.map((i) => (
+                <li key={i.section + i.issue}>
+                  <strong>{i.section}:</strong> {i.issue}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CancelAssessment({
+  busy,
+  act,
+}: {
+  busy: boolean;
+  act: (b: Record<string, unknown>) => Promise<void>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState("");
+  return (
+    <div className="mt-3">
+      {open ? (
+        <div className="flex flex-col gap-2">
+          <TextField
+            label="Why it isn't going ahead"
+            required
+            value={reason}
+            onChange={setReason}
+          />
+          <Button
+            size="sm"
+            disabled={busy || reason.trim().length < 3}
+            onClick={() => act({ action: "cancel", reason })}
+          >
+            Cancel assessment
+          </Button>
+        </div>
+      ) : (
+        <Button size="sm" variant="ghost" onClick={() => setOpen(true)}>
+          Not assessed? Cancel with a reason
+        </Button>
+      )}
+    </div>
   );
 }
