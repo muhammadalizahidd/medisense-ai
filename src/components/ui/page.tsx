@@ -70,3 +70,14 @@ export function ScreenTitle({
     </header>
   );
 }
+
+/** Shown while a signed-in page checks the session and loads, so the frame appears at once. */
+export function PageLoading() {
+  return (
+    <main className="w-full px-4 pt-6 pb-18 md:px-6 md:pt-8 xl:px-10" aria-busy="true">
+      <span className="sr-only">Loading…</span>
+      <div className="mb-8 h-32 animate-pulse rounded-card bg-border motion-reduce:animate-none" />
+      <div className="h-64 animate-pulse rounded-card bg-border motion-reduce:animate-none" />
+    </main>
+  );
+}

@@ -1,3 +1,4 @@
+import { PageLoading } from "@/components/ui/page";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { MessagesPage } from "@/features/live/messages-page";
@@ -6,7 +7,7 @@ import { requirePageUser } from "@/server/page-auth";
 
 export const metadata: Metadata = { title: "Messages · Medisense" };
 
-export default async function Messages() {
+async function MessagesContent() {
   const user = await requirePageUser("/messages", "therapist");
   if (!user) return <OfflinePage />;
   return (
@@ -16,5 +17,14 @@ export default async function Messages() {
         <MessagesPage myId={user._id.toHexString()} />
       </Suspense>
     </main>
+  );
+}
+
+/** The session is checked inside Suspense, so the page frame shows straight away. */
+export default function Messages() {
+  return (
+    <Suspense fallback={<PageLoading />}>
+      <MessagesContent />
+    </Suspense>
   );
 }
