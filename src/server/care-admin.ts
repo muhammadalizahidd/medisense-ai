@@ -1,76 +1,15 @@
 import "server-only";
 import { MongoServerError, ObjectId } from "mongodb";
 import { z } from "zod";
-import { disciplines, frequencies, fundingStreams, regions } from "@/lib/live/catalogue";
 import type { ClientDetailDto, MatchDto } from "@/lib/live/types";
-import { brisbaneDay, slotLabel } from "@/lib/live/time";
+import { slotLabel } from "@/lib/live/time";
 import { newInviteCode } from "./auth";
 import { collections } from "./db";
 import { appointmentDto, assignmentDto, clientSummary, nameMap, seriesLookup } from "./dto";
 import { UserFacingError } from "./http";
 import { audit, notify, publish, adminIds } from "./live";
 import { isSlotFree, rankTherapists } from "./matching";
-import type { AppointmentDoc, ClientDoc, UserDoc } from "./models";
-
-export const newClientSchema = z.object({
-  name: z.string().trim().min(2, "Enter the patient's full name").max(120),
-  dateOfBirth: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/)
-    .refine((d) => d >= "1900-01-01", "Check the year of birth")
-    .refine(
-      (d) => d <= brisbaneDay(new Date()).toISOString().slice(0, 10),
-      "The date of birth can't be in the future",
-    )
-    .nullable(),
-  email: z.email("Enter a valid email").transform((v) => v.toLowerCase()),
-  phone: z.string().trim().max(30).nullable(),
-  suburb: z.string().trim().min(2, "Enter the suburb").max(80),
-  region: z.enum(regions),
-  funding: z.enum(fundingStreams),
-  needs: z
-    .array(z.object({ discipline: z.enum(disciplines), frequency: z.enum(frequencies) }))
-    .min(1, "Choose at least one therapy")
-    .refine(
-      (needs) => new Set(needs.map((n) => n.discipline)).size === needs.length,
-      "Each therapy can only be added once",
-    ),
-  notes: z.string().trim().max(2000),
-});
-
-export async function createClient(admin: UserDoc, input: z.infer<typeof newClientSchema>) {
-  const { users, clients } = await collections();
-  if (await users.findOne({ email: input.email })) {
-    throw new UserFacingError("An account already uses this email.", 409);
-  }
-  const clientId = new ObjectId();
-  const userId = new ObjectId();
-  const { code, invite } = newInviteCode();
-  const now = new Date();
-  await users.insertOne({
-    _id: userId,
-    email: input.email,
-    name: input.name,
-    role: "client",
-    passwordHash: null,
-    invite,
-    therapistId: null,
-    clientId,
-    createdAt: now,
-  });
-  const client: ClientDoc = {
-    _id: clientId,
-    ...input,
-    needs: input.needs.map((n) => ({ ...n, status: "needs-therapist", therapistId: null })),
-    userId,
-    createdBy: admin._id,
-    createdAt: now,
-  };
-  await clients.insertOne(client);
-  await audit(admin, "Added patient", clientId);
-  await publish(await adminIds(), "care", { clientId: clientId.toHexString() });
-  return { id: clientId.toHexString(), inviteCode: code, inviteExpires: invite.expiresAt };
-}
+import type { AppointmentDoc, UserDoc } from "./models";
 
 export async function listClients() {
   const { clients, therapists } = await collections();
@@ -90,14 +29,30 @@ async function loadClient(id: ObjectId) {
 }
 
 export async function clientDetail(id: ObjectId): Promise<ClientDetailDto> {
-  const { users, therapists, assignments, appointments, audit: log } = await collections();
+  const {
+    users,
+    therapists,
+    assignments,
+    appointments,
+    audit: log,
+    documents,
+    referrals,
+  } = await collections();
   const client = await loadClient(id);
-  const [account, team, assigned, allVisits, activity] = await Promise.all([
+  const [account, team, assigned, allVisits, activity, docs, refs] = await Promise.all([
     users.findOne({ _id: client.userId }),
     therapists.find({}, { projection: { name: 1 } }).toArray(),
     assignments.find({ clientId: id }).sort({ createdAt: -1 }).toArray(),
     appointments.find({ clientId: id }).sort({ start: 1 }).toArray(),
     log.find({ clientId: id }).sort({ at: -1 }).limit(30).toArray(),
+    documents
+      .find({ clientId: id }, { projection: { data: 0 } })
+      .sort({ at: -1 })
+      .toArray(),
+    referrals
+      .find({ clientId: id }, { projection: { reference: 1 } })
+      .sort({ createdAt: -1 })
+      .toArray(),
   ]);
   const names = nameMap(team);
   const clientNames = new Map([[id.toHexString(), client.name]]);
@@ -117,6 +72,16 @@ export async function clientDetail(id: ObjectId): Promise<ClientDetailDto> {
         }
       : null,
     emergencyContact: client.emergencyContact ?? null,
+    precautions: client.precautions ?? null,
+    documents: docs.map((d) => ({
+      id: d._id.toHexString(),
+      kind: d.kind,
+      name: d.name,
+      size: d.size,
+      uploadedBy: d.uploadedBy,
+      at: d.at.toISOString(),
+    })),
+    referrals: refs.map((r) => ({ id: r._id.toHexString(), reference: r.reference })),
     dateOfBirth: client.dateOfBirth,
     email: client.email,
     phone: client.phone,
@@ -144,11 +109,11 @@ export async function clientDetail(id: ObjectId): Promise<ClientDetailDto> {
   };
 }
 
-export async function matchesFor(clientId: ObjectId, discipline: string): Promise<MatchDto[]> {
+export async function matchesFor(clientId: ObjectId, needId: string): Promise<MatchDto[]> {
   const { therapists, appointments } = await collections();
   const client = await loadClient(clientId);
-  const need = client.needs.find((n) => n.discipline === discipline);
-  if (!need) throw new UserFacingError("This patient doesn't need that therapy.");
+  const need = client.needs.find((n) => n.id === needId);
+  if (!need) throw new UserFacingError("Service request not found.", 404);
   const candidates = await therapists.find({ discipline: need.discipline }).toArray();
   const ids = candidates.map((c) => c._id);
   const upcoming = await appointments
@@ -163,7 +128,7 @@ export async function matchesFor(clientId: ObjectId, discipline: string): Promis
 }
 
 export const requestSchema = z.object({
-  discipline: z.enum(disciplines),
+  needId: z.string().min(1),
   therapistId: z.string(),
   start: z.iso.datetime(),
 });
@@ -176,13 +141,14 @@ export async function requestTherapist(
 ) {
   const db = await collections();
   const client = await loadClient(clientId);
-  const need = client.needs.find((n) => n.discipline === input.discipline);
+  const need = client.needs.find((n) => n.id === input.needId);
   if (!need || need.status !== "needs-therapist") {
-    throw new UserFacingError("This therapy already has a therapist or a request waiting.", 409);
+    throw new UserFacingError("This service already has a therapist or a request waiting.", 409);
   }
+  if (client.discharged) throw new UserFacingError("This patient has been discharged.", 409);
   if (!ObjectId.isValid(input.therapistId)) throw new UserFacingError("Therapist not found.", 404);
   const therapist = await db.therapists.findOne({ _id: new ObjectId(input.therapistId) });
-  if (!therapist || therapist.discipline !== input.discipline) {
+  if (!therapist || therapist.discipline !== need.discipline) {
     throw new UserFacingError("Therapist not found.", 404);
   }
   const start = new Date(input.start);
@@ -204,7 +170,7 @@ export async function requestTherapist(
           _id: appointmentId,
           therapistId: therapist._id,
           clientId,
-          discipline: input.discipline,
+          discipline: need.discipline,
           start,
           end: new Date(start.getTime() + therapist.sessionMinutes * 60_000),
           status: "tentative",
@@ -217,8 +183,9 @@ export async function requestTherapist(
         {
           _id: assignmentId,
           clientId,
+          needId: need.id,
           therapistId: therapist._id,
-          discipline: input.discipline,
+          discipline: need.discipline,
           status: "pending",
           appointmentId,
           declineReason: null,
@@ -231,13 +198,13 @@ export async function requestTherapist(
       const updated = await db.clients.updateOne(
         {
           _id: clientId,
-          needs: { $elemMatch: { discipline: input.discipline, status: "needs-therapist" } },
+          needs: { $elemMatch: { id: need.id, status: "needs-therapist" } },
         },
         { $set: { "needs.$.status": "waiting", "needs.$.therapistId": therapist._id } },
         { session },
       );
       if (updated.modifiedCount !== 1) {
-        throw new UserFacingError("This therapy already has a request waiting.", 409);
+        throw new UserFacingError("This service already has a request waiting.", 409);
       }
     });
   } catch (error) {
@@ -251,10 +218,10 @@ export async function requestTherapist(
 
   await notify([therapist.userId], {
     title: `New patient: ${client.name}`,
-    body: `${input.discipline}, ${need.frequency.toLowerCase()}. First visit ${slotLabel(start)}. Accept or decline.`,
+    body: `${need.support}, ${need.frequency.toLowerCase()}. First visit ${slotLabel(start)}. Accept or decline.`,
     href: "/therapist",
   });
-  await audit(admin, `Asked ${therapist.name} to take ${input.discipline}`, clientId);
+  await audit(admin, `Asked ${therapist.name} to take ${need.support}`, clientId);
   await publish([...(await adminIds()), therapist.userId], "care", {
     clientId: clientId.toHexString(),
   });
@@ -277,7 +244,7 @@ export async function withdrawRequest(admin: UserDoc, assignmentId: ObjectId) {
     { $set: { status: "cancelled", holdsSlot: false } },
   );
   await db.clients.updateOne(
-    { _id: assignment.clientId, "needs.discipline": assignment.discipline },
+    { _id: assignment.clientId, "needs.id": assignment.needId },
     { $set: { "needs.$.status": "needs-therapist", "needs.$.therapistId": null } },
   );
   if (therapist) {

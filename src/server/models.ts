@@ -1,5 +1,15 @@
-import type { ObjectId } from "mongodb";
-import type { Discipline, Frequency, FundingStream, Region } from "@/lib/live/catalogue";
+import type { Binary, ObjectId } from "mongodb";
+import type {
+  Discipline,
+  DocumentKind,
+  Frequency,
+  FundingStream,
+  Region,
+  ServiceLocation,
+  StaffRole,
+  Support,
+} from "@/lib/live/catalogue";
+import type { Gap, ReferralInput, ReferralStatus } from "@/lib/live/referral";
 
 export type UserRole = "admin" | "therapist" | "client";
 
@@ -14,6 +24,8 @@ export interface UserDoc {
   therapistId: ObjectId | null;
   clientId: ObjectId | null;
   phone?: string | null;
+  /** Admin responsibilities; a Clinical Lead or Super Admin makes clinical triage decisions. */
+  staffRoles?: StaffRole[];
   createdAt: Date;
 }
 
@@ -68,11 +80,18 @@ export interface TherapistDoc {
 
 export type NeedStatus = "needs-therapist" | "waiting" | "assigned";
 
+/** A service request: one per support asked for, under the one participant record. */
 export interface ClientNeed {
+  id: string;
+  support: Support;
   discipline: Discipline;
   frequency: Frequency;
+  /** Nursing type, "Other" support details or an "Other" frequency, in the referral's words. */
+  details?: string;
+  location?: ServiceLocation;
   status: NeedStatus;
   therapistId: ObjectId | null;
+  referralId?: ObjectId | null;
 }
 
 export interface ClientDoc {
@@ -87,6 +106,8 @@ export interface ClientDoc {
   needs: ClientNeed[];
   notes: string;
   emergencyContact?: { name: string; relationship: string; phone: string } | null;
+  /** From clinical triage: what every therapist must know before a visit. */
+  precautions?: string | null;
   discharged?: { at: Date; reason: string; byName: string } | null;
   userId: ObjectId;
   createdBy: ObjectId;
@@ -98,6 +119,8 @@ export type AssignmentStatus = "pending" | "accepted" | "declined" | "withdrawn"
 export interface AssignmentDoc {
   _id: ObjectId;
   clientId: ObjectId;
+  /** The service request this asks the therapist to take. */
+  needId: string;
   therapistId: ObjectId;
   discipline: Discipline;
   status: AssignmentStatus;
@@ -190,5 +213,72 @@ export interface AuditDoc {
   actorName: string;
   action: string;
   clientId: ObjectId | null;
+  referralId?: ObjectId | null;
+  at: Date;
+}
+
+export interface InfoRequest {
+  id: string;
+  items: Gap[];
+  message: string;
+  requestedBy: string;
+  at: Date;
+  answer: string | null;
+  answeredAt: Date | null;
+}
+
+export interface ReferralDoc {
+  _id: ObjectId;
+  /** Shown to the submitter, e.g. MSR-7K2Q9P. Reveals nothing on its own. */
+  reference: string;
+  /** SHA-256 of the secret tracking token in the submitter's link. */
+  trackingHash: string;
+  status: ReferralStatus;
+  data: ReferralInput;
+  /** Set during intake review; used for matching. */
+  region: Region | null;
+  /** From the automated completeness check, as last run. */
+  gaps: Gap[];
+  infoRequests: InfoRequest[];
+  /** Possible duplicates found on submission. A person always decides. */
+  duplicates: { kind: "patient" | "referral"; id: string; name: string; why: string }[];
+  duplicateDecision: { clientId: ObjectId | null; byName: string; at: Date } | null;
+  owner: { id: ObjectId; name: string } | null;
+  triage: {
+    decision: "Accepted" | "Waitlisted" | "Declined" | "More information";
+    notes: string;
+    riskAction: string;
+    precaution: string;
+    byName: string;
+    at: Date;
+  } | null;
+  fundingReview: {
+    verification: "Verified" | "Exception";
+    exceptionReason: string;
+    agreement: "Signed" | "Sent" | "Not required";
+    consentRecorded: boolean;
+    notes: string;
+    byName: string;
+    at: Date;
+  } | null;
+  outcome: { reason: string; byName: string; at: Date } | null;
+  clientId: ObjectId | null;
+  submittedBy: "public" | "staff";
+  createdBy: ObjectId | null;
+  history: { status: ReferralStatus; byName: string; note: string; at: Date }[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface DocumentDoc {
+  _id: ObjectId;
+  referralId: ObjectId | null;
+  clientId: ObjectId | null;
+  kind: DocumentKind;
+  name: string;
+  mime: string;
+  size: number;
+  data: Binary;
+  uploadedBy: string;
   at: Date;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, MessageCircle } from "lucide-react";
+import { ArrowLeft, MessageCircle, ShieldAlert } from "lucide-react";
 import { useState } from "react";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { MetricBand } from "@/components/ui/metric-band";
@@ -10,6 +10,7 @@ import { ageLabel, relativeTime, shortDate } from "@/lib/live/time";
 import type { ClientDetailDto } from "@/lib/live/types";
 import { ErrorNote, LiveBadge, Panel, Skeleton, StageTag, Stars } from "./bits";
 import { DischargeSheet } from "./care-sheets";
+import { DocumentList } from "./client-detail";
 import { useConversations } from "./conversations";
 import { VisitList } from "./visit-list";
 
@@ -80,6 +81,18 @@ export function TherapistPatient({ clientId }: { clientId: string }) {
           {p.discharged.reason}.
         </p>
       )}
+      {p.precautions && (
+        <p
+          role="note"
+          className="mb-6 flex gap-3 rounded-card border border-over-bg bg-over-bg px-5 py-4 text-small"
+        >
+          <ShieldAlert className="mt-0.5 size-5 flex-none text-over" aria-hidden="true" />
+          <span>
+            <strong className="block text-over">Precautions from clinical triage</strong>
+            <span className="whitespace-pre-line">{p.precautions}</span>
+          </span>
+        </p>
+      )}
       <div className="mb-6">
         <MetricBand
           label="Visit figures"
@@ -139,13 +152,25 @@ export function TherapistPatient({ clientId }: { clientId: string }) {
               </dd>
               <dt className="text-ink-500">Therapy</dt>
               <dd>
-                {p.needs.map((n) => `${n.discipline}, ${n.frequency.toLowerCase()}`).join("; ")}
+                {p.needs
+                  .map(
+                    (n) =>
+                      `${n.support}, ${n.frequency.toLowerCase()} (${n.location.toLowerCase()})`,
+                  )
+                  .join("; ")}
               </dd>
             </dl>
             {p.notes && (
               <p className="mt-4 border-t border-border pt-3 text-small whitespace-pre-line text-ink-700">
                 {p.notes}
               </p>
+            )}
+          </Panel>
+          <Panel title="Documents">
+            {p.documents.length ? (
+              <DocumentList documents={p.documents} />
+            ) : (
+              <p className="text-small text-ink-500">No documents on file.</p>
             )}
           </Panel>
           <Panel title="History">

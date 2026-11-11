@@ -1,16 +1,23 @@
 import type { Metadata } from "next";
-import { PageContainer } from "@/components/ui/page";
-import { NewClientForm } from "@/features/live/new-client-form";
+import { PageContainer, PageHeader } from "@/components/ui/page";
 import { OfflinePage } from "@/features/live/offline-page";
+import { ReferralForm } from "@/features/live/referral-form";
 import { requirePageUser } from "@/server/page-auth";
 
-export const metadata: Metadata = { title: "Add a patient · Medisense" };
+export const metadata: Metadata = { title: "Enter a referral · Medisense" };
 
-export default async function NewClientPage() {
-  if (!(await requirePageUser("/care/new", "admin"))) return <OfflinePage />;
+/** Staff enter a referral received by phone or email. It goes through the same intake path. */
+export default async function NewReferralPage() {
+  const admin = await requirePageUser("/care/new", "admin");
+  if (!admin) return <OfflinePage />;
   return (
     <PageContainer>
-      <NewClientForm />
+      <PageHeader
+        eyebrow="Referrals and intake"
+        title="Enter a referral"
+        description="For referrals received by phone or email. It goes through the completeness check, intake review, clinical triage and funding like any other."
+      />
+      <ReferralForm mode="staff" staffName={admin.name} />
     </PageContainer>
   );
 }

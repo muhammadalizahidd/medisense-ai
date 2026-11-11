@@ -5,7 +5,7 @@ import { caseloadStatus, declineReasons, practitioner } from "@/lib/live/catalog
 import { ageLabel, slotLabel } from "@/lib/live/time";
 import type { TherapistHomeDto } from "@/lib/live/types";
 import { collections } from "./db";
-import { appointmentDto, assignmentDto, nameMap, seriesLookup } from "./dto";
+import { appointmentDto, assignmentDto, nameMap, needOf, seriesLookup } from "./dto";
 import { UserFacingError } from "./http";
 import { adminIds, audit, notify, publish } from "./live";
 import type { UserDoc } from "./models";
@@ -68,7 +68,7 @@ export async function respond(
         { session },
       );
       await db.clients.updateOne(
-        { _id: client._id, "needs.discipline": assignment.discipline },
+        { _id: client._id, "needs.id": assignment.needId },
         {
           $set: accepted
             ? { "needs.$.status": "assigned", "needs.$.therapistId": therapist._id }
@@ -104,8 +104,7 @@ export async function respond(
   const admins = await adminIds();
   const schedule = { booked: 0, skipped: 0 };
   if (accepted) {
-    const frequency =
-      client.needs.find((n) => n.discipline === assignment.discipline)?.frequency ?? "Assessment";
+    const frequency = needOf(client, assignment)?.frequency ?? "Assessment";
     const series = await bookSeries({ ...visit, status: "booked" }, therapist, frequency);
     schedule.booked = series.booked.length;
     schedule.skipped = series.skipped.length;
@@ -218,15 +217,19 @@ export async function therapistHome(user: UserDoc): Promise<TherapistHomeDto> {
       const client = clientById.get(a.clientId.toHexString());
       const visit = visitById.get(a.appointmentId.toHexString());
       if (!client || !visit) return [];
-      const need = client.needs.find((n) => n.discipline === a.discipline);
+      const need = needOf(client, a);
       return [
         {
           ...assignmentDto(a, visit.start, clientNames, me),
           age: ageLabel(client.dateOfBirth),
           suburb: client.suburb,
           funding: client.funding,
+          support: need?.support ?? a.discipline,
+          details: need?.details ?? "",
+          location: need?.location ?? "Home",
           frequency: need?.frequency ?? "Weekly",
           notes: client.notes,
+          precautions: client.precautions ?? null,
         },
       ];
     });
@@ -246,7 +249,7 @@ export async function therapistHome(user: UserDoc): Promise<TherapistHomeDto> {
       .flatMap((a) => {
         const client = clientById.get(a.clientId.toHexString());
         if (!client) return [];
-        const need = client.needs.find((n) => n.discipline === a.discipline);
+        const need = needOf(client, a);
         return [
           {
             id: client._id.toHexString(),

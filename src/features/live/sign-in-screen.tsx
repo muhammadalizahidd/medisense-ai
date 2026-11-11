@@ -150,7 +150,7 @@ export function SignInScreen({
   );
 }
 
-function Brand({ light = false }: { light?: boolean }) {
+export function Brand({ light = false }: { light?: boolean }) {
   return (
     <div className="flex items-center gap-3">
       <span

@@ -255,7 +255,7 @@ export function PatientHome({
                   {data.team.map((t) => {
                     const unread = unreadFor(t.conversationId);
                     return (
-                      <li key={t.discipline} className="border-b border-border last:border-0">
+                      <li key={t.therapistName} className="border-b border-border last:border-0">
                         <button
                           type="button"
                           disabled={!t.conversationId}
@@ -288,8 +288,8 @@ export function PatientHome({
 
             {waiting.map((n) => (
               <Matching
-                key={n.discipline}
-                discipline={n.discipline}
+                key={n.id}
+                discipline={n.support}
                 status={n.status}
                 therapist={n.therapistName}
               />

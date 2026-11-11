@@ -29,7 +29,7 @@ export function CareBoard() {
   const rows = clients
     .filter((c) => filter === "all" || c.stage === filter)
     .filter((c) =>
-      `${c.name} ${c.suburb} ${c.needs.map((n) => n.discipline).join(" ")}`
+      `${c.name} ${c.suburb} ${c.needs.map((n) => n.support).join(" ")}`
         .toLowerCase()
         .includes(query.trim().toLowerCase()),
     );
@@ -39,13 +39,13 @@ export function CareBoard() {
       <PageHeader
         eyebrow="Patient onboarding"
         title="New patients and therapist matching"
-        description="Add a patient, choose a therapist by availability, and follow each request until it's accepted."
+        description="Accepted referrals become patients with one service request per support. Choose a therapist for each by availability and follow the request until it's accepted."
         actions={
           <div className="flex items-center gap-3">
             <LiveBadge />
-            <ButtonLink href="/care/new" variant="primary">
+            <ButtonLink href="/care/referrals" variant="primary">
               <Plus className="size-4" aria-hidden="true" />
-              Add patient
+              New referral
             </ButtonLink>
           </div>
         }
@@ -111,7 +111,7 @@ export function CareBoard() {
           {clients.length ? (
             "Try another filter or search."
           ) : (
-            <Link href="/care/new">Add the first patient</Link>
+            <Link href="/care/referrals">Accept a referral to add the first patient</Link>
           )}
         </EmptyNote>
       ) : (
@@ -140,8 +140,8 @@ export function CareBoard() {
                   <td className="px-4 py-3">
                     <span className="flex flex-wrap gap-1.5">
                       {c.needs.map((n) => (
-                        <Tag key={n.discipline} tone={needTone[n.status]}>
-                          {n.discipline}
+                        <Tag key={n.id} tone={needTone[n.status]}>
+                          {n.support}
                           {n.therapistName ? ` · ${n.therapistName}` : ""}
                         </Tag>
                       ))}

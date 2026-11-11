@@ -6,13 +6,16 @@ import type {
   AuditDoc,
   ClientDoc,
   ConversationDoc,
+  DocumentDoc,
   EventDoc,
   MessageDoc,
   NotificationDoc,
+  ReferralDoc,
   SessionDoc,
   TherapistDoc,
   UserDoc,
 } from "./models";
+import { migrate } from "./migrate";
 import { seedIfEmpty } from "./seed";
 
 const DATABASE = process.env.MONGODB_DB ?? "Medisense";
@@ -53,8 +56,15 @@ async function prepare(client: MongoClient) {
     db.collection("messages").createIndex({ conversationId: 1, createdAt: 1 }),
     db.collection("events").createIndex({ createdAt: 1 }, { expireAfterSeconds: 86_400 }),
     db.collection("audit").createIndex({ clientId: 1, at: -1 }),
+    db.collection("audit").createIndex({ referralId: 1, at: -1 }),
+    db.collection("referrals").createIndex({ reference: 1 }, { unique: true }),
+    db.collection("referrals").createIndex({ trackingHash: 1 }, { unique: true }),
+    db.collection("referrals").createIndex({ status: 1, createdAt: -1 }),
+    db.collection("documents").createIndex({ referralId: 1 }),
+    db.collection("documents").createIndex({ clientId: 1 }),
   ]);
   await seedIfEmpty(db);
+  await migrate(db);
   return db;
 }
 
@@ -90,5 +100,7 @@ export async function collections() {
     messages: db.collection<MessageDoc>("messages"),
     events: db.collection<EventDoc>("events"),
     audit: db.collection<AuditDoc>("audit"),
+    referrals: db.collection<ReferralDoc>("referrals"),
+    documents: db.collection<DocumentDoc>("documents"),
   };
 }

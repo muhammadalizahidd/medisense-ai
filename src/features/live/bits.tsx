@@ -41,10 +41,11 @@ export function StageTag({ stage }: { stage: ClientStage }) {
   return <Tag tone={stageTone[stage]}>{stage}</Tag>;
 }
 
+/** Service request statuses in the requirements' words (section 3.1). */
 export const needLabel: Record<NeedStatus, string> = {
-  "needs-therapist": "Needs a therapist",
-  waiting: "Waiting for reply",
-  assigned: "Assigned",
+  "needs-therapist": "Approved · awaiting clinician",
+  waiting: "Clinician suggested",
+  assigned: "Active",
 };
 
 export const needTone: Record<NeedStatus, TagTone> = {

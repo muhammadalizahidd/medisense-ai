@@ -1,13 +1,14 @@
 "use client";
 
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, FileText, ShieldAlert } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page";
 import { Tag } from "@/components/ui/tag";
 import { api, useNow, useResource } from "@/lib/live/client";
 import { ageLabel, relativeTime, shortDate, slotLabel } from "@/lib/live/time";
-import type { AssignmentDto, ClientDetailDto, NeedDto } from "@/lib/live/types";
+import type { AssignmentDto, ClientDetailDto, DocumentDto, NeedDto } from "@/lib/live/types";
 import {
   EmptyNote,
   ErrorNote,
@@ -91,9 +92,25 @@ export function ClientDetail({ clientId }: { clientId: string }) {
       )}
       <div className="grid gap-6 xl:grid-cols-12">
         <div className="flex flex-col gap-6 xl:col-span-8">
+          {client.precautions && (
+            <section
+              aria-label="Precautions"
+              className="flex gap-3 rounded-card border border-over-bg bg-over-bg px-5 py-4"
+            >
+              <ShieldAlert className="mt-0.5 size-5 flex-none text-over" aria-hidden="true" />
+              <div>
+                <h2 className="text-small font-semibold text-over">
+                  Precautions from clinical triage
+                </h2>
+                <p className="mt-1 text-small whitespace-pre-line text-ink-900">
+                  {client.precautions}
+                </p>
+              </div>
+            </section>
+          )}
           {client.needs.map((need) => (
             <NeedPanel
-              key={need.discipline}
+              key={need.id}
               clientId={client.id}
               need={need}
               assignments={client.assignments}
@@ -146,6 +163,26 @@ export function ClientDetail({ clientId }: { clientId: string }) {
             )}
           </Panel>
           <AppAccess clientId={client.id} account={client.account} name={client.name} />
+          <Panel title="Documents">
+            {client.documents.length === 0 ? (
+              <p className="text-small text-ink-500">No documents on file.</p>
+            ) : (
+              <DocumentList documents={client.documents} />
+            )}
+            {client.referrals.length > 0 && (
+              <p className="mt-3 border-t border-border pt-3 text-caption text-ink-500">
+                From referral{client.referrals.length > 1 ? "s" : ""}{" "}
+                {client.referrals.map((r, i) => (
+                  <span key={r.id}>
+                    {i > 0 && ", "}
+                    <Link href={`/care/referrals/${r.id}`} className="font-semibold text-accent">
+                      {r.reference}
+                    </Link>
+                  </span>
+                ))}
+              </p>
+            )}
+          </Panel>
           <Panel title="Activity">
             {client.activity.length === 0 ? (
               <p className="text-small text-ink-500">Nothing yet.</p>
@@ -179,7 +216,7 @@ function NeedPanel({
   assignments: AssignmentDto[];
   onChange: () => void;
 }) {
-  const mine = assignments.filter((a) => a.discipline === need.discipline);
+  const mine = assignments.filter((a) => a.needId === need.id);
   const current = mine.find((a) => a.status === "pending" || a.status === "accepted");
   const past = mine.filter((a) => a.status === "declined" || a.status === "withdrawn");
   const [busy, setBusy] = useState(false);
@@ -200,9 +237,13 @@ function NeedPanel({
 
   return (
     <Panel
-      title={`${need.discipline} · ${need.frequency}`}
+      title={`${need.support} · ${need.frequency}`}
       action={<Tag tone={needTone[need.status]}>{needLabel[need.status]}</Tag>}
     >
+      <p className="-mt-2 mb-4 text-caption text-ink-500">
+        {need.discipline} · {need.location}
+        {need.details ? ` · ${need.details}` : ""}
+      </p>
       {past.length > 0 && (
         <ul className="mb-4 flex flex-col gap-1.5">
           {past.map((a) => (
@@ -220,7 +261,12 @@ function NeedPanel({
         </ul>
       )}
       {need.status === "needs-therapist" && (
-        <MatchPicker clientId={clientId} discipline={need.discipline} onSent={onChange} />
+        <MatchPicker
+          clientId={clientId}
+          needId={need.id}
+          discipline={need.discipline}
+          onSent={onChange}
+        />
       )}
       {current?.status === "pending" && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-control border border-monitor-bg bg-monitor-bg px-4 py-3">
@@ -313,5 +359,31 @@ function AppAccess({
         </>
       )}
     </Panel>
+  );
+}
+
+/** Stored documents; opening one is recorded in the audit trail. */
+export function DocumentList({ documents }: { documents: DocumentDto[] }) {
+  return (
+    <ul className="flex flex-col gap-2">
+      {documents.map((d) => (
+        <li key={d.id}>
+          <a
+            href={`/api/documents/${d.id}`}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-3 rounded-control border border-border px-3 py-2 hover:bg-canvas"
+          >
+            <FileText className="size-4 flex-none text-accent" aria-hidden="true" />
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-small font-semibold">{d.name}</span>
+              <span className="block text-caption text-ink-500">
+                {d.kind} · {Math.max(1, Math.round(d.size / 1024))} KB · {d.uploadedBy}
+              </span>
+            </span>
+          </a>
+        </li>
+      ))}
+    </ul>
   );
 }

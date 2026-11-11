@@ -73,6 +73,7 @@ export const navigation: { group: string; items: NavItem[] }[] = [
   {
     group: "Live care",
     items: [
+      { href: "/care/referrals", label: "Referrals and intake", icon: FileInput, roles: [L, A] },
       { href: "/care", label: "Patient onboarding", icon: UserPlus, roles: [L, A] },
       { href: "/care/therapists", label: "Therapists", icon: Stethoscope, roles: [L, A] },
       { href: "/therapist", label: "My new patients", icon: BellRing, roles: [C] },
@@ -153,7 +154,7 @@ const roleLayouts: Partial<Record<Role, { group: string; hrefs: string[] }[]>> =
     { group: "Mobile apps", hrefs: ["/mobile/staff", "/mobile/family", "/mobile/patient"] },
   ],
   Admin: [
-    { group: "Live care", hrefs: ["/care", "/care/therapists", "/profile"] },
+    { group: "Live care", hrefs: ["/care/referrals", "/care", "/care/therapists", "/profile"] },
     { group: "Admin", hrefs: ["/admin-queue", "/intake", "/forms", "/tasks", "/admin-operations"] },
     { group: "Clinical", hrefs: ["/patients-requiring-attention", "/patients", "/schedule"] },
     { group: "AI workspace", hrefs: ["/reports"] },
@@ -217,7 +218,15 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
   { prefix: "/profile", meta: { section: "Live care", page: "My profile", role: "Clinician" } },
   {
     prefix: "/care/new",
-    meta: { section: "Patient onboarding", page: "Add a patient", role: "Admin" },
+    meta: { section: "Referrals and intake", page: "Enter a referral", role: "Admin" },
+  },
+  {
+    prefix: "/care/referrals/",
+    meta: { section: "Referrals and intake", page: "Referral", role: "Admin" },
+  },
+  {
+    prefix: "/care/referrals",
+    meta: { section: "Live care", page: "Referrals and intake", role: "Admin" },
   },
   { prefix: "/care/", meta: { section: "Patient onboarding", page: "Patient", role: "Admin" } },
   { prefix: "/care", meta: { section: "Live care", page: "Patient onboarding", role: "Admin" } },
@@ -314,7 +323,13 @@ export function routeMeta(pathname: string): RouteMeta {
 
 /** Screens that stand alone, without the staff sidebar and top bar. */
 export function isStandalone(pathname: string) {
-  return pathname.startsWith("/family") || pathname.startsWith("/mobile") || pathname === "/login";
+  return (
+    pathname.startsWith("/family") ||
+    pathname.startsWith("/mobile") ||
+    pathname === "/login" ||
+    pathname === "/refer" ||
+    pathname.startsWith("/refer/")
+  );
 }
 
 /** Detail pages that belong to a differently named sidebar entry. */

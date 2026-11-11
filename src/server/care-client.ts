@@ -37,8 +37,11 @@ export async function clientHome(user: UserDoc): Promise<ClientHomeDto> {
       : null,
     toRate: toRate.map((v) => appointmentDto(v, nameMap([client]), names, series, "patient")),
     needs: needDtos(client, names),
-    team: client.needs.flatMap((n) =>
-      n.status === "assigned" && n.therapistId
+    // One row per therapist, even when they deliver more than one service (an FCA and OT, say).
+    team: client.needs.flatMap((n, i, all) =>
+      n.status === "assigned" &&
+      n.therapistId &&
+      all.findIndex((m) => m.status === "assigned" && m.therapistId?.equals(n.therapistId!)) === i
         ? [
             {
               therapistName: names.get(n.therapistId.toHexString()) ?? "Your therapist",

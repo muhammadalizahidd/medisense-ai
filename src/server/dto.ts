@@ -31,8 +31,16 @@ export function stageOf(client: Pick<ClientDoc, "needs" | "discharged">): Client
   return "Active";
 }
 
+/** The service request an assignment is for. */
+export const needOf = (client: Pick<ClientDoc, "needs">, a: Pick<AssignmentDoc, "needId">) =>
+  client.needs.find((n) => n.id === a.needId);
+
 export function needDtos(client: ClientDoc, therapists: NameLookup): NeedDto[] {
   return client.needs.map((n) => ({
+    id: n.id,
+    support: n.support,
+    details: n.details ?? "",
+    location: n.location ?? "Home",
     discipline: n.discipline,
     frequency: n.frequency,
     status: n.status,
@@ -123,6 +131,7 @@ export function assignmentDto(
   return {
     id: a._id.toHexString(),
     clientId: a.clientId.toHexString(),
+    needId: a.needId,
     clientName: nameOf(clients, a.clientId) ?? "Patient",
     therapistName: nameOf(therapists, a.therapistId) ?? "Therapist",
     discipline: a.discipline,

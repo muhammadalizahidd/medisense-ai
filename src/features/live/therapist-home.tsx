@@ -1,6 +1,6 @@
 "use client";
 
-import { BellRing, CalendarDays, MapPin, MessageCircle } from "lucide-react";
+import { BellRing, CalendarDays, MapPin, MessageCircle, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -221,18 +221,28 @@ export function RequestCard({
           </p>
           <p className="mt-0.5 flex flex-wrap gap-x-4 gap-y-1 text-caption text-ink-700">
             <span>
-              {r.discipline}, {r.frequency.toLowerCase()}
+              {r.support}, {r.frequency.toLowerCase()}
+              {r.details ? ` · ${r.details}` : ""}
             </span>
             <span>{r.funding}</span>
             <span className="inline-flex items-center gap-1">
               <MapPin className="size-3.5" aria-hidden="true" />
-              {r.suburb}
+              {r.location === "Home" ? r.suburb : `${r.location}, ${r.suburb}`}
             </span>
             <span className="inline-flex items-center gap-1">
               <CalendarDays className="size-3.5" aria-hidden="true" />
               First visit {slotLabel(r.firstVisit)}
             </span>
           </p>
+          {r.precautions && (
+            <p className="mt-2 flex gap-2 rounded-control bg-over-bg px-3 py-2 text-small text-ink-900">
+              <ShieldAlert className="mt-0.5 size-4 flex-none text-over" aria-hidden="true" />
+              <span>
+                <strong className="text-over">Precaution: </strong>
+                {r.precautions}
+              </span>
+            </p>
+          )}
           {r.notes && <p className="mt-2 text-small whitespace-pre-line text-ink-900">{r.notes}</p>}
           <p className="mt-2 text-caption text-ink-500">Sent {relativeTime(r.createdAt)}</p>
         </div>

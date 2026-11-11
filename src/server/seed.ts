@@ -2,7 +2,7 @@ import "server-only";
 import bcrypt from "bcryptjs";
 import { ObjectId, type Db } from "mongodb";
 import { clinicians } from "@/data/clinicians";
-import type { Discipline, Region } from "@/lib/live/catalogue";
+import type { Discipline, Region, StaffRole } from "@/lib/live/catalogue";
 import { CLOSE_MINUTES, OPEN_MINUTES } from "@/lib/live/catalogue";
 import { serverLog } from "./log";
 import type { TherapistDoc, UserDoc, WeeklyHours } from "./models";
@@ -74,6 +74,20 @@ async function staffPasswordHash() {
   return bcrypt.hash(password, 11);
 }
 
+/** Jo runs intake, scheduling and finance; Neil is the Super Admin and Clinical Lead. */
+export const seedAdmins = [
+  {
+    name: "Jo Marsh",
+    email: "jo.marsh@medisense.test",
+    staffRoles: ["Intake Officer", "Scheduler", "Finance"] as StaffRole[],
+  },
+  {
+    name: "Neil Hensley",
+    email: "neil.hensley@medisense.test",
+    staffRoles: ["Super Admin", "Clinical Lead"] as StaffRole[],
+  },
+];
+
 export async function seedIfEmpty(db: Db) {
   const therapists = db.collection<TherapistDoc>("therapists");
   if ((await therapists.estimatedDocumentCount()) > 0) return;
@@ -82,10 +96,7 @@ export async function seedIfEmpty(db: Db) {
   const passwordHash = await staffPasswordHash();
   const now = new Date();
 
-  const admins = [
-    { name: "Jo Marsh", email: "jo.marsh@medisense.test" },
-    { name: "Neil Hensley", email: "neil.hensley@medisense.test" },
-  ];
+  const admins = seedAdmins;
   for (const admin of admins) {
     await users.updateOne(
       { email: admin.email },

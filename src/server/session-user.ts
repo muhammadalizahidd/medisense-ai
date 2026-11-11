@@ -7,4 +7,5 @@ export const sessionUser = (u: UserDoc): SessionUser => ({
   name: u.name,
   email: u.email,
   role: u.role,
+  staffRoles: u.staffRoles ?? [],
 });

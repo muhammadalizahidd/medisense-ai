@@ -1,14 +1,36 @@
-import type { CaseloadStatus, Discipline, Frequency, FundingStream, Region } from "./catalogue";
+import type {
+  CaseloadStatus,
+  Discipline,
+  DocumentKind,
+  Frequency,
+  FundingStream,
+  Region,
+  ServiceLocation,
+  StaffRole,
+  SubmitterRole,
+  Support,
+} from "./catalogue";
+import type { Gap, ReferralInput, ReferralStatus } from "./referral";
 
 /** JSON shapes the API returns. Dates are ISO strings. */
 
 export type Role = "admin" | "therapist" | "client";
 
-export type SessionUser = { id: string; name: string; email: string; role: Role };
+export type SessionUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: Role;
+  staffRoles: StaffRole[];
+};
 
 export type NeedStatus = "needs-therapist" | "waiting" | "assigned";
 
 export type NeedDto = {
+  id: string;
+  support: Support;
+  details: string;
+  location: ServiceLocation;
   discipline: Discipline;
   frequency: Frequency;
   status: NeedStatus;
@@ -57,6 +79,7 @@ export type AppointmentDto = {
 export type AssignmentDto = {
   id: string;
   clientId: string;
+  needId: string;
   clientName: string;
   therapistName: string;
   discipline: Discipline;
@@ -66,7 +89,19 @@ export type AssignmentDto = {
   createdAt: string;
 };
 
+export type DocumentDto = {
+  id: string;
+  kind: DocumentKind;
+  name: string;
+  size: number;
+  uploadedBy: string;
+  at: string;
+};
+
 export type ClientDetailDto = ClientSummaryDto & {
+  precautions: string | null;
+  documents: DocumentDto[];
+  referrals: { id: string; reference: string }[];
   discharged: { at: string; reason: string; byName: string } | null;
   emergencyContact: { name: string; relationship: string; phone: string } | null;
   dateOfBirth: string | null;
@@ -107,8 +142,13 @@ export type RequestDto = AssignmentDto & {
   age: string | null;
   suburb: string;
   funding: FundingStream;
+  support: string;
+  details: string;
+  location: ServiceLocation;
   frequency: Frequency;
   notes: string;
+  /** From clinical triage: read before accepting or visiting. */
+  precautions: string | null;
 };
 
 export type TherapistHomeDto = {
@@ -184,7 +224,7 @@ export type MessageDto = {
 export type LiveEvent =
   | { type: "notification"; payload: { title: string } }
   | { type: "message"; payload: { message: MessageDto } }
-  | { type: "care"; payload: { clientId?: string } }
+  | { type: "care"; payload: { clientId?: string; referralId?: string } }
   | { type: "read"; payload: { conversationId: string; readerId?: string } }
   | { type: "typing"; payload: { conversationId: string; name: string } }
   | { type: "connected"; payload: Record<string, never> };
@@ -235,4 +275,77 @@ export type TherapistDetailDto = TherapistCardDto & {
   }[];
   feedback: { rating: number; comment: string; at: string; patient: string; visit: string }[];
   history: { id: string; action: string; at: string }[];
+};
+
+/** What a tracking link shows: the status and anything asked for, nothing else. */
+export type PublicReferralDto = {
+  reference: string;
+  status: ReferralStatus;
+  statusText: string;
+  submittedAt: string;
+  updatedAt: string;
+  participantInitials: string;
+  openRequest: { id: string; items: Gap[]; message: string; at: string } | null;
+  canWithdraw: boolean;
+};
+
+export type ReferralSummaryDto = {
+  id: string;
+  reference: string;
+  name: string;
+  dateOfBirth: string;
+  suburb: string;
+  region: Region | null;
+  status: ReferralStatus;
+  funding: FundingStream;
+  supports: string[];
+  /** A reported risk or behaviours of concern (Yes or Unknown): clinical review before matching. */
+  risk: boolean;
+  gaps: number;
+  duplicates: number;
+  owner: string | null;
+  submitterRole: SubmitterRole;
+  submittedBy: "public" | "staff";
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ReferralDetailDto = ReferralSummaryDto & {
+  data: ReferralInput;
+  gapsList: Gap[];
+  duplicatesList: { kind: "patient" | "referral"; id: string; name: string; why: string }[];
+  duplicateDecision: { clientId: string | null; byName: string; at: string } | null;
+  infoRequests: {
+    id: string;
+    items: Gap[];
+    message: string;
+    requestedBy: string;
+    at: string;
+    answer: string | null;
+    answeredAt: string | null;
+  }[];
+  triage: {
+    decision: "Accepted" | "Waitlisted" | "Declined" | "More information";
+    notes: string;
+    riskAction: string;
+    precaution: string;
+    byName: string;
+    at: string;
+  } | null;
+  fundingReview: {
+    verification: "Verified" | "Exception";
+    exceptionReason: string;
+    agreement: "Signed" | "Sent" | "Not required";
+    consentRecorded: boolean;
+    notes: string;
+    byName: string;
+    at: string;
+  } | null;
+  outcome: { reason: string; byName: string; at: string } | null;
+  clientId: string | null;
+  documents: DocumentDto[];
+  history: { status: ReferralStatus; byName: string; note: string; at: string }[];
+  activity: { id: string; action: string; actor: string; at: string }[];
+  /** True when the viewer can make the clinical triage decision. */
+  canTriage: boolean;
 };

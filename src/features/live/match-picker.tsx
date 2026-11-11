@@ -21,14 +21,16 @@ const reasonTone = {
 /** Ranked therapists for one therapy, with their open times. Picking a time sends the request. */
 export function MatchPicker({
   clientId,
+  needId,
   discipline,
   onSent,
 }: {
   clientId: string;
+  needId: string;
   discipline: Discipline;
   onSent: () => void;
 }) {
-  const url = `/api/care/clients/${clientId}/matches?discipline=${encodeURIComponent(discipline)}`;
+  const url = `/api/care/clients/${clientId}/matches?need=${encodeURIComponent(needId)}`;
   const { data, error, loading, reload } = useResource<{ matches: MatchDto[] }>(
     url,
     (event) => event.type === "care",
@@ -61,7 +63,7 @@ export function MatchPicker({
     setSendError(null);
     try {
       await api(`/api/care/clients/${clientId}/requests`, {
-        body: { discipline, therapistId: choice.therapist.therapistId, start: choice.start },
+        body: { needId, therapistId: choice.therapist.therapistId, start: choice.start },
       });
       setChoice(null);
       onSent();
