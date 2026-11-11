@@ -12,6 +12,7 @@ import { disciplines } from "@/lib/live/catalogue";
 import { shortDate } from "@/lib/live/time";
 import type { TherapistCardDto, TherapistDetailDto } from "@/lib/live/types";
 import { CaseloadTag, EmptyNote, ErrorNote, LiveBadge, Skeleton, Stars } from "./bits";
+import { AddTherapist, TherapistActiveToggle } from "./add-therapist";
 import { TherapistRecord } from "./therapist-record";
 
 const day = (iso: string) => shortDate(`${iso}T00:00:00+10:00`);
@@ -34,7 +35,12 @@ export function TherapistDirectory() {
         eyebrow="Patient onboarding"
         title="Therapists"
         description="Working days, hours and time off as each therapist set them, with caseload and patient ratings."
-        actions={<LiveBadge />}
+        actions={
+          <div className="flex items-center gap-3">
+            <LiveBadge />
+            <AddTherapist onAdded={reload} />
+          </div>
+        }
       />
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <SelectField label="Discipline" value={discipline} onChange={setDiscipline}>
@@ -82,6 +88,11 @@ export function TherapistDirectory() {
                     <span className="block text-caption text-ink-500">
                       {t.discipline} · {t.region}
                     </span>
+                    {!t.active && (
+                      <span className="mt-1 inline-block rounded-tag bg-canvas px-1.5 py-0.5 text-eyebrow font-semibold text-ink-500">
+                        Inactive
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-ink-700">{t.availability.pattern}</td>
                   <td className="px-4 py-3">
@@ -151,6 +162,7 @@ export function TherapistProfilePage({ id }: { id: string }) {
           <div className="flex items-center gap-3">
             <LiveBadge />
             <ResetPassword therapistId={t.id} name={t.name} />
+            <TherapistActiveToggle id={t.id} name={t.name} active={t.active} onChanged={reload} />
           </div>
         }
       />

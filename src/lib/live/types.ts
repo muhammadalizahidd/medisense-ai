@@ -322,6 +322,8 @@ export type TimeOffDto = { id: string; from: string; to: string; reason: string 
 
 export type TherapistCardDto = {
   id: string;
+  active: boolean;
+  registrationExpiry: string | null;
   name: string;
   discipline: Discipline;
   region: Region;

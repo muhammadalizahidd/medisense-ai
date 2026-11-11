@@ -20,6 +20,9 @@ export async function POST(request: Request) {
     if (!(await checkPassword(user, password)) || !user) {
       throw new UserFacingError("Email or password is incorrect.");
     }
+    if (user.disabled) {
+      throw new UserFacingError("This account has been deactivated. Contact a Medisense admin.");
+    }
     await startSession(user._id);
     return { user: sessionUser(user) };
   });

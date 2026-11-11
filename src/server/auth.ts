@@ -58,7 +58,8 @@ export async function currentUser(): Promise<UserDoc | null> {
   const { sessions, users } = await collections();
   const session = await sessions.findOne({ _id: sha256(token), expiresAt: { $gt: new Date() } });
   if (!session) return null;
-  return users.findOne({ _id: session.userId });
+  const user = await users.findOne({ _id: session.userId });
+  return user?.disabled ? null : user;
 }
 
 export class AuthError extends Error {

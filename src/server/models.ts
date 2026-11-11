@@ -35,6 +35,8 @@ export interface UserDoc {
   therapistId: ObjectId | null;
   clientId: ObjectId | null;
   phone?: string | null;
+  /** True once staff have left: they can't sign in. */
+  disabled?: boolean;
   /** Admin responsibilities; a Clinical Lead or Super Admin makes clinical triage decisions. */
   staffRoles?: StaffRole[];
   createdAt: Date;
@@ -97,6 +99,8 @@ export interface TherapistDoc {
   availabilityUpdatedAt?: Date | null;
   /** Registration, screening and the assessments they're credentialed for (E2E-05). */
   credentials?: TherapistCredentials;
+  /** False once they've left: not offered in matching and can't sign in. */
+  active?: boolean;
   userId: ObjectId;
 }
 

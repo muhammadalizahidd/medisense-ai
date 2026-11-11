@@ -1,8 +1,15 @@
 import "server-only";
 import { randomInt, randomUUID } from "node:crypto";
-import type { ObjectId } from "mongodb";
+import { ObjectId } from "mongodb";
 import { z } from "zod";
-import { caseloadStatus, CLOSE_MINUTES, OPEN_MINUTES } from "@/lib/live/catalogue";
+import {
+  caseloadStatus,
+  CLOSE_MINUTES,
+  disciplines,
+  OPEN_MINUTES,
+  regions,
+  supports,
+} from "@/lib/live/catalogue";
 import { brisbaneDay, brisbaneMinutes, isoWeekday, slotLabel } from "@/lib/live/time";
 import type { TherapistCardDto, TherapistDetailDto } from "@/lib/live/types";
 import { hashPassword } from "./auth";
@@ -146,6 +153,8 @@ function card(t: TherapistDoc, ratings: Ratings): TherapistCardDto {
   const r = ratings.get(t._id.toHexString());
   return {
     id: t._id.toHexString(),
+    active: t.active !== false,
+    registrationExpiry: t.credentials?.registrationExpiry ?? null,
     name: t.name,
     discipline: t.discipline,
     region: t.region,
@@ -246,4 +255,111 @@ export async function resetStaffPassword(admin: UserDoc, therapistId: ObjectId) 
   await sessions.deleteMany({ userId: t.userId });
   await audit(admin, `Reset the password for ${t.name}`, null);
   return { temporaryPassword: temporary };
+}
+
+/* ------------------------------------------------------- adding staff (A04) */
+
+const temporaryPassword = () => {
+  const alphabet = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+  return Array.from({ length: 14 }, () => alphabet[randomInt(alphabet.length)]).join("");
+};
+
+export const newTherapistSchema = z.object({
+  name: z.string().trim().min(3, "Enter the full name").max(80),
+  email: z.email("Enter a valid work email").transform((v) => v.toLowerCase()),
+  phone: z.string().trim().max(30),
+  discipline: z.enum(disciplines),
+  region: z.enum(regions),
+  seniority: z.enum(["Graduate", "Clinician", "Senior"]),
+  capacity: z.number().int().min(1, "Capacity is at least 1").max(60),
+  sessionMinutes: z.number().int().min(30).max(120),
+  weekdays: z.array(z.number().int().min(1).max(5)).min(1, "Choose at least one working day"),
+  registration: z.string().trim().min(3, "Enter the registration number").max(30),
+  registrationExpiry: z.string().regex(DAY, "Enter the registration expiry date"),
+  screeningExpiry: z.string().regex(DAY, "Enter the worker screening expiry date"),
+  assessmentScopes: z.array(z.enum(supports)).max(20),
+});
+
+/**
+ * An admin adds a therapist (module A04): their profile, credentials and working days, and a
+ * login with a temporary password shown once. They're offered in matching straight away.
+ */
+export async function createTherapist(admin: UserDoc, input: z.infer<typeof newTherapistSchema>) {
+  const { users, therapists } = await collections();
+  if (await users.findOne({ email: input.email })) {
+    throw new UserFacingError("An account already uses this email.", 409);
+  }
+  const today = brisbaneDay(new Date()).toISOString().slice(0, 10);
+  if (input.registrationExpiry < today) {
+    throw new UserFacingError(
+      "The registration has expired. They can't be added until it's renewed.",
+    );
+  }
+  const temporary = temporaryPassword();
+  const userId = new ObjectId();
+  const therapistId = new ObjectId();
+  const base = input.name
+    .toLowerCase()
+    .replace(/[^a-z ]/g, "")
+    .trim()
+    .replace(/\s+/g, "-");
+  const slug = (await therapists.findOne({ slug: base }))
+    ? `${base}-${randomUUID().slice(0, 4)}`
+    : base;
+  await users.insertOne({
+    _id: userId,
+    email: input.email,
+    name: input.name,
+    role: "therapist",
+    passwordHash: await hashPassword(temporary),
+    invite: null,
+    therapistId,
+    clientId: null,
+    phone: input.phone || null,
+    createdAt: new Date(),
+  });
+  await therapists.insertOne({
+    _id: therapistId,
+    slug,
+    name: input.name,
+    discipline: input.discipline,
+    region: input.region,
+    seniority: input.seniority,
+    capacity: input.capacity,
+    activeClients: 0,
+    caseloadScore: 30,
+    sessionMinutes: input.sessionMinutes,
+    weekly: [...new Set(input.weekdays)]
+      .sort()
+      .map((weekday) => ({ weekday, start: OPEN_MINUTES, end: CLOSE_MINUTES })),
+    timeOff: [],
+    credentials: {
+      registration: input.registration,
+      registrationExpiry: input.registrationExpiry,
+      screeningExpiry: input.screeningExpiry,
+      assessmentScopes: input.assessmentScopes,
+    },
+    active: true,
+    availabilityUpdatedAt: null,
+    userId,
+  });
+  await audit(admin, `Added therapist ${input.name} (${input.discipline}, ${input.region})`, null);
+  await publish(await adminIds(), "care", {});
+  return { id: therapistId.toHexString(), email: input.email, temporaryPassword: temporary };
+}
+
+/** A therapist who leaves: they can't sign in and aren't offered for new patients. */
+export async function setTherapistActive(admin: UserDoc, id: ObjectId, active: boolean) {
+  const { therapists, users, sessions } = await collections();
+  const t = await therapists.findOne({ _id: id });
+  if (!t) throw new UserFacingError("Therapist not found.", 404);
+  await therapists.updateOne({ _id: id }, { $set: { active } });
+  await users.updateOne({ _id: t.userId }, { $set: { disabled: !active } });
+  if (!active) await sessions.deleteMany({ userId: t.userId });
+  await audit(
+    admin,
+    `${active ? "Reactivated" : "Deactivated"} therapist ${t.name}${active ? "" : ` (${t.activeClients} current patients)`}`,
+    null,
+  );
+  await publish(await adminIds(), "care", {});
 }

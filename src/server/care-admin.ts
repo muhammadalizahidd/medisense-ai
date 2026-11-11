@@ -119,7 +119,9 @@ export async function matchesFor(clientId: ObjectId, needId: string): Promise<Ma
   const client = await loadClient(clientId);
   const need = client.needs.find((n) => n.id === needId);
   if (!need) throw new UserFacingError("Service request not found.", 404);
-  const candidates = await therapists.find({ discipline: need.discipline }).toArray();
+  const candidates = await therapists
+    .find({ discipline: need.discipline, active: { $ne: false } })
+    .toArray();
   const ids = candidates.map((c) => c._id);
   const upcoming = await appointments
     .find({ therapistId: { $in: ids }, holdsSlot: true, start: { $gte: new Date() } })
