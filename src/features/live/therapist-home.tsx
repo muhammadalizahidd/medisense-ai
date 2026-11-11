@@ -8,6 +8,7 @@ import { Select } from "@/components/ui/select";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page";
 import { Avatar } from "@/components/ui/premium";
+import { TabPanel, Tabs, useTab } from "@/components/ui/tabs";
 import { Tag } from "@/components/ui/tag";
 import { declineReasons } from "@/lib/live/catalogue";
 import { api, useResource } from "@/lib/live/client";
@@ -23,6 +24,18 @@ export function TherapistHome() {
     "/api/care/therapist",
     (event) => event.type === "care" || event.type === "notification",
   );
+  const counts = {
+    today: (data?.toRecord.length ?? 0) + (data?.notesToWrite.length ?? 0),
+    requests: data?.requests.length ?? 0,
+    patients: data?.clients.filter((c) => !c.discharged).length ?? 0,
+  };
+  const tabs = [
+    { id: "today", label: "Today", count: counts.today, alert: true },
+    { id: "requests", label: "Requests", count: counts.requests, alert: true },
+    { id: "patients", label: "My patients", count: counts.patients },
+    { id: "recent", label: "Recent visits" },
+  ] as const;
+  const [tab, setTab] = useTab(tabs);
 
   if (error && !data) return <ErrorNote message={error} onRetry={reload} />;
   if (loading || !data) {
@@ -34,6 +47,7 @@ export function TherapistHome() {
     );
   }
   const { therapist, requests, clients, upcoming, toRecord, notesToWrite, recent } = data;
+  const booked = upcoming.filter((v) => v.status === "booked");
 
   return (
     <>
@@ -48,117 +62,143 @@ export function TherapistHome() {
           </div>
         }
       />
-      <div className="grid gap-6 xl:grid-cols-12">
-        <div className="flex flex-col gap-6 xl:col-span-8">
-          <Panel
-            title="New patient requests"
-            action={requests.length > 0 && <Tag tone="monitor">{requests.length} waiting</Tag>}
+      <Tabs label="My work" tabs={tabs} value={tab} onChange={setTab} />
+      <TabPanel id="today" value={tab}>
+        {toRecord.length === 0 && notesToWrite.length === 0 && requests.length === 0 && (
+          <p className="rounded-card border border-healthy-bg bg-healthy-bg px-5 py-4 text-small">
+            You&apos;re all caught up: no requests, visits to record or notes to sign.
+          </p>
+        )}
+        {requests.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setTab("requests")}
+            className="flex cursor-pointer items-center justify-between rounded-card border border-accent bg-accent-tint px-5 py-4 text-left text-small"
           >
-            {requests.length === 0 ? (
-              <EmptyNote title="No new requests.">
-                When the care team asks you to take a patient, it appears here straight away.
-              </EmptyNote>
-            ) : (
-              <ul className="flex flex-col gap-3">
-                {requests.map((r) => (
-                  <RequestCard key={r.id} request={r} onDone={reload} />
-                ))}
-              </ul>
-            )}
-          </Panel>
-          {toRecord.length > 0 && (
-            <Panel
-              title="Visits to record"
-              action={<Tag tone="monitor">{toRecord.length} to record</Tag>}
-            >
-              <VisitList
-                visits={toRecord}
-                show="client"
-                onChanged={reload}
-                emptyText="All past visits are recorded."
-              />
-            </Panel>
-          )}
-          {notesToWrite.length > 0 && (
-            <Panel
-              title="Notes to write or sign"
-              action={<Tag tone="monitor">{notesToWrite.length} to write</Tag>}
-            >
-              <VisitList
-                visits={notesToWrite}
-                show="client"
-                onChanged={reload}
-                emptyText="Every completed visit has its note."
-              />
-            </Panel>
-          )}
-          <Panel title="Coming up">
+            <span>
+              <strong>
+                {requests.length} new patient request{requests.length === 1 ? "" : "s"}
+              </strong>{" "}
+              waiting for your answer.
+            </span>
+            <span className="font-semibold text-accent">Open requests →</span>
+          </button>
+        )}
+        {toRecord.length > 0 && (
+          <Panel
+            title="Visits to record"
+            action={<Tag tone="monitor">{toRecord.length} to record</Tag>}
+          >
             <VisitList
-              visits={upcoming.filter((v) => v.status === "booked")}
+              visits={toRecord}
               show="client"
               onChanged={reload}
-              emptyText="No booked visits yet. They appear when you accept a patient."
+              emptyText="All past visits are recorded."
             />
           </Panel>
-          <Panel title="Recent visits">
+        )}
+        {notesToWrite.length > 0 && (
+          <Panel
+            title="Notes to write or sign"
+            action={<Tag tone="monitor">{notesToWrite.length} to write</Tag>}
+          >
             <VisitList
-              visits={recent}
+              visits={notesToWrite}
               show="client"
               onChanged={reload}
-              emptyText="Completed, missed and cancelled visits from the last two weeks appear here."
+              emptyText="Every completed visit has its note."
             />
           </Panel>
-        </div>
-        <div className="flex flex-col gap-6 xl:col-span-4">
-          <Panel
-            title="My new patients"
-            action={
-              <ButtonLink href="/messages" size="sm">
-                All messages
-              </ButtonLink>
-            }
-          >
-            {clients.length === 0 ? (
-              <EmptyNote title="No patients accepted here yet." />
-            ) : (
-              <ul className="divide-y divide-border">
-                {clients.map((c) => (
-                  <li
-                    key={`${c.id}-${c.discipline}`}
-                    className="flex flex-wrap items-center gap-3 py-3 first:pt-0 last:pb-0"
-                  >
-                    <Avatar name={c.name} size={36} />
-                    <span className="min-w-0 flex-1">
-                      <Link
-                        href={`/therapist/patients/${c.id}`}
-                        className="block text-small font-semibold text-ink-900"
-                      >
-                        {c.name}
-                      </Link>
-                      <span className="block text-caption text-ink-500">
-                        {c.suburb} · {c.discipline}, {c.frequency.toLowerCase()}
-                      </span>
+        )}
+        <Panel title="Coming up">
+          <VisitList
+            visits={booked}
+            show="client"
+            onChanged={reload}
+            emptyText="No booked visits yet. They appear when you accept a patient."
+          />
+        </Panel>
+      </TabPanel>
+      <TabPanel id="requests" value={tab}>
+        <Panel
+          title="New patient requests"
+          action={requests.length > 0 && <Tag tone="monitor">{requests.length} waiting</Tag>}
+        >
+          {requests.length === 0 ? (
+            <EmptyNote title="No new requests.">
+              When the care team asks you to take a patient, it appears here straight away.
+            </EmptyNote>
+          ) : (
+            <ul className="flex flex-col gap-3">
+              {requests.map((r) => (
+                <RequestCard key={r.id} request={r} onDone={reload} />
+              ))}
+            </ul>
+          )}
+        </Panel>
+      </TabPanel>
+      <TabPanel id="patients" value={tab}>
+        <Panel
+          title="My patients"
+          action={
+            <ButtonLink href="/messages" size="sm">
+              All messages
+            </ButtonLink>
+          }
+        >
+          {clients.length === 0 ? (
+            <EmptyNote title="No patients accepted here yet." />
+          ) : (
+            <ul className="divide-y divide-border">
+              {clients.map((c) => (
+                <li
+                  key={`${c.id}-${c.discipline}`}
+                  className="flex flex-wrap items-center gap-3 py-3 first:pt-0 last:pb-0"
+                >
+                  <Avatar name={c.name} size={36} />
+                  <span className="min-w-0 flex-1">
+                    <Link
+                      href={`/therapist/patients/${c.id}`}
+                      className="block text-small font-semibold text-ink-900"
+                    >
+                      {c.name}
+                    </Link>
+                    <span className="block text-caption text-ink-500">
+                      {c.suburb} · {c.discipline}, {c.frequency.toLowerCase()}
                     </span>
-                    {c.conversationId && (
-                      <ButtonLink href={`/messages?c=${c.conversationId}`} size="sm">
-                        <MessageCircle className="size-3.5" aria-hidden="true" />
-                        Message
-                      </ButtonLink>
-                    )}
-                    {c.discharged ? (
-                      <Tag tone="neutral">Discharged</Tag>
-                    ) : (
-                      <Button size="sm" variant="ghost" onClick={() => setDischarging(c)}>
-                        Discharge
-                      </Button>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Panel>
-        </div>
-      </div>
+                  </span>
+                  <ButtonLink href={`/therapist/patients/${c.id}`} size="sm" variant="ghost">
+                    Open record
+                  </ButtonLink>
+                  {c.conversationId && (
+                    <ButtonLink href={`/messages?c=${c.conversationId}`} size="sm">
+                      <MessageCircle className="size-3.5" aria-hidden="true" />
+                      Message
+                    </ButtonLink>
+                  )}
+                  {c.discharged ? (
+                    <Tag tone="neutral">Discharged</Tag>
+                  ) : (
+                    <Button size="sm" variant="ghost" onClick={() => setDischarging(c)}>
+                      Discharge
+                    </Button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
+      </TabPanel>
+      <TabPanel id="recent" value={tab}>
+        <Panel title="Recent visits">
+          <VisitList
+            visits={recent}
+            show="client"
+            onChanged={reload}
+            emptyText="Completed, missed and cancelled visits from the last two weeks appear here."
+          />
+        </Panel>
+      </TabPanel>
       {discharging && (
         <DischargeSheet
           clientId={discharging.id}

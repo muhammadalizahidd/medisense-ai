@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page";
+import { TabPanel, Tabs, useTab } from "@/components/ui/tabs";
 import { Tag } from "@/components/ui/tag";
 import { api, useNow, useResource } from "@/lib/live/client";
 import { ageLabel, relativeTime, shortDate, slotLabel } from "@/lib/live/time";
@@ -32,6 +33,25 @@ export function ClientDetail({ clientId }: { clientId: string }) {
     (event) =>
       event.type === "care" && (!event.payload.clientId || event.payload.clientId === clientId),
   );
+
+  const c = data?.client;
+  const tabs = [
+    {
+      id: "services",
+      label: "Services and matching",
+      count: c?.needs.filter((n) => n.status === "needs-therapist").length,
+      alert: true,
+    },
+    {
+      id: "visits",
+      label: "Visits",
+      count: c?.appointments.filter((v) => v.status === "booked").length,
+    },
+    { id: "clinical", label: "Clinical progress" },
+    { id: "details", label: "Details and documents", count: c?.documents.length },
+    { id: "activity", label: "Activity" },
+  ] as const;
+  const [tab, setTab] = useTab(tabs);
 
   if (error && !data) return <ErrorNote message={error} onRetry={reload} />;
   if (loading || !data) {
@@ -97,54 +117,55 @@ export function ClientDetail({ clientId }: { clientId: string }) {
           onDone={reload}
         />
       )}
-      <div className="grid gap-6 xl:grid-cols-12">
-        <div className="flex flex-col gap-6 xl:col-span-8">
-          {client.precautions && (
-            <section
-              aria-label="Precautions"
-              className="flex gap-3 rounded-card border border-over-bg bg-over-bg px-5 py-4"
-            >
-              <ShieldAlert className="mt-0.5 size-5 flex-none text-over" aria-hidden="true" />
-              <div>
-                <h2 className="text-small font-semibold text-over">
-                  Precautions from clinical triage
-                </h2>
-                <p className="mt-1 text-small whitespace-pre-line text-ink-900">
-                  {client.precautions}
-                </p>
-              </div>
-            </section>
-          )}
-          {client.needs.map((need) => (
-            <NeedPanel
-              key={need.id}
-              clientId={client.id}
-              need={need}
-              assignments={client.assignments}
-              onChange={reload}
-            />
-          ))}
-          <ClinicalPanel clientId={client.id} needs={client.needs} mode="admin" />
-          <Panel
-            title="Visits"
-            action={
-              client.appointments.some((a) => a.cancellation?.chargeable) && (
-                <Tag tone="over">
-                  {client.appointments.filter((a) => a.cancellation?.chargeable).length} may be
-                  charged
-                </Tag>
-              )
-            }
-          >
-            <VisitList
-              visits={client.appointments}
-              show="therapist"
-              onChanged={reload}
-              emptyText="Visits appear here once a therapist accepts."
-            />
-          </Panel>
-        </div>
-        <div className="flex flex-col gap-6 xl:col-span-4">
+      {client.precautions && (
+        <section
+          aria-label="Precautions"
+          className="mb-6 flex gap-3 rounded-card border border-over-bg bg-over-bg px-5 py-4"
+        >
+          <ShieldAlert className="mt-0.5 size-5 flex-none text-over" aria-hidden="true" />
+          <div>
+            <h2 className="text-small font-semibold text-over">Precautions from clinical triage</h2>
+            <p className="mt-1 text-small whitespace-pre-line text-ink-900">{client.precautions}</p>
+          </div>
+        </section>
+      )}
+      <Tabs label="Patient record" tabs={tabs} value={tab} onChange={setTab} />
+      <TabPanel id="services" value={tab}>
+        {client.needs.map((need) => (
+          <NeedPanel
+            key={need.id}
+            clientId={client.id}
+            need={need}
+            assignments={client.assignments}
+            onChange={reload}
+          />
+        ))}
+      </TabPanel>
+      <TabPanel id="visits" value={tab}>
+        <Panel
+          title="Visits"
+          action={
+            client.appointments.some((a) => a.cancellation?.chargeable) && (
+              <Tag tone="over">
+                {client.appointments.filter((a) => a.cancellation?.chargeable).length} may be
+                charged
+              </Tag>
+            )
+          }
+        >
+          <VisitList
+            visits={client.appointments}
+            show="therapist"
+            onChanged={reload}
+            emptyText="Visits appear here once a therapist accepts."
+          />
+        </Panel>
+      </TabPanel>
+      <TabPanel id="clinical" value={tab}>
+        <ClinicalPanel clientId={client.id} needs={client.needs} mode="admin" />
+      </TabPanel>
+      <TabPanel id="details" value={tab}>
+        <div className="grid gap-6 lg:grid-cols-2">
           <Panel title="Details">
             <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-small">
               <dt className="text-ink-500">Email</dt>
@@ -170,45 +191,49 @@ export function ClientDetail({ clientId }: { clientId: string }) {
               </p>
             )}
           </Panel>
-          <AppAccess clientId={client.id} account={client.account} name={client.name} />
-          <Panel title="Documents">
-            {client.documents.length === 0 ? (
-              <p className="text-small text-ink-500">No documents on file.</p>
-            ) : (
-              <DocumentList documents={client.documents} />
-            )}
-            {client.referrals.length > 0 && (
-              <p className="mt-3 border-t border-border pt-3 text-caption text-ink-500">
-                From referral{client.referrals.length > 1 ? "s" : ""}{" "}
-                {client.referrals.map((r, i) => (
-                  <span key={r.id}>
-                    {i > 0 && ", "}
-                    <Link href={`/care/referrals/${r.id}`} className="font-semibold text-accent">
-                      {r.reference}
-                    </Link>
-                  </span>
-                ))}
-              </p>
-            )}
-          </Panel>
-          <Panel title="Activity">
-            {client.activity.length === 0 ? (
-              <p className="text-small text-ink-500">Nothing yet.</p>
-            ) : (
-              <ol className="flex flex-col gap-3">
-                {client.activity.map((a) => (
-                  <li key={a.id} className="text-small">
-                    <span className="block">{a.action}</span>
-                    <span className="text-caption text-ink-500">
-                      {a.actor} · {relativeTime(a.at)}
+          <div className="flex flex-col gap-6">
+            <AppAccess clientId={client.id} account={client.account} name={client.name} />
+            <Panel title="Documents">
+              {client.documents.length === 0 ? (
+                <p className="text-small text-ink-500">No documents on file.</p>
+              ) : (
+                <DocumentList documents={client.documents} />
+              )}
+              {client.referrals.length > 0 && (
+                <p className="mt-3 border-t border-border pt-3 text-caption text-ink-500">
+                  From referral{client.referrals.length > 1 ? "s" : ""}{" "}
+                  {client.referrals.map((r, i) => (
+                    <span key={r.id}>
+                      {i > 0 && ", "}
+                      <Link href={`/care/referrals/${r.id}`} className="font-semibold text-accent">
+                        {r.reference}
+                      </Link>
                     </span>
-                  </li>
-                ))}
-              </ol>
-            )}
-          </Panel>
+                  ))}
+                </p>
+              )}
+            </Panel>
+          </div>
         </div>
-      </div>
+      </TabPanel>
+      <TabPanel id="activity" value={tab}>
+        <Panel title="Activity">
+          {client.activity.length === 0 ? (
+            <p className="text-small text-ink-500">Nothing yet.</p>
+          ) : (
+            <ol className="flex flex-col gap-3">
+              {client.activity.map((a) => (
+                <li key={a.id} className="text-small">
+                  <span className="block">{a.action}</span>
+                  <span className="text-caption text-ink-500">
+                    {a.actor} · {relativeTime(a.at)}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </Panel>
+      </TabPanel>
     </>
   );
 }

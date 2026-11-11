@@ -152,3 +152,26 @@ export async function signalTyping(user: UserDoc, id: ObjectId) {
     name: user.name.split(" ")[0] ?? user.name,
   });
 }
+
+/** Messages matching the words, across this person's own conversations only. */
+export async function searchMessages(user: UserDoc, query: string) {
+  const q = query.trim().slice(0, 80);
+  if (q.length < 2) return [];
+  const { conversations, messages } = await collections();
+  const mine = await conversations
+    .find({ memberIds: user._id }, { projection: { _id: 1 } })
+    .toArray();
+  const pattern = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+  const rows = await messages
+    .find({ conversationId: { $in: mine.map((c) => c._id) }, body: pattern })
+    .sort({ createdAt: -1 })
+    .limit(30)
+    .toArray();
+  return rows.map((m) => ({
+    id: m._id.toHexString(),
+    conversationId: m.conversationId.toHexString(),
+    mine: m.senderId.equals(user._id),
+    body: m.body,
+    createdAt: m.createdAt.toISOString(),
+  }));
+}

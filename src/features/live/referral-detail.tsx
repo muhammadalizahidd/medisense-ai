@@ -17,6 +17,7 @@ import { PageHeader } from "@/components/ui/page";
 import { Select } from "@/components/ui/select";
 import { Field } from "@/components/ui/sheet";
 import { Sheet } from "@/components/ui/sheet";
+import { TabPanel, Tabs, useTab } from "@/components/ui/tabs";
 import { Tag } from "@/components/ui/tag";
 import { api, useResource, useSession } from "@/lib/live/client";
 import { disciplines, regions, type Discipline } from "@/lib/live/catalogue";
@@ -51,6 +52,19 @@ export function ReferralDetail({ id }: { id: string }) {
   const [actionError, setActionError] = useState<string | null>(null);
   const [sheet, setSheet] = useState<"waitlist" | "decline" | "withdraw" | null>(null);
   const [invite, setInvite] = useState<Invite | null>(null);
+  const ref = data?.referral;
+  const tabs = [
+    { id: "next", label: "Next step" },
+    { id: "referral", label: "Referral as submitted" },
+    {
+      id: "documents",
+      label: "Documents and requests",
+      count:
+        (ref?.documents.length ?? 0) + (ref?.infoRequests.filter((q) => !q.answeredAt).length ?? 0),
+    },
+    { id: "history", label: "History and audit" },
+  ] as const;
+  const [tab, setTab] = useTab(tabs);
 
   async function act(body: Record<string, unknown>) {
     setBusy(true);
@@ -177,12 +191,15 @@ export function ReferralDetail({ id }: { id: string }) {
         </p>
       )}
 
-      <div className="grid gap-6 xl:grid-cols-12">
-        <div className="flex flex-col gap-6 xl:col-span-8">
-          <NextStep r={r} busy={busy} act={act} invite={invite} />
-          <ReferralContent r={r} />
-        </div>
-        <div className="flex flex-col gap-6 xl:col-span-4">
+      <Tabs label="Referral" tabs={tabs} value={tab} onChange={setTab} />
+      <TabPanel id="next" value={tab}>
+        <NextStep r={r} busy={busy} act={act} invite={invite} />
+      </TabPanel>
+      <TabPanel id="referral" value={tab}>
+        <ReferralContent r={r} />
+      </TabPanel>
+      <TabPanel id="documents" value={tab}>
+        <div className="grid gap-6 lg:grid-cols-2">
           <Panel title="Documents">
             {r.documents.length ? (
               <DocumentList documents={r.documents} />
@@ -219,6 +236,10 @@ export function ReferralDetail({ id }: { id: string }) {
               </ol>
             </Panel>
           )}
+        </div>
+      </TabPanel>
+      <TabPanel id="history" value={tab}>
+        <div className="grid gap-6 lg:grid-cols-2">
           <Panel title="Status history">
             <ol className="relative flex flex-col gap-3 border-l border-border pl-4">
               {[...r.history].reverse().map((h, i) => (
@@ -249,7 +270,7 @@ export function ReferralDetail({ id }: { id: string }) {
             </ol>
           </Panel>
         </div>
-      </div>
+      </TabPanel>
 
       {sheet && (
         <ReasonSheet

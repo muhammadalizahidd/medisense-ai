@@ -4,6 +4,7 @@ import { ArrowLeft, MessageCircle, ShieldAlert } from "lucide-react";
 import { useState } from "react";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { MetricBand } from "@/components/ui/metric-band";
+import { TabPanel, Tabs, useTab } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/ui/page";
 import { useNow, useResource, useSession } from "@/lib/live/client";
 import { ageLabel, relativeTime, shortDate } from "@/lib/live/time";
@@ -30,6 +31,20 @@ export function TherapistPatient({ clientId }: { clientId: string }) {
   const conversationId = chats.data?.conversations.find((c) => c.clientId === clientId)?.id ?? null;
   const [discharging, setDischarging] = useState(false);
   const me = useSession().user?.name;
+  const nowMs = now;
+  const todo = (data?.client.appointments ?? []).filter(
+    (v) =>
+      (v.status === "booked" && new Date(v.start).getTime() < nowMs && !v.checkIn) ||
+      (v.status === "completed" &&
+        (!v.note || v.note.status === "Draft" || v.note.status === "Pending Signature")),
+  ).length;
+  const tabs = [
+    { id: "visits", label: "Visits", count: todo, alert: true },
+    { id: "clinical", label: "Clinical work" },
+    { id: "details", label: "Details and documents", count: data?.client.documents.length },
+    { id: "history", label: "History" },
+  ] as const;
+  const [tab, setTab] = useTab(tabs);
 
   if (error && !data) return <ErrorNote message={error} onRetry={reload} />;
   if (loading || !data) return <Skeleton className="h-96" />;
@@ -125,27 +140,30 @@ export function TherapistPatient({ clientId }: { clientId: string }) {
           ]}
         />
       </div>
-      <div className="grid gap-6 xl:grid-cols-12">
-        <div className="flex flex-col gap-6 xl:col-span-8">
-          <ClinicalPanel clientId={p.id} needs={p.needs} mode="therapist" myName={me} />
-          <Panel title="Coming up">
-            <VisitList
-              visits={upcoming}
-              show="therapist"
-              onChanged={reload}
-              emptyText="No upcoming visits."
-            />
-          </Panel>
-          <Panel title="Visit history">
-            <VisitList
-              visits={history}
-              show="therapist"
-              onChanged={reload}
-              emptyText="No past visits yet. Completed, missed and cancelled visits appear here with their notes."
-            />
-          </Panel>
-        </div>
-        <div className="flex flex-col gap-6 xl:col-span-4">
+      <Tabs label="Patient record" tabs={tabs} value={tab} onChange={setTab} />
+      <TabPanel id="visits" value={tab}>
+        <Panel title="Coming up">
+          <VisitList
+            visits={upcoming}
+            show="therapist"
+            onChanged={reload}
+            emptyText="No upcoming visits."
+          />
+        </Panel>
+        <Panel title="Visit history">
+          <VisitList
+            visits={history}
+            show="therapist"
+            onChanged={reload}
+            emptyText="No past visits yet. Completed, missed and cancelled visits appear here with their notes."
+          />
+        </Panel>
+      </TabPanel>
+      <TabPanel id="clinical" value={tab}>
+        <ClinicalPanel clientId={p.id} needs={p.needs} mode="therapist" myName={me} />
+      </TabPanel>
+      <TabPanel id="details" value={tab}>
+        <div className="grid gap-6 lg:grid-cols-2">
           <Panel title="Details">
             <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-small">
               <dt className="text-ink-500">Phone</dt>
@@ -181,28 +199,30 @@ export function TherapistPatient({ clientId }: { clientId: string }) {
               <p className="text-small text-ink-500">No documents on file.</p>
             )}
           </Panel>
-          <Panel title="History">
-            {p.activity.length === 0 ? (
-              <p className="text-small text-ink-500">Nothing yet.</p>
-            ) : (
-              <ol className="relative flex flex-col gap-3 border-l border-border pl-4">
-                {p.activity.map((a) => (
-                  <li key={a.id} className="relative text-small">
-                    <i
-                      aria-hidden="true"
-                      className="absolute top-1.5 -left-5.5 size-2.5 rounded-full border-2 border-surface bg-accent-fill"
-                    />
-                    <span className="block">{a.action}</span>
-                    <span className="text-caption text-ink-500">
-                      {a.actor} · {relativeTime(a.at)}
-                    </span>
-                  </li>
-                ))}
-              </ol>
-            )}
-          </Panel>
         </div>
-      </div>
+      </TabPanel>
+      <TabPanel id="history" value={tab}>
+        <Panel title="History">
+          {p.activity.length === 0 ? (
+            <p className="text-small text-ink-500">Nothing yet.</p>
+          ) : (
+            <ol className="relative flex flex-col gap-3 border-l border-border pl-4">
+              {p.activity.map((a) => (
+                <li key={a.id} className="relative text-small">
+                  <i
+                    aria-hidden="true"
+                    className="absolute top-1.5 -left-5.5 size-2.5 rounded-full border-2 border-surface bg-accent-fill"
+                  />
+                  <span className="block">{a.action}</span>
+                  <span className="text-caption text-ink-500">
+                    {a.actor} · {relativeTime(a.at)}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </Panel>
+      </TabPanel>
       {discharging && (
         <DischargeSheet
           clientId={p.id}
