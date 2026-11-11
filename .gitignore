@@ -25,5 +25,6 @@ pnpm-debug.log*
 *.tsbuildinfo
 .vercel
 .netlify
-
+# scripts
 /scripts/demo-videos/output
+.tmp-check/
