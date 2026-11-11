@@ -226,6 +226,7 @@ export async function requestTherapist(
           status: "tentative",
           holdsSlot: true,
           modality: need.location === "Telehealth" ? "Telehealth" : "In person",
+          needId: need.id,
           createdAt: now,
         },
         { session },

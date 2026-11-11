@@ -31,6 +31,24 @@ export function stageOf(client: Pick<ClientDoc, "needs" | "discharged">): Client
   return "Active";
 }
 
+/**
+ * The service request a visit delivers. Older visits have no id, so fall back to the clinician's
+ * service in that discipline, preferring one with a treatment plan.
+ */
+export function needOfVisit(
+  client: Pick<ClientDoc, "needs">,
+  visit: Pick<AppointmentDoc, "needId" | "discipline" | "therapistId">,
+) {
+  if (visit.needId) {
+    const exact = client.needs.find((n) => n.id === visit.needId);
+    if (exact) return exact;
+  }
+  const mine = client.needs.filter(
+    (n) => n.discipline === visit.discipline && n.therapistId?.equals(visit.therapistId),
+  );
+  return mine.find((n) => n.status === "assigned") ?? mine[0];
+}
+
 /** The service request an assignment is for. */
 export const needOf = (client: Pick<ClientDoc, "needs">, a: Pick<AssignmentDoc, "needId">) =>
   client.needs.find((n) => n.id === a.needId);

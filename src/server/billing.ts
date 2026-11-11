@@ -12,6 +12,7 @@ import {
 } from "@/lib/live/clinical";
 import { brisbaneDay, shortDate } from "@/lib/live/time";
 import { collections } from "./db";
+import { needOfVisit } from "./dto";
 import { UserFacingError } from "./http";
 import { adminIds, audit, notify, publish } from "./live";
 import type { AppointmentDoc, ClientDoc, InvoiceDoc, InvoiceLine, UserDoc } from "./models";
@@ -79,9 +80,7 @@ export async function billVisit(visit: AppointmentDoc, kind: "service" | "cancel
   const rate = hourlyRates[visit.discipline];
   const amount =
     round((rate * minutes) / 60) * (kind === "cancellation" ? CANCELLATION_CHARGE_SHARE : 1);
-  const need = client.needs.find(
-    (n) => n.discipline === visit.discipline && n.therapistId?.equals(visit.therapistId),
-  );
+  const need = needOfVisit(client, visit);
   const line: InvoiceLine = {
     id: randomUUID(),
     kind,

@@ -94,6 +94,7 @@ export async function bookSeries(
       replaces: null,
       cancellation: null,
       modality: first.modality ?? "In person",
+      needId: first.needId ?? null,
       createdAt: new Date(),
     };
     try {
@@ -270,6 +271,7 @@ export async function rebookVisit(
       replaces: visit._id,
       cancellation: null,
       modality: visit.modality ?? "In person",
+      needId: visit.needId ?? null,
       createdAt: new Date(),
     });
     // The cancelled visit is now a rescheduled one (appointment status, section 3.1).

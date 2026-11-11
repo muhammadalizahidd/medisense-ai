@@ -147,7 +147,9 @@ function AnswerRequest({
 
   function add(list: FileList | null) {
     setError(null);
-    for (const file of list ? [...list] : []) {
+    // Copy now: the input is cleared right after, which empties the live FileList.
+    const incoming = list ? [...list] : [];
+    for (const file of incoming) {
       if (
         !(DOCUMENT_TYPES as readonly string[]).includes(file.type) ||
         file.size > DOCUMENT_MAX_BYTES
@@ -158,7 +160,7 @@ function AnswerRequest({
     }
     setFiles((f) => [
       ...f,
-      ...[...(list ?? [])].map((file) => ({
+      ...incoming.map((file) => ({
         id: crypto.randomUUID(),
         file,
         kind: (wantsPlan ? "NDIS plan" : "Other") as DocumentKind,

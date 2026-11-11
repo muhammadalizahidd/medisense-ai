@@ -242,6 +242,8 @@ export interface AppointmentDoc {
   aborted?: { reason: string; remaining: string; byName: string; at: Date } | null;
   /** Set once the service is verified and on an invoice. */
   invoiceId?: ObjectId | null;
+  /** The service request this visit delivers. */
+  needId?: string | null;
   /** Telehealth is an appointment modality (section 1); in person by default. */
   modality?: "In person" | "Telehealth";
   /** The patient confirmed they'll be there (P03). */

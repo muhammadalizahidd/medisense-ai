@@ -23,7 +23,7 @@ import {
 import { slotLabel } from "@/lib/live/time";
 import { billVisit } from "./billing";
 import { collections } from "./db";
-import { noteStatusOf } from "./dto";
+import { needOfVisit, noteStatusOf } from "./dto";
 import { UserFacingError } from "./http";
 import { adminIds, audit, notify, publish } from "./live";
 import type { AssessmentDoc, ClientDoc, PlanDoc, UserDoc } from "./models";
@@ -718,9 +718,7 @@ export async function briefing(user: UserDoc, visitId: ObjectId) {
   const { visit, actsFor } = await visitFor(user, visitId);
   if (actsFor === "client") throw new UserFacingError("Visit not found.", 404);
   const { client } = await partiesOf(visit);
-  const need = client.needs.find(
-    (n) => n.discipline === visit.discipline && n.therapistId?.equals(visit.therapistId),
-  );
+  const need = needOfVisit(client, visit);
   const [plan, assessment, last] = await Promise.all([
     need
       ? db.plans.findOne(

@@ -165,7 +165,7 @@ In a terminal, in the project folder:
 node --env-file=.env.local .tmp-check/move-visits.mjs "Mia Testcase"
 ```
 
-**Expect:** three visits are moved: **yesterday 10 am**, **yesterday 2 pm** and **now**.
+**Expect:** three visits are moved: **yesterday 8 am**, **yesterday 4 pm** and **now**.
 
 ---
 
@@ -226,7 +226,7 @@ records the reason.
 ## Part D: Visits (section 11), notes and missed visits
 
 ### D1. An in-person visit, recorded afterwards (Daniel)
-1. In **Visit history**, open the **yesterday 10 am** visit → **Start visit**.
+1. In **Visit history**, open the **yesterday 8 am** visit → **Start visit**.
 2. Click **AI briefing**. **Expect:** points, each with its source.
 3. Fill in **Who is present**, tick that it's safe, and set the actual check-in time → **Check
    in**.
@@ -242,7 +242,7 @@ records the reason.
 - Jo's **Billing** shows a **Draft** invoice.
 
 ### D2. Did not attend
-On the **yesterday 2 pm** visit, click **Did not attend**.
+On the **yesterday 4 pm** visit, click **Did not attend**.
 
 **Expect:** a charge line is added to the draft invoice.
 
@@ -258,7 +258,7 @@ These are optional, on any later visit:
 ## Part E: Telehealth (section 12)
 
 ### E1. Set it up (Daniel)
-1. On the visit moved to **now**, click **Make telehealth** → **Video room**.
+1. On the visit moved to **now** (it started a few minutes ago, so it's under **Visit history**), click **Make telehealth** → **Video room**.
 2. Try **Create and send link** first. **Expect:** blocked until suitability is recorded.
 3. **1. Clinical suitability:** tick it → **Record**.
 4. **2. Join link:** **Create and send link** → **Copy**.
