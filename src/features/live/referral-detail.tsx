@@ -851,7 +851,23 @@ function ClinicalTriage({ r, busy, act }: { r: ReferralDetailDto; busy: boolean;
   const [notes, setNotes] = useState("");
   const [riskAction, setRiskAction] = useState("");
   const [precaution, setPrecaution] = useState("");
+  const [tried, setTried] = useState(false);
   const c = r.data.clinical;
+  const riskFields = risk && decision === "Accepted";
+  const missing = {
+    notes: !notes.trim() ? "Write your clinical review notes." : undefined,
+    riskAction:
+      riskFields && !riskAction.trim() ? "Describe how the risk will be managed." : undefined,
+    precaution:
+      riskFields && !precaution.trim() ? "Write the precaution therapists will see." : undefined,
+  };
+  const problems = Object.values(missing).filter(Boolean) as string[];
+  const actionLabel = {
+    Accepted: "Accept referral",
+    "More information": "Ask for more information",
+    Waitlisted: "Put on the waitlist",
+    Declined: "Decline referral",
+  }[decision];
 
   return (
     <Panel title="Clinical suitability and safety">
@@ -898,6 +914,8 @@ function ClinicalTriage({ r, busy, act }: { r: ReferralDetailDto; busy: boolean;
               value={notes}
               onChange={setNotes}
               rows={3}
+              error={tried ? missing.notes : undefined}
+              placeholder="Why this decision: suitability, scope, anything the therapist should know"
             />
             {risk && decision === "Accepted" && (
               <>
@@ -907,6 +925,7 @@ function ClinicalTriage({ r, busy, act }: { r: ReferralDetailDto; busy: boolean;
                   value={riskAction}
                   onChange={setRiskAction}
                   rows={3}
+                  error={tried ? missing.riskAction : undefined}
                   placeholder="For example, two-person visit for the first session; carer present"
                 />
                 <TextArea
@@ -915,6 +934,7 @@ function ClinicalTriage({ r, busy, act }: { r: ReferralDetailDto; busy: boolean;
                   value={precaution}
                   onChange={setPrecaution}
                   rows={2}
+                  error={tried ? missing.precaution : undefined}
                   placeholder="Shown on the request and the patient record"
                   maxLength={1000}
                 />
@@ -929,14 +949,36 @@ function ClinicalTriage({ r, busy, act }: { r: ReferralDetailDto; busy: boolean;
                 maxLength={1000}
               />
             )}
-            <div>
+            <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
               <Button
-                variant="primary"
-                disabled={busy || !notes.trim()}
-                onClick={() => act({ type: "triage", decision, notes, riskAction, precaution })}
+                variant={decision === "Declined" ? "danger" : "primary"}
+                loading={busy}
+                onClick={() => {
+                  setTried(true);
+                  if (problems.length) return;
+                  void act({ type: "triage", decision, notes, riskAction, precaution });
+                }}
               >
-                Record decision
+                {actionLabel}
               </Button>
+              {tried && problems.length > 0 ? (
+                <p role="alert" className="flex items-center gap-1.5 text-small text-over">
+                  <AlertTriangle className="size-4 flex-none" aria-hidden="true" />
+                  {problems.length === 1
+                    ? problems[0]
+                    : `${problems.length} fields to complete above.`}
+                </p>
+              ) : (
+                <p className="text-caption text-ink-500">
+                  {decision === "Accepted"
+                    ? "Moves the referral to Funding and consent."
+                    : decision === "More information"
+                      ? "Sets it to Needs information, waiting on the referrer."
+                      : decision === "Waitlisted"
+                        ? "Parks it until there is capacity."
+                        : "Closes the referral with your notes as the reason."}
+                </p>
+              )}
             </div>
           </>
         )}
