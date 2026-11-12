@@ -4,12 +4,13 @@ import {
   AlertTriangle,
   ArrowLeft,
   Check,
+  CircleAlert,
   CircleCheck,
+  CircleDashed,
   ShieldAlert,
   UserRound,
-  Users,
 } from "lucide-react";
-import { AiIcon } from "@/components/ai/provenance";
+import { AiChip, AiIcon, RuleMark } from "@/components/ai/provenance";
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import { Button, ButtonLink } from "@/components/ui/button";
@@ -129,17 +130,18 @@ export function ReferralDetail({ id }: { id: string }) {
                 {r.owner ? `Take over from ${r.owner.split(" ")[0]}` : "Take ownership"}
               </Button>
             )}
+            {open && <span aria-hidden="true" className="mx-1 h-5 w-px bg-border" />}
             {open && r.status !== "Waitlisted" && (
-              <Button size="sm" onClick={() => setSheet("waitlist")}>
+              <Button size="sm" variant="ghost" onClick={() => setSheet("waitlist")}>
                 Waitlist
               </Button>
             )}
             {open && (
               <>
-                <Button size="sm" onClick={() => setSheet("decline")}>
+                <Button size="sm" variant="danger" onClick={() => setSheet("decline")}>
                   Decline
                 </Button>
-                <Button size="sm" onClick={() => setSheet("withdraw")}>
+                <Button size="sm" variant="danger" onClick={() => setSheet("withdraw")}>
                   Withdraw
                 </Button>
               </>
@@ -149,7 +151,10 @@ export function ReferralDetail({ id }: { id: string }) {
       />
 
       {r.status !== "Declined" && r.status !== "Withdrawn" && r.status !== "Waitlisted" && (
-        <ol aria-label="Referral stages" className="mb-6 grid grid-cols-5 gap-2">
+        <ol
+          aria-label="Referral stages"
+          className="no-scrollbar mb-6 flex items-center overflow-x-auto rounded-card border border-border bg-surface px-5 py-4"
+        >
           {stages.map((s, i) => {
             const done = i < at || r.status === "Accepted";
             const now = i === at && r.status !== "Accepted";
@@ -157,28 +162,42 @@ export function ReferralDetail({ id }: { id: string }) {
               <li
                 key={s.label}
                 aria-current={now ? "step" : undefined}
-                className={cn(
-                  "flex items-center gap-2 rounded-control border px-3 py-2 text-caption font-semibold",
-                  done
-                    ? "border-accent-fill bg-accent-tint text-ink-900"
-                    : now
-                      ? "border-ink-900 bg-surface text-ink-900 shadow-hairline"
-                      : "border-border bg-surface text-ink-500",
-                )}
+                className="flex min-w-max flex-1 items-center gap-2.5 last:flex-none"
               >
                 <span
                   className={cn(
-                    "flex size-5 flex-none items-center justify-center rounded-full text-label",
+                    "flex size-6 flex-none items-center justify-center rounded-full text-caption font-semibold",
                     done
                       ? "bg-accent-fill text-on-accent"
                       : now
-                        ? "bg-ink-900 text-surface"
-                        : "bg-canvas",
+                        ? "border-2 border-accent-fill bg-surface text-accent"
+                        : "border border-border-strong text-ink-500",
                   )}
                 >
-                  {done ? <Check className="size-3" strokeWidth={3} /> : i + 1}
+                  {done ? <Check className="size-3.5" strokeWidth={3} aria-hidden="true" /> : i + 1}
                 </span>
-                <span className="truncate">{s.label}</span>
+                <span className="flex flex-col leading-tight">
+                  <span
+                    className={cn(
+                      "text-small",
+                      now ? "font-semibold text-ink-900" : done ? "text-ink-900" : "text-ink-500",
+                    )}
+                  >
+                    {s.label}
+                  </span>
+                  <span className="text-caption text-ink-500">
+                    {done ? "Done" : now ? "In progress" : "Not started"}
+                  </span>
+                </span>
+                {i < stages.length - 1 && (
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      "mx-4 h-px min-w-6 flex-1",
+                      done ? "bg-accent-fill" : "bg-border",
+                    )}
+                  />
+                )}
               </li>
             );
           })}
@@ -343,8 +362,8 @@ function NextStep({
           {invite?.usesReferralCode && (
             <p className="mb-4 rounded-control border border-healthy-bg bg-healthy-bg px-4 py-3 text-small">
               The family already has their app code from the referral. They sign in to the patient
-              app with their email and that code, then choose a password. If they&apos;ve lost it,
-              create a new one from the patient&apos;s record.
+              app with that code alone. If they&apos;ve lost it, create a new one from the
+              patient&apos;s record.
             </p>
           )}
           {invite?.inviteCode && (
@@ -385,205 +404,441 @@ function NextStep({
   }
 }
 
+/** One line of the intake checklist: state icon, what was checked, and its status. */
+function CheckRow({
+  state,
+  title,
+  detail,
+  status,
+  children,
+}: {
+  state: "ok" | "attention" | "blocked";
+  title: string;
+  detail?: ReactNode;
+  status: ReactNode;
+  children?: ReactNode;
+}) {
+  const Icon = state === "ok" ? CircleCheck : state === "attention" ? CircleAlert : AlertTriangle;
+  return (
+    <li className="flex gap-3.5 border-t border-border px-5 py-4 first:border-0">
+      <Icon
+        className={cn(
+          "mt-0.5 size-4.5 flex-none",
+          state === "ok" ? "text-healthy" : state === "attention" ? "text-watch" : "text-over",
+        )}
+        strokeWidth={2}
+        aria-hidden="true"
+      />
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
+          <p className="text-small font-semibold text-ink-900">{title}</p>
+          {status}
+        </div>
+        {detail && <div className="mt-0.5 text-small text-ink-700">{detail}</div>}
+        {children && <div className="mt-3">{children}</div>}
+      </div>
+    </li>
+  );
+}
+
+/** Key facts of the referral, always in view beside the work. */
+function ReferralFacts({ r }: { r: ReferralDetailDto }) {
+  const rows: [string, ReactNode][] = [
+    [
+      "Reference",
+      <span key="ref" className="font-mono">
+        {r.reference}
+      </span>,
+    ],
+    ["Received", `${shortDate(r.createdAt)} · ${relativeTime(r.createdAt)}`],
+    ["Referred by", `${r.data.submitter.name} (${r.data.submitter.role.toLowerCase()})`],
+    ["Funding", r.funding],
+    ["Owner", r.owner ?? "Unassigned"],
+    ["Region", r.region ?? "Not set"],
+  ];
+  return (
+    <section
+      aria-label="Referral summary"
+      className="overflow-hidden rounded-card border border-border bg-surface"
+    >
+      <h3 className="border-b border-border px-5 py-3 text-small font-semibold text-ink-900">
+        Referral summary
+      </h3>
+      <dl className="divide-y divide-border">
+        {rows.map(([k, v]) => (
+          <div key={k} className="flex justify-between gap-4 px-5 py-2.5 text-small">
+            <dt className="text-ink-500">{k}</dt>
+            <dd className="text-right text-ink-900">{v}</dd>
+          </div>
+        ))}
+        <div className="px-5 py-2.5 text-small">
+          <dt className="text-ink-500">Supports requested</dt>
+          <dd className="mt-1.5 flex flex-wrap gap-1.5">
+            {r.supports.map((s) => (
+              <Tag key={s} tone="meta">
+                {s}
+              </Tag>
+            ))}
+          </dd>
+        </div>
+      </dl>
+    </section>
+  );
+}
+
 function IntakeReview({ r, busy, act }: { r: ReferralDetailDto; busy: boolean; act: Act }) {
   const [asking, setAsking] = useState(false);
   const [chosen, setChosen] = useState<Gap[]>(r.gapsList);
-  const [message, setMessage] = useState("");
   const risk = needsRiskReview(r.data);
+  const duplicateOpen = r.duplicatesList.length > 0 && !r.duplicateDecision;
+  const attention =
+    (r.gapsList.length ? 1 : 0) + (duplicateOpen ? 1 : 0) + (risk ? 1 : 0) + (r.region ? 0 : 1);
+  const blockers = [
+    duplicateOpen && "Decide whether this is the same person as an existing record.",
+  ].filter(Boolean) as string[];
 
   return (
-    <Panel title="Intake review" action={<Tag tone="available">Step 3 of the lifecycle</Tag>}>
-      <div className="flex flex-col gap-5">
+    <div className="grid items-start gap-6 xl:grid-cols-12">
+      <div className="flex min-w-0 flex-col gap-6 xl:col-span-8">
+        <section
+          aria-labelledby="intake-checks"
+          className="overflow-hidden rounded-card border border-border bg-surface"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-3.5">
+            <div>
+              <h2 id="intake-checks" className="text-section font-semibold text-ink-900">
+                Intake checks
+              </h2>
+              <p className="flex items-center gap-1.5 text-caption text-ink-500">
+                <RuleMark>Rules</RuleMark> run on every referral · you verify each one
+              </p>
+            </div>
+            {attention === 0 ? (
+              <Tag tone="healthy">All checks clear</Tag>
+            ) : (
+              <Tag tone="watch">{attention} need attention</Tag>
+            )}
+          </div>
+          <ul>
+            <CheckRow
+              state={r.gapsList.length ? "attention" : "ok"}
+              title="Required information"
+              status={
+                r.gapsList.length ? (
+                  <Tag tone="watch">{r.gapsList.length} missing</Tag>
+                ) : (
+                  <Tag tone="healthy">Complete</Tag>
+                )
+              }
+              detail={
+                r.gapsList.length ? (
+                  <ul className="mt-1 flex flex-col gap-1">
+                    {r.gapsList.map((g) => (
+                      <li key={g.field} className="flex items-center gap-2">
+                        <CircleDashed
+                          className="size-3.5 flex-none text-ink-400"
+                          aria-hidden="true"
+                        />
+                        {g.label}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  "Everything the requirements ask for is present."
+                )
+              }
+            />
+            <CheckRow
+              state={duplicateOpen ? "blocked" : "ok"}
+              title="Duplicate check"
+              status={
+                duplicateOpen ? (
+                  <Tag tone="over">Decision needed</Tag>
+                ) : r.duplicateDecision ? (
+                  <Tag tone="healthy">Decided</Tag>
+                ) : (
+                  <Tag tone="healthy">No match</Tag>
+                )
+              }
+              detail={
+                duplicateOpen ? (
+                  "A possible match was found. Records are never merged automatically."
+                ) : r.duplicateDecision ? (
+                  <>
+                    {r.duplicateDecision.clientId ? (
+                      <>
+                        Linked to an{" "}
+                        <Link
+                          href={`/care/${r.duplicateDecision.clientId}`}
+                          className="font-semibold"
+                        >
+                          existing patient
+                        </Link>
+                        ; services will be added to their record.
+                      </>
+                    ) : (
+                      "Confirmed as a new person."
+                    )}{" "}
+                    <span className="text-caption text-ink-500">{r.duplicateDecision.byName}</span>
+                  </>
+                ) : (
+                  "No existing patient or open referral matches this person."
+                )
+              }
+            >
+              {duplicateOpen && (
+                <div className="overflow-hidden rounded-control border border-border">
+                  {r.duplicatesList.map((dup) => (
+                    <div
+                      key={dup.id}
+                      className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-3.5 py-2.5 last:border-0"
+                    >
+                      <span className="min-w-0 text-small">
+                        <Link
+                          href={
+                            dup.kind === "patient" ? `/care/${dup.id}` : `/care/referrals/${dup.id}`
+                          }
+                          className="font-semibold"
+                        >
+                          {dup.name}
+                        </Link>
+                        <span className="block text-caption text-ink-500">
+                          {dup.kind === "patient" ? "Existing patient" : "Open referral"} ·{" "}
+                          {dup.why}
+                        </span>
+                      </span>
+                      {dup.kind === "patient" && (
+                        <Button
+                          size="sm"
+                          disabled={busy}
+                          onClick={() => act({ type: "duplicate", clientId: dup.id })}
+                        >
+                          Same person
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                  <div className="flex justify-end bg-sunken px-3.5 py-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={busy}
+                      onClick={() => act({ type: "duplicate", clientId: null })}
+                    >
+                      Not the same person
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </CheckRow>
+            <CheckRow
+              state={risk ? "blocked" : "ok"}
+              title="Risk screening"
+              status={
+                risk ? (
+                  <Tag tone="over">Clinical review</Tag>
+                ) : (
+                  <Tag tone="healthy">None reported</Tag>
+                )
+              }
+              detail={
+                risk
+                  ? "A risk or behaviours of concern are reported (Yes or Unknown). Clinical triage reviews it before any therapist is matched."
+                  : "No risks or behaviours of concern reported."
+              }
+            />
+            <CheckRow
+              state={r.region ? "ok" : "attention"}
+              title="Service region"
+              status={
+                r.region ? <Tag tone="healthy">Set</Tag> : <Tag tone="watch">Choose a region</Tag>
+              }
+              detail={
+                r.region
+                  ? "Suggested from the postcode. Used to match therapists who cover the area."
+                  : "The postcode wasn't recognised. Choose the region for matching."
+              }
+            >
+              <RegionPicker r={r} busy={busy} act={act} />
+            </CheckRow>
+          </ul>
+        </section>
+
         <AiReview
           id={r.id}
-          onUse={(items) =>
+          onUse={(items) => {
             setChosen((list) => [
               ...list,
               ...items.filter((i) => !list.some((c) => c.field === i.field)),
-            ])
-          }
-          onAsk={() => setAsking(true)}
+            ]);
+            setAsking(true);
+          }}
         />
-        <section aria-label="Completeness check">
-          <h3 className="flex items-center gap-2 text-small font-semibold">
-            Completeness check
-            <span className="text-caption font-normal text-ink-500">rules, verified by you</span>
-          </h3>
-          {r.gapsList.length === 0 ? (
-            <p className="mt-2 flex items-center gap-2 text-small text-healthy">
-              <CircleCheck className="size-4" aria-hidden="true" /> Nothing missing.
+      </div>
+
+      <aside className="flex flex-col gap-4 xl:sticky xl:top-[calc(var(--topbar-h)+4rem)] xl:col-span-4">
+        <section
+          aria-labelledby="decision"
+          className="overflow-hidden rounded-card border border-border bg-surface"
+        >
+          <div className="px-5 pt-4 pb-5">
+            <p className="label-caps">Next step</p>
+            <h2 id="decision" className="mt-1.5 text-section font-semibold text-ink-900">
+              Send to clinical triage
+            </h2>
+            <p className="mt-1 text-small text-ink-700">
+              A Clinical Lead decides whether to accept. Missing information can be requested now or
+              after triage.
             </p>
-          ) : (
-            <ul className="mt-2 flex flex-col gap-1.5">
-              {r.gapsList.map((g) => (
-                <li key={g.field} className="flex items-center gap-2 text-small">
-                  <i aria-hidden="true" className="size-1.5 rounded-full bg-watch-dot" />
-                  {g.label}
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        {r.duplicatesList.length > 0 && (
-          <section
-            aria-label="Possible duplicates"
-            className="rounded-control border border-watch-bg bg-watch-bg/50 p-4"
-          >
-            <h3 className="flex items-center gap-2 text-small font-semibold">
-              <Users className="size-4 text-watch" aria-hidden="true" /> Possible duplicate
-            </h3>
-            <p className="mt-1 text-caption text-ink-700">
-              Records are never merged automatically. Check the details and decide.
-            </p>
-            <ul className="mt-3 flex flex-col gap-2">
-              {r.duplicatesList.map((dup) => (
-                <li
-                  key={dup.id}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-control bg-surface px-3 py-2"
-                >
-                  <span className="text-small">
-                    {dup.kind === "patient" ? (
-                      <Link href={`/care/${dup.id}`} className="font-semibold">
-                        {dup.name}
-                      </Link>
-                    ) : (
-                      <Link href={`/care/referrals/${dup.id}`} className="font-semibold">
-                        {dup.name}
-                      </Link>
-                    )}
-                    <span className="block text-caption text-ink-500">
-                      {dup.kind === "patient" ? "Existing patient" : "Open referral"}: {dup.why}
-                    </span>
-                  </span>
-                  {dup.kind === "patient" && (
-                    <Button
-                      size="sm"
-                      disabled={busy}
-                      onClick={() => act({ type: "duplicate", clientId: dup.id })}
-                    >
-                      Same person: add to their record
-                    </Button>
-                  )}
-                </li>
-              ))}
-            </ul>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="mt-2"
-              disabled={busy}
-              onClick={() => act({ type: "duplicate", clientId: null })}
-            >
-              Not the same person
-            </Button>
-          </section>
-        )}
-        {r.duplicateDecision && (
-          <p className="text-small text-ink-700">
-            {r.duplicateDecision.clientId ? (
-              <>
-                Linked to an{" "}
-                <Link href={`/care/${r.duplicateDecision.clientId}`} className="font-semibold">
-                  existing patient
-                </Link>
-                ; services will be added to their record.
-              </>
-            ) : (
-              "Confirmed as a new person."
-            )}{" "}
-            <span className="text-caption text-ink-500">({r.duplicateDecision.byName})</span>
-          </p>
-        )}
-
-        <RegionPicker r={r} busy={busy} act={act} />
-
-        {risk && (
-          <p className="flex gap-2 rounded-control bg-over-bg px-3 py-2 text-small text-over">
-            <AlertTriangle className="mt-0.5 size-4 flex-none" aria-hidden="true" />A risk or
-            behaviours of concern are reported (Yes or Unknown). Clinical triage must review it
-            before any therapist is matched.
-          </p>
-        )}
-
-        {asking ? (
-          <div className="flex flex-col gap-3 rounded-control border border-border p-4">
-            <p className="text-small font-semibold">What do you need from the submitter?</p>
-            {[
-              ...r.gapsList,
-              ...chosen.filter((c) => !r.gapsList.some((g) => g.field === c.field)),
-            ].map((g) => (
-              <Tick
-                key={g.field}
-                checked={chosen.some((c) => c.field === g.field)}
-                onChange={(on) =>
-                  setChosen((list) => (on ? [...list, g] : list.filter((c) => c.field !== g.field)))
-                }
-              >
-                {g.label}
-              </Tick>
-            ))}
-            <TextArea
-              label="Message"
-              value={message}
-              onChange={setMessage}
-              rows={3}
-              placeholder="Anything else you need, in plain words"
-            />
-            <div className="flex gap-2">
+            {blockers.length > 0 && (
+              <ul className="mt-3 flex flex-col gap-1.5 rounded-control border border-over bg-over-bg px-3 py-2.5 text-small text-ink-900">
+                {blockers.map((b) => (
+                  <li key={b} className="flex gap-2">
+                    <AlertTriangle
+                      className="mt-0.5 size-3.5 flex-none text-over"
+                      aria-hidden="true"
+                    />
+                    {b}
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="mt-4 flex flex-col gap-2">
               <Button
                 variant="primary"
-                disabled={busy || (!chosen.length && !message.trim())}
-                onClick={async () => {
-                  if (await act({ type: "request-info", items: chosen, message })) setAsking(false);
-                }}
+                className="w-full"
+                disabled={busy || blockers.length > 0}
+                onClick={() => act({ type: "to-triage", note: "" })}
               >
-                Send request
+                Send to clinical triage
               </Button>
-              <Button variant="ghost" onClick={() => setAsking(false)}>
-                Cancel
+              <Button className="w-full" disabled={busy} onClick={() => setAsking(true)}>
+                Request information
               </Button>
             </div>
           </div>
-        ) : (
-          <div className="flex flex-wrap gap-2 border-t border-border pt-4">
-            <Button
-              variant="primary"
-              disabled={busy || (r.duplicatesList.length > 0 && !r.duplicateDecision)}
-              onClick={() => act({ type: "to-triage", note: "" })}
-            >
-              Send to clinical triage
-            </Button>
-            <Button disabled={busy} onClick={() => setAsking(true)}>
-              Request information
-            </Button>
-          </div>
-        )}
+          <p className="border-t border-border bg-sunken px-5 py-2.5 text-caption text-ink-500">
+            Waitlist, decline or withdraw from the top of the page.
+          </p>
+        </section>
+        <ReferralFacts r={r} />
+      </aside>
+
+      {asking && (
+        <RequestInfoSheet
+          r={r}
+          busy={busy}
+          chosen={chosen}
+          setChosen={setChosen}
+          onClose={() => setAsking(false)}
+          onSend={async (message) => {
+            if (await act({ type: "request-info", items: chosen, message })) setAsking(false);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+/** Ask the submitter for what's missing; they answer on their private tracking link. */
+function RequestInfoSheet({
+  r,
+  busy,
+  chosen,
+  setChosen,
+  onClose,
+  onSend,
+}: {
+  r: ReferralDetailDto;
+  busy: boolean;
+  chosen: Gap[];
+  setChosen: (update: (list: Gap[]) => Gap[]) => void;
+  onClose: () => void;
+  onSend: (message: string) => void;
+}) {
+  const [message, setMessage] = useState("");
+  const options = [
+    ...r.gapsList,
+    ...chosen.filter((c) => !r.gapsList.some((g) => g.field === c.field)),
+  ];
+  return (
+    <Sheet
+      title="Request information"
+      description={`${r.data.submitter.name} answers on their private tracking link. The referral waits in Needs information until they do.`}
+      onClose={onClose}
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            className="ml-auto"
+            loading={busy}
+            disabled={!chosen.length && !message.trim()}
+            onClick={() => onSend(message)}
+          >
+            Send request{chosen.length ? ` · ${chosen.length}` : ""}
+          </Button>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-5">
+        <div>
+          <p className="mb-2 label-caps">What to ask for</p>
+          {options.length ? (
+            <div className="flex flex-col gap-2">
+              {options.map((g) => (
+                <Tick
+                  key={g.field}
+                  checked={chosen.some((c) => c.field === g.field)}
+                  onChange={(on) =>
+                    setChosen((list) =>
+                      on ? [...list, g] : list.filter((c) => c.field !== g.field),
+                    )
+                  }
+                >
+                  {g.label}
+                  {g.field.startsWith("ai:") && (
+                    <span className="ml-2 align-middle">
+                      <AiChip>AI suggested</AiChip>
+                    </span>
+                  )}
+                </Tick>
+              ))}
+            </div>
+          ) : (
+            <p className="text-small text-ink-500">
+              Nothing is flagged as missing. Write what you need below.
+            </p>
+          )}
+        </div>
+        <TextArea
+          label="Message"
+          value={message}
+          onChange={setMessage}
+          rows={4}
+          placeholder="Anything else you need, in plain words"
+        />
       </div>
-    </Panel>
+    </Sheet>
   );
 }
 
 function RegionPicker({ r, busy, act }: { r: ReferralDetailDto; busy: boolean; act: Act }) {
   return (
-    <div className="flex flex-wrap items-end gap-3">
-      <div className="w-56">
-        <Field
-          label="Service region for matching"
-          hint={r.region ? "Suggested from the postcode" : "Not recognised from the postcode"}
-        >
-          <Select
-            value={r.region ?? ""}
-            disabled={busy}
-            onChange={(e) => e.target.value && act({ type: "set-region", region: e.target.value })}
-          >
-            {!r.region && <option value="">Choose…</option>}
-            {regions.map((region) => (
-              <option key={region}>{region}</option>
-            ))}
-          </Select>
-        </Field>
-      </div>
+    <div className="w-60">
+      <Select
+        aria-label="Service region for matching"
+        value={r.region ?? ""}
+        disabled={busy}
+        onChange={(e) => e.target.value && act({ type: "set-region", region: e.target.value })}
+      >
+        {!r.region && <option value="">Choose a region…</option>}
+        {regions.map((region) => (
+          <option key={region}>{region}</option>
+        ))}
+      </Select>
     </div>
   );
 }
@@ -599,10 +854,7 @@ function ClinicalTriage({ r, busy, act }: { r: ReferralDetailDto; busy: boolean;
   const c = r.data.clinical;
 
   return (
-    <Panel
-      title="Clinical suitability and safety"
-      action={<Tag tone="live">Step 4 of the lifecycle</Tag>}
-    >
+    <Panel title="Clinical suitability and safety">
       <div className="flex flex-col gap-5">
         <dl className="grid gap-x-6 gap-y-2 rounded-control bg-canvas p-4 text-small md:grid-cols-[180px_1fr]">
           <dt className="text-ink-500">Diagnosis (reported)</dt>
@@ -734,10 +986,7 @@ function FundingReview({ r, busy, act }: { r: ReferralDetailDto; busy: boolean; 
           )}
         </Panel>
       )}
-      <Panel
-        title="Payment path and consent"
-        action={<Tag tone="live">Step 5 of the lifecycle</Tag>}
-      >
+      <Panel title="Payment path and consent">
         <div className="flex flex-col gap-5">
           <dl className="grid gap-x-6 gap-y-2 rounded-control bg-canvas p-4 text-small md:grid-cols-[180px_1fr]">
             <dt className="text-ink-500">Funding source</dt>
@@ -1047,82 +1296,116 @@ function ReasonSheet({
   );
 }
 
-/** AI referral review (section 13): a missing-information checklist. The admin verifies each item. */
-function AiReview({
-  id,
-  onUse,
-  onAsk,
-}: {
-  id: string;
-  onUse: (items: Gap[]) => void;
-  onAsk: () => void;
-}) {
-  const [items, setItems] = useState<{ field: string; label: string; why: string }[] | null>(null);
+/**
+ * AI referral review (section 13): suggestions for what's missing or unclear. Each one is chosen
+ * by a person before anything is sent.
+ */
+function AiReview({ id, onUse }: { id: string; onUse: (items: Gap[]) => void }) {
+  type Item = { field: string; label: string; why: string };
+  const [items, setItems] = useState<Item[] | null>(null);
+  const [picked, setPicked] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [fail, setFail] = useState<string | null>(null);
+
+  async function run() {
+    setBusy(true);
+    setFail(null);
+    try {
+      const found = (
+        await api<{ items: Item[] }>(`/api/care/referrals/${id}/ai-review`, { method: "POST" })
+      ).items;
+      setItems(found);
+      setPicked(found.map((i) => i.field + i.label));
+    } catch (e) {
+      setFail(e instanceof Error ? e.message : "AI isn't available.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const chosen = (items ?? []).filter((i) => picked.includes(i.field + i.label));
+
   return (
-    <section
-      aria-label="AI review"
-      className="rounded-card border border-accent/30 bg-accent-tint p-4"
-    >
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="flex items-center gap-2 text-small font-semibold">
-          <AiIcon className="size-4" /> AI completeness review
-        </p>
-        <Button
-          size="sm"
-          disabled={busy}
-          onClick={async () => {
-            setBusy(true);
-            setFail(null);
-            try {
-              setItems(
-                (
-                  await api<{ items: { field: string; label: string; why: string }[] }>(
-                    `/api/care/referrals/${id}/ai-review`,
-                    { method: "POST" },
-                  )
-                ).items,
-              );
-            } catch (e) {
-              setFail(e instanceof Error ? e.message : "AI isn't available.");
-            } finally {
-              setBusy(false);
-            }
-          }}
-        >
+    <section aria-labelledby="ai-review" className="overflow-hidden rounded-card surface-draft">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5">
+        <div>
+          <h2
+            id="ai-review"
+            className="flex items-center gap-2 text-section font-semibold text-ink-900"
+          >
+            <AiIcon className="size-4" /> AI completeness review
+          </h2>
+          <p className="text-caption text-ink-500">
+            Reads the referral for anything a clinician would need that&apos;s missing or unclear ·
+            suggestions only
+          </p>
+        </div>
+        <Button size="sm" loading={busy} onClick={run}>
           {busy ? "Reviewing…" : items ? "Review again" : "Review with AI"}
         </Button>
       </div>
-      {fail && <p className="mt-2 text-caption text-over">{fail}</p>}
+
+      {busy && !items && (
+        <div role="status" aria-label="Reviewing" className="flex flex-col gap-2 px-5 pb-5">
+          <span className="ai-shimmer h-3 w-11/12 rounded-tag" />
+          <span className="ai-shimmer h-3 w-8/12 rounded-tag" />
+          <span className="ai-shimmer h-3 w-10/12 rounded-tag" />
+        </div>
+      )}
+      {fail && <p className="px-5 pb-4 text-small text-over">{fail}</p>}
+
       {items && (
         <>
           {items.length === 0 ? (
-            <p className="mt-2 text-small">AI found nothing missing. You still verify.</p>
+            <p className="border-t border-draft-rule/60 px-5 py-4 text-small text-ink-700">
+              Nothing missing found. You still verify the checks above.
+            </p>
           ) : (
-            <ul className="mt-3 flex flex-col gap-1.5 text-small">
-              {items.map((i) => (
-                <li key={i.field + i.label}>
-                  <strong>{i.label}</strong> <span className="text-ink-700">· {i.why}</span>
-                </li>
-              ))}
+            <ul className="border-t border-draft-rule/60 bg-surface">
+              {items.map((i) => {
+                const key = i.field + i.label;
+                const on = picked.includes(key);
+                return (
+                  <li key={key} className="border-b border-border last:border-0">
+                    <label className="flex cursor-pointer gap-3 px-5 py-3 hover:bg-sunken/60">
+                      <input
+                        type="checkbox"
+                        checked={on}
+                        onChange={(e) =>
+                          setPicked((list) =>
+                            e.target.checked ? [...list, key] : list.filter((k) => k !== key),
+                          )
+                        }
+                        className="mt-0.5 size-4 flex-none accent-(--color-accent-fill)"
+                      />
+                      <span className="min-w-0">
+                        <span className="block text-small font-semibold text-ink-900">
+                          {i.label}
+                        </span>
+                        <span className="block text-small text-ink-700">{i.why}</span>
+                      </span>
+                    </label>
+                  </li>
+                );
+              })}
             </ul>
           )}
           {items.length > 0 && (
-            <Button
-              size="sm"
-              className="mt-3"
-              onClick={() => {
-                onUse(items.map((i) => ({ field: `ai:${i.field}`, label: i.label })));
-                onAsk();
-              }}
-            >
-              Add to a request for information
-            </Button>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-draft-rule/60 px-5 py-3">
+              <p className="text-caption text-ink-500">
+                {chosen.length} of {items.length} selected · nothing is sent until you choose
+              </p>
+              <Button
+                size="sm"
+                disabled={!chosen.length}
+                onClick={() =>
+                  onUse(chosen.map((i) => ({ field: `ai:${i.field}`, label: i.label })))
+                }
+              >
+                Add to a request
+              </Button>
+            </div>
           )}
-          <p className="mt-2 text-caption text-ink-500">
-            Suggestions only: nothing is sent until you choose.
-          </p>
         </>
       )}
     </section>
