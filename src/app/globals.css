@@ -8,6 +8,9 @@
    Never write a hex value in a component.
    ========================================================================== */
 @import "tailwindcss";
+/* Don't scan build output, dev logs or the static design boards for class names. */
+@source not "../../.next";
+@source not "../../design-reference";
 
 /* Dark-scheme variant: dark:bg-raised etc. data-scheme is set by the theme script. */
 @custom-variant dark (&:where([data-scheme="dark"], [data-scheme="dark"] *));

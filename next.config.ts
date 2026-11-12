@@ -36,6 +36,11 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   devIndicators: false,
   partialPrefetching: true,
+  experimental: {
+    // The persistent dev cache went stale twice and put the browser in a reload loop
+    // (every HMR connection reported the client entry as changed). Dev builds start clean.
+    turbopackFileSystemCacheForDev: false,
+  },
   turbopack: {
     rules: {
       "*.css": {
