@@ -64,7 +64,7 @@ export function SinceYesterday() {
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                  <h2 className="type-display text-h2">
+                  <h2 className="text-section font-semibold text-ink-900">
                     {e.client}&apos;s task was escalated to Grace Liu
                   </h2>
                   <p className="mt-0.5 text-small text-ink-700">
@@ -142,7 +142,7 @@ export function SinceYesterday() {
         </div>
 
         <Card aria-labelledby="audit-side" className="px-5 pt-4.5 pb-5 xl:col-span-5">
-          <h2 id="audit-side" className="mb-3 type-display text-h2">
+          <h2 id="audit-side" className="mb-3 text-section font-semibold text-ink-900">
             Audit trail
           </h2>
           <ol className="border-l border-border">

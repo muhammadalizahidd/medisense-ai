@@ -168,7 +168,7 @@ export function ClientTable({ clients }: { clients: CaseloadClient[] }) {
         role="table"
         aria-label="Sarah Thompson’s patients"
       >
-        <div className="min-w-268">
+        <div className="md:min-w-268">
           <TableHeader columns={COLUMNS} className="sticky top-0 z-1">
             <div>Patient</div>
             <div>Service</div>

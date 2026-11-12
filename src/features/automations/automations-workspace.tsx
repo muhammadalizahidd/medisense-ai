@@ -124,7 +124,7 @@ export function AutomationsWorkspace() {
     <>
       <section
         aria-label="Automation summary"
-        className="stat-band grid grid-cols-2 gap-px overflow-hidden rounded-card border border-border bg-border lg:grid-cols-5"
+        className="grid grid-cols-2 gap-px overflow-hidden rounded-card border border-border bg-border lg:grid-cols-5"
       >
         {metrics.map((m) => (
           <div key={m.label} className="flex flex-col gap-1.5 bg-surface px-5 py-4">
@@ -360,7 +360,7 @@ export function AutomationsWorkspace() {
 
       <section
         aria-label="Guardrails"
-        className="stat-band mt-6 grid gap-px overflow-hidden rounded-card border border-border bg-border lg:grid-cols-3"
+        className="mt-6 grid gap-px overflow-hidden rounded-card border border-border bg-border lg:grid-cols-3"
       >
         {[
           {

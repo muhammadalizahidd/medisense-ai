@@ -90,7 +90,7 @@ function ApprovedNote({
   return (
     <section aria-labelledby="the-note" className="rounded-card border border-border bg-surface">
       <div className="border-b border-border px-5 pt-4.5 pb-3.5">
-        <h2 id="the-note" className="type-display text-h2">
+        <h2 id="the-note" className="text-section font-semibold text-ink-900">
           Oliver&apos;s approved note
         </h2>
         <div className="mt-1">
@@ -164,7 +164,7 @@ function ItemHead({
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-        <h3 className="type-display text-h2">{title}</h3>
+        <h3 className="text-section font-semibold text-ink-900">{title}</h3>
         <div className="flex items-center gap-2">
           {children}
           {tag}
@@ -599,7 +599,7 @@ export function PreparedView() {
     return (
       <section aria-busy="true" aria-label="Preparing" className="max-w-200">
         <Card className="px-6 py-5">
-          <h2 className="type-display text-h2">
+          <h2 className="text-section font-semibold text-ink-900">
             Note approved. AI is preparing what follows from it.
           </h2>
           <ul className="mt-4 flex flex-col gap-3">
@@ -679,7 +679,7 @@ export function PreparedView() {
             className="rounded-card border border-l-2 border-border border-l-draft-rule bg-draft"
           >
             <div className="px-5 pt-4.5 pb-3.5">
-              <h3 id="follow-ups" className="type-display text-h2">
+              <h3 id="follow-ups" className="text-section font-semibold text-ink-900">
                 {prepared.tasks.length} {prepared.tasks.length === 1 ? "follow-up" : "follow-ups"}{" "}
                 AI found
               </h3>
@@ -707,7 +707,7 @@ export function PreparedView() {
         className="mt-8 grid gap-x-16 gap-y-3 border-t border-border-strong pt-5 lg:grid-cols-12"
       >
         <div className="lg:col-span-5">
-          <h2 id="not-repeated" className="type-display text-h2">
+          <h2 id="not-repeated" className="text-section font-semibold text-ink-900">
             Steps you didn&apos;t have to repeat
           </h2>
           <ButtonLink href="/my-day" className="mt-3">

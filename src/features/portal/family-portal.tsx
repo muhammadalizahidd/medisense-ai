@@ -24,7 +24,7 @@ export function SignIn() {
   }
 
   return (
-    <main className="hero-page flex min-h-screen items-center justify-center bg-canvas px-4 py-10">
+    <main className="flex min-h-screen items-center justify-center bg-canvas px-4 py-10">
       <div className="w-full max-w-100 rounded-sheet border border-border bg-surface px-6 py-7 shadow-overlay">
         <p className="type-display text-h2">Medisense</p>
         <h1 className="mt-5 type-display text-h1">Family portal</h1>

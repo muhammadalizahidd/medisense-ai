@@ -1445,22 +1445,69 @@ input:-webkit-autofill:focus {
   background: var(--color-sunken);
 }
 @keyframes ai-shimmer {
-  from { background-position: 200% 0; }
-  to { background-position: -200% 0; }
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
 }
 @media (prefers-reduced-motion: no-preference) {
   .ai-shimmer {
-    background: linear-gradient(90deg, var(--color-sunken) 0%, var(--color-draft) 50%, var(--color-sunken) 100%) 0 0 / 200% 100%;
+    background: linear-gradient(
+        90deg,
+        var(--color-sunken) 0%,
+        var(--color-draft) 50%,
+        var(--color-sunken) 100%
+      )
+      0 0 / 200% 100%;
     animation: ai-shimmer 1.6s linear infinite;
   }
 }
 /* Toasts slide up from the bottom right. */
 @keyframes toast-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 @media (prefers-reduced-motion: no-preference) {
-  .toast-in { animation: toast-in var(--duration-base) var(--ease-out) both; }
+  .toast-in {
+    animation: toast-in var(--duration-base) var(--ease-out) both;
+  }
+}
+
+/* Real <table>s stack into one card per row on phones, so nothing scrolls sideways. */
+@media (width < 48rem) {
+  .table-stack thead {
+    display: none;
+  }
+  .table-stack,
+  .table-stack tbody,
+  .table-stack tr,
+  .table-stack td {
+    display: block;
+    width: 100%;
+  }
+  .table-stack tr {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .table-stack td {
+    padding: 0.125rem 0 !important;
+    border: 0 !important;
+  }
+}
+/* Print: only the page content, on white (progress reports and invoices). */
+@media print {
+  html,
+  body {
+    background: #fff !important;
+  }
 }
 
 /* ==========================================================================

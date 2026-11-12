@@ -101,7 +101,7 @@ export function LiveBrief() {
         />
       )}
 
-      <h2 id="agenda-title" className="mt-3.5 mb-1 type-display text-h2">
+      <h2 id="agenda-title" className="mt-3.5 mb-1 text-section font-semibold text-ink-900">
         AI supervision brief
       </h2>
 

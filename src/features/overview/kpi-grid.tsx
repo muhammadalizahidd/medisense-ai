@@ -6,7 +6,7 @@ export function KpiGrid({ kpis, label }: { kpis: Kpi[]; label: string }) {
   return (
     <section
       aria-label={label}
-      className="stat-band grid grid-cols-2 gap-px overflow-hidden rounded-card border border-border bg-border lg:grid-cols-4"
+      className="grid grid-cols-2 gap-px overflow-hidden rounded-card border border-border bg-border lg:grid-cols-4"
     >
       {kpis.map((kpi) => (
         <div

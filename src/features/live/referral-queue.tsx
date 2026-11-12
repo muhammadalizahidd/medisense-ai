@@ -77,12 +77,12 @@ export function ReferralQueue() {
                 void navigator.clipboard?.writeText(`${window.location.origin}/refer`);
                 setCopied(true);
               }}
-              className="on-light inline-flex h-9 cursor-pointer items-center gap-2 rounded-control border border-border-strong bg-surface px-3 text-small font-semibold text-ink-900 hover:bg-canvas"
+              className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-control border border-border-strong bg-surface px-3 text-small font-semibold text-ink-900 hover:bg-canvas"
             >
               <Copy className="size-3.5" aria-hidden="true" />
               {copied ? "Link copied" : "Copy public form link"}
             </button>
-            <ButtonLink href="/refer" target="_blank" className="on-light">
+            <ButtonLink href="/refer" target="_blank">
               <ExternalLink className="size-3.5" aria-hidden="true" />
               Public form
             </ButtonLink>
@@ -171,7 +171,7 @@ export function ReferralQueue() {
         </EmptyNote>
       ) : (
         <div className="overflow-x-auto rounded-card border border-border bg-surface">
-          <table className="w-full min-w-240 text-left text-small">
+          <table className="table-stack w-full text-left text-small md:min-w-240">
             <thead className="border-b border-border text-caption text-ink-500">
               <tr>
                 <th className="px-4 py-3 font-medium">Referral</th>

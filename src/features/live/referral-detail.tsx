@@ -124,27 +124,22 @@ export function ReferralDetail({ id }: { id: string }) {
             <LiveBadge />
             <ReferralStatusTag status={r.status} />
             {open && !mine && (
-              <Button
-                size="sm"
-                className="on-light"
-                disabled={busy}
-                onClick={() => act({ type: "take-ownership" })}
-              >
+              <Button size="sm" disabled={busy} onClick={() => act({ type: "take-ownership" })}>
                 <UserRound className="size-3.5" aria-hidden="true" />
                 {r.owner ? `Take over from ${r.owner.split(" ")[0]}` : "Take ownership"}
               </Button>
             )}
             {open && r.status !== "Waitlisted" && (
-              <Button size="sm" className="on-light" onClick={() => setSheet("waitlist")}>
+              <Button size="sm" onClick={() => setSheet("waitlist")}>
                 Waitlist
               </Button>
             )}
             {open && (
               <>
-                <Button size="sm" className="on-light" onClick={() => setSheet("decline")}>
+                <Button size="sm" onClick={() => setSheet("decline")}>
                   Decline
                 </Button>
-                <Button size="sm" className="on-light" onClick={() => setSheet("withdraw")}>
+                <Button size="sm" onClick={() => setSheet("withdraw")}>
                   Withdraw
                 </Button>
               </>

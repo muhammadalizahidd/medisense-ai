@@ -25,12 +25,12 @@ export function ChatOverlay({
 
   return (
     <div className="absolute inset-0 z-20 flex flex-col bg-surface">
-      <header className="page-hero flex items-center gap-3 rounded-none! px-3! pt-12! pb-3!">
+      <header className="flex items-center gap-3 border-b border-border bg-surface px-3 pt-12 pb-3">
         <button
           type="button"
           aria-label="Back"
           onClick={onBack}
-          className="on-light flex size-9 flex-none cursor-pointer items-center justify-center rounded-full bg-surface/90 text-ink-900 hover:bg-surface"
+          className="flex size-9 flex-none cursor-pointer items-center justify-center rounded-full bg-surface/90 text-ink-900 hover:bg-surface"
         >
           <ArrowLeft className="size-5" aria-hidden="true" />
         </button>

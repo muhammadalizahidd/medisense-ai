@@ -15,7 +15,7 @@ export function ScoreBreakdown({
     <Card aria-labelledby="why-score" className="flex h-full flex-col px-6 pt-5 pb-4.5">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 id="why-score" className="type-display text-h2">
+          <h2 id="why-score" className="text-section font-semibold text-ink-900">
             Why this score
           </h2>
           <Caption className="mt-1">Six configured indicators, weighted to {max}.</Caption>

@@ -75,7 +75,7 @@ export function CaseloadHealth({
       </div>
 
       <div className="overflow-x-auto" role="table" aria-label="Caseload health by clinician">
-        <div className="min-w-200">
+        <div className="md:min-w-200">
           <TableHeader columns={COLUMNS} className="px-3">
             <div>Clinician</div>
             <div>Capacity</div>

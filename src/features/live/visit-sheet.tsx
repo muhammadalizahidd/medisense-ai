@@ -281,9 +281,12 @@ export function VisitSheet({
               </section>
               <AiBriefing visitId={visit.id} />
               {b.precautions && (
-                <p className="flex gap-2 rounded-control bg-over-bg px-3 py-2 text-small">
+                <p className="flex gap-2 rounded-control border border-over bg-over-bg px-3 py-2 text-small text-ink-900">
                   <ShieldAlert className="mt-0.5 size-4 flex-none text-over" aria-hidden="true" />
-                  {b.precautions}
+                  <span>
+                    <strong className="font-bold text-over">Precaution: </strong>
+                    {b.precautions}
+                  </span>
                 </p>
               )}
               <h3 className="text-body font-semibold">On arrival</h3>

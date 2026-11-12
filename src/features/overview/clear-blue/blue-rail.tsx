@@ -51,7 +51,7 @@ export function MonthCalendar({ className }: { className?: string }) {
       className={cn("flex flex-col rounded-card border border-border bg-surface p-5", className)}
     >
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="type-display text-section" aria-live="polite">
+        <h2 className="text-section font-semibold" aria-live="polite">
           {MONTHS[month]} {year}
         </h2>
         <div className="flex gap-1">
@@ -152,7 +152,7 @@ export function Notifications({ className }: { className?: string }) {
       className={cn("rounded-card border border-border bg-surface p-5", className)}
     >
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="type-display text-section">Notifications</h2>
+        <h2 className="text-section font-semibold">Notifications</h2>
         <button
           type="button"
           onClick={() => setAuditOpen(true)}

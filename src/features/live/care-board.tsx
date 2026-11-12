@@ -149,7 +149,7 @@ export function CareBoard() {
         </EmptyNote>
       ) : (
         <div className="overflow-x-auto rounded-card border border-border bg-surface">
-          <table className="w-full min-w-200 text-left text-small">
+          <table className="table-stack w-full text-left text-small md:min-w-200">
             <thead className="border-b border-border text-caption text-ink-500">
               <tr>
                 <th className="px-4 py-3 font-medium">Patient</th>

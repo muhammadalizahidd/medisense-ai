@@ -86,7 +86,7 @@ export function ClientDirectory() {
     <>
       <section
         aria-label="Patient summary"
-        className="stat-band grid grid-cols-2 gap-px overflow-hidden rounded-card border border-border bg-border lg:grid-cols-5"
+        className="grid grid-cols-2 gap-px overflow-hidden rounded-card border border-border bg-border lg:grid-cols-5"
       >
         {metrics.map((m) => (
           <div key={m.label} className="flex flex-col gap-1.5 bg-surface px-5 py-4">
@@ -155,7 +155,7 @@ export function ClientDirectory() {
 
       <Card aria-label="Patients" className="overflow-hidden">
         <div className="overflow-x-auto" role="table" aria-label="Patients">
-          <div className="min-w-280">
+          <div className="md:min-w-280">
             <TableHeader columns={COLUMNS}>
               <div>Patient</div>
               <div>Funding</div>

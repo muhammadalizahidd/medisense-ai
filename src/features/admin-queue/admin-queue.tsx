@@ -101,7 +101,7 @@ function Exception() {
             aria-hidden="true"
           />
           <div>
-            <h2 id="exceptions" className="type-display text-h2">
+            <h2 id="exceptions" className="text-section font-semibold text-ink-900">
               1 exception: a form didn&apos;t sync
             </h2>
             <p className="mt-0.5 max-w-180 text-small text-ink-700">
@@ -270,7 +270,7 @@ export function AdminQueue() {
 
       <Card aria-label="Tasks" className="overflow-hidden">
         <div className="overflow-x-auto" role="table" aria-label="Admin tasks">
-          <div className="min-w-280">
+          <div className="md:min-w-280">
             <TableHeader columns={COLUMNS}>
               <div role="columnheader">Task and source</div>
               <div role="columnheader">Patient</div>

@@ -93,7 +93,7 @@ export function TasksWorkspace() {
     <>
       <section
         aria-label="Task summary"
-        className="stat-band grid grid-cols-2 gap-px overflow-hidden rounded-card border border-border bg-border lg:grid-cols-5"
+        className="grid grid-cols-2 gap-px overflow-hidden rounded-card border border-border bg-border lg:grid-cols-5"
       >
         {metrics.map((m) => (
           <div key={m.label} className="flex flex-col gap-1.5 bg-surface px-5 py-4">
@@ -155,7 +155,7 @@ export function TasksWorkspace() {
 
       <Card aria-label="Tasks" className="overflow-hidden">
         <div className="overflow-x-auto" role="table" aria-label="Tasks">
-          <div className="min-w-290">
+          <div className="md:min-w-290">
             <TableHeader columns={COLUMNS}>
               <div>Task</div>
               <div>Patient</div>

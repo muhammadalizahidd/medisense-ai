@@ -660,7 +660,7 @@ export function SessionNote() {
             Typing instead of dictating. If your microphone isn&apos;t working, allow access in your
             browser settings.
           </p>
-          <h2 id="type-note" className="mt-5 type-display text-h2">
+          <h2 id="type-note" className="mt-5 text-section font-semibold text-ink-900">
             What happened on this visit?
           </h2>
           <textarea
@@ -691,7 +691,7 @@ export function SessionNote() {
 
       {stage === "complete" && (
         <section aria-labelledby="transcript" className="max-w-200">
-          <h2 id="transcript" className="type-display text-h2">
+          <h2 id="transcript" className="text-section font-semibold text-ink-900">
             Here&apos;s what you said
           </h2>
           <p className="mt-1 text-small text-ink-700">

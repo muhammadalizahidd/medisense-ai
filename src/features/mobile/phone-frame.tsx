@@ -53,7 +53,7 @@ export function PhoneFrame({
   children: ReactNode;
 }) {
   return (
-    <div className="hero-page flex min-h-dvh items-center justify-center gap-16 bg-canvas md:py-8 lg:px-10">
+    <div className="flex min-h-dvh items-center justify-center gap-16 bg-canvas md:py-8 lg:px-10">
       <div className="fixed top-4 left-4 z-10 hidden md:block">
         <ButtonLink href="/">
           <ArrowLeft className="size-4" strokeWidth={1.5} aria-hidden="true" />
@@ -158,7 +158,7 @@ export function AppHeader({
   children?: ReactNode;
 }) {
   return (
-    <header className="page-hero border-b border-border bg-surface px-5 pt-12 pb-4">
+    <header className="border-b border-border bg-surface px-5 pt-12 pb-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           {eyebrow && <p className="text-caption font-medium text-ink-700">{eyebrow}</p>}
@@ -186,7 +186,7 @@ export function AppCard({
     <section className={cn("mb-3 rounded-card border border-border bg-surface p-4", className)}>
       {(title || action) && (
         <div className="mb-2.5 flex items-center justify-between gap-2">
-          {title && <h3 className="type-display text-section">{title}</h3>}
+          {title && <h3 className="text-section font-semibold">{title}</h3>}
           {action}
         </div>
       )}
@@ -223,7 +223,7 @@ export function AppSheet({
         className="relative flex max-h-[88%] flex-col rounded-t-[28px] bg-raised"
       >
         <header className="flex items-center justify-between gap-3 px-5 pt-5 pb-3">
-          <h3 className="type-display text-h2">{title}</h3>
+          <h3 className="text-section font-semibold text-ink-900">{title}</h3>
           <button
             type="button"
             onClick={onClose}

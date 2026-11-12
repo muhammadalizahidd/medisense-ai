@@ -129,7 +129,7 @@ export function AdminOperations() {
 
       <section
         aria-label="Compliance summary"
-        className="stat-band mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-card border border-border bg-border lg:grid-cols-5"
+        className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-card border border-border bg-border lg:grid-cols-5"
       >
         {metrics.map((m) => (
           <div key={m.label} className="flex flex-col gap-1.5 bg-surface px-5 py-4">
@@ -198,7 +198,7 @@ export function AdminOperations() {
           />
         </div>
         <div className="overflow-x-auto">
-          <div className="min-w-240">
+          <div className="md:min-w-240">
             <div className="grid grid-cols-[200px_repeat(5,minmax(0,1fr))] border-y border-border bg-sunken px-5 py-2 label-caps">
               <span>Clinician</span>
               {staffRequirements.map((r) => (
@@ -276,7 +276,7 @@ export function AdminOperations() {
 
       <Card aria-label="Expiry worklist" className="overflow-hidden">
         <div className="overflow-x-auto" role="table" aria-label="Expiry worklist">
-          <div className="min-w-220">
+          <div className="md:min-w-220">
             <TableHeader columns={COLUMNS}>
               <div>Item</div>
               <div>Who</div>

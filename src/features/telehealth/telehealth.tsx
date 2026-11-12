@@ -121,7 +121,7 @@ function NotePanel({ visit, ended }: { visit: ScheduleItem; ended: boolean }) {
         {noteSectionTitles.map(({ id, title }) =>
           note.sections[id].length ? (
             <div key={id}>
-              <h4 className="type-display text-section">{title}</h4>
+              <h4 className="text-section font-semibold">{title}</h4>
               <ul className="mt-1 flex flex-col gap-1 text-small">
                 {note.sections[id].map((s) => (
                   <li key={s.id}>{s.text}</li>

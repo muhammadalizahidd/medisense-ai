@@ -71,7 +71,7 @@ export function AttentionPanel({
   return (
     <Card aria-labelledby="needs-attention" className="flex h-full flex-col">
       <div className="px-5 pt-5 pb-3.5">
-        <h2 id="needs-attention" className="type-display text-h2">
+        <h2 id="needs-attention" className="text-section font-semibold text-ink-900">
           Needs your attention
         </h2>
       </div>

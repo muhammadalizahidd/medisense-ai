@@ -140,7 +140,7 @@ function Finance() {
                   <span className="block text-small font-semibold">{r.from}</span>
                   <Caption>{r.age}</Caption>
                 </span>
-                <span className="type-display text-section">{money(r.amount)}</span>
+                <span className="text-section font-semibold">{money(r.amount)}</span>
               </li>
             ))}
           </ul>
@@ -274,7 +274,7 @@ function Payroll() {
           />
         </div>
         <div className="overflow-x-auto" role="table" aria-label="Pay run">
-          <div className="min-w-160">
+          <div className="md:min-w-160">
             <TableHeader columns={PAY}>
               <div>Name</div>
               <div>Hours</div>

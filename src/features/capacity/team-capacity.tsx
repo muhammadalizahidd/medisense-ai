@@ -274,7 +274,7 @@ export function TeamCapacity() {
 
         <Card aria-labelledby="caseload-balance" className="overflow-hidden lg:col-span-12">
           <div className="flex flex-wrap items-end justify-between gap-3 px-5 pt-4.5 pb-3.5">
-            <h2 id="caseload-balance" className="type-display text-h2">
+            <h2 id="caseload-balance" className="text-section font-semibold text-ink-900">
               Caseload balance
             </h2>
             <Caption>
@@ -283,7 +283,7 @@ export function TeamCapacity() {
             </Caption>
           </div>
           <div className="overflow-x-auto" role="table" aria-label="Caseload balance by clinician">
-            <div className="min-w-260">
+            <div className="md:min-w-260">
               <TableHeader columns={COLUMNS}>
                 <div>Clinician</div>
                 <div className="text-right">Active</div>
@@ -368,7 +368,7 @@ export function TeamCapacity() {
         <Card aria-labelledby="candidates" className="overflow-hidden lg:col-span-12">
           <div className="flex flex-wrap items-end justify-between gap-3 px-5 pt-4.5 pb-3.5">
             <div>
-              <h2 id="candidates" className="type-display text-h2">
+              <h2 id="candidates" className="text-section font-semibold text-ink-900">
                 Patients a supervisor could review for transfer
               </h2>
               <Caption className="mt-1">

@@ -82,7 +82,7 @@ function VisitCard({ onChange }: { onChange: () => void }) {
       <div className="flex items-center gap-3">
         <Avatar name={family.clinician} size={48} />
         <div className="min-w-0">
-          <p className="type-display text-section">{family.nextAppointment.when}</p>
+          <p className="text-section font-semibold">{family.nextAppointment.when}</p>
           <Caption>
             {family.nextAppointment.where}, with {family.nextAppointment.with}
           </Caption>
@@ -181,7 +181,7 @@ function HomeTab({ onChange, onTab }: { onChange: () => void; onTab: (id: string
           className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-card border border-border bg-surface p-4 text-left"
         >
           <span>
-            <span className="block type-display text-section">{family.client}&apos;s goals</span>
+            <span className="block text-section font-semibold">{family.client}&apos;s goals</span>
             <Caption>{family.goals.length} goals in progress</Caption>
           </span>
           <ChevronRight className="size-5 text-ink-500" strokeWidth={1.5} aria-hidden="true" />
@@ -429,7 +429,7 @@ export function FamilyApp() {
     () => false,
   );
 
-  if (!hydrated) return <div className="hero-page min-h-dvh bg-canvas" />;
+  if (!hydrated) return <div className="min-h-dvh bg-canvas" />;
   if (!signedIn) return <SignIn />;
 
   return (

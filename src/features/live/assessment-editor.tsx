@@ -114,7 +114,7 @@ function Editor({ a, reload }: { a: AssessmentDto; reload: () => void }) {
         actions={
           <div className="flex items-center gap-2">
             {editable && (
-              <span className="on-light text-caption text-ink-500">
+              <span className="text-caption text-ink-500">
                 {saved === "saving"
                   ? "Saving…"
                   : saved === "error"

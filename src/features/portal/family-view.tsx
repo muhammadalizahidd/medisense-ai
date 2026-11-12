@@ -53,7 +53,7 @@ export function FamilyView() {
 
   return (
     <div className="flex flex-col gap-4 px-6 py-6">
-      <div className="page-hero">
+      <div>
         <p className="label-caps">Medisense family portal</p>
         <h2 className="mt-1 type-display text-h1">Hi {family.viewer.split(" ")[0]},</h2>
         <p className="mt-1 text-small text-ink-700">

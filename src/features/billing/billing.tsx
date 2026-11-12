@@ -273,7 +273,7 @@ export function Billing() {
           </div>
         </div>
         <div className="overflow-x-auto" role="table" aria-label="Claim lines">
-          <div className="min-w-220">
+          <div className="md:min-w-220">
             <TableHeader columns={COLUMNS}>
               <div>Patient</div>
               <div>When</div>

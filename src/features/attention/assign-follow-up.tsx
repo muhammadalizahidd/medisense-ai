@@ -44,7 +44,7 @@ export function AssignFollowUpPopover({
     >
       <div className="px-4.5 pt-4 pb-1">
         <div className="label-caps">Assign follow-up</div>
-        <div className="mt-1 type-display text-section">{client.name}</div>
+        <div className="mt-1 text-section font-semibold">{client.name}</div>
         <Caption className="mt-0.5">{client.reason}</Caption>
       </div>
       <div className="grid grid-cols-2 gap-3 px-4.5 pt-3 pb-4">

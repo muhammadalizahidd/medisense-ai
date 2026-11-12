@@ -196,7 +196,7 @@ export function SarahDay() {
           {myBookings.length > 0 && (
             <Card aria-labelledby="new-bookings" className="overflow-hidden">
               <div className="px-5 pt-4.5 pb-3">
-                <h2 id="new-bookings" className="type-display text-h2">
+                <h2 id="new-bookings" className="text-section font-semibold text-ink-900">
                   New bookings
                 </h2>
                 <Caption>Booked into your diary by the team</Caption>
@@ -228,7 +228,7 @@ export function SarahDay() {
           )}
 
           <Card aria-labelledby="notes-due" className="overflow-hidden">
-            <h2 id="notes-due" className="px-5 pt-4.5 pb-3 type-display text-h2">
+            <h2 id="notes-due" className="px-5 pt-4.5 pb-3 text-section font-semibold text-ink-900">
               Notes to write
             </h2>
             {!approved && (
@@ -271,7 +271,7 @@ export function SarahDay() {
           </Card>
 
           <Card aria-labelledby="my-tasks" className="overflow-hidden">
-            <h2 id="my-tasks" className="px-5 pt-4.5 pb-3 type-display text-h2">
+            <h2 id="my-tasks" className="px-5 pt-4.5 pb-3 text-section font-semibold text-ink-900">
               My tasks
             </h2>
             {tasks.length === 0 && (
@@ -319,7 +319,7 @@ export function SarahDay() {
           </Card>
 
           <Card aria-labelledby="next-supervision" className="px-5 pt-4.5 pb-4.5">
-            <h2 id="next-supervision" className="type-display text-h2">
+            <h2 id="next-supervision" className="text-section font-semibold text-ink-900">
               Next supervision
             </h2>
             <p className="mt-2 flex items-start gap-2 text-small">

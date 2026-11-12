@@ -275,10 +275,10 @@ export function RequestCard({
             </span>
           </p>
           {r.precautions && (
-            <p className="mt-2 flex gap-2 rounded-control bg-over-bg px-3 py-2 text-small text-ink-900">
+            <p className="mt-2 flex gap-2 rounded-control border border-over bg-over-bg px-3 py-2 text-small text-ink-900">
               <ShieldAlert className="mt-0.5 size-4 flex-none text-over" aria-hidden="true" />
               <span>
-                <strong className="text-over">Precaution: </strong>
+                <strong className="font-bold text-over">Precaution: </strong>
                 {r.precautions}
               </span>
             </p>

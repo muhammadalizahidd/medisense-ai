@@ -94,7 +94,7 @@ function LiveFigures() {
     <section aria-label="Live care" className="rounded-card border border-border bg-surface p-5">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <h2 className="type-display text-section">Live care</h2>
+          <h2 className="text-section font-semibold">Live care</h2>
           <LiveBadge />
         </div>
         <Link href="/care" className="inline-flex items-center gap-1 text-caption font-medium">

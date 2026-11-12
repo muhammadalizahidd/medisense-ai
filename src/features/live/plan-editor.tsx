@@ -117,7 +117,7 @@ function Plan({ p, reload }: { p: PlanDto; reload: () => void }) {
         description={`Version ${p.version} · ${p.therapistName}${p.approved ? ` · approved ${shortDate(p.approved.at)}` : ""}`}
         actions={
           <div className="flex items-center gap-2">
-            {editable && <span className="on-light text-caption text-ink-500">{saved}</span>}
+            {editable && <span className="text-caption text-ink-500">{saved}</span>}
             <Tag tone={planTone[p.status]}>{p.status}</Tag>
           </div>
         }

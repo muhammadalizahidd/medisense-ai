@@ -185,7 +185,7 @@ export function TopBar() {
 
   return (
     <>
-      <header className="sticky top-0 z-20 flex min-h-(--topbar-h) items-center justify-between gap-4 border-b border-border bg-topbar px-4 py-2 md:px-6 xl:pr-6 xl:pl-10">
+      <header className="sticky top-0 z-20 flex min-h-(--topbar-h) items-center justify-between gap-4 border-b border-border bg-topbar px-4 py-2 md:px-6 xl:pr-6 xl:pl-10 print:hidden">
         <nav
           aria-label="Breadcrumb"
           className="flex min-w-0 flex-1 items-center gap-1.5 text-small"

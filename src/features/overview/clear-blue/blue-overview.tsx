@@ -54,7 +54,7 @@ export function Panel({
       )}
     >
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="type-display text-section">{title}</h2>
+        <h2 className="text-section font-semibold">{title}</h2>
         {action && (
           <Link href={action.href} className="text-caption font-medium whitespace-nowrap">
             {action.label}
@@ -72,11 +72,11 @@ function BriefingCard() {
   return (
     <section
       aria-label="AI briefing"
-      className="ai-surface flex min-w-0 flex-col gap-4 rounded-card p-5 lg:flex-row lg:items-center"
+      className="flex min-w-0 flex-col gap-4 rounded-card p-5 lg:flex-row lg:items-center"
     >
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <h2 className="type-display text-section">Today&apos;s briefing</h2>
+          <h2 className="text-section font-semibold">Today&apos;s briefing</h2>
           <AiMark>AI briefing, recommendation only</AiMark>
         </div>
         {briefing.loading ? (
@@ -136,11 +136,11 @@ function TeamStatus({ className }: { className?: string }) {
       <dl className="mt-auto grid grid-cols-2 gap-3 border-t border-border pt-4">
         <div>
           <dt className="text-caption text-ink-500">Team utilisation</dt>
-          <dd className="type-display text-section">{utilisation}%</dd>
+          <dd className="text-section font-semibold">{utilisation}%</dd>
         </div>
         <div>
           <dt className="text-caption text-ink-500">Peak caseload</dt>
-          <dd className="type-display text-section">{highest}%</dd>
+          <dd className="text-section font-semibold">{highest}%</dd>
         </div>
       </dl>
     </Panel>

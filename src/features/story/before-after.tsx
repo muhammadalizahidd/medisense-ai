@@ -142,7 +142,7 @@ export function BeforeAfter() {
 
       {noteRows.length > 0 && (
         <Card aria-labelledby="from-note" className="px-6 pt-5 pb-2">
-          <h2 id="from-note" className="type-display text-h2">
+          <h2 id="from-note" className="text-section font-semibold text-ink-900">
             Because of what Sarah approved and confirmed
           </h2>
           <p className="mt-0.5 mb-4 text-small text-ink-700">
@@ -166,7 +166,7 @@ export function BeforeAfter() {
       <div className="mt-6 grid items-start gap-6 xl:grid-cols-12">
         {dayRows.length > 0 && (
           <Card aria-labelledby="from-day" className="px-6 pt-5 pb-2 xl:col-span-8">
-            <h2 id="from-day" className="type-display text-h2">
+            <h2 id="from-day" className="text-section font-semibold text-ink-900">
               Because a day passed
             </h2>
             <p className="mt-0.5 mb-4 text-small text-ink-700">
@@ -178,7 +178,7 @@ export function BeforeAfter() {
           </Card>
         )}
         <Card aria-labelledby="same" className="px-6 pt-5 pb-5 xl:col-span-4">
-          <h2 id="same" className="type-display text-h2">
+          <h2 id="same" className="text-section font-semibold text-ink-900">
             What hasn&apos;t changed
           </h2>
           <p className="mt-2 text-small leading-5.5 text-ink-700">

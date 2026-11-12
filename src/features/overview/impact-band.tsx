@@ -7,7 +7,7 @@ export function ImpactBand({ measures }: { measures: ImpactMeasure[] }) {
       <div className="flex flex-wrap items-end justify-between gap-3 px-6 pt-5 pb-4.5">
         <div>
           <p className="label-caps">Projected impact</p>
-          <h2 id="impact-title" className="mt-1.5 type-display text-h2">
+          <h2 id="impact-title" className="mt-1.5 text-section font-semibold text-ink-900">
             What the team gets back with Medisense in place
           </h2>
         </div>

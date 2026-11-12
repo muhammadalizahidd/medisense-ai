@@ -106,11 +106,11 @@ export function TherapistPatient({ clientId }: { clientId: string }) {
       {p.precautions && (
         <p
           role="note"
-          className="mb-6 flex gap-3 rounded-card border border-over-bg bg-over-bg px-5 py-4 text-small"
+          className="mb-6 flex gap-3 rounded-card border border-over bg-over-bg px-5 py-4 text-small"
         >
           <ShieldAlert className="mt-0.5 size-5 flex-none text-over" aria-hidden="true" />
           <span>
-            <strong className="block text-over">Precautions from clinical triage</strong>
+            <strong className="block font-bold text-over">Precaution · from clinical triage</strong>
             <span className="whitespace-pre-line">{p.precautions}</span>
           </span>
         </p>

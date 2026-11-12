@@ -68,7 +68,7 @@ export function Sidebar() {
     <nav
       aria-label="Primary"
       style={darkFocus}
-      className="no-scrollbar sticky top-0 hidden h-screen w-(--rail-w) flex-none flex-col gap-4 overflow-y-auto border-r border-sidebar-border bg-sidebar px-2 pt-4 pb-4 md:flex xl:w-(--sidebar-w) xl:px-3"
+      className="no-scrollbar sticky top-0 hidden h-screen w-(--rail-w) flex-none flex-col gap-4 overflow-y-auto border-r border-sidebar-border bg-sidebar px-2 pt-4 pb-4 md:flex xl:w-(--sidebar-w) xl:px-3 print:hidden"
     >
       <Link
         href="/"

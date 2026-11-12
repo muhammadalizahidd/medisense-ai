@@ -123,7 +123,7 @@ export function ReportsLibrary() {
     <>
       <section
         aria-label="Report summary"
-        className="stat-band grid grid-cols-2 gap-px overflow-hidden rounded-card border border-border bg-border lg:grid-cols-5"
+        className="grid grid-cols-2 gap-px overflow-hidden rounded-card border border-border bg-border lg:grid-cols-5"
       >
         {metrics.map((m) => (
           <div key={m.label} className="flex flex-col gap-1.5 bg-surface px-5 py-4">
@@ -241,7 +241,7 @@ export function ReportsLibrary() {
       <div className="grid items-start gap-6 lg:grid-cols-12">
         <Card aria-label="Reports" className="overflow-hidden lg:col-span-8">
           <div className="overflow-x-auto" role="table" aria-label="Reports">
-            <div className="min-w-180">
+            <div className="md:min-w-180">
               <TableHeader columns={COLUMNS}>
                 <div>Patient</div>
                 <div>Report</div>

@@ -155,7 +155,7 @@ export function Brand({ light = false }: { light?: boolean }) {
     <div className="flex items-center gap-3">
       <span
         aria-hidden="true"
-        className="flex size-11 items-center justify-center rounded-control bg-accent-fill text-on-accent"
+        className="flex size-11 items-center justify-center rounded-control bg-ink-900 text-page"
       >
         <HeartPulse className="size-6" strokeWidth={2} />
       </span>

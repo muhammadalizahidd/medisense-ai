@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page";
+import { PrintButton } from "@/components/ui/print-button";
 import { Tag } from "@/components/ui/tag";
 import { api, useResource, useSession } from "@/lib/live/client";
 import { invoiceMoves, money, type InvoiceDto } from "@/lib/live/clinical";
@@ -74,6 +75,7 @@ export function InvoiceDetail({ id }: { id: string }) {
           <div className="flex items-center gap-2">
             <LiveBadge />
             <Tag tone={invoiceTone[inv.status]}>{inv.status}</Tag>
+            <PrintButton />
           </div>
         }
       />
@@ -97,7 +99,7 @@ export function InvoiceDetail({ id }: { id: string }) {
           )}
           <Panel title="Lines">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-160 text-left text-small">
+              <table className="table-stack w-full text-left text-small md:min-w-160">
                 <thead className="border-b border-border text-caption text-ink-500">
                   <tr>
                     <th className="py-2 pr-3 font-medium">Date</th>

@@ -120,11 +120,11 @@ export function ClientDetail({ clientId }: { clientId: string }) {
       {client.precautions && (
         <section
           aria-label="Precautions"
-          className="mb-6 flex gap-3 rounded-card border border-over-bg bg-over-bg px-5 py-4"
+          className="mb-6 flex gap-3 rounded-card border border-over bg-over-bg px-5 py-4"
         >
           <ShieldAlert className="mt-0.5 size-5 flex-none text-over" aria-hidden="true" />
           <div>
-            <h2 className="text-small font-semibold text-over">Precautions from clinical triage</h2>
+            <h2 className="text-small font-bold text-over">Precaution · from clinical triage</h2>
             <p className="mt-1 text-small whitespace-pre-line text-ink-900">{client.precautions}</p>
           </div>
         </section>

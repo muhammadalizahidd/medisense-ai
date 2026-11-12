@@ -109,7 +109,7 @@ export function ReportSources() {
 
   return (
     <Card aria-labelledby="sources" className="px-5 pt-5 pb-4.5">
-      <h2 id="sources" className="type-display text-h2">
+      <h2 id="sources" className="text-section font-semibold text-ink-900">
         Approved sources
       </h2>
       <Caption className="mt-1 mb-3">Only approved clinical information is used.</Caption>

@@ -42,7 +42,7 @@ export default function AdminInsightsPage() {
           className="flex flex-col overflow-hidden lg:col-span-7"
         >
           <div className="border-b border-border px-5 pt-5 pb-4">
-            <h2 id="opportunities" className="type-display text-h2">
+            <h2 id="opportunities" className="text-section font-semibold text-ink-900">
               Safe automation opportunities
             </h2>
             <Caption className="mt-1">
@@ -92,7 +92,7 @@ export default function AdminInsightsPage() {
 
         <section
           aria-label="Guardrails"
-          className="stat-band grid gap-px overflow-hidden rounded-card border border-border bg-border lg:col-span-12 lg:grid-cols-3"
+          className="grid gap-px overflow-hidden rounded-card border border-border bg-border lg:col-span-12 lg:grid-cols-3"
         >
           {guardrails.map((g, i) => (
             <div key={g.title} className="flex flex-col gap-2 bg-surface px-6 py-5.5">

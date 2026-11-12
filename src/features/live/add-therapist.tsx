@@ -32,7 +32,7 @@ export function AddTherapist({ onAdded }: { onAdded: () => void }) {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <Button variant="primary" className="on-light" onClick={() => setOpen(true)}>
+      <Button variant="primary" onClick={() => setOpen(true)}>
         <UserPlus className="size-4" aria-hidden="true" />
         Add therapist
       </Button>
@@ -312,7 +312,7 @@ export function TherapistActiveToggle({
   };
   if (active && confirm) {
     return (
-      <span className="on-light flex items-center gap-2 text-caption text-ink-700">
+      <span className="flex items-center gap-2 text-caption text-ink-700">
         {name.split(" ")[0]} won&apos;t be able to sign in or get new patients.
         <Button size="sm" disabled={busy} onClick={run}>
           Deactivate
@@ -324,12 +324,7 @@ export function TherapistActiveToggle({
     );
   }
   return (
-    <Button
-      size="sm"
-      className="on-light"
-      disabled={busy}
-      onClick={() => (active ? setConfirm(true) : run())}
-    >
+    <Button size="sm" disabled={busy} onClick={() => (active ? setConfirm(true) : run())}>
       {active ? "Deactivate" : "Reactivate"}
     </Button>
   );

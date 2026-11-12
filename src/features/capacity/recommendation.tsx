@@ -59,7 +59,7 @@ export function Recommendation({
           {capacityRecommendation.generatedAt} · {state === "pending" ? "Not applied" : "Reviewed"}
         </Caption>
       </div>
-      <h2 id="recommendation" className="type-display text-section">
+      <h2 id="recommendation" className="text-section font-semibold">
         Rebalancing for review
       </h2>
       <p>{capacityRecommendation.text}</p>
