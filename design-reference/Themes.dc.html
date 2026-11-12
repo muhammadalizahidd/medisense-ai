@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<title>Medisense · Theme system</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&amp;family=Instrument+Serif&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1D56D0}a:hover{color:#1E40AF}
+</style>
+</helmet>
+<div style="width: 1440px; min-height: 2200px; box-sizing: border-box; background: #F6F4EF; color: #1C1A17; font-family: 'Instrument Sans', system-ui, sans-serif; font-size: 14px; line-height: 1.5; font-feature-settings: 'ss01', 'tnum'; padding: 64px 80px; display: flex; flex-direction: column; gap: 40px">
+
+  <header style="display: flex; justify-content: space-between; align-items: flex-end; gap: 40px">
+    <div style="display: flex; flex-direction: column; gap: 8px; max-width: 820px">
+      <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #655F56">03 · Theme system</span>
+      <h1 style="margin: 0; font-family: 'Instrument Serif', serif; font-weight: 400; font-size: 48px; line-height: 1.04">Thirteen complete themes, one token set</h1>
+      <p style="margin: 0; color: #3D3933">Each theme fills every <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px">--color-*</span> token, so every component works in every theme. Six are your current palettes with their exact values; gradients, glow and gradient AI borders are replaced by the flat treatment. Semantic colours never take the accent.</p>
+    </div>
+    <div style="display: flex; gap: 8px; font-size: 12px">
+      <span style="border: 1px solid #CFC8BB; border-radius: 6px; padding: 3px 10px; color: #3D3933">6 from your app</span>
+      <span style="border: 1px solid #CFC8BB; border-radius: 6px; padding: 3px 10px; color: #3D3933">10 light · 3 dark</span>
+    </div>
+  </header>
+
+  <section style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px">
+    <sc-for list="{{themes}}" as="t" hint-placeholder-count="8">
+      <article style="background: #FFFFFF; border: 1px solid #E4E0D7; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column">
+        <div style="height: 236px; display: flex; background: {{t.page}}; border-bottom: 1px solid #E4E0D7" role="img" aria-label="{{t.name}} theme preview">
+          <div style="width: 112px; flex-shrink: 0; padding: 12px 8px; display: flex; flex-direction: column; gap: 4px; background: {{t.sbBg}}; border-right: 1px solid {{t.sbBorder}}">
+            <div style="display: flex; align-items: center; gap: 6px; padding: 0 4px 8px"><span style="width: 14px; height: 14px; border-radius: 4px; background: {{t.ink900}}"></span><span style="font-size: 11px; font-weight: 700; color: {{t.sbInk}}">Medisense</span></div>
+            <span style="font-size: 8px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 6px; color: {{t.sbMuted}}">Live care</span>
+            <span style="font-size: 10px; padding: 4px 6px; border-radius: 6px; font-weight: 600; background: {{t.sbActive}}; color: {{t.sbActiveInk}}">My new patients</span>
+            <span style="font-size: 10px; padding: 4px 6px; color: {{t.sbInk}}">Messages</span>
+            <span style="font-size: 10px; padding: 4px 6px; color: {{t.sbInk}}">Recordings</span>
+            <span style="font-size: 8px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 6px 6px 2px; color: {{t.sbMuted}}">My work</span>
+            <span style="font-size: 10px; padding: 4px 6px; color: {{t.sbInk}}">My day</span>
+            <span style="font-size: 10px; padding: 4px 6px; color: {{t.sbInk}}">Tasks</span>
+          </div>
+          <div style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+            <div style="height: 28px; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; border-bottom: 1px solid {{t.border}}">
+              <span style="font-size: 9px; color: {{t.ink500}}">Live care › My new patients</span>
+              <span style="width: 110px; height: 16px; border-radius: 6px; border: 1px solid {{t.border}}; background: {{t.surface}}"></span>
+            </div>
+            <div style="padding: 10px 12px; display: flex; flex-direction: column; gap: 8px">
+              <div style="display: flex; justify-content: space-between; align-items: center">
+                <span style="font-family: 'Instrument Serif', serif; font-size: 24px; line-height: 1; color: {{t.ink900}}">Hello, Daniel</span>
+                <span style="font-size: 9px; font-weight: 600; padding: 4px 8px; border-radius: 6px; background: {{t.fill}}; color: {{t.on}}; border-radius: {{t.rc}}">Accept patient</span>
+              </div>
+              <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px">
+                <div style="border-radius: 8px; padding: 6px 8px; background: {{t.surface}}; border: 1px solid {{t.border}}"><div style="font-size: 7px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.ink500}}">Caseload</div><div style="font-family: 'Instrument Serif', serif; font-size: 24px; line-height: 1.05; color: {{t.ink900}}">17 of 22</div></div>
+                <div style="border-radius: 8px; padding: 6px 8px; background: {{t.draftBg}}; border: 1px dashed {{t.draftBorder}}"><div style="font-size: 7px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.ink700}}">◇ AI draft</div><div style="font-size: 9px; line-height: 1.35; color: {{t.ink900}}">3 of 4 routine steps with one prompt.</div></div>
+              </div>
+              <div style="border-radius: 8px; background: {{t.surface}}; border: 1px solid {{t.border}}; overflow: hidden">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 5px 8px; font-size: 9px; color: {{t.ink900}}"><span>Mia Robinson · OT</span><span style="font-weight: 600; padding: 1px 6px; border-radius: 4px; background: {{t.healthyB}}; color: {{t.healthyT}}">● Healthy</span></div>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 5px 8px; font-size: 9px; border-top: 1px solid {{t.border}}; color: {{t.ink900}}; background: {{t.tint}}"><span>Oliver Grant · OT</span><span style="font-weight: 600; padding: 1px 6px; border-radius: 4px; background: {{t.watchB}}; color: {{t.watchT}}">● Watch</span></div>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 5px 8px; font-size: 9px; border-top: 1px solid {{t.border}}; color: {{t.ink900}}"><span>Ruth Hallam · Speech</span><span style="font-weight: 600; padding: 1px 6px; border-radius: 4px; background: {{t.overB}}; color: {{t.overT}}">● At Risk</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="padding: 14px 18px 18px; display: flex; flex-direction: column; gap: 4px">
+          <div style="display: flex; justify-content: space-between; align-items: center"><h2 style="margin: 0; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px">{{t.name}}<span style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: {{t.badgeInk}}">{{t.badge}}</span></h2><span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #655F56">data-theme="{{t.id}}"</span></div>
+          <p style="margin: 0; font-size: 13px; color: #3D3933">{{t.desc}}</p>
+          <p style="margin: 0; font-size: 12px; color: #655F56">Accent: {{t.pair}} · corners {{t.radii}} · hero: {{t.hero}}</p>
+        </div>
+      </article>
+    </sc-for>
+
+    <article style="background: #FFFFFF; border: 1px solid #E4E0D7; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+      <h2 style="margin: 0; font-size: 16px; font-weight: 600">Match system</h2>
+      <p style="margin: 0; font-size: 13px; color: #3D3933">Follows the operating system’s light / dark preference, switching between a chosen pair.</p>
+      <div style="display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 8px 12px; align-items: center; font-size: 13px">
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #655F56">OS light</span>
+        <span style="display: flex; align-items: center; gap: 8px"><span style="width: 20px; height: 20px; border-radius: 6px; background: #F6F4EF; border: 1px solid #CFC8BB"></span>Premium Light <span style="color: #655F56">(any light theme)</span></span>
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #655F56">OS dark</span>
+        <span style="display: flex; align-items: center; gap: 8px"><span style="width: 20px; height: 20px; border-radius: 6px; background: #161616; border: 1px solid #404040"></span>Premium Dark <span style="color: #655F56">(any dark theme)</span></span>
+      </div>
+      <div style="border-top: 1px solid #E4E0D7; padding-top: 12px; display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: #3D3933">
+        <span><b style="font-weight: 600">Attributes</b> · <span style="font-family: 'JetBrains Mono', monospace">data-theme</span> + <span style="font-family: 'JetBrains Mono', monospace">data-accent</span> on &lt;html&gt;; <span style="font-family: 'JetBrains Mono', monospace">data-theme="system"</span> resolves via <span style="font-family: 'JetBrains Mono', monospace">prefers-color-scheme</span>.</span>
+        <span><b style="font-weight: 600">Persistence</b> · saved to the user profile; device copy in localStorage as fallback; inline head script applies it before first paint.</span>
+        <span><b style="font-weight: 600">Signed out</b> · patient app and public pages follow the system setting.</span>
+        <span><b style="font-weight: 600">Transition</b> · 260ms colour cross-fade; instant under reduced motion.</span>
+        <span><b style="font-weight: 600">Video room</b> · always the dark call stage, whatever the theme.</span>
+      </div>
+    </article>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2200}}'>
+const TK=["dark","page","surface","raised","sunken","border","borderStrong","ink900","ink700","ink500","ink400","sbBg","sbInk","sbMuted","sbHover","sbActive","sbActiveInk","sbBorder","draftBg","draftBorder","healthyT","healthyB","watchT","watchB","overT","overB","availT","availB","liveT","s1","s2","s3","s4","rTag","rControl","rField","rCard","rSheet","group","pair"];
+const TH={"premium-light":["Premium Light",[0,"#F6F4EF","#FFFFFF","#FFFFFF","#EFECE5","#E4E0D7","#CFC8BB","#1C1A17","#3D3933","#655F56","#8A8478","#EFECE5","#2A2723","#655F56","#E6E2D9","#FFFFFF","#1C1A17","#E0DBD1","#F4F1EA","#B5AD9E","#1B6E40","#E5F3EA","#875500","#FBF0D9","#B0261E","#FBE8E6","#2F55AE","#E9EEFB","#0B6F8F","#2F6BB3","#D9792B","#2E8C7E","#7E57B8",6,10,12,16,24,"new","Blue"]],"clinical-blue":["Clinical Blue",[0,"#F4F8FE","#FFFFFF","#FFFFFF","#F6F9FE","#E9ECEF","#D4D8E0","#0B1533","#475467","#566379","#5F6B80","#F4F8FE","#101C35","#566379","#E4EEFD","#1570EF","#FFFFFF","#DFE5EE","#F5F9FF","#84ADFF","#067A55","#E3F6ED","#A8480A","#FEF1DF","#C0271C","#FEECEB","#175CD3","#E8F1FD","#0B6B8C","#1570EF","#0E9F8E","#7A5AF8","#C4679B",6,12,12,20,28,"current","Blue"]],"green":["Green",[0,"#F2FAF5","#FFFFFF","#FFFFFF","#F5FBF7","#E6ECE9","#CED8D3","#0A2015","#3F5249","#4F6359","#58695F","#F2FAF5","#0A2015","#4F6359","#E1F5E9","#08844A","#FFFFFF","#DBE7E0","#F5FBF7","#6CE0A0","#05693B","#E0F6EC","#A8480A","#FEF1DF","#C0271C","#FEECEB","#0B6B80","#E7F1F4","#0B6B8C","#0A9150","#7A5AF8","#0E9FC4","#C4679B",6,12,12,20,28,"current","Green"]],"navy-rail":["Navy rail",[0,"#EEF5F2","#FFFFFF","#FFFFFF","#F3F8F6","#E8EAEB","#D1D5D7","#1F2937","#4B5563","#525D6B","#5A6573","#172B36","#F3F7F5","#9FB3BC","#293B45","#0D7A43","#FFFFFF","#243741","#F3FAF6","#6CC592","#0A6B3C","#E1F3EA","#A8480A","#FEF1DF","#C0271C","#FEECEB","#0B6B80","#E7F1F4","#0B6B8C","#0D7A43","#7A5AF8","#0E9FC4","#C4679B",6,12,12,20,28,"current","Evergreen"]],"mint":["Mint",[0,"#EEF7F2","#FFFFFF","#FFFFFF","#F4FAF7","#E9EBED","#D2D6DA","#203448","#47586A","#506173","#58687A","#FFFFFF","#203448","#506173","#E8F7F0","#0D7A43","#FFFFFF","#E9EBED","#F3FAF6","#6CC592","#0A6B3C","#E1F3EA","#A8480A","#FEF1DF","#C0271C","#FEECEB","#0B6B80","#E7F1F4","#0B6B8C","#0D7A43","#7A5AF8","#0E9FC4","#C4679B",6,12,12,20,28,"current","Evergreen"]],"sand":["Sand",[0,"#F1EADC","#F8F3E8","#FBF7EE","#E9E0CE","#DCD1BB","#C7BAA0","#2B2620","#463E33","#62584A","#8A7E6B","#E9E0CE","#2B2620","#62584A","#E1D6C0","#F8F3E8","#2B2620","#DCD1BB","#EFE7D7","#A89A80","#1E663D","#E1EDD9","#7A4E00","#F6E6C4","#A3241D","#F5DDD6","#2C4F9E","#E3E6F0","#0A6480","#2F6BB3","#D9792B","#2E8C7E","#7E57B8",6,10,12,16,24,"new","Blue"]],"slate":["Slate",[0,"#E6E9EE","#FFFFFF","#FFFFFF","#EEF0F3","#D5DAE1","#BEC5CF","#141A22","#323B48","#535E6D","#77828F","#1E2733","#E5E9EF","#9AA5B4","#29343F","#334050","#FFFFFF","#2C3644","#F1F3F6","#9AA3B0","#17703F","#E3F4EA","#835300","#FBF0D9","#B0261E","#FCE8E6","#2F55AE","#E8EEFC","#0B6B8C","#2F6BB3","#D9792B","#2E8C7E","#7E57B8",6,10,12,16,24,"new","Blue"]],"warm-editorial":["Warm Editorial",[0,"#F5F3EE","#FFFFFF","#FFFFFF","#FAF8F3","#ECECEC","#DADAD9","#17150F","#5E5B54","#64615A","#716E66","#0A0B0D","#F5F3EE","#A3A099","#18191A","#18191A","#C9A96A","#18191A","#FBF7EE","#C9B98F","#3D6E4F","#E5EFE6","#8A5A12","#F5E9D2","#9C3B26","#F4E0D8","#3E5670","#E3E9EF","#0A6480","#4A8A84","#B8934A","#5A7094","#8C8478",4,6,6,10,14,"current","Bronze"]],"olive-green":["Olive Green",[0,"#F5F1EA","#FCFAF6","#FCFAF6","#EEE9E0","#E2DBCF","#CFC6B7","#1E1C19","#4A453E","#6B655B","#857E72","#EFEAE1","#1E1C19","#665F55","#E3ECE6","#E3ECE6","#2E5A4C","#E2DBCF","#F8F3E6","#C9B98F","#3D6E4F","#E5EFE6","#8A5A12","#F5E9D2","#9C3B26","#F4E0D8","#3E5670","#E3E9EF","#0A6480","#2E5A4C","#8FAE9C","#CDBF9F","#6E8296",4,6,6,10,14,"retired","Olive"]],"high-contrast":["High Contrast",[0,"#FFFFFF","#FFFFFF","#FFFFFF","#F2F2F2","#6B6B6B","#1A1A1A","#000000","#1A1A1A","#3D3D3D","#5C5C5C","#FFFFFF","#000000","#3D3D3D","#EDEDED","#000000","#FFFFFF","#1A1A1A","#FFFFFF","#000000","#0B5A2E","#DDF0E4","#6B4200","#F8E7C2","#8F1A13","#F8DCD8","#1F3F8A","#E0E7FA","#06506A","#2F6BB3","#D9792B","#2E8C7E","#7E57B8",6,10,12,16,24,"new","Blue"]],"premium-dark":["Premium Dark",[1,"#161616","#1E1E1E","#262626","#121212","#2E2E2E","#404040","#ECECEA","#C9C8C4","#9E9C97","#77756F","#121212","#DEDDD9","#9E9C97","#1E1E1E","#262626","#FFFFFF","#262626","#232220","#6A665E","#6FD39A","#1D3326","#F0C062","#3A2E14","#FF8F86","#3E1F1C","#A3B8FF","#232B45","#62CDF0","#7AA7E6","#F0A35E","#5FC4B5","#B794E6",6,10,12,16,24,"new","Blue"]],"midnight":["Midnight",[1,"#0E1626","#152036","#1B2842","#0B1220","#24324D","#33456A","#E6ECF5","#BCC7D9","#8E9CB4","#68768E","#0B1220","#D6DEEB","#8E9CB4","#152036","#1F2E4C","#FFFFFF","#1B2842","#18233A","#5D6E8E","#6FD39A","#163227","#F0C062","#352C17","#FF8F86","#3A1F26","#A3B8FF","#1F2B4E","#62CDF0","#7AA7E6","#F0A35E","#5FC4B5","#B794E6",6,10,12,16,24,"new","Blue"]],"oled":["OLED Dark",[1,"#000000","#0B0B0B","#151515","#000000","#1F1F1F","#333333","#F2F2F2","#CFCFCF","#A3A3A3","#7A7A7A","#000000","#E6E6E6","#A3A3A3","#111111","#1C1C1C","#FFFFFF","#151515","#121212","#5E5E5E","#6FD39A","#0F2619","#F0C062","#2A200A","#FF8F86","#2E1210","#A3B8FF","#151D38","#62CDF0","#7AA7E6","#F0A35E","#5FC4B5","#B794E6",6,10,12,16,24,"new","Blue"]]};
+const AC={Blue:[["#175CD3","#1570EF","#175CD3","#1849A9","#E8F1FD"],["#8DB0FF","#2F6BEB","#4A80F0","#2557C9","#1E2D52"],"#FFFFFF","#FFFFFF"],Indigo:[["#4338CA","#4F46E5","#4338CA","#3730A3","#EEEDFC"],["#A9A5FF","#5850E8","#6E66F2","#4840D0","#28264F"],"#FFFFFF","#FFFFFF"],Violet:[["#6D28D9","#7C3AED","#6D28D9","#5B21B6","#F2ECFD"],["#C4A6FF","#7C3AED","#8E55F0","#6A2BD6","#2E2350"],"#FFFFFF","#FFFFFF"],Purple:[["#9D1CA8","#A21CAF","#86198F","#701A75","#FAEAFB"],["#F0A6F7","#A925B6","#BA3EC6","#8F1C9B","#3A1E3E"],"#FFFFFF","#FFFFFF"],Emerald:[["#036B4D","#047857","#065F46","#064E3B","#E3F5EE"],["#5EDBB0","#10B981","#34C795","#0E9F6F","#123328"],"#FFFFFF","#1A1406"],Green:[["#056B3A","#08844A","#067A42","#05602F","#E6F3ED"],["#9BDB7E","#6CC24A","#80CE61","#57A839","#1D3316"],"#FFFFFF","#1A1406"],Teal:[["#0D6B64","#0F766E","#115E59","#134E4A","#E0F3F1"],["#5ED6CB","#14B8A6","#2CC6B5","#0F9C8D","#10312F"],"#FFFFFF","#1A1406"],Cyan:[["#0B6680","#0E7490","#155E75","#164E63","#E0F2F7"],["#67D4EE","#22B8DA","#3EC4E2","#1A9CBB","#0F2F3A"],"#FFFFFF","#1A1406"],Rose:[["#BE185D","#C81E5E","#AD1950","#8F1542","#FCE8F0"],["#FF9CC2","#E8457F","#EE6090","#CC3069","#3D1A28"],"#FFFFFF","#1A1406"],Red:[["#B91C1C","#C62828","#AD2222","#8F1C1C","#FCEAEA"],["#FF9B93","#E5484D","#EB6164","#C93338","#3E1A1A"],"#FFFFFF","#1A1406"],Orange:[["#A8420A","#C2410C","#A8380A","#8C2F08","#FDEDE3"],["#FFB27A","#F07A2E","#F38C47","#D4651C","#3D2414"],"#FFFFFF","#1A1406"],Amber:[["#875500","#F2B01E","#E0A010","#C98D08","#FCF3DC"],["#F6CB5C","#F2B01E","#F5BD3D","#D69A0E","#3A2E12"],"#1A1406","#1A1406"],Evergreen:[["#0B6A3A","#0D7A43","#0B6A3A","#095A31","#DFF4E8"],["#6CC592","#18A05E","#2FB06F","#12884F","#12301F"],"#FFFFFF","#1A1406"],Olive:[["#2E5A4C","#2E5A4C","#244A3E","#1C3B31","#E3ECE6"],["#9FC2B0","#6F9E8A","#80AC99","#5B8875","#1D2B26"],"#FFFFFF","#1A1406"],Bronze:[["#775A23","#C9A96A","#D6B97E","#B39454","#F6F1E7"],["#D9BD84","#C9A96A","#D6B97E","#B39454","#33291A"],"#1A1406","#1A1406"]};
+const DESC={"premium-light": ["New default. Warm paper surfaces, soft ink, hairline borders.", "flat surface panel"], "clinical-blue": ["Your current default, exact values. Pale-blue canvas and sidebar, solid blue active item.", "flat (was midnight-to-blue gradient)"], "green": ["Your current palette. Pale-green canvas and sidebar, success-green accent.", "flat (was forest-green gradient)"], "navy-rail": ["Your current palette. Dark navy rail, grey-green workspace, evergreen accent.", "flat (was navy-to-evergreen gradient)"], "mint": ["Your current palette. White sidebar with mint hover, mint-tinted canvas.", "flat (was slate-to-mint gradient)"], "sand": ["Warm, lower contrast for long reading and documentation.", "flat sunken panel"], "slate": ["Dark slate rail with light content: Navy rail, neutralised.", "flat; rail carries the weight"], "warm-editorial": ["Your built-in fallback, now selectable. Ivory page, black sidebar, champagne buttons.", "flat page header, as before"], "olive-green": ["Your retired original. Warm paper, beige sidebar, olive. Faint text darkened to pass.", "flat page header, as before"], "high-contrast": ["Black ink, strong borders, filled active states. Accessibility first.", "plain white, 1px black rule"], "premium-dark": ["Deep neutral greys, lighter raised surfaces, reduced-glare ink.", "raised grey panel"], "midnight": ["Navy surfaces, cool ink. Calm for evening documentation.", "raised navy panel"], "oled": ["True black, minimal borders. For phones and tablets.", "no panel; type on black"]};
+class Component extends DCLogic {
+  renderVals() {
+    const themes = Object.keys(TH).map((id) => {
+      const v = {}; TK.forEach((k, i) => { v[k] = TH[id][1][i]; });
+      const dark = v.dark === 1; const A = AC[v.pair] || AC.Blue; const s = dark ? A[1] : A[0];
+      const badge = { current: 'Current', retired: 'Retired', new: 'New' }[v.group];
+      return Object.assign(v, {
+        id, name: TH[id][0], desc: DESC[id][0], hero: DESC[id][1],
+        fill: s[1], on: dark ? A[3] : A[2], tint: s[4],
+        badge, badgeInk: v.group === 'new' ? '#655F56' : v.group === 'retired' ? '#875500' : '#1D56D0',
+        radii: [v.rTag, v.rControl, v.rCard, v.rSheet].join('·'), rc: Math.min(v.rControl, 8) + 'px'
+      });
+    });
+    return { themes };
+  }
+}
+</script>
+</body>
+</html>

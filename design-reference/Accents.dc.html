@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<title>Medisense · Accent system</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&amp;family=Instrument+Serif&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1D56D0}a:hover{color:#1E40AF}
+</style>
+</helmet>
+<div style="width: 1440px; min-height: 1420px; box-sizing: border-box; background: #F6F4EF; color: #1C1A17; font-family: 'Instrument Sans', system-ui, sans-serif; font-size: 14px; line-height: 1.5; font-feature-settings: 'ss01', 'tnum'; padding: 64px 80px; display: flex; flex-direction: column; gap: 32px">
+
+  <header style="display: flex; flex-direction: column; gap: 8px; max-width: 900px">
+    <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #655F56">04 · Accent system</span>
+    <h1 style="margin: 0; font-family: 'Instrument Serif', serif; font-weight: 400; font-size: 48px; line-height: 1.04">15 presets, two families, one rule</h1>
+    <p style="margin: 0; color: #3D3933">Each preset sets <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px">accent · accent-fill · fill-hover · fill-pressed · accent-tint · on-accent</span> for light and dark themes. On-accent text is picked automatically: white when it reaches 4.5:1, otherwise ink #1A1406. Blue, Green, Evergreen, Olive and Bronze are your current palette colours; their fills are exact, and the text shade is darkened slightly where needed for 4.5:1 on every theme.</p>
+  </header>
+
+  <section style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px">
+    <div style="background: #FFFFFF; border: 1px solid #E4E0D7; border-radius: 16px; overflow: hidden">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; border-bottom: 1px solid #E4E0D7"><h2 style="margin: 0; font-size: 16px; font-weight: 600">Light family</h2><span style="font-size: 12px; color: #655F56">shown on Premium Light</span></div>
+      <div style="display: grid; grid-template-columns: 96px 150px 128px minmax(0, 1fr); gap: 12px; padding: 8px 20px; background: #EFECE5; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #655F56"><span>Preset</span><span>Text · fill · hover · press · tint</span><span>Button</span><span>Contrast</span></div>
+      <sc-for list="{{light}}" as="a" hint-placeholder-count="12">
+        <div style="display: grid; grid-template-columns: 96px 150px 128px minmax(0, 1fr); gap: 12px; padding: 8px 20px; border-top: 1px solid #EFECE5; align-items: center">
+          <span style="display: flex; flex-direction: column; line-height: 1.25"><span style="font-weight: 600">{{a.name}}</span><span style="font-size: 11px; color: {{a.tagInk}}">{{a.tag}}</span></span>
+          <span style="display: flex; gap: 4px"><span style="width: 24px; height: 24px; border-radius: 6px; background: {{a.c0}}"></span><span style="width: 24px; height: 24px; border-radius: 6px; background: {{a.c1}}"></span><span style="width: 24px; height: 24px; border-radius: 6px; background: {{a.c2}}"></span><span style="width: 24px; height: 24px; border-radius: 6px; background: {{a.c3}}"></span><span style="width: 24px; height: 24px; border-radius: 6px; border: 1px solid #E4E0D7; background: {{a.c4}}"></span></span>
+          <span style="display: flex; gap: 6px; align-items: center"><span style="font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 8px; background: {{a.c1}}; color: {{a.on}}">Sign note</span><span style="font-size: 12px; font-weight: 600; color: {{a.c0}}">Open</span></span>
+          <span style="font-size: 12px; color: #3D3933"><span style="font-family: 'JetBrains Mono', monospace">{{a.r1}}</span> fill · <span style="font-family: 'JetBrains Mono', monospace">{{a.r2}}</span> text <span style="color: {{a.warnColor}}; font-weight: 600">{{a.warn}}</span></span>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="background: #1E1E1E; border: 1px solid #2E2E2E; border-radius: 16px; overflow: hidden; color: #ECECEA">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; border-bottom: 1px solid #2E2E2E"><h2 style="margin: 0; font-size: 16px; font-weight: 600">Dark family</h2><span style="font-size: 12px; color: #9E9C97">shown on Premium Dark</span></div>
+      <div style="display: grid; grid-template-columns: 96px 150px 128px minmax(0, 1fr); gap: 12px; padding: 8px 20px; background: #121212; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #9E9C97"><span>Preset</span><span>Text · fill · hover · press · tint</span><span>Button</span><span>Contrast</span></div>
+      <sc-for list="{{dark}}" as="a" hint-placeholder-count="12">
+        <div style="display: grid; grid-template-columns: 96px 150px 128px minmax(0, 1fr); gap: 12px; padding: 8px 20px; border-top: 1px solid #262626; align-items: center">
+          <span style="display: flex; flex-direction: column; line-height: 1.25"><span style="font-weight: 600">{{a.name}}</span><span style="font-size: 11px; color: {{a.tagInk}}">{{a.tag}}</span></span>
+          <span style="display: flex; gap: 4px"><span style="width: 24px; height: 24px; border-radius: 6px; background: {{a.c0}}"></span><span style="width: 24px; height: 24px; border-radius: 6px; background: {{a.c1}}"></span><span style="width: 24px; height: 24px; border-radius: 6px; background: {{a.c2}}"></span><span style="width: 24px; height: 24px; border-radius: 6px; background: {{a.c3}}"></span><span style="width: 24px; height: 24px; border-radius: 6px; border: 1px solid #404040; background: {{a.c4}}"></span></span>
+          <span style="display: flex; gap: 6px; align-items: center"><span style="font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 8px; background: {{a.c1}}; color: {{a.on}}">Sign note</span><span style="font-size: 12px; font-weight: 600; color: {{a.c0}}">Open</span></span>
+          <span style="font-size: 12px; color: #C9C8C4"><span style="font-family: 'JetBrains Mono', monospace">{{a.r1}}</span> fill · <span style="font-family: 'JetBrains Mono', monospace">{{a.r2}}</span> text <span style="color: {{a.warnColor}}; font-weight: 600">{{a.warn}}</span></span>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <section style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px">
+    <div style="background: #FFFFFF; border: 1px solid #E4E0D7; border-radius: 16px; padding: 20px 24px; display: flex; flex-direction: column; gap: 8px">
+      <h2 style="margin: 0; font-size: 16px; font-weight: 600">Custom colour: generation</h2>
+      <ol style="margin: 0; padding-left: 18px; font-size: 13px; color: #3D3933; display: flex; flex-direction: column; gap: 4px">
+        <li>Take the picked hex into OKLCH. Keep hue, clamp chroma to 0.04–0.20.</li>
+        <li><b style="font-weight: 600">Fill:</b> lightness stepped until white reaches 4.5:1; if no step works within L 0.45–0.70, use ink on-accent instead.</li>
+        <li><b style="font-weight: 600">Hover / pressed:</b> fill L −0.05 / −0.10 (light), +0.05 / −0.06 (dark).</li>
+        <li><b style="font-weight: 600">Text:</b> darkened (light) or lightened (dark) until ≥ 4.5:1 on page, surface and sunken of the active theme.</li>
+        <li><b style="font-weight: 600">Tint:</b> L 0.96 C 0.03 (light); L 0.26 C 0.05 (dark).</li>
+      </ol>
+    </div>
+    <div style="background: #FFFFFF; border: 1px solid #E4E0D7; border-radius: 16px; padding: 20px 24px; display: flex; flex-direction: column; gap: 10px">
+      <h2 style="margin: 0; font-size: 16px; font-weight: 600">Warnings before saving</h2>
+      <div style="display: flex; gap: 10px; align-items: flex-start; background: #FBF0D9; border-radius: 12px; padding: 10px 12px; font-size: 13px; color: #875500">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="flex-shrink: 0; margin-top: 2px"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+        <span><b style="font-weight: 600">Close to “At Risk” red.</b> Hue within 18° of a semantic colour. Status tags will still read, because they always carry a label, but buttons may look like warnings.</span>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: flex-start; background: #FBE8E6; border-radius: 12px; padding: 10px 12px; font-size: 13px; color: #B0261E">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="flex-shrink: 0; margin-top: 2px"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
+        <span><b style="font-weight: 600">Fails contrast on Midnight.</b> Text 3.8:1, needs 4.5:1. We adjusted it to #9DB4FF; keep the adjustment or pick another colour.</span>
+      </div>
+      <p style="margin: 0; font-size: 12px; color: #655F56">Red, Amber, Green and Emerald presets show the same “close to” note in the picker but remain allowed.</p>
+    </div>
+    <div style="background: #FFFFFF; border: 1px solid #E4E0D7; border-radius: 16px; padding: 20px 24px; display: flex; flex-direction: column; gap: 8px">
+      <h2 style="margin: 0; font-size: 16px; font-weight: 600">What the accent may touch</h2>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 16px; font-size: 13px">
+        <span style="font-weight: 600; color: #1B6E40">Yes</span><span style="font-weight: 600; color: #B0261E">Never</span>
+        <span>Primary button fill</span><span>Healthy / Watch / At Risk</span>
+        <span>Links, active tab line</span><span>Live badge</span>
+        <span>Selected row tint, pill, swatch</span><span>Danger buttons</span>
+        <span>Focus ring</span><span>AI draft surface</span>
+        <span>Active sidebar bar</span><span>Chart series (own palette)</span>
+        <span>Progress bars, rings</span><span>Video room stage</span>
+      </div>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1420}}'>
+const AC={Blue:[["#175CD3","#1570EF","#175CD3","#1849A9","#E8F1FD"],["#8DB0FF","#2F6BEB","#4A80F0","#2557C9","#1E2D52"],"#FFFFFF","#FFFFFF"],Indigo:[["#4338CA","#4F46E5","#4338CA","#3730A3","#EEEDFC"],["#A9A5FF","#5850E8","#6E66F2","#4840D0","#28264F"],"#FFFFFF","#FFFFFF"],Violet:[["#6D28D9","#7C3AED","#6D28D9","#5B21B6","#F2ECFD"],["#C4A6FF","#7C3AED","#8E55F0","#6A2BD6","#2E2350"],"#FFFFFF","#FFFFFF"],Purple:[["#9D1CA8","#A21CAF","#86198F","#701A75","#FAEAFB"],["#F0A6F7","#A925B6","#BA3EC6","#8F1C9B","#3A1E3E"],"#FFFFFF","#FFFFFF"],Emerald:[["#036B4D","#047857","#065F46","#064E3B","#E3F5EE"],["#5EDBB0","#10B981","#34C795","#0E9F6F","#123328"],"#FFFFFF","#1A1406"],Green:[["#056B3A","#08844A","#067A42","#05602F","#E6F3ED"],["#9BDB7E","#6CC24A","#80CE61","#57A839","#1D3316"],"#FFFFFF","#1A1406"],Teal:[["#0D6B64","#0F766E","#115E59","#134E4A","#E0F3F1"],["#5ED6CB","#14B8A6","#2CC6B5","#0F9C8D","#10312F"],"#FFFFFF","#1A1406"],Cyan:[["#0B6680","#0E7490","#155E75","#164E63","#E0F2F7"],["#67D4EE","#22B8DA","#3EC4E2","#1A9CBB","#0F2F3A"],"#FFFFFF","#1A1406"],Rose:[["#BE185D","#C81E5E","#AD1950","#8F1542","#FCE8F0"],["#FF9CC2","#E8457F","#EE6090","#CC3069","#3D1A28"],"#FFFFFF","#1A1406"],Red:[["#B91C1C","#C62828","#AD2222","#8F1C1C","#FCEAEA"],["#FF9B93","#E5484D","#EB6164","#C93338","#3E1A1A"],"#FFFFFF","#1A1406"],Orange:[["#A8420A","#C2410C","#A8380A","#8C2F08","#FDEDE3"],["#FFB27A","#F07A2E","#F38C47","#D4651C","#3D2414"],"#FFFFFF","#1A1406"],Amber:[["#875500","#F2B01E","#E0A010","#C98D08","#FCF3DC"],["#F6CB5C","#F2B01E","#F5BD3D","#D69A0E","#3A2E12"],"#1A1406","#1A1406"],Evergreen:[["#0B6A3A","#0D7A43","#0B6A3A","#095A31","#DFF4E8"],["#6CC592","#18A05E","#2FB06F","#12884F","#12301F"],"#FFFFFF","#1A1406"],Olive:[["#2E5A4C","#2E5A4C","#244A3E","#1C3B31","#E3ECE6"],["#9FC2B0","#6F9E8A","#80AC99","#5B8875","#1D2B26"],"#FFFFFF","#1A1406"],Bronze:[["#775A23","#C9A96A","#D6B97E","#B39454","#F6F1E7"],["#D9BD84","#C9A96A","#D6B97E","#B39454","#33291A"],"#1A1406","#1A1406"]};
+const CR={"Blue":[4.6,6.0,4.7,7.8],"Indigo":[6.3,7.9,5.6,7.6],"Violet":[5.7,7.1,5.7,8.1],"Purple":[6.3,6.6,5.8,9.1],"Emerald":[5.5,6.5,7.2,9.7],"Green":[4.8,6.6,8.2,10.2],"Teal":[5.5,6.4,7.4,9.5],"Cyan":[5.4,6.5,7.8,9.7],"Rose":[5.5,6.0,4.9,8.6],"Red":[5.6,6.5,4.7,8.2],"Orange":[5.2,6.1,6.6,9.4],"Amber":[9.6,6.3,9.6,10.8],"Evergreen":[5.4,6.7,5.4,8.0],"Olive":[7.8,7.8,6.0,8.6],"Bronze":[8.2,6.4,8.2,9.2]};
+const NEAR={Red:'· near At Risk',Amber:'· near Watch',Bronze:'· near Watch',Green:'· near Healthy',Emerald:'· near Healthy',Evergreen:'· near Healthy'};
+const MINE={Blue:'Your Clinical Blue',Green:'Your Green',Evergreen:'Your Navy rail / Mint',Olive:'Your Olive Green',Bronze:'Your Warm Editorial'};
+class Component extends DCLogic {
+  renderVals() {
+    const make = (dark) => Object.keys(AC).map((n) => {
+      const s = AC[n][dark ? 1 : 0];
+      return { name: n, c0: s[0], c1: s[1], c2: s[2], c3: s[3], c4: s[4], on: AC[n][dark ? 3 : 2],
+        r1: CR[n][dark ? 2 : 0].toFixed(1), r2: CR[n][dark ? 3 : 1].toFixed(1),
+        warn: NEAR[n] || '', warnColor: dark ? '#F0C062' : '#875500', tag: MINE[n] || 'New preset', tagInk: MINE[n] ? (dark ? '#8DB0FF' : '#1D56D0') : (dark ? '#9E9C97' : '#655F56') };
+    });
+    return { light: make(false), dark: make(true) };
+  }
+}
+</script>
+</body>
+</html>
