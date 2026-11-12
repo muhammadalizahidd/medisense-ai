@@ -16,7 +16,7 @@ import { CaseloadTag, EmptyNote, ErrorNote, Skeleton } from "./bits";
 const reasonTone = {
   good: "bg-healthy-bg text-healthy",
   neutral: "bg-canvas text-ink-700",
-  warn: "bg-monitor-bg text-monitor",
+  warn: "bg-watch-bg text-watch",
 };
 
 /** Ranked therapists for one therapy, with their open times. Picking a time sends the request. */
@@ -141,7 +141,7 @@ export function MatchPicker({
                   {m.availability.away.map((a) => (
                     <span
                       key={`${a.from}-${a.to}`}
-                      className="inline-flex items-center gap-1 text-monitor"
+                      className="inline-flex items-center gap-1 text-watch"
                     >
                       <CalendarOff className="size-3.5" aria-hidden="true" />
                       Away {shortDate(`${a.from}T00:00:00+10:00`)}

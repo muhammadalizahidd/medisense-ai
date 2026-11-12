@@ -181,7 +181,7 @@ function WeekCalendar({
                 <span
                   key={h}
                   aria-hidden="true"
-                  className="absolute inset-x-0 border-t border-grid"
+                  className="absolute inset-x-0 border-t border-chart-grid"
                   style={{ top: (h - DAY_START) * PX_PER_MIN }}
                 />
               ))}
@@ -273,7 +273,7 @@ function TeamDay({
                   <span
                     key={h}
                     aria-hidden="true"
-                    className="absolute inset-y-0 border-l border-grid"
+                    className="absolute inset-y-0 border-l border-chart-grid"
                     style={{ left: pct(h) }}
                   />
                 ))}

@@ -131,7 +131,7 @@ export function UpcomingSupervision({ className }: { className?: string }) {
               </Link>
               <span className="block truncate text-caption text-ink-500">{c.discipline}</span>
             </span>
-            <span className="flex-none rounded-tag bg-monitor-bg px-1.5 py-0.5 text-label leading-4 font-semibold text-monitor">
+            <span className="flex-none rounded-tag bg-watch-bg px-1.5 py-0.5 text-label leading-4 font-semibold text-watch">
               {c.supervisionNote}
             </span>
           </li>

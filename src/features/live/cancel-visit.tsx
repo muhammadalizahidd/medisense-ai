@@ -132,7 +132,7 @@ export function CancelVisitPanel({
             role="status"
             className={cn(
               "rounded-control px-3 py-2 text-small",
-              preview.late ? "bg-monitor-bg text-monitor" : "bg-healthy-bg text-healthy",
+              preview.late ? "bg-watch-bg text-watch" : "bg-healthy-bg text-healthy",
             )}
           >
             {noticeSummary(preview, who)}

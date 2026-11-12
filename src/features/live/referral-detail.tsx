@@ -417,7 +417,7 @@ function IntakeReview({ r, busy, act }: { r: ReferralDetailDto; busy: boolean; a
             <ul className="mt-2 flex flex-col gap-1.5">
               {r.gapsList.map((g) => (
                 <li key={g.field} className="flex items-center gap-2 text-small">
-                  <i aria-hidden="true" className="size-1.5 rounded-full bg-monitor-dot" />
+                  <i aria-hidden="true" className="size-1.5 rounded-full bg-watch-dot" />
                   {g.label}
                 </li>
               ))}
@@ -428,10 +428,10 @@ function IntakeReview({ r, busy, act }: { r: ReferralDetailDto; busy: boolean; a
         {r.duplicatesList.length > 0 && (
           <section
             aria-label="Possible duplicates"
-            className="rounded-control border border-monitor-bg bg-monitor-bg/50 p-4"
+            className="rounded-control border border-watch-bg bg-watch-bg/50 p-4"
           >
             <h3 className="flex items-center gap-2 text-small font-semibold">
-              <Users className="size-4 text-monitor" aria-hidden="true" /> Possible duplicate
+              <Users className="size-4 text-watch" aria-hidden="true" /> Possible duplicate
             </h3>
             <p className="mt-1 text-caption text-ink-700">
               Records are never merged automatically. Check the details and decide.

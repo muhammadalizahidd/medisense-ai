@@ -427,8 +427,8 @@ function ReferralDetail({
         )}
 
         {missing.length > 0 && !finished && (
-          <div className="rounded-control border border-border bg-monitor-bg px-4 py-3">
-            <div className="mb-1 text-small font-semibold text-monitor">
+          <div className="rounded-control border border-border bg-watch-bg px-4 py-3">
+            <div className="mb-1 text-small font-semibold text-watch">
               Missing before the first visit · {missing.length}
             </div>
             <ul className="flex list-disc flex-col gap-0.5 pl-4.5 text-small">

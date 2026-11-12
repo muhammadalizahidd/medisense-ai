@@ -75,7 +75,7 @@ export function RecordingBadge({ status }: { status: string }) {
       role="status"
       className={cn(
         "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-caption font-bold text-white",
-        status === "Recording" ? "bg-over-dot" : "bg-monitor-dot",
+        status === "Recording" ? "bg-over-dot" : "bg-watch-dot",
       )}
     >
       <Circle

@@ -27,7 +27,7 @@ const stageTone: Record<InpatientStage, TagTone> = {
 };
 const stageRule: Record<InpatientStage, string> = {
   New: "bg-over-dot",
-  Accepted: "bg-monitor-dot",
+  Accepted: "bg-watch-dot",
   Seen: "bg-available-dot",
   "Ready for discharge": "bg-healthy-dot",
 };

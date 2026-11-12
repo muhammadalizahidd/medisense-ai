@@ -84,11 +84,11 @@ export function InvoiceDetail({ id }: { id: string }) {
           {inv.exceptions.length > 0 && (
             <section
               aria-label="Exceptions"
-              className="rounded-card border border-monitor-bg bg-monitor-bg/50 p-4"
+              className="rounded-card border border-watch-bg bg-watch-bg/50 p-4"
             >
               <h2 className="flex items-center gap-2 text-small font-semibold">
-                <AlertTriangle className="size-4 text-monitor" aria-hidden="true" /> To resolve
-                before issuing
+                <AlertTriangle className="size-4 text-watch" aria-hidden="true" /> To resolve before
+                issuing
               </h2>
               <ul className="mt-2 flex flex-col gap-1 text-small">
                 {inv.exceptions.map((e) => (

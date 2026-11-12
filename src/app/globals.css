@@ -1511,42 +1511,16 @@ input:-webkit-autofill:focus {
 }
 
 /* ==========================================================================
-   Legacy aliases · remove after migration (Phases 2–3)
-   Old token names still used by components that haven't been redesigned yet.
-   Each points at a new token, so every theme and accent still applies.
+   Focus and rule shadows · token-based rings and edge rules used by shared components
    ========================================================================== */
 @theme inline {
-  /* "monitor" is the old name of the Watch status colour. */
-  --color-monitor: var(--color-watch);
-  --color-monitor-bg: var(--color-watch-bg);
-  --color-monitor-dot: var(--color-watch-dot);
-  /* AI provenance label text; Phase 2 replaces it with <AiMark>. */
-  --color-brass: var(--color-accent);
-  /* Old chart colour names. */
-  --color-grid: var(--color-chart-grid);
-  --color-chart-evergreen: var(--color-series-1);
-  --color-chart-sage: var(--color-series-3);
-  --color-chart-sand: var(--color-border-strong);
-  --color-chart-slate: var(--color-series-4);
-  --color-chart-stone: var(--color-ink-400);
-  --color-chart-clay: var(--color-over-dot);
-  /* Old rules and rings drawn with shadows; Phase 2 turns them into borders. */
+  /* Focus ring for composite fields (a wrapper around an input with its own outline off). */
   --shadow-focus: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-focus);
   --shadow-focus-dark: 0 0 0 2px var(--color-sidebar), 0 0 0 4px var(--color-focus);
+  /* Edge rules: a Watch flag on top, an At Risk or accent rule on the left. */
   --shadow-flag: inset 0 2px 0 var(--color-watch-dot);
   --shadow-rule-over: inset 2px 0 0 var(--color-over-dot);
   --shadow-rule-accent: inset 2px 0 0 var(--color-accent-fill);
   --shadow-hairline: 0 0 0 1px var(--color-border);
   --shadow-underline-accent: inset 0 -1px 0 var(--color-accent);
-}
-:root {
-  /* Video room colours read inline by the sample telehealth and staff-app screens. */
-  --hero-ink: var(--color-call-stage);
-  --room-glow: var(--color-call-tile);
-  --room-deep: var(--color-call-stage);
-}
-/* AI cards: the old gradient border becomes the flat draft surface until <AiDraft> lands. */
-.ai-surface {
-  background: var(--color-draft);
-  border: 1px dashed var(--color-draft-rule);
 }

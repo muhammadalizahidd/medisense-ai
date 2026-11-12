@@ -52,10 +52,7 @@ export function ScoreBreakdown({
       <div className="mt-4.5">
         <div className="flex h-2 overflow-hidden rounded-full" aria-hidden="true">
           <span className="bg-healthy-bg" style={{ flex: thresholds.monitor }} />
-          <span
-            className="bg-monitor-bg"
-            style={{ flex: thresholds.atRisk - thresholds.monitor }}
-          />
+          <span className="bg-watch-bg" style={{ flex: thresholds.atRisk - thresholds.monitor }} />
           <span className="bg-over-bg" style={{ flex: max - thresholds.atRisk }} />
         </div>
         <div className="relative h-0" aria-hidden="true">

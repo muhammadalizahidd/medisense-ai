@@ -56,14 +56,14 @@ function Documentation({ value, href }: { value: DocumentationStatus; href?: str
       return <span className="text-ink-500">Complete</span>;
     case "overdue":
       return href ? (
-        <Link href={href} className="font-medium text-monitor underline-offset-2 hover:underline">
+        <Link href={href} className="font-medium text-watch underline-offset-2 hover:underline">
           Note overdue · {value.days} days
         </Link>
       ) : (
-        <span className="font-medium text-monitor">Note overdue · {value.days} days</span>
+        <span className="font-medium text-watch">Note overdue · {value.days} days</span>
       );
     case "report-incomplete":
-      return <span className="font-medium text-monitor">Progress report incomplete</span>;
+      return <span className="font-medium text-watch">Progress report incomplete</span>;
     case "ai-draft": {
       const label = (
         <>

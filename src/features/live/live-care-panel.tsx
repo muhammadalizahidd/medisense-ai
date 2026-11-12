@@ -58,7 +58,7 @@ function Stat({
         className={cn(
           "type-display text-h1-compact font-semibold",
           tone === "over" && "text-over",
-          tone === "monitor" && "text-monitor",
+          tone === "monitor" && "text-watch",
         )}
       >
         {value}

@@ -136,7 +136,7 @@ export function TherapistRecord({
               <ul className="flex flex-col gap-1">
                 {t.availability.away.map((a) => (
                   <li key={`${a.from}-${a.to}`} className="flex items-center gap-2 text-small">
-                    <CalendarOff className="size-4 text-monitor" aria-hidden="true" />
+                    <CalendarOff className="size-4 text-watch" aria-hidden="true" />
                     Away {day(a.from)}
                     {a.to !== a.from && ` – ${day(a.to)}`} · {a.reason}
                   </li>

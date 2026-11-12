@@ -181,7 +181,7 @@ export function PatientHome({
               aria-hidden="true"
               className={cn(
                 "absolute -right-0.5 -bottom-0.5 size-3 rounded-full border-2 border-white",
-                status === "live" ? "bg-healthy-dot" : "bg-monitor-dot",
+                status === "live" ? "bg-healthy-dot" : "bg-watch-dot",
               )}
             />
           </span>
@@ -231,10 +231,10 @@ export function PatientHome({
                 key={v.id}
                 type="button"
                 onClick={() => onRate(v)}
-                className="mb-3 flex w-full cursor-pointer items-center gap-3 rounded-card border border-monitor-bg bg-monitor-bg p-3.5 text-left active:scale-99"
+                className="mb-3 flex w-full cursor-pointer items-center gap-3 rounded-card border border-watch-bg bg-watch-bg p-3.5 text-left active:scale-99"
               >
-                <span className="flex size-10 flex-none items-center justify-center rounded-full bg-surface text-monitor">
-                  <Star className="size-5 fill-monitor-dot text-monitor-dot" aria-hidden="true" />
+                <span className="flex size-10 flex-none items-center justify-center rounded-full bg-surface text-watch">
+                  <Star className="size-5 fill-watch-dot text-watch-dot" aria-hidden="true" />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-small font-semibold">How was your visit?</span>

@@ -113,7 +113,7 @@ export function ClientProfileView({ profile }: { profile: ClientProfile }) {
               className={cn(
                 "flex items-center gap-2.5 rounded-card border px-4 py-2.5 text-small",
                 a.tone === "over" && "border-over/30 bg-over-bg text-over",
-                a.tone === "monitor" && "border-monitor/30 bg-monitor-bg text-monitor",
+                a.tone === "monitor" && "border-watch/30 bg-watch-bg text-watch",
                 a.tone === "neutral" && "border-border bg-surface text-ink-700",
               )}
             >

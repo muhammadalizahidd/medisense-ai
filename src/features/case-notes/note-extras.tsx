@@ -22,10 +22,10 @@ export function MissingInformation({ items }: { items: string[] }) {
   return (
     <section
       aria-label="Missing information"
-      className="rounded-control border border-border bg-monitor-bg px-4 py-3"
+      className="rounded-control border border-border bg-watch-bg px-4 py-3"
     >
       <div className="mb-1.5 flex items-center justify-between gap-2">
-        <span className="flex items-center gap-1.5 text-small font-semibold text-monitor">
+        <span className="flex items-center gap-1.5 text-small font-semibold text-watch">
           <TriangleAlert className="size-4" strokeWidth={1.5} aria-hidden="true" />
           Check before approving · {items.length} possible gaps
         </span>

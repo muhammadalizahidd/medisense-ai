@@ -188,7 +188,7 @@ function People() {
                       c.utilisation >= 100
                         ? "bg-over-dot"
                         : c.utilisation >= 95
-                          ? "bg-monitor-dot"
+                          ? "bg-watch-dot"
                           : "bg-accent-fill",
                     )}
                     style={{ width: `${Math.min(c.utilisation, 100)}%` }}
@@ -385,7 +385,7 @@ function Purchasing() {
                     <i
                       className={cn(
                         "block h-full rounded-full",
-                        percent >= 90 ? "bg-monitor-dot" : "bg-accent-fill",
+                        percent >= 90 ? "bg-watch-dot" : "bg-accent-fill",
                       )}
                       style={{ width: `${percent}%` }}
                     />

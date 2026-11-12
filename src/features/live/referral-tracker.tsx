@@ -192,10 +192,10 @@ function AnswerRequest({
   return (
     <section
       aria-label="We need more information"
-      className="rounded-card border border-monitor-bg bg-surface p-6"
+      className="rounded-card border border-watch-bg bg-surface p-6"
     >
       <h2 className="flex items-center gap-2 text-body font-semibold">
-        <MessageSquareWarning className="size-5 text-monitor" aria-hidden="true" />
+        <MessageSquareWarning className="size-5 text-watch" aria-hidden="true" />
         We need a little more information
       </h2>
       <p className="mt-1 text-caption text-ink-500">Asked {relativeTime(request.at)}</p>
@@ -205,7 +205,7 @@ function AnswerRequest({
             <li key={i.field} className="flex gap-2 text-small">
               <span
                 aria-hidden="true"
-                className="mt-2 size-1.5 flex-none rounded-full bg-monitor-dot"
+                className="mt-2 size-1.5 flex-none rounded-full bg-watch-dot"
               />
               {i.label}
             </li>

@@ -342,7 +342,7 @@ export function Billing() {
             ))}
           </dl>
           {open.needsNote ? (
-            <p className="mt-4 rounded-control bg-monitor-bg px-3.5 py-3 text-small text-monitor">
+            <p className="mt-4 rounded-control bg-watch-bg px-3.5 py-3 text-small text-watch">
               Held back: the session note isn&apos;t approved yet.{" "}
               <Link href="/tasks" className="font-semibold">
                 View tasks

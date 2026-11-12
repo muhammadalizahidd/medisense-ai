@@ -104,7 +104,7 @@ export function TherapistDirectory() {
                           key={`${a.from}-${a.to}`}
                           className="flex items-center gap-1.5 text-caption"
                         >
-                          <CalendarOff className="size-3.5 text-monitor" aria-hidden="true" />
+                          <CalendarOff className="size-3.5 text-watch" aria-hidden="true" />
                           {day(a.from)}
                           {a.to !== a.from && `–${day(a.to)}`} · {a.reason}
                         </span>

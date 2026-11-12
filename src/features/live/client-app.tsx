@@ -116,7 +116,7 @@ export function ClientApp() {
         <AppHeader eyebrow="Medisense" title="Welcome" />
         <div className="p-4">
           {user && (
-            <p className="mb-3 rounded-control bg-monitor-bg px-3 py-2 text-small text-monitor">
+            <p className="mb-3 rounded-control bg-watch-bg px-3 py-2 text-small text-watch">
               You&apos;re signed in as staff. Sign in with a patient account to use this app.
             </p>
           )}

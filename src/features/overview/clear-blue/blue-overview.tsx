@@ -221,11 +221,11 @@ function ReviewAlerts({ className }: { className?: string }) {
               key={a.id}
               className={cn(
                 "flex gap-2 rounded-control px-2.5 py-2",
-                high ? "bg-over-bg" : "bg-monitor-bg",
+                high ? "bg-over-bg" : "bg-watch-bg",
               )}
             >
               <AlertTriangle
-                className={cn("mt-0.5 size-4 flex-none", high ? "text-over" : "text-monitor")}
+                className={cn("mt-0.5 size-4 flex-none", high ? "text-over" : "text-watch")}
                 strokeWidth={1.75}
                 aria-hidden="true"
               />
@@ -233,7 +233,7 @@ function ReviewAlerts({ className }: { className?: string }) {
                 <span
                   className={cn(
                     "block text-caption font-semibold",
-                    high ? "text-over" : "text-monitor",
+                    high ? "text-over" : "text-watch",
                   )}
                 >
                   {a.priority} priority

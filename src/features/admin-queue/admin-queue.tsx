@@ -240,7 +240,7 @@ export function AdminQueue() {
       <Exception />
 
       {reminder && (
-        <div className="mb-6 flex flex-wrap items-center gap-2 rounded-card bg-monitor-bg px-5 py-3 text-small font-semibold text-monitor">
+        <div className="mb-6 flex flex-wrap items-center gap-2 rounded-card bg-watch-bg px-5 py-3 text-small font-semibold text-watch">
           <Bell className="size-4 flex-none" strokeWidth={1.5} aria-hidden="true" />
           Reminder, 8:00 am. {reminder.text}.
         </div>

@@ -40,7 +40,7 @@ export function ChatOverlay({
             aria-hidden="true"
             className={cn(
               "absolute -right-0.5 -bottom-0.5 size-3 rounded-full border-2 border-surface",
-              status === "live" ? "bg-healthy-dot" : "bg-monitor-dot",
+              status === "live" ? "bg-healthy-dot" : "bg-watch-dot",
             )}
           />
         </span>

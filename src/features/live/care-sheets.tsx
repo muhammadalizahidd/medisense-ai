@@ -237,7 +237,7 @@ export function NoteSheet({
               </p>
             )}
             {missing.length > 0 && (
-              <div className="rounded-control bg-monitor-bg px-3 py-2 text-small">
+              <div className="rounded-control bg-watch-bg px-3 py-2 text-small">
                 <p className="font-semibold">AI found these missing from your notes:</p>
                 <ul className="mt-1 list-disc pl-5">
                   {missing.map((m) => (

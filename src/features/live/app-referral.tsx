@@ -149,7 +149,7 @@ export function PendingReferral({
         </ol>
       )}
       {r.openRequest && (
-        <p className="mt-4 rounded-control bg-monitor-bg px-3 py-2 text-caption">
+        <p className="mt-4 rounded-control bg-watch-bg px-3 py-2 text-caption">
           We&apos;ve asked for more information. Use the tracking link from your referral to answer.
         </p>
       )}

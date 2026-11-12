@@ -386,7 +386,7 @@ function FormItem({
               key={f.id}
               className={cn(
                 "grid items-center gap-x-3 border-b border-border py-1.5 text-small last:border-b-0 md:grid-cols-[150px_minmax(0,1fr)_130px]",
-                !values[f.id]?.trim() && "bg-monitor-bg",
+                !values[f.id]?.trim() && "bg-watch-bg",
               )}
             >
               <dt className="text-ink-700">{f.label}</dt>

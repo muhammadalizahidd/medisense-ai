@@ -223,7 +223,7 @@ function FormDetail({ draft }: { draft: FormDraft }) {
             <span
               className={cn(
                 "block h-full rounded-full",
-                c.missing ? "bg-monitor-dot" : "bg-healthy-dot",
+                c.missing ? "bg-watch-dot" : "bg-healthy-dot",
               )}
               style={{ width: `${c.percent}%` }}
             />
@@ -240,7 +240,7 @@ function FormDetail({ draft }: { draft: FormDraft }) {
               key={f.id}
               className={cn(
                 "grid grid-cols-1 gap-2 border-b border-border px-6 py-2.5 md:grid-cols-[180px_minmax(0,1fr)_170px] md:items-start",
-                empty && f.required && "bg-monitor-bg",
+                empty && f.required && "bg-watch-bg",
               )}
             >
               <label htmlFor={`${draft.id}-${f.id}`} className="pt-1.5 text-small font-semibold">
@@ -258,7 +258,7 @@ function FormDetail({ draft }: { draft: FormDraft }) {
                     className={cn(
                       input,
                       "resize-y",
-                      empty && f.required ? "border-monitor-dot" : "border-border-strong",
+                      empty && f.required ? "border-watch-dot" : "border-border-strong",
                     )}
                   />
                 ) : (
@@ -270,12 +270,12 @@ function FormDetail({ draft }: { draft: FormDraft }) {
                     onChange={(e) => setValue(draft.id, f.id, e.target.value)}
                     className={cn(
                       input,
-                      empty && f.required ? "border-monitor-dot" : "border-border-strong",
+                      empty && f.required ? "border-watch-dot" : "border-border-strong",
                     )}
                   />
                 )}
                 {f.check && !submitted && (
-                  <p className="mt-1 flex items-center gap-1 text-caption font-medium text-monitor">
+                  <p className="mt-1 flex items-center gap-1 text-caption font-medium text-watch">
                     <CircleAlert className="size-3.5" strokeWidth={1.5} aria-hidden="true" />
                     {f.check}
                   </p>

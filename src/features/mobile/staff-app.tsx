@@ -142,7 +142,7 @@ function HomeTab({ onNote, onTab }: { onNote: () => void; onTab: (id: string) =>
               </div>
             </div>
             {next.leaveBy && (
-              <p className="mt-2 flex items-center gap-1.5 text-small font-medium text-monitor">
+              <p className="mt-2 flex items-center gap-1.5 text-small font-medium text-watch">
                 <Car className="size-4" strokeWidth={1.5} aria-hidden="true" />
                 Leave by {next.leaveBy}
               </p>
@@ -765,7 +765,7 @@ function TasksTab({ offline, queued }: { offline: boolean; queued: string[] }) {
                 {t.client}, due {t.due}
               </p>
               {saved ? (
-                <p className="mt-2 text-small font-medium text-monitor">
+                <p className="mt-2 text-small font-medium text-watch">
                   Saved on this phone. It sends when you&apos;re back online.
                 </p>
               ) : t.done ? (
@@ -991,7 +991,7 @@ function NoteView({ offline, onBack }: { offline: boolean; onBack: () => void })
                 </p>
               )}
               {offline && (
-                <p className="mt-2 text-small text-monitor">
+                <p className="mt-2 text-small text-watch">
                   AI needs a connection. Your text stays here until you&apos;re back online.
                 </p>
               )}
@@ -1058,7 +1058,7 @@ export function StaffApp() {
       {offline && (
         <p
           role="status"
-          className="sticky top-0 z-10 bg-monitor py-1 text-center text-caption font-semibold text-white"
+          className="sticky top-0 z-10 bg-watch py-1 text-center text-caption font-semibold text-white"
         >
           Offline{queued.length ? `, ${queued.length} waiting to send` : ""}
         </p>

@@ -177,7 +177,7 @@ export function SignInForm({
         trailing={eye}
         hint={
           capsLock ? (
-            <span className="text-monitor">Caps Lock is on.</span>
+            <span className="text-watch">Caps Lock is on.</span>
           ) : activating ? (
             "At least 10 characters. Leave blank to check a referral."
           ) : undefined

@@ -302,7 +302,7 @@ function NeedPanel({
         />
       )}
       {current?.status === "pending" && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-control border border-monitor-bg bg-monitor-bg px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-control border border-watch-bg bg-watch-bg px-4 py-3">
           <p className="text-small">
             Waiting for <strong>{current.therapistName}</strong> to accept. First visit held for{" "}
             <strong>{slotLabel(current.firstVisit)}</strong>. Sent {relativeTime(current.createdAt)}

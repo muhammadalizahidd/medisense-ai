@@ -497,9 +497,9 @@ function ReviewedNote({
         {!approved && revealed >= noteSectionTitles.length && open.length > 0 && (
           <section
             aria-labelledby="check"
-            className="rounded-control border border-border bg-monitor-bg px-4 py-3"
+            className="rounded-control border border-border bg-watch-bg px-4 py-3"
           >
-            <h3 id="check" className="text-small font-semibold text-monitor">
+            <h3 id="check" className="text-small font-semibold text-watch">
               AI found {open.length} {open.length === 1 ? "thing" : "things"} to check before you
               approve
             </h3>

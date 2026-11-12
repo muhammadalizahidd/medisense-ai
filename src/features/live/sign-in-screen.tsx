@@ -94,7 +94,7 @@ export function SignInScreen({
           {offline && (
             <p
               role="status"
-              className="mb-4 rounded-control bg-monitor-bg px-3 py-2 text-small text-monitor"
+              className="mb-4 rounded-control bg-watch-bg px-3 py-2 text-small text-watch"
             >
               Sign-in is unavailable because the database can&apos;t be reached. Try again shortly.
             </p>

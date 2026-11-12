@@ -206,8 +206,8 @@ export function TimeSkipView() {
             description="One reminder this morning. Oliver's report upload moved to the top because it's due today."
           />
           <Card aria-label="Reminder" className="mb-6 overflow-hidden">
-            <div className="flex flex-wrap items-center justify-between gap-3 bg-monitor-bg px-5 py-3">
-              <span className="flex items-center gap-2 text-small font-semibold text-monitor">
+            <div className="bg-monitor-bg flex flex-wrap items-center justify-between gap-3 px-5 py-3">
+              <span className="text-monitor flex items-center gap-2 text-small font-semibold">
                 <Bell className="size-4" strokeWidth={1.5} aria-hidden="true" />
                 Reminder, 8:00 am: Oliver Grant&apos;s report upload is due today
               </span>

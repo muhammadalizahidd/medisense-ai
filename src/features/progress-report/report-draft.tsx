@@ -10,7 +10,7 @@ import { useDemoStore } from "@/state/demo-store";
 
 const goalStatusDot: Record<string, string> = {
   "Largely achieved": "bg-healthy-dot",
-  Progressing: "bg-chart-sand",
+  Progressing: "bg-border-strong",
 };
 
 function ReportSection({

@@ -233,9 +233,9 @@ function Prompts() {
   return (
     <section
       aria-labelledby="check"
-      className="rounded-control border border-border bg-monitor-bg px-4 py-3"
+      className="bg-monitor-bg rounded-control border border-border px-4 py-3"
     >
-      <h3 id="check" className="text-small font-semibold text-monitor">
+      <h3 id="check" className="text-monitor text-small font-semibold">
         AI found 2 things to check before you approve
       </h3>
       <ul className="mt-1.5 flex flex-col">
@@ -504,7 +504,7 @@ export function NoteView() {
           <section aria-labelledby="type-note" className="max-w-200">
             <p
               role="alert"
-              className="flex items-start gap-2 rounded-control bg-monitor-bg px-4 py-3 text-small text-monitor"
+              className="bg-monitor-bg text-monitor flex items-start gap-2 rounded-control px-4 py-3 text-small"
             >
               <MicOff className="mt-0.5 size-4 flex-none" strokeWidth={1.5} aria-hidden="true" />
               <span>

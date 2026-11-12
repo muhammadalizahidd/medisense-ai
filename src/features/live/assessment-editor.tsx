@@ -312,7 +312,7 @@ function Editor({ a, reload }: { a: AssessmentDto; reload: () => void }) {
                     {gaps.map((g) => (
                       <li key={g} className="flex gap-2">
                         <TriangleAlert
-                          className="mt-0.5 size-3.5 flex-none text-monitor"
+                          className="mt-0.5 size-3.5 flex-none text-watch"
                           aria-hidden="true"
                         />
                         {g}

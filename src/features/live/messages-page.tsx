@@ -57,7 +57,7 @@ function Mark({ text, q }: { text: string; q: string }) {
   return (
     <>
       {text.slice(0, i)}
-      <mark className="rounded-sm bg-monitor-bg px-0.5 text-ink-900">
+      <mark className="rounded-sm bg-watch-bg px-0.5 text-ink-900">
         {text.slice(i, i + q.length)}
       </mark>
       {text.slice(i + q.length)}
