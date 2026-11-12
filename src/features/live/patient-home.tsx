@@ -176,7 +176,7 @@ export function PatientHome({
         title={`Hi ${first}`}
         aside={
           <span className="relative mt-1">
-            <Avatar name={data?.name ?? first} size={42} className="ring-2 ring-white/40" />
+            <Avatar name={data?.name ?? first} size={42} className="ring-2 ring-surface" />
             <i
               aria-hidden="true"
               className={cn(

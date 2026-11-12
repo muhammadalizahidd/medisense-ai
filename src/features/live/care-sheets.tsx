@@ -1,6 +1,7 @@
 "use client";
 
-import { Lock, PenLine, Sparkles } from "lucide-react";
+import { Lock, PenLine } from "lucide-react";
+import { AiIcon } from "@/components/ai/provenance";
 import { useState } from "react";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -202,7 +203,7 @@ export function NoteSheet({
               className="rounded-card border border-accent/30 bg-accent-tint p-4"
             >
               <p className="flex items-center gap-2 text-small font-semibold">
-                <Sparkles className="size-4 text-accent" aria-hidden="true" />
+                <AiIcon className="size-4" />
                 Draft with AI
               </p>
               <p className="mt-1 text-caption text-ink-700">
@@ -225,7 +226,7 @@ export function NoteSheet({
                 disabled={drafting || rough.trim().length < 15}
                 onClick={draft}
               >
-                <Sparkles className="size-3.5" aria-hidden="true" />
+                <AiIcon className="size-3.5" />
                 {drafting ? "Drafting…" : "Draft SOAP note"}
               </Button>
             </section>

@@ -310,7 +310,7 @@ function Room({ visit, onLeave }: { visit: ScheduleItem; onLeave: () => void }) 
   return (
     <div className="grid items-start gap-6 lg:grid-cols-12">
       <div className="lg:col-span-8">
-        <div className="relative aspect-video overflow-hidden rounded-sheet bg-[radial-gradient(circle_at_30%_20%,var(--room-glow),var(--room-deep)_60%)] text-white shadow-overlay">
+        <div className="relative aspect-video overflow-hidden rounded-sheet bg-call-stage text-call-ink">
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center">
             <Avatar name={visit.title} size={112} className="ring-4 ring-white/25" />
             <p className="type-display text-h1">{visit.title}</p>

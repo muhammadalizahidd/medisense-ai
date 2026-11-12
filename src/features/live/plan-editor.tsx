@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowLeft, CheckCircle2, Plus, Sparkles, Target, Trash2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Plus, Target, Trash2 } from "lucide-react";
+import { AiIcon } from "@/components/ai/provenance";
 import { useEffect, useRef, useState } from "react";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page";
@@ -326,7 +327,7 @@ function Plan({ p, reload }: { p: PlanDto; reload: () => void }) {
                 disabled={busy}
                 onClick={() => act({ action: "progress-summary" })}
               >
-                <Sparkles className="size-3.5" aria-hidden="true" />
+                <AiIcon className="size-3.5" />
                 {p.progressSummary ? "Draft again" : "Draft progress summary"}
               </Button>
             </Panel>

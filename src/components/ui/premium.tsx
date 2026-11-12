@@ -1,14 +1,6 @@
 import { cn } from "@/lib/cn";
 import type { ReactNode } from "react";
 
-const tones = [
-  "from-available-dot to-accent-fill-pressed",
-  "from-series-2 to-healthy",
-  "from-series-3 to-accent-fill-pressed",
-  "from-series-4 to-series-3",
-  "from-accent-fill to-series-2",
-];
-
 export function initialsOf(name: string) {
   return name
     .split(" ")
@@ -18,7 +10,7 @@ export function initialsOf(name: string) {
     .join("");
 }
 
-/** Initials on a gradient. The same name always gets the same colour. */
+/** Initials on a quiet tint. */
 export function Avatar({
   name,
   size = 40,
@@ -28,14 +20,12 @@ export function Avatar({
   size?: number;
   className?: string;
 }) {
-  const hash = [...name].reduce((sum, c) => sum + c.charCodeAt(0), 0);
   return (
     <span
       aria-hidden="true"
       style={{ width: size, height: size, fontSize: Math.round(size * 0.36) }}
       className={cn(
-        "flex flex-none items-center justify-center rounded-full bg-linear-to-br font-semibold text-white",
-        tones[hash % tones.length],
+        "flex flex-none items-center justify-center rounded-full bg-sunken font-semibold text-ink-700",
         className,
       )}
     >
@@ -51,14 +41,12 @@ export function Ring({
   stroke = 8,
   label,
   children,
-  light = false,
 }: {
   percent: number;
   size?: number;
   stroke?: number;
   label: string;
   children: ReactNode;
-  light?: boolean;
 }) {
   const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -77,7 +65,7 @@ export function Ring({
           r={radius}
           fill="none"
           strokeWidth={stroke}
-          stroke={light ? "rgb(255 255 255 / 0.22)" : "var(--color-border)"}
+          stroke="var(--color-sunken)"
         />
         <circle
           cx={size / 2}
@@ -86,7 +74,7 @@ export function Ring({
           fill="none"
           strokeWidth={stroke}
           strokeLinecap="round"
-          stroke={light ? "#ffffff" : "var(--color-accent-fill)"}
+          stroke="var(--color-accent-fill)"
           strokeDasharray={circumference}
           strokeDashoffset={circumference * (1 - clamped / 100)}
         />
@@ -106,7 +94,7 @@ export function Stepper({ steps, current }: { steps: string[]; current: number }
         <li key={step} className="flex min-w-0 flex-1 flex-col gap-1.5">
           <span
             aria-hidden="true"
-            className={cn("h-1.5 rounded-full", i <= current ? "bg-accent-fill" : "bg-canvas")}
+            className={cn("h-1.5 rounded-full", i <= current ? "bg-accent-fill" : "bg-sunken")}
           />
           <span
             aria-current={i === current ? "step" : undefined}

@@ -10,7 +10,7 @@ import {
   Lock,
   Paperclip,
   Trash2,
-  Wand2,
+  FlaskConical,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -944,7 +944,7 @@ function ReferralFormBody({ mode, staffName, embedded = false }: Props) {
               onClick={fillSample}
               className="flex cursor-pointer items-center gap-1 rounded-full border border-border-strong px-2.5 py-1 text-caption font-semibold text-accent hover:bg-accent-tint"
             >
-              <Wand2 className="size-3" aria-hidden="true" /> Fill sample data
+              <FlaskConical className="size-3" aria-hidden="true" /> Fill sample data
             </button>
           </div>
           <h2 id="step-title" className="mt-1 type-display text-[26px] leading-[1.1]">
@@ -1054,7 +1054,7 @@ function ReferralFormBody({ mode, staffName, embedded = false }: Props) {
           onClick={fillSample}
           className="mt-3 flex w-full cursor-pointer items-center justify-center gap-2 rounded-control border border-dashed border-border-strong px-3 py-2 text-caption font-semibold text-accent hover:border-accent hover:bg-accent-tint lg:w-auto"
         >
-          <Wand2 className="size-3.5" aria-hidden="true" /> Fill sample data (testing)
+          <FlaskConical className="size-3.5" aria-hidden="true" /> Fill sample data (testing)
         </button>
       </nav>
 

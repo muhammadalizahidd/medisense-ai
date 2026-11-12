@@ -1,6 +1,7 @@
 "use client";
 
-import { CalendarClock, CalendarOff, Send, Wand2 } from "lucide-react";
+import { CalendarClock, CalendarOff, Send } from "lucide-react";
+import { RuleIcon } from "@/components/ai/provenance";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -96,7 +97,7 @@ export function MatchPicker({
           caseload health and how soon they can start. Choose a time to send the request.
         </p>
         <Button size="sm" disabled={sending} onClick={autoAllocate}>
-          <Wand2 className="size-3.5" aria-hidden="true" />
+          <RuleIcon className="size-3.5" />
           Auto-allocate (low-risk rule)
         </Button>
       </div>

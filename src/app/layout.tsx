@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/shell/sidebar";
 import { PresenterPanel } from "@/components/shell/presenter-panel";
 import { TabBar } from "@/components/shell/tab-bar";
 import { TopBar } from "@/components/shell/top-bar";
+import { Toaster } from "@/components/ui/toast";
 import { DemoStoreHydrator } from "@/state/demo-store-hydrator";
 import { fontVariables } from "./fonts";
 import { ThemeScript } from "./theme-script";
@@ -43,6 +44,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
       </head>
       <body>
         <DemoStoreHydrator />
+        <Toaster />
         <Suspense fallback={<div className="min-h-screen bg-page" />}>
           <Today>
             <div className="flex min-h-screen bg-page">

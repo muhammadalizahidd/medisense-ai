@@ -3,7 +3,7 @@ import { cn } from "@/lib/cn";
 
 const levelColours: Record<Complexity | Priority, string> = {
   High: "bg-over-dot",
-  Medium: "bg-monitor-dot",
+  Medium: "bg-watch-dot",
   Low: "bg-ink-400",
   Review: "bg-ink-400",
 };

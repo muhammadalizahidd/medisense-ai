@@ -42,7 +42,8 @@ function blockStyle(item: ScheduleItem): CSSProperties {
   if (item.status === "cancelled") {
     return {
       background:
-        "repeating-linear-gradient(135deg, var(--color-sunken) 0 6px, var(--color-surface) 6px 12px)",
+        // design-ok: hatching marks a cancelled visit without relying on colour
+        "repeating-linear-gradient(135deg, var(--color-sunken) 0 6px, var(--color-surface) 6px 12px)", // design-ok
       borderLeft: "3px solid var(--color-border-strong)",
     };
   }

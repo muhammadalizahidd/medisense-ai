@@ -30,9 +30,9 @@ export function Segmented<T extends string>({
           aria-pressed={value === o.id}
           onClick={() => onChange(o.id)}
           className={cn(
-            "h-7 cursor-pointer rounded-tag px-2.5 text-small whitespace-nowrap",
+            "h-7 cursor-pointer rounded-tag px-2.5 text-small whitespace-nowrap transition-colors duration-(--duration-fast)",
             value === o.id
-              ? "bg-raised font-semibold text-ink-900 shadow-hairline"
+              ? "bg-surface font-semibold text-ink-900 ring-1 ring-border"
               : "font-medium text-ink-700 hover:text-ink-900",
           )}
         >

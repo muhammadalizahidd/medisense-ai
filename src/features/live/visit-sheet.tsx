@@ -6,10 +6,10 @@ import {
   LogIn,
   LogOut,
   ShieldAlert,
-  Sparkles,
   Target,
   TriangleAlert,
 } from "lucide-react";
+import { AiIcon } from "@/components/ai/provenance";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet } from "@/components/ui/sheet";
@@ -471,7 +471,7 @@ function AiBriefing({ visitId }: { visitId: string }) {
             }
           }}
         >
-          <Sparkles className="size-3.5" aria-hidden="true" />
+          <AiIcon className="size-3.5" />
           {busy ? "Preparing…" : "AI briefing"}
         </Button>
         {fail && <p className="mt-1 text-caption text-over">{fail}</p>}
@@ -484,8 +484,7 @@ function AiBriefing({ visitId }: { visitId: string }) {
       className="rounded-card border border-accent/30 bg-accent-tint p-4 text-small"
     >
       <p className="mb-2 flex items-center gap-2 font-semibold">
-        <Sparkles className="size-4 text-accent" aria-hidden="true" /> AI briefing · check before
-        relying on it
+        <AiIcon className="size-4" /> AI briefing · check before relying on it
       </p>
       <ul className="flex flex-col gap-1.5">
         {data.points.map((p) => (

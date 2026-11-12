@@ -23,7 +23,7 @@ export function CardTitle({
   return (
     <div className={cn("flex flex-wrap items-start justify-between gap-3", className)}>
       <div>
-        <h2 id={id} className="type-display text-h2">
+        <h2 id={id} className="text-section font-semibold text-ink-900">
           {title}
         </h2>
         {description && <p className="mt-1 text-caption font-medium text-ink-500">{description}</p>}

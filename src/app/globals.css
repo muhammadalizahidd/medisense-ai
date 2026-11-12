@@ -1439,6 +1439,30 @@ input:-webkit-autofill:focus {
   }
 }
 
+/* AI drafting in progress: a calm shimmer on the draft surface. Under reduced motion, a still bar. */
+.ai-shimmer {
+  display: block;
+  background: var(--color-sunken);
+}
+@keyframes ai-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ai-shimmer {
+    background: linear-gradient(90deg, var(--color-sunken) 0%, var(--color-draft) 50%, var(--color-sunken) 100%) 0 0 / 200% 100%;
+    animation: ai-shimmer 1.6s linear infinite;
+  }
+}
+/* Toasts slide up from the bottom right. */
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .toast-in { animation: toast-in var(--duration-base) var(--ease-out) both; }
+}
+
 /* ==========================================================================
    Legacy aliases · remove after migration (Phases 2–3)
    Old token names still used by components that haven't been redesigned yet.

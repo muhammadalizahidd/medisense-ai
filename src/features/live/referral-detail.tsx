@@ -6,10 +6,10 @@ import {
   Check,
   CircleCheck,
   ShieldAlert,
-  Sparkles,
   UserRound,
   Users,
 } from "lucide-react";
+import { AiIcon } from "@/components/ai/provenance";
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import { Button, ButtonLink } from "@/components/ui/button";
@@ -1072,7 +1072,7 @@ function AiReview({
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="flex items-center gap-2 text-small font-semibold">
-          <Sparkles className="size-4 text-accent" aria-hidden="true" /> AI completeness review
+          <AiIcon className="size-4" /> AI completeness review
         </p>
         <Button
           size="sm"

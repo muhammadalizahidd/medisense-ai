@@ -15,7 +15,7 @@ export function TableHeader({
       role="row"
       style={{ gridTemplateColumns: columns } as CSSProperties}
       className={cn(
-        "grid min-h-9 items-center gap-x-3 border-b border-border bg-sunken px-4 label-caps whitespace-nowrap",
+        "grid min-h-9 items-center gap-x-3 border-b border-border bg-sunken px-4 py-2 label-caps whitespace-nowrap",
         className,
       )}
       {...props}
@@ -35,8 +35,8 @@ export function TableRow({
       role="row"
       style={{ gridTemplateColumns: columns, ...style } as CSSProperties}
       className={cn(
-        "relative grid min-h-12 items-center gap-x-3 border-b border-border px-4 text-small",
-        interactive && "transition-colors duration-160 ease-out hover:bg-canvas",
+        "relative grid min-h-(--row-h) items-center gap-x-3 border-b border-border px-4 py-2.5 text-small",
+        interactive && "transition-colors duration-(--duration-fast) hover:bg-sunken/60",
         className,
       )}
       {...props}

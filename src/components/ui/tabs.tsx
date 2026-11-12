@@ -31,7 +31,7 @@ export function useTab<T extends string>(tabs: readonly TabDef<T>[], fallback?: 
   return [tab, setTab] as const;
 }
 
-/** A tab bar that stays visible under the top bar while the page scrolls. */
+/** An underline tab bar that stays visible under the top bar while the page scrolls. */
 export function Tabs<T extends string>({
   tabs,
   value,
@@ -54,16 +54,11 @@ export function Tabs<T extends string>({
     document.getElementById(`tab-${next.id}`)?.focus();
   }
   return (
-    <div
-      className={cn(
-        "sticky top-16 z-10 -mx-1 mb-6 bg-page/90 px-1 pt-1 pb-2 backdrop-blur",
-        className,
-      )}
-    >
+    <div className={cn("sticky top-16 z-10 mb-6 bg-page", className)}>
       <div
         role="tablist"
         aria-label={label}
-        className="flex gap-1 overflow-x-auto rounded-card border border-border bg-surface p-1"
+        className="no-scrollbar flex gap-6 overflow-x-auto border-b border-border"
       >
         {tabs.map((t, i) => {
           const active = t.id === value;
@@ -79,22 +74,18 @@ export function Tabs<T extends string>({
               onClick={() => onChange(t.id)}
               onKeyDown={(e) => onKey(e, i)}
               className={cn(
-                "flex h-10 flex-none cursor-pointer items-center gap-2 rounded-control px-4 text-small whitespace-nowrap transition-colors duration-160",
+                "-mb-px flex h-11 flex-none cursor-pointer items-center gap-2 border-b-2 px-0.5 text-small whitespace-nowrap transition-colors duration-(--duration-fast)",
                 active
-                  ? "bg-accent-fill font-semibold text-on-accent shadow-hairline"
-                  : "font-medium text-ink-700 hover:bg-canvas hover:text-ink-900",
+                  ? "border-accent-fill font-semibold text-ink-900"
+                  : "border-transparent font-medium text-ink-500 hover:text-ink-900",
               )}
             >
               {t.label}
               {t.count !== undefined && t.count > 0 && (
                 <span
                   className={cn(
-                    "flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-label font-bold",
-                    active
-                      ? "bg-white/25 text-on-accent"
-                      : t.alert
-                        ? "bg-over-dot text-white"
-                        : "bg-canvas text-ink-700",
+                    "flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-caption",
+                    t.alert ? "bg-over-bg font-semibold text-over" : "bg-sunken text-ink-700",
                   )}
                 >
                   {t.count}

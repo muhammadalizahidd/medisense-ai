@@ -1,8 +1,8 @@
 "use client";
 
-import { ArrowRight, Check, CircleDashed, Sparkles } from "lucide-react";
+import { ArrowRight, Check, CircleDashed } from "lucide-react";
 import { useState } from "react";
-import { DraftLabel, PenNib, draftSurface } from "@/components/ai/provenance";
+import { AiIcon, DraftLabel, PenNib, draftSurface } from "@/components/ai/provenance";
 import { colour } from "@/components/charts/chart-kit";
 import { DonutChart } from "@/components/charts/donut-chart";
 import { StackedColumns } from "@/components/charts/stacked-columns";
@@ -342,7 +342,7 @@ export function ReportsLibrary() {
             <div className="mt-1 flex flex-wrap gap-2 border-t border-border pt-3">
               {selected.current === "Not started" && (
                 <Button variant="primary" onClick={() => draftReport(selected.id)}>
-                  <Sparkles className="size-4" strokeWidth={1.5} aria-hidden="true" />
+                  <AiIcon className="size-4" />
                   Generate AI draft
                 </Button>
               )}

@@ -156,13 +156,12 @@ function HomeTab({ onChange, onTab }: { onChange: () => void; onTab: (id: string
         <div className="mt-4 flex items-center gap-4">
           <Ring
             percent={percent}
-            light
             label={`${done.length} of ${family.homeProgram.length} home activities done`}
           >
-            <span className="type-display text-h2 text-white">
+            <span className="type-display text-h2 text-ink-900">
               {done.length}/{family.homeProgram.length}
             </span>
-            <span className="text-[10px] text-white/80">this week</span>
+            <span className="text-[10px] text-ink-500">this week</span>
           </Ring>
           <p className="min-w-0 text-small text-ink-700">
             Here&apos;s how {family.client} is going with {clinicianFirst}.

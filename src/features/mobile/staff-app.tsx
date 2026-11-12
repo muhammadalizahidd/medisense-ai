@@ -87,13 +87,12 @@ function HomeTab({ onNote, onTab }: { onNote: () => void; onTab: (id: string) =>
         <div className="mt-4 flex items-center gap-4">
           <Ring
             percent={(done / sarahDay.length) * 100}
-            light
             label={`${done} of ${sarahDay.length} visits done`}
           >
-            <span className="type-display text-h2 text-white">
+            <span className="type-display text-h2 text-ink-900">
               {done}/{sarahDay.length}
             </span>
-            <span className="text-[10px] text-white/80">visits</span>
+            <span className="text-[10px] text-ink-500">visits</span>
           </Ring>
           <p className="min-w-0 text-small text-ink-700">
             {noteApproved
@@ -194,8 +193,8 @@ function ScheduleTab({ onNote }: { onNote: () => void }) {
                 aria-pressed={day === d.id}
                 onClick={() => setDay(d.id)}
                 className={cn(
-                  "flex cursor-pointer flex-col items-center rounded-control! py-2 text-white",
-                  day === d.id ? "bg-white text-[var(--hero-ink)]!" : "bg-white/12",
+                  "flex cursor-pointer flex-col items-center rounded-control py-2",
+                  day === d.id ? "bg-accent-fill text-on-accent" : "bg-sunken text-ink-700",
                 )}
               >
                 <span className="text-[11px] font-medium opacity-85">{weekday?.slice(0, 3)}</span>
@@ -739,8 +738,8 @@ function TasksTab({ offline, queued }: { offline: boolean; queued: string[] }) {
               aria-pressed={show === f.id}
               onClick={() => setShow(f.id)}
               className={cn(
-                "h-8 cursor-pointer rounded-full px-3.5 text-small font-semibold text-white",
-                show === f.id ? "bg-white text-[var(--hero-ink)]!" : "bg-white/12",
+                "h-8 cursor-pointer rounded-full px-3.5 text-small font-semibold",
+                show === f.id ? "bg-accent-fill text-on-accent" : "bg-sunken text-ink-700",
               )}
             >
               {f.label}
@@ -902,7 +901,7 @@ function NoteView({ offline, onBack }: { offline: boolean; onBack: () => void })
             type="button"
             onClick={onBack}
             aria-label="Back"
-            className="flex size-9 flex-none cursor-pointer items-center justify-center rounded-full bg-white/15 text-ink-900"
+            className="flex size-9 flex-none cursor-pointer items-center justify-center rounded-full bg-sunken text-ink-900"
           >
             <ArrowLeft className="size-5" strokeWidth={1.75} aria-hidden="true" />
           </button>

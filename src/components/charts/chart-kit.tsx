@@ -12,15 +12,16 @@ export const colour = {
   series4: "var(--color-series-4)",
   accent: "var(--color-accent)",
   over: "var(--color-over-dot)",
-  monitor: "var(--color-monitor-dot)",
+  watch: "var(--color-watch-dot)",
+  monitor: "var(--color-watch-dot)",
   healthy: "var(--color-healthy-dot)",
   available: "var(--color-available-dot)",
-  sand: "var(--color-chart-sand)",
-  sage: "var(--color-chart-sage)",
-  slate: "var(--color-chart-slate)",
-  stone: "var(--color-chart-stone)",
-  grid: "var(--color-grid)",
-  ink: "var(--color-ink-500)",
+  sand: "var(--color-border-strong)",
+  sage: "var(--color-series-3)",
+  slate: "var(--color-series-4)",
+  stone: "var(--color-ink-400)",
+  grid: "var(--color-chart-grid)",
+  ink: "var(--color-chart-axis)",
   surface: "var(--color-surface)",
 } as const;
 
@@ -36,7 +37,7 @@ export const gridProps = { vertical: false, stroke: colour.grid } as const;
 
 export const cursorLine = { stroke: colour.ink, strokeWidth: 1, strokeDasharray: "3 3" } as const;
 
-export const cursorBand = { fill: "var(--color-canvas)" } as const;
+export const cursorBand = { fill: "var(--color-sunken)" } as const;
 
 export type TooltipRow = { key: string; label: ReactNode; value: ReactNode; colour?: string };
 
