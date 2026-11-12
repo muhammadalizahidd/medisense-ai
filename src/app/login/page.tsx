@@ -10,13 +10,24 @@ import { staffEmail } from "@/server/seed";
 
 export const metadata: Metadata = { title: "Sign in · Medisense" };
 
-/** Seeded accounts, listed on the sign-in page only while running locally. */
+/**
+ * Demo accounts, listed on the sign-in page so reviewers can pick one. Only the email is filled in;
+ * the password is still needed. Set HIDE_TEST_ACCOUNTS=1 to remove the list once real people use it.
+ */
 function testAccounts(): TestAccount[] | null {
-  if (process.env.NODE_ENV !== "development") return null;
-  const pick = ["emma-clarke", "sarah-thompson", "olivia-reyes", "nadia-hassan"];
+  if (process.env.HIDE_TEST_ACCOUNTS === "1") return null;
+  const pick = ["emma-clarke", "daniel-okafor", "sarah-thompson", "olivia-reyes", "nadia-hassan"];
   return [
-    { name: "Jo Marsh", role: "Admin", email: "jo.marsh@medisense.test" },
-    { name: "Neil Hensley", role: "Admin", email: "neil.hensley@medisense.test" },
+    {
+      name: "Neil Hensley",
+      role: "Super Admin · Clinical Lead",
+      email: "neil.hensley@medisense.test",
+    },
+    {
+      name: "Jo Marsh",
+      role: "Admin · Intake, scheduling, finance",
+      email: "jo.marsh@medisense.test",
+    },
     ...clinicians
       .filter((c) => pick.includes(c.id))
       .map((c) => ({ name: c.name, role: c.discipline, email: staffEmail(c.name) })),

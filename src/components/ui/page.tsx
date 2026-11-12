@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
 export function PageContainer({ children }: { children: ReactNode }) {
-  return <main className="w-full px-4 pt-6 pb-18 md:px-6 md:pt-8 xl:px-10">{children}</main>;
+  return <main className="w-full px-4 pt-4 pb-18 md:px-6 md:pt-5 xl:px-10">{children}</main>;
 }
 
 /**
@@ -28,37 +28,48 @@ export function PageHeader({
   display?: boolean;
   align?: "end" | "center";
 }) {
+  if (!display) {
+    // Compact: one row with the title and actions. The breadcrumb already names the section, so
+    // a text eyebrow is dropped; explanatory sentences are dropped too (kept for screen readers).
+    // Short facts (an MRN line) and links (a back button) stay.
+    const sentence = typeof description === "string" && description.trim().endsWith(".");
+    return (
+      <header className="mb-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+          {leading}
+          {typeof eyebrow !== "string" && eyebrow && (
+            <>
+              <div className="flex-none">{eyebrow}</div>
+              <span aria-hidden="true" className="h-5 w-px bg-border-strong" />
+            </>
+          )}
+          <h1 className="type-display text-h2 leading-tight text-ink-900">{title}</h1>
+          {description &&
+            (sentence ? (
+              <p className="sr-only">{description}</p>
+            ) : (
+              <div className="min-w-0 text-small text-ink-500">{description}</div>
+            ))}
+        </div>
+        {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+      </header>
+    );
+  }
   return (
     <header
       className={cn(
         "mb-6 flex flex-wrap justify-between gap-x-6 gap-y-4",
         align === "end" ? "items-end" : "items-center",
-        display
-          ? "rounded-card border border-border bg-surface px-5 py-6 md:px-8 md:py-7"
-          : "border-b border-border pb-5",
+        "rounded-card border border-border bg-surface px-5 py-6 md:px-8 md:py-7",
       )}
     >
       <div className="flex min-w-0 items-center gap-4">
         {leading}
         <div className="min-w-0">
           <p className="label-caps">{eyebrow}</p>
-          <h1
-            className={cn(
-              "type-display text-ink-900",
-              display ? "mt-2 text-h1 md:text-display" : "mt-1.5 text-h1-compact",
-            )}
-          >
-            {title}
-          </h1>
+          <h1 className="mt-2 type-display text-h1 text-ink-900 md:text-display">{title}</h1>
           {description && (
-            <p
-              className={cn(
-                "max-w-3xl text-ink-700",
-                display ? "mt-2 text-body md:text-[15px]" : "mt-1 text-small",
-              )}
-            >
-              {description}
-            </p>
+            <p className="mt-2 max-w-3xl text-body text-ink-700 md:text-[15px]">{description}</p>
           )}
         </div>
       </div>

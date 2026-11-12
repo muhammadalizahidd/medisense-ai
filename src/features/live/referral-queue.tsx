@@ -12,6 +12,7 @@ import { useResource } from "@/lib/live/client";
 import { isFinal, type ReferralStatus } from "@/lib/live/referral";
 import { relativeTime } from "@/lib/live/time";
 import type { ReferralSummaryDto } from "@/lib/live/types";
+import { TableFrame } from "@/components/ui/table-frame";
 import { EmptyNote, ErrorNote, LiveBadge, Skeleton } from "./bits";
 
 export const referralTone: Record<ReferralStatus, TagTone> = {
@@ -153,24 +154,24 @@ export function ReferralQueue() {
         </label>
       </div>
 
-      {error && !data ? (
-        <ErrorNote message={error} onRetry={reload} />
-      ) : loading && !data ? (
-        <div className="flex flex-col gap-2">
-          {[0, 1, 2].map((i) => (
-            <Skeleton key={i} className="h-14" />
-          ))}
-        </div>
-      ) : rows.length === 0 ? (
-        <EmptyNote title={all.length ? "No referrals here." : "No referrals yet."}>
-          {all.length ? (
-            "Try another filter or search."
-          ) : (
-            <Link href="/refer">Open the public referral form</Link>
-          )}
-        </EmptyNote>
-      ) : (
-        <div className="overflow-x-auto rounded-card border border-border bg-surface">
+      <TableFrame>
+        {error && !data ? (
+          <ErrorNote message={error} onRetry={reload} />
+        ) : loading && !data ? (
+          <div className="flex flex-col gap-2">
+            {[0, 1, 2].map((i) => (
+              <Skeleton key={i} className="h-14" />
+            ))}
+          </div>
+        ) : rows.length === 0 ? (
+          <EmptyNote title={all.length ? "No referrals here." : "No referrals yet."}>
+            {all.length ? (
+              "Try another filter or search."
+            ) : (
+              <Link href="/refer">Open the public referral form</Link>
+            )}
+          </EmptyNote>
+        ) : (
           <table className="table-stack w-full text-left text-small md:min-w-240">
             <thead className="border-b border-border text-caption text-ink-500">
               <tr>
@@ -235,8 +236,8 @@ export function ReferralQueue() {
               ))}
             </tbody>
           </table>
-        </div>
-      )}
+        )}
+      </TableFrame>
     </>
   );
 }

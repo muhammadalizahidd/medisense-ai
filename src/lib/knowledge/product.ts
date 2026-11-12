@@ -27,7 +27,7 @@ export const productTopics: ProductTopic[] = [
       {
         label: "1. Referral",
         detail:
-          "Anyone sends a referral at /refer, no account needed. They get a reference (MSR-…) and a private tracking link.",
+          "Anyone sends a referral at /refer, no account needed. They get a reference (REF-MRN-DDMMYYYY-0001), the participant's MRN to sign in to the patient app, and a private tracking link.",
         href: "/refer",
       },
       {

@@ -78,6 +78,10 @@ export type PlanType = (typeof planTypes)[number];
 export const yesNoUnknown = ["Yes", "No", "Unknown"] as const;
 export type YesNoUnknown = (typeof yesNoUnknown)[number];
 
+/** The funding-periods question (F04). */
+export const yesNoUnsure = ["Yes", "No", "Unsure"] as const;
+export type YesNoUnsure = (typeof yesNoUnsure)[number];
+
 /** Where the service happens, as on the referral form. */
 export const serviceLocations = [
   "Home",
@@ -107,7 +111,7 @@ export const supportCatalogue = [
   },
   { name: "SIL/ILO Housing Assessment", discipline: "Occupational Therapy", kind: "assessment" },
   { name: "SDA Housing Assessment", discipline: "Occupational Therapy", kind: "assessment" },
-  { name: "Home Modification Assessment", discipline: "Occupational Therapy", kind: "assessment" },
+  { name: "Home Mod Assessment", discipline: "Occupational Therapy", kind: "assessment" },
   {
     name: "Assistive Technology Assessment",
     discipline: "Occupational Therapy",
@@ -124,7 +128,6 @@ export const supportCatalogue = [
   { name: "Trauma Therapy", discipline: "Trauma Therapy", kind: "treatment" },
   { name: "Nursing", discipline: "Nursing", kind: "treatment" },
   { name: "Podiatry", discipline: "Podiatry", kind: "treatment" },
-  { name: "Dietetics", discipline: "Dietetics", kind: "treatment" },
   { name: "Other", discipline: null, kind: "treatment" },
 ] as const satisfies readonly { name: string; discipline: Discipline | null; kind: SupportKind }[];
 
@@ -181,6 +184,21 @@ export const staffRoles = [
   "Clinical Lead",
 ] as const;
 export type StaffRole = (typeof staffRoles)[number];
+
+/** A document's review state (section 11): a replacement supersedes, never deletes. */
+export const documentStatuses = ["Pending review", "Accepted", "Rejected", "Superseded"] as const;
+export type DocumentStatus = (typeof documentStatuses)[number];
+
+/** What intake decides for each requested service: they move independently (section 11). */
+export const serviceDecisions = ["Accepted", "Waitlisted", "Declined"] as const;
+export type ServiceDecision = (typeof serviceDecisions)[number];
+
+/**
+ * Medical record number: MRN-DDMMYYYY-0001, numbered per day. The patient signs in to the app with
+ * it, and their referral reference is REF- followed by it.
+ */
+export const MRN_PATTERN = /^MRN-\d{8}-\d{4}$/;
+export const referralReferenceFor = (mrn: string) => `REF-${mrn}`;
 
 /** Files a referral can carry: plan excerpts, letters, reports. */
 export const documentKinds = ["NDIS plan", "Referral letter", "Report", "Other"] as const;

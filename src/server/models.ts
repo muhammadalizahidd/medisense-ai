@@ -2,10 +2,12 @@ import type { Binary, ObjectId } from "mongodb";
 import type {
   Discipline,
   DocumentKind,
+  DocumentStatus,
   Frequency,
   FundingStream,
   Region,
   ServiceLocation,
+  ServiceDecision,
   StaffRole,
   Support,
 } from "@/lib/live/catalogue";
@@ -20,7 +22,23 @@ import type {
   SectionEntry,
 } from "@/lib/live/clinical";
 import type { Gap, ReferralInput, ReferralStatus } from "@/lib/live/referral";
+import type {
+  Address,
+  ConsentKey,
+  ConsentState,
+  ContactInput,
+  ManualStatus,
+} from "@/lib/live/participant";
 import type { RecordingStatus } from "@/lib/live/telehealth";
+import type { AppointmentPurpose, SiteInput } from "@/lib/live/scheduling";
+import type {
+  CompetencyStatus,
+  CoverageInput,
+  CredentialInput,
+  CredentialStatus,
+  EngagementStatus,
+  StaffProfileInput,
+} from "@/lib/live/staff";
 
 import type { Appearance } from "@/app/theme-script";
 
@@ -105,12 +123,87 @@ export interface TherapistDoc {
   credentials?: TherapistCredentials;
   /** False once they've left: not offered in matching and can't sign in. */
   active?: boolean;
+  /** Module 04: staff profile, credential register, service eligibility and coverage. */
+  staff?: StaffDoc;
   userId: ObjectId;
+}
+
+export interface StaffDoc {
+  staffId: string;
+  status: EngagementStatus;
+  statusNote: { status: string; reason: string; byName: string; at: Date } | null;
+  profile: StaffProfileInput;
+  coverage: CoverageInput;
+  credentials: (CredentialInput & {
+    id: string;
+    status: CredentialStatus;
+    reviewedBy: string | null;
+    reviewedAt: Date | null;
+    note: string;
+  })[];
+  competencies: {
+    support: string;
+    status: CompetencyStatus;
+    reviewedBy: string | null;
+    reviewedAt: Date | null;
+    note: string;
+    supervisionRequired: boolean;
+  }[];
 }
 
 export type NeedStatus = "needs-therapist" | "waiting" | "assigned" | "completed";
 
 /** A service request: one per support asked for, under the one participant record. */
+export interface ParticipantProfileDoc {
+  /** Set by hand; otherwise the status follows the services and discharge. */
+  manualStatus: ManualStatus | null;
+  statusNote: { status: string; reason: string; byName: string; at: Date } | null;
+  preferredName: string;
+  pronouns: string;
+  address: Address;
+  addressHistory: { address: Address; until: Date; byName: string }[];
+  language: string;
+  interpreter: boolean;
+  accessibility: string[];
+  accessibilityNotes: string;
+  contactMode: string;
+  contactTime: string;
+  /** Where each value came from, and who verified it (section 4, record provenance). */
+  provenance: Record<string, { source: string; verifiedBy: string | null; at: Date }>;
+  reportedDiagnosis: { text: string; source: string } | null;
+}
+
+export interface ContactDoc extends Omit<ContactInput, "id"> {
+  id: string;
+  /** A secure link to the participant's appointments, for authorised contacts only (AT-24). */
+  portal?: { hash: string; expiresAt: Date } | null;
+  state: "Invited" | "Unverified" | "Verified" | "Revoked";
+  verifiedBy: string | null;
+  verifiedAt: Date | null;
+  revoked: { reason: string; byName: string; at: Date } | null;
+  source: string;
+  createdAt: Date;
+}
+
+export interface ConsentDoc {
+  key: ConsentKey;
+  state: ConsentState;
+  version: string;
+  respondent: string;
+  recordedBy: string;
+  at: Date | null;
+  /** Share with coordinator: the record categories included. */
+  scope: string[];
+  note: string;
+  history: {
+    state: ConsentState;
+    respondent: string;
+    recordedBy: string;
+    at: Date;
+    note: string;
+  }[];
+}
+
 export interface ClientNeed {
   id: string;
   support: Support;
@@ -126,6 +219,12 @@ export interface ClientNeed {
 
 export interface ClientDoc {
   _id: ObjectId;
+  /** Medical record number, MRN-DDMMYYYY-0001. The patient signs in to the app with it. */
+  mrn?: string;
+  /** Module 03: identity details, contacts and representatives, and consents. */
+  profile?: ParticipantProfileDoc;
+  contacts?: ContactDoc[];
+  consents?: ConsentDoc[];
   name: string;
   dateOfBirth: string | null;
   email: string;
@@ -256,6 +355,24 @@ export interface AppointmentDoc {
   modality?: "In person" | "Telehealth";
   /** The patient confirmed they'll be there (P03). */
   confirmedByPatient?: Date | null;
+  /** Module 05: APT-000001, given once and never changed. */
+  ref?: string;
+  /** Where the visit happens and what the site needs (home access, school permission…). */
+  site?: SiteInput | null;
+  purpose?: AppointmentPurpose | null;
+  /** Why a lower-ranked clinician was chosen over the suggestion (AC-15). */
+  overrideReason?: string | null;
+  /** Recorded with a no-show: attempts to reach the participant and any safety concern. */
+  noShow?: { attempts: string; concern: boolean; byName: string; at: Date } | null;
+  /** A secure link the participant opens without an account to confirm or ask for a change. */
+  publicLink?: { hash: string; expiresAt: Date } | null;
+  changeRequests?: { at: Date; note: string; resolved: boolean }[];
+  /** A custom series agreed at booking, instead of the referral frequency's default. */
+  seriesPlan?: { visits: number; everyDays: number } | null;
+  /** When the visit was moved, from where, why and by whom (AT-13). */
+  moved?: { from: Date; reason: string; byName: string; at: Date; notified: string } | null;
+  /** Reminders sent again by staff, by trigger. */
+  resent?: { trigger: string; at: Date; byName: string }[];
   /** Left by the patient after a completed visit, once. */
   feedback?: { rating: number; comment: string; at: Date } | null;
   createdAt: Date;
@@ -307,6 +424,8 @@ export interface AuditDoc {
   action: string;
   clientId: ObjectId | null;
   referralId?: ObjectId | null;
+  /** Module 04: changes to a staff member's record. */
+  therapistId?: ObjectId | null;
   at: Date;
 }
 
@@ -322,7 +441,7 @@ export interface InfoRequest {
 
 export interface ReferralDoc {
   _id: ObjectId;
-  /** Shown to the submitter, e.g. MSR-7K2Q9P. Reveals nothing on its own. */
+  /** Shown to the submitter: REF- followed by the MRN, e.g. REF-MRN-12112026-0001. */
   reference: string;
   /** SHA-256 of the secret tracking token in the submitter's link. */
   trackingHash: string;
@@ -331,8 +450,12 @@ export interface ReferralDoc {
    * once accepted, the same code activates the patient's account.
    */
   access?: { codeHash: string; expiresAt: Date } | null;
+  /** The MRN issued on submission; the reference is REF- followed by it. */
+  mrn?: string;
   status: ReferralStatus;
   data: ReferralInput;
+  /** Intake's decision for each requested support, by its position in data.supports. */
+  services?: ServiceRecord[];
   /** Set during intake review; used for matching. */
   region: Region | null;
   /** From the automated completeness check, as last run. */
@@ -368,8 +491,26 @@ export interface ReferralDoc {
   updatedAt: Date;
 }
 
+export interface ServiceRecord {
+  index: number;
+  support: string;
+  decision: ServiceDecision;
+  reason: string;
+  /** The service request on the patient record, once it exists. */
+  needId: string | null;
+  byName: string;
+  at: Date;
+}
+
 export interface DocumentDoc {
   _id: ObjectId;
+  /** Review state; missing on files from before reviews, which count as pending. */
+  status?: DocumentStatus;
+  version?: number;
+  /** The earlier version this replaces, and the later one that replaced it. */
+  supersedes?: ObjectId | null;
+  replacedBy?: ObjectId | null;
+  review?: { byName: string; at: Date; reason: string } | null;
   referralId: ObjectId | null;
   clientId: ObjectId | null;
   kind: DocumentKind;

@@ -9,15 +9,16 @@ import { sessionUser } from "@/server/session-user";
 const schema = z.object({
   /** Optional: the code alone identifies the patient. */
   email: z.string().trim().toLowerCase().max(200).default(""),
-  code: z.string().trim().min(6).max(12),
+  /** The patient's MRN (MRN-DDMMYYYY-0001), or an older 8-character code. */
+  code: z.string().trim().min(6).max(24),
   /** Optional. A patient can also set a password to sign in with email later. */
   password: z.string().max(200).default(""),
 });
 
 const sha256 = (value: string) => createHash("sha256").update(value).digest("hex");
 
-/** How long a code keeps working after each sign-in with it. */
-const CODE_DAYS = 90;
+/** How long an MRN keeps working after each sign-in with it. */
+const CODE_DAYS = 365;
 
 /**
  * A patient signs in with the code from their referral or from the care team. The code alone is
@@ -50,7 +51,7 @@ export async function POST(request: Request) {
           : await referralByCodeOnly(code);
       if (pending) return { pending: true, referral: pending };
       throw new UserFacingError(
-        "That code doesn't match a referral or an account. Check it, or ask your care team for a new code.",
+        "That MRN doesn't match a referral or a patient record. Check it, or ask your care team.",
       );
     }
     if (user.disabled) throw new UserFacingError("This account is closed. Ask your care team.");

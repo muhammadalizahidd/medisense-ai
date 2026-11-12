@@ -12,6 +12,7 @@ import { shortDate, slotLabel, timeOfDay } from "@/lib/live/time";
 import type { MatchDto } from "@/lib/live/types";
 import { cn } from "@/lib/cn";
 import { CaseloadTag, EmptyNote, ErrorNote, Skeleton } from "./bits";
+import { TextArea } from "./form-bits";
 
 const reasonTone = {
   good: "bg-healthy-bg text-healthy",
@@ -40,6 +41,8 @@ export function MatchPicker({
   const [choice, setChoice] = useState<{ therapist: MatchDto; start: string } | null>(null);
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [override, setOverride] = useState("");
+  const [needsReason, setNeedsReason] = useState(false);
 
   if (error && !data) return <ErrorNote message={error} onRetry={reload} />;
   if (loading && !data) {
@@ -77,13 +80,22 @@ export function MatchPicker({
     setSendError(null);
     try {
       await api(`/api/care/clients/${clientId}/requests`, {
-        body: { needId, therapistId: choice.therapist.therapistId, start: choice.start },
+        body: {
+          needId,
+          therapistId: choice.therapist.therapistId,
+          start: choice.start,
+          overrideReason: override.trim() || undefined,
+        },
       });
       setChoice(null);
+      setOverride("");
+      setNeedsReason(false);
       onSent();
     } catch (e) {
-      setSendError(e instanceof Error ? e.message : "Couldn't send the request.");
-      reload();
+      const message = e instanceof Error ? e.message : "Couldn't send the request.";
+      if (/override/i.test(message)) setNeedsReason(true);
+      else reload();
+      setSendError(message);
     } finally {
       setSending(false);
     }
@@ -214,6 +226,18 @@ export function MatchPicker({
         <p role="alert" className="mt-3 rounded-control bg-over-bg px-3 py-2 text-small text-over">
           {sendError}
         </p>
+      )}
+      {needsReason && (
+        <div className="mt-3">
+          <TextArea
+            label="Why not one of the top three suggestions?"
+            required
+            rows={2}
+            value={override}
+            onChange={setOverride}
+            hint="Recorded with the request. Eligibility itself can't be overridden."
+          />
+        </div>
       )}
       {choice && (
         <div className="sticky bottom-4 mt-4 flex flex-wrap items-center justify-between gap-3 rounded-control border border-accent bg-raised px-4 py-3 shadow-overlay">

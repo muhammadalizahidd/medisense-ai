@@ -13,6 +13,7 @@ import {
 import { brisbaneDay, brisbaneMinutes, isoWeekday, slotLabel } from "@/lib/live/time";
 import type { TherapistCardDto, TherapistDetailDto } from "@/lib/live/types";
 import { hashPassword } from "./auth";
+import { ensureStaff, staffBlocks } from "./staff";
 import { collections } from "./db";
 import { UserFacingError } from "./http";
 import { adminIds, audit, publish } from "./live";
@@ -154,6 +155,13 @@ function card(t: TherapistDoc, ratings: Ratings): TherapistCardDto {
   return {
     id: t._id.toHexString(),
     active: t.active !== false,
+    staffId: t.staff?.staffId ?? null,
+    engagement: t.staff?.status ?? (t.active === false ? "Inactive" : "Active"),
+    approvedServices: (t.staff?.competencies ?? [])
+      .filter((c) => c.status === "Approved")
+      .map((c) => c.support),
+    blocks: staffBlocks(t, null, null),
+    credentialDays: soonestExpiry(t),
     registrationExpiry: t.credentials?.registrationExpiry ?? null,
     name: t.name,
     discipline: t.discipline,
@@ -167,12 +175,24 @@ function card(t: TherapistDoc, ratings: Ratings): TherapistCardDto {
   };
 }
 
+/** Days until the first required credential runs out. */
+function soonestExpiry(t: TherapistDoc) {
+  const on = Date.parse(new Date().toISOString().slice(0, 10));
+  const days = (t.staff?.credentials ?? [])
+    .filter((c) => c.required && c.expiry)
+    .map((c) => Math.round((Date.parse(c.expiry) - on) / 86_400_000));
+  return days.length ? Math.min(...days) : null;
+}
+
 export async function listTherapists(): Promise<TherapistCardDto[]> {
-  const { therapists } = await collections();
-  const [rows, ratings] = await Promise.all([
-    therapists.find().sort({ discipline: 1, name: 1 }).toArray(),
+  const { therapists, db } = await collections();
+  const [found, ratings] = await Promise.all([
+    therapists.find().sort({ name: 1 }).toArray(),
     ratingsByTherapist(),
   ]);
+  // Staff from before Module 04 get their record (and STF number) once, in name order.
+  const rows = [];
+  for (const t of found) rows.push(await ensureStaff(db, t));
   return rows.map((t) => card(t, ratings));
 }
 

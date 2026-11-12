@@ -31,6 +31,7 @@ import {
   serviceLocations,
   submitterRoles,
   yesNoUnknown,
+  yesNoUnsure,
   type DocumentKind,
 } from "@/lib/live/catalogue";
 import {
@@ -132,8 +133,12 @@ function readDraft(key: string): Draft | null {
     const saved = window.localStorage.getItem(key);
     if (!saved) return null;
     const parsed = JSON.parse(saved) as Draft;
+    const blank = emptyReferral();
+    // Drafts from before a field existed get its blank value.
+    const funding = { ...blank.funding, ...parsed.form.funding };
+    if (funding.fundingPeriods === ("Unknown" as string)) funding.fundingPeriods = "Unsure";
     return {
-      form: { ...emptyReferral(), ...parsed.form },
+      form: { ...blank, ...parsed.form, funding },
       step: Math.min(parsed.step ?? 0, steps.length - 1),
     };
   } catch {
@@ -499,11 +504,87 @@ function ReferralFormBody({ mode, staffName, embedded = false }: Props) {
               <div className="md:col-span-2">
                 <Choice
                   label="Does the plan have funding periods?"
-                  options={yesNoUnknown}
+                  options={yesNoUnsure}
                   value={form.funding.fundingPeriods}
-                  onChange={(v) => set("funding.fundingPeriods", v)}
+                  onChange={(v) => {
+                    set("funding.fundingPeriods", v);
+                    if (v === "Yes" && !form.funding.periods.length) {
+                      set("funding.periods", [{ start: "", end: "" }]);
+                    }
+                  }}
                 />
               </div>
+              {form.funding.fundingPeriods === "Yes" && (
+                <div className="flex flex-col gap-3 md:col-span-2">
+                  <p className="text-small font-semibold">
+                    Funding periods{" "}
+                    <span className="font-normal text-ink-500">(from the plan)</span>
+                  </p>
+                  {form.funding.periods.map((period, i) => (
+                    <div
+                      key={i}
+                      className="grid items-end gap-3 rounded-control border border-border p-3 md:grid-cols-[1fr_1fr_auto]"
+                    >
+                      <TextField
+                        label={`Period ${i + 1} starts`}
+                        type="date"
+                        required
+                        value={period.start}
+                        onChange={(v) =>
+                          set(
+                            "funding.periods",
+                            form.funding.periods.map((x, j) => (j === i ? { ...x, start: v } : x)),
+                          )
+                        }
+                        error={err(`funding.periods.${i}.start`)}
+                      />
+                      <TextField
+                        label="Ends"
+                        type="date"
+                        required
+                        min={period.start || undefined}
+                        value={period.end}
+                        onChange={(v) =>
+                          set(
+                            "funding.periods",
+                            form.funding.periods.map((x, j) => (j === i ? { ...x, end: v } : x)),
+                          )
+                        }
+                        error={err(`funding.periods.${i}.end`)}
+                      />
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={form.funding.periods.length === 1}
+                        onClick={() =>
+                          set(
+                            "funding.periods",
+                            form.funding.periods.filter((_, j) => j !== i),
+                          )
+                        }
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ))}
+                  {err("funding.periods") && (
+                    <p role="alert" className="text-small text-over">
+                      {err("funding.periods")}
+                    </p>
+                  )}
+                  <div>
+                    <Button
+                      size="sm"
+                      disabled={form.funding.periods.length >= 12}
+                      onClick={() =>
+                        set("funding.periods", [...form.funding.periods, { start: "", end: "" }])
+                      }
+                    >
+                      Add another period
+                    </Button>
+                  </div>
+                </div>
+              )}
               {form.funding.planType === "Plan Managed" && (
                 <>
                   <TextField
@@ -1179,10 +1260,12 @@ function ReferralSent({
         <p className="my-3 font-mono text-h1 tracking-widest">{sent.reference}</p>
         <div className="mt-5 rounded-card border-2 border-accent bg-accent-tint p-4 text-left">
           <p className="text-small font-semibold">
-            {mode === "staff" ? "The family's app code" : "Your app code"}
+            {mode === "staff" ? "The participant's MRN" : "Your MRN (medical record number)"}
           </p>
           <div className="mt-2 flex items-center gap-2">
-            <span className="flex-1 font-mono text-h2 tracking-[0.2em]">{sent.appCode}</span>
+            <span className="flex-1 font-mono text-section font-semibold tracking-wide">
+              {sent.appCode}
+            </span>
             <Button
               size="sm"
               onClick={() => {
@@ -1199,9 +1282,9 @@ function ReferralSent({
             </Button>
           </div>
           <p className="mt-2 text-caption text-ink-700">
-            {mode === "staff" ? "Give this to the family. They" : "Keep this code. You"} open the
-            Medisense patient app, choose <strong>I have a code</strong> and enter this code. Until
-            the referral is accepted it shows progress; once accepted, the same code opens the app.
+            {mode === "staff" ? "Give this to the family. They" : "Keep this MRN. You"} open the
+            Medisense patient app, choose <strong>I have an MRN</strong> and enter it. Until the
+            referral is accepted it shows progress; once accepted, the same MRN opens the app.
           </p>
         </div>
         <div className="mt-5 rounded-control border border-border bg-canvas p-4 text-left">

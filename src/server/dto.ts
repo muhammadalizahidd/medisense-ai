@@ -15,6 +15,7 @@ import type {
   NotificationDoc,
   TherapistDoc,
 } from "./models";
+import { completenessOf, statusOf } from "./participants";
 
 export type NameLookup = Map<string, string>;
 
@@ -76,6 +77,11 @@ export function clientSummary(client: ClientDoc, therapists: NameLookup): Client
     needs: needDtos(client, therapists),
     stage: stageOf(client),
     createdAt: client.createdAt.toISOString(),
+    mrn: client.mrn ?? null,
+    phone: client.phone,
+    participantStatus: statusOf(client),
+    completeness: completenessOf(client)?.percent ?? null,
+    missing: completenessOf(client)?.missing ?? [],
   };
 }
 

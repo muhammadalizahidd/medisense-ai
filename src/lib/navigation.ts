@@ -6,6 +6,7 @@ import {
   BellRing,
   Briefcase,
   CalendarClock,
+  CalendarRange,
   CalendarDays,
   ChartLine,
   ChartPie,
@@ -76,7 +77,9 @@ export const navigation: { group: string; items: NavItem[] }[] = [
       { href: "/care/referrals", label: "Referrals and intake", icon: FileInput, roles: [L, A] },
       { href: "/care", label: "Patient onboarding", icon: UserPlus, roles: [L, A] },
       { href: "/care/therapists", label: "Therapists", icon: Stethoscope, roles: [L, A] },
+      { href: "/care/schedule", label: "Scheduling", icon: CalendarRange, roles: [L, A] },
       { href: "/care/billing", label: "Billing", icon: Receipt, roles: [L, A] },
+      { href: "/therapist/schedule", label: "My schedule", icon: CalendarRange, roles: [C] },
       { href: "/therapist", label: "My new patients", icon: BellRing, roles: [C] },
       { href: "/messages", label: "Messages", icon: MessagesSquare, roles: [C] },
       { href: "/telehealth/recordings", label: "Recordings", icon: Video, roles: [L, A, C] },
@@ -150,7 +153,13 @@ const roleLayouts: Partial<Record<Role, { group: string; hrefs: string[] }[]>> =
   Clinician: [
     {
       group: "Live care",
-      hrefs: ["/therapist", "/messages", "/telehealth/recordings", "/profile"],
+      hrefs: [
+        "/therapist/schedule",
+        "/therapist",
+        "/messages",
+        "/telehealth/recordings",
+        "/profile",
+      ],
     },
     { group: "My work", hrefs: ["/my-day", "/sessions/oliver-grant", "/tasks"] },
     { group: "AI workspace", hrefs: ["/case-notes/mia-robinson", "/reports"] },
@@ -165,6 +174,7 @@ const roleLayouts: Partial<Record<Role, { group: string; hrefs: string[] }[]>> =
         "/care/referrals",
         "/care",
         "/care/therapists",
+        "/care/schedule",
         "/care/billing",
         "/telehealth/recordings",
         "/profile",
@@ -249,6 +259,14 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
   {
     prefix: "/therapist/patients",
     meta: { section: "My new patients", page: "Patient", role: "Clinician" },
+  },
+  {
+    prefix: "/therapist/schedule",
+    meta: { section: "Live care", page: "My schedule", role: "Clinician" },
+  },
+  {
+    prefix: "/care/schedule",
+    meta: { section: "Live care", page: "Scheduling", role: "Admin" },
   },
   {
     prefix: "/care/therapists",
@@ -368,7 +386,9 @@ export function isStandalone(pathname: string) {
     pathname === "/login" ||
     pathname === "/refer" ||
     pathname.startsWith("/refer/") ||
-    pathname.startsWith("/join/")
+    pathname.startsWith("/join/") ||
+    pathname.startsWith("/appointment/") ||
+    pathname.startsWith("/contact/")
   );
 }
 

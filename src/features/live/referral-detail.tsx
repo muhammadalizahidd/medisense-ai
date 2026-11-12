@@ -21,13 +21,18 @@ import { Sheet } from "@/components/ui/sheet";
 import { TabPanel, Tabs, useTab } from "@/components/ui/tabs";
 import { Tag } from "@/components/ui/tag";
 import { api, useResource, useSession } from "@/lib/live/client";
-import { disciplines, regions, type Discipline } from "@/lib/live/catalogue";
+import {
+  disciplines,
+  regions,
+  serviceDecisions,
+  type Discipline,
+  type ServiceDecision,
+} from "@/lib/live/catalogue";
 import { needsRiskReview, supportLine, type Gap } from "@/lib/live/referral";
 import { ageLabel, relativeTime, shortDate } from "@/lib/live/time";
 import type { ReferralDetailDto } from "@/lib/live/types";
 import { cn } from "@/lib/cn";
 import { ErrorNote, LiveBadge, Panel, Skeleton } from "./bits";
-import { DocumentList } from "./client-detail";
 import { Choice, TextArea, Tick } from "./form-bits";
 import { ReferralStatusTag } from "./referral-queue";
 
@@ -39,12 +44,7 @@ const stages = [
   { label: "Ready for matching", statuses: ["Accepted", "Closed"] },
 ];
 
-type Invite = {
-  inviteCode?: string;
-  inviteExpires?: string;
-  clientId?: string;
-  usesReferralCode?: boolean;
-};
+type Invite = { mrn?: string; clientId?: string };
 
 /** One referral's workspace: what was asked for, the checks, and the decision for its stage. */
 export function ReferralDetail({ id }: { id: string }) {
@@ -219,13 +219,7 @@ export function ReferralDetail({ id }: { id: string }) {
       </TabPanel>
       <TabPanel id="documents" value={tab}>
         <div className="grid gap-6 lg:grid-cols-2">
-          <Panel title="Documents">
-            {r.documents.length ? (
-              <DocumentList documents={r.documents} />
-            ) : (
-              <p className="text-small text-ink-500">No documents attached.</p>
-            )}
-          </Panel>
+          <ReferralDocuments r={r} busy={busy} act={act} onChanged={reload} />
           {r.infoRequests.length > 0 && (
             <Panel title="Requests for information">
               <ol className="flex flex-col gap-4">
@@ -359,31 +353,24 @@ function NextStep({
     case "Accepted":
       return (
         <Panel title="Accepted: ready for matching">
-          {invite?.usesReferralCode && (
-            <p className="mb-4 rounded-control border border-healthy-bg bg-healthy-bg px-4 py-3 text-small">
-              The family already has their app code from the referral. They sign in to the patient
-              app with that code alone. If they&apos;ve lost it, create a new one from the
-              patient&apos;s record.
-            </p>
-          )}
-          {invite?.inviteCode && (
-            <div className="mb-4 rounded-control border border-border bg-canvas px-4 py-3">
-              <p className="text-small text-ink-700">
-                Patient app invite code, shown only once. Give it to the participant or their
-                booking contact; the app is optional.
-              </p>
-              <p className="my-2 font-mono text-h2 tracking-widest">{invite.inviteCode}</p>
-              {invite.inviteExpires && (
-                <p className="text-caption text-ink-500">
-                  Valid until {shortDate(invite.inviteExpires)}.
+          {(invite?.mrn ?? r.mrn) && (
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-control border border-border bg-canvas px-4 py-3">
+              <div>
+                <p className="text-caption font-semibold tracking-wide text-ink-500 uppercase">
+                  Medical record number
                 </p>
-              )}
+                <p className="font-mono text-section font-semibold">{invite?.mrn ?? r.mrn}</p>
+              </div>
+              <p className="max-w-80 text-caption text-ink-700">
+                The participant signs in to the patient app with this MRN. The app is optional.
+              </p>
             </div>
           )}
           <p className="mb-4 text-small text-ink-700">
-            Each support is now its own service request on the patient&apos;s record. Choose a
-            therapist for each one by availability.
+            Each accepted support is now its own service request on the patient&apos;s record.
+            Choose a therapist for each one by availability.
           </p>
+          {r.services.length > 0 && <ServiceOutcomes r={r} busy={busy} act={act} />}
           {r.clientId && (
             <ButtonLink href={`/care/${r.clientId}`} variant="primary">
               Match therapists
@@ -1000,6 +987,11 @@ function FundingReview({ r, busy, act }: { r: ReferralDetailDto; busy: boolean; 
   const [notes, setNotes] = useState(saved?.notes ?? "");
   const others = r.data.supports.map((s, i) => ({ s, i })).filter(({ s }) => s.support === "Other");
   const [otherDisciplines, setOther] = useState<Record<string, Discipline>>({});
+  const [choices, setChoices] = useState<
+    Record<string, { decision: ServiceDecision; reason: string }>
+  >({});
+  const choice = (i: number) => choices[String(i)] ?? { decision: "Accepted" as const, reason: "" };
+  const accepted = r.data.supports.filter((_, i) => choice(i).decision === "Accepted").length;
   const f = r.data.funding;
 
   const blockers = [
@@ -1008,8 +1000,11 @@ function FundingReview({ r, busy, act }: { r: ReferralDetailDto; busy: boolean; 
     saved?.agreement === "Sent" && "The service agreement isn't signed yet.",
     !r.region && "Set the service region.",
     r.triage?.decision !== "Accepted" && "Clinical triage hasn't accepted it.",
-    others.some(({ i }) => !otherDisciplines[String(i)]) &&
-      'Choose who delivers each "Other" support.',
+    others.some(({ i }) => choice(i).decision === "Accepted" && !otherDisciplines[String(i)]) &&
+      'Choose who delivers each accepted "Other" support.',
+    accepted === 0 && "Accept at least one service, or waitlist the whole referral.",
+    r.data.supports.some((_, i) => choice(i).decision !== "Accepted" && !choice(i).reason.trim()) &&
+      "Give a reason for each service you waitlist or decline.",
   ].filter(Boolean) as string[];
 
   return (
@@ -1043,6 +1038,12 @@ function FundingReview({ r, busy, act }: { r: ReferralDetailDto; busy: boolean; 
                   {f.planEndDate ? shortDate(`${f.planEndDate}T00:00:00Z`) : "not given"} · funding
                   periods: {f.fundingPeriods || "not given"}
                 </dd>
+                {(f.periods ?? []).length > 0 && (
+                  <>
+                    <dt className="text-ink-500">Funding periods</dt>
+                    <dd>{periodsLine(f.periods)}</dd>
+                  </>
+                )}
                 {f.planType === "Plan Managed" && (
                   <>
                     <dt className="text-ink-500">Plan manager</dt>
@@ -1119,6 +1120,74 @@ function FundingReview({ r, busy, act }: { r: ReferralDetailDto; busy: boolean; 
         </div>
       </Panel>
       <Panel title="Accept the referral">
+        <p className="mb-3 text-small text-ink-700">
+          Decide each service on its own: accept it now, hold it on the waitlist, or decline it.
+        </p>
+        <ul className="mb-5 flex flex-col divide-y divide-border rounded-card border border-border">
+          {r.data.supports.map((s, i) => {
+            const c = choice(i);
+            return (
+              <li key={`${s.support}-${i}`} className="flex flex-col gap-3 px-4 py-3.5">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-small font-semibold">{s.support}</p>
+                    <p className="text-caption text-ink-500">
+                      {supportLine(s).split(" · ").slice(1).join(" · ")}
+                      {s.details ? ` · ${s.details}` : ""}
+                    </p>
+                  </div>
+                  <div
+                    role="radiogroup"
+                    aria-label={`Decision for ${s.support}`}
+                    className="flex rounded-control bg-sunken p-0.5"
+                  >
+                    {serviceDecisions.map((d) => (
+                      <button
+                        key={d}
+                        type="button"
+                        role="radio"
+                        aria-checked={c.decision === d}
+                        onClick={() =>
+                          setChoices((all) => ({ ...all, [String(i)]: { ...c, decision: d } }))
+                        }
+                        className={cn(
+                          "h-8 cursor-pointer rounded-[8px] px-3 text-caption font-semibold transition-colors duration-(--duration-fast)",
+                          c.decision === d
+                            ? d === "Declined"
+                              ? "bg-surface text-over shadow-lift"
+                              : d === "Waitlisted"
+                                ? "bg-surface text-watch shadow-lift"
+                                : "bg-surface text-healthy shadow-lift"
+                            : "text-ink-500 hover:text-ink-900",
+                        )}
+                      >
+                        {d === "Accepted" ? "Accept" : d === "Waitlisted" ? "Waitlist" : "Decline"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {c.decision !== "Accepted" && (
+                  <TextArea
+                    label={
+                      c.decision === "Waitlisted" ? "Why it's waitlisted" : "Why it's declined"
+                    }
+                    required
+                    rows={2}
+                    value={c.reason}
+                    onChange={(v) =>
+                      setChoices((all) => ({ ...all, [String(i)]: { ...c, reason: v } }))
+                    }
+                    placeholder={
+                      c.decision === "Waitlisted"
+                        ? "For example, no psychology capacity in Brisbane South until March"
+                        : "For example, outside the funded plan"
+                    }
+                  />
+                )}
+              </li>
+            );
+          })}
+        </ul>
         {others.length > 0 && (
           <div className="mb-4 grid gap-3 md:grid-cols-2">
             {others.map(({ s, i }) => (
@@ -1143,8 +1212,8 @@ function FundingReview({ r, busy, act }: { r: ReferralDetailDto; busy: boolean; 
           {r.duplicateDecision?.clientId
             ? "new service requests on the existing patient record"
             : "the patient record"}{" "}
-          with {r.data.supports.length} service request{r.data.supports.length === 1 ? "" : "s"},
-          ready for therapist matching.
+          with {accepted} service request{accepted === 1 ? "" : "s"}, ready for therapist matching.
+          Waitlisted services stay on this referral and can start later.
         </p>
         {blockers.length > 0 && (
           <ul className="mb-3 flex flex-col gap-1 text-small text-over">
@@ -1156,9 +1225,11 @@ function FundingReview({ r, busy, act }: { r: ReferralDetailDto; busy: boolean; 
         <Button
           variant="primary"
           disabled={busy || blockers.length > 0}
-          onClick={() => act({ type: "accept", otherDisciplines })}
+          onClick={() => act({ type: "accept", otherDisciplines, services: choices })}
         >
-          Accept and create service requests
+          {accepted === r.data.supports.length
+            ? "Accept and create service requests"
+            : `Accept ${accepted} of ${r.data.supports.length} services`}
         </Button>
       </Panel>
     </>
@@ -1216,6 +1287,29 @@ function ReferralContent({ r }: { r: ReferralDetailDto }) {
             label="Contact"
             value={[d.participant.phone, d.participant.email].filter(Boolean).join(" · ")}
           />
+        </Section>
+        <Section title="Funding">
+          <Row label="Source" value={d.funding.source} />
+          {d.funding.source === "NDIS" ? (
+            <>
+              <Row label="NDIS number" value={d.funding.ndisNumber} />
+              <Row label="Plan type" value={d.funding.planType} />
+              <Row
+                label="Plan end date"
+                value={d.funding.planEndDate ? shortDate(`${d.funding.planEndDate}T00:00:00Z`) : ""}
+              />
+              <Row label="Funding periods" value={d.funding.fundingPeriods} />
+              <Row label="Periods" value={periodsLine(d.funding.periods ?? [])} />
+              <Row
+                label="Plan manager"
+                value={[d.funding.planManagerCompany, d.funding.planManagerEmail]
+                  .filter(Boolean)
+                  .join(" · ")}
+              />
+            </>
+          ) : (
+            <Row label="Details" value={d.funding.otherDetails} />
+          )}
         </Section>
         <Section title="Contacts">
           <Row label="Support coordinator" value={contact(d.supportCoordinator)} />
@@ -1451,5 +1545,267 @@ function AiReview({ id, onUse }: { id: string; onUse: (items: Gap[]) => void }) 
         </>
       )}
     </section>
+  );
+}
+
+/** "1 Jul 2026 to 30 Sep 2026; 1 Oct 2026 to 31 Dec 2026". */
+function periodsLine(periods: { start: string; end: string }[]) {
+  return periods
+    .filter((p) => p.start || p.end)
+    .map(
+      (p) =>
+        `${p.start ? shortDate(`${p.start}T00:00:00Z`) : "?"} to ${p.end ? shortDate(`${p.end}T00:00:00Z`) : "?"}`,
+    )
+    .join("; ");
+}
+
+const decisionTone = { Accepted: "healthy", Waitlisted: "watch", Declined: "over" } as const;
+
+/** After acceptance: what happened to each requested service, and starting a waitlisted one. */
+function ServiceOutcomes({ r, busy, act }: { r: ReferralDetailDto; busy: boolean; act: Act }) {
+  const [who, setWho] = useState<Record<number, Discipline>>({});
+  return (
+    <ul className="mb-4 flex flex-col divide-y divide-border rounded-card border border-border">
+      {r.services.map((x) => {
+        const support = r.data.supports[x.index];
+        const isOther = support?.support === "Other";
+        return (
+          <li key={x.index} className="flex flex-wrap items-center gap-3 px-4 py-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-small font-semibold">{x.support}</p>
+              {x.reason && <p className="text-caption text-ink-500">{x.reason}</p>}
+            </div>
+            <Tag tone={decisionTone[x.decision]}>
+              {x.decision === "Accepted" ? "Service request created" : x.decision}
+            </Tag>
+            {x.decision === "Waitlisted" && (
+              <div className="flex items-center gap-2">
+                {isOther && (
+                  <Select
+                    aria-label="Who delivers it"
+                    value={who[x.index] ?? ""}
+                    onChange={(e) =>
+                      setWho((w) => ({ ...w, [x.index]: e.target.value as Discipline }))
+                    }
+                  >
+                    <option value="">Who delivers it…</option>
+                    {disciplines.map((dsc) => (
+                      <option key={dsc}>{dsc}</option>
+                    ))}
+                  </Select>
+                )}
+                <Button
+                  size="sm"
+                  disabled={busy || (isOther && !who[x.index])}
+                  onClick={() =>
+                    act({ type: "start-service", index: x.index, discipline: who[x.index] })
+                  }
+                >
+                  Start now
+                </Button>
+              </div>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+const documentTone = {
+  "Pending review": "monitor",
+  Accepted: "healthy",
+  Rejected: "over",
+  Superseded: "neutral",
+} as const;
+
+/** Referral documents with their review state: accept, reject with a reason, or replace. */
+function ReferralDocuments({
+  r,
+  busy,
+  act,
+  onChanged,
+}: {
+  r: ReferralDetailDto;
+  busy: boolean;
+  act: Act;
+  onChanged: () => void;
+}) {
+  const [rejecting, setRejecting] = useState<string | null>(null);
+  const [reason, setReason] = useState("");
+  const [uploading, setUploading] = useState<string | null>(null);
+  const [fail, setFail] = useState<string | null>(null);
+  const current = r.documents.filter((d) => d.status !== "Superseded");
+  const earlier = r.documents.filter((d) => d.status === "Superseded");
+
+  async function replace(id: string, file: File) {
+    setUploading(id);
+    setFail(null);
+    try {
+      const body = new FormData();
+      body.append("files", file);
+      body.append("kinds", "Other");
+      body.append("answer", id);
+      const res = await fetch(`/api/care/referrals/${r.id}/documents`, { method: "POST", body });
+      if (!res.ok) {
+        const json = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(json.error ?? "The file couldn't be uploaded.");
+      }
+      onChanged();
+    } catch (e) {
+      setFail(e instanceof Error ? e.message : "The file couldn't be uploaded.");
+    } finally {
+      setUploading(null);
+    }
+  }
+
+  return (
+    <Panel title="Documents">
+      {current.length === 0 ? (
+        <p className="text-small text-ink-500">No documents attached.</p>
+      ) : (
+        <ul className="flex flex-col gap-3">
+          {current.map((d) => (
+            <li key={d.id} className="rounded-control border border-border p-3">
+              <div className="flex flex-wrap items-start gap-3">
+                <a
+                  href={`/api/documents/${d.id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="min-w-0 flex-1 hover:no-underline"
+                >
+                  <span className="block truncate text-small font-semibold text-ink-900">
+                    {d.name}
+                  </span>
+                  <span className="block text-caption text-ink-500">
+                    {d.kind} · version {d.version ?? 1} · {Math.max(1, Math.round(d.size / 1024))}{" "}
+                    KB · {d.uploadedBy}, {relativeTime(d.at)}
+                  </span>
+                </a>
+                <Tag tone={documentTone[d.status ?? "Pending review"]}>
+                  {d.status ?? "Pending review"}
+                </Tag>
+              </div>
+              {d.review && (
+                <p className="mt-2 text-caption text-ink-700">
+                  {d.status} by {d.review.byName}, {relativeTime(d.review.at)}
+                  {d.review.reason && `: ${d.review.reason}`}
+                </p>
+              )}
+              {rejecting === d.id ? (
+                <div className="mt-3 flex flex-col gap-2">
+                  <TextArea
+                    label="Why it's rejected"
+                    required
+                    rows={2}
+                    value={reason}
+                    onChange={setReason}
+                    placeholder="For example, the plan pages are from the previous plan"
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      disabled={busy || !reason.trim()}
+                      onClick={async () => {
+                        const ok = await act({
+                          type: "document-review",
+                          documentId: d.id,
+                          decision: "Rejected",
+                          reason,
+                        });
+                        if (ok) {
+                          setRejecting(null);
+                          setReason("");
+                        }
+                      }}
+                    >
+                      Reject document
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => setRejecting(null)}>
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {d.status !== "Accepted" && (
+                    <Button
+                      size="sm"
+                      disabled={busy}
+                      onClick={() =>
+                        act({
+                          type: "document-review",
+                          documentId: d.id,
+                          decision: "Accepted",
+                          reason: "",
+                        })
+                      }
+                    >
+                      <Check className="size-3.5" aria-hidden="true" />
+                      Accept
+                    </Button>
+                  )}
+                  {d.status !== "Rejected" && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={busy}
+                      onClick={() => {
+                        setRejecting(d.id);
+                        setReason("");
+                      }}
+                    >
+                      Reject
+                    </Button>
+                  )}
+                  <label
+                    className={cn(
+                      "inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-control border border-border-strong px-3 text-caption font-semibold hover:bg-canvas",
+                      uploading === d.id && "pointer-events-none opacity-60",
+                    )}
+                  >
+                    {uploading === d.id ? "Uploading…" : "Replace with new version"}
+                    <input
+                      type="file"
+                      className="sr-only"
+                      accept=".pdf,.jpg,.jpeg,.png,.docx"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        e.target.value = "";
+                        if (file) void replace(d.id, file);
+                      }}
+                    />
+                  </label>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+      {fail && (
+        <p role="alert" className="mt-3 text-small text-over">
+          {fail}
+        </p>
+      )}
+      {earlier.length > 0 && (
+        <details className="mt-4">
+          <summary className="cursor-pointer text-small font-semibold text-ink-700">
+            Earlier versions ({earlier.length})
+          </summary>
+          <ul className="mt-2 flex flex-col gap-1.5">
+            {earlier.map((d) => (
+              <li key={d.id} className="flex items-center gap-2 text-caption text-ink-500">
+                <a href={`/api/documents/${d.id}`} target="_blank" rel="noreferrer">
+                  {d.name}
+                </a>
+                · version {d.version ?? 1} · replaced
+                {d.review ? ` · was ${d.review.reason ? "rejected" : "reviewed"}` : ""}
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+    </Panel>
   );
 }

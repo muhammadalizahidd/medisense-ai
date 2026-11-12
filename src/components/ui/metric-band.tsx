@@ -13,7 +13,7 @@ const captionTone = { over: "text-over", watch: "text-watch", monitor: "text-wat
 
 const columns = {
   5: "grid-cols-2 lg:grid-cols-5",
-  6: "grid-cols-2 md:grid-cols-3",
+  6: "grid-cols-2 md:grid-cols-3 xl:grid-cols-6",
   8: "grid-cols-2 lg:grid-cols-4",
 };
 

@@ -1,18 +1,32 @@
 "use client";
 
-import { ArrowLeft, CalendarOff, Search } from "lucide-react";
+import { ArrowLeft, CalendarOff, Lock, Search } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page";
-import { SelectField } from "@/components/ui/segmented";
+import { TabPanel, Tabs, useTab } from "@/components/ui/tabs";
+import { Select } from "@/components/ui/select";
 import { Sheet } from "@/components/ui/sheet";
+import { Tag } from "@/components/ui/tag";
+import { engagementStatuses } from "@/lib/live/staff";
 import { api, useResource } from "@/lib/live/client";
 import { disciplines } from "@/lib/live/catalogue";
 import { shortDate } from "@/lib/live/time";
 import type { TherapistCardDto, TherapistDetailDto } from "@/lib/live/types";
+import { TableFrame } from "@/components/ui/table-frame";
 import { CaseloadTag, EmptyNote, ErrorNote, LiveBadge, Skeleton, Stars } from "./bits";
-import { AddTherapist, TherapistActiveToggle } from "./add-therapist";
+import { AddTherapist } from "./add-therapist";
+import {
+  engagementTone,
+  CapacityTab,
+  CredentialsTab,
+  EligibilityTab,
+  StaffActivity,
+  StaffDetailsTab,
+  StaffIdentity,
+  useStaff,
+} from "./staff-profile";
 import { TherapistRecord } from "./therapist-record";
 
 const day = (iso: string) => shortDate(`${iso}T00:00:00+10:00`);
@@ -23,92 +37,219 @@ export function TherapistDirectory() {
     "/api/care/therapists",
     (e) => e.type === "care",
   );
-  const [discipline, setDiscipline] = useState("all");
+  const [discipline, setDiscipline] = useState("");
+  const [status, setStatus] = useState("");
+  const [service, setService] = useState("");
+  const [sort, setSort] = useState("name");
   const [query, setQuery] = useState("");
-  const rows = (data?.therapists ?? [])
-    .filter((t) => discipline === "all" || t.discipline === discipline)
-    .filter((t) => t.name.toLowerCase().includes(query.trim().toLowerCase()));
+  const all = data?.therapists ?? [];
+  const services = [...new Set(all.flatMap((t) => t.approvedServices))].sort();
+  const q = query.trim().toLowerCase();
+  const rows = all
+    .filter((t) => !discipline || t.discipline === discipline)
+    .filter((t) => !status || t.engagement === status)
+    .filter((t) => !service || (t.approvedServices.includes(service) && t.blocks.length === 0))
+    .filter(
+      (t) =>
+        !q ||
+        `${t.name} ${t.staffId ?? ""} ${t.discipline} ${t.region} ${t.approvedServices.join(" ")}`
+          .toLowerCase()
+          .includes(q),
+    )
+    .sort((x, y) =>
+      sort === "caseload"
+        ? y.activeClients / y.capacity - x.activeClients / x.capacity
+        : sort === "expiry"
+          ? (x.credentialDays ?? 9999) - (y.credentialDays ?? 9999)
+          : x.name.localeCompare(y.name),
+    );
+  const filtering = Boolean(discipline || status || service);
 
   return (
     <>
       <PageHeader
         eyebrow="Patient onboarding"
         title="Therapists"
-        description="Working days, hours and time off as each therapist set them, with caseload and patient ratings."
         actions={
           <div className="flex items-center gap-3">
             <LiveBadge />
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- a CSV download, not a page */}
+            <a
+              href="/api/care/therapists/export"
+              download
+              className="inline-flex h-10 items-center gap-2 rounded-control border border-border-strong bg-surface px-4 text-small font-semibold text-ink-900 transition-all hover:-translate-y-px hover:border-accent hover:text-accent hover:no-underline active:scale-95"
+              title="Operational columns only. Every export is recorded."
+            >
+              Export CSV
+            </a>
             <AddTherapist onAdded={reload} />
           </div>
         }
       />
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <SelectField label="Discipline" value={discipline} onChange={setDiscipline}>
-          <option value="all">All disciplines</option>
-          {disciplines.map((d) => (
-            <option key={d}>{d}</option>
-          ))}
-        </SelectField>
-        <label className="flex h-9 w-72 items-center gap-2 rounded-control border border-border bg-surface px-3 focus-within:shadow-focus">
+      <div className="mb-4 flex flex-wrap items-center gap-2 rounded-card border border-border bg-surface p-3 shadow-lift">
+        <span className="mr-1 text-caption font-semibold tracking-wide text-ink-500 uppercase">
+          Filter
+        </span>
+        <div className="w-48 flex-none">
+          <Select
+            aria-label="Discipline"
+            className="h-9"
+            value={discipline}
+            onChange={(e) => setDiscipline(e.target.value)}
+          >
+            <option value="">Any discipline</option>
+            {disciplines.map((d) => (
+              <option key={d}>{d}</option>
+            ))}
+          </Select>
+        </div>
+        <div className="w-44 flex-none">
+          <Select
+            aria-label="Status"
+            className="h-9"
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+          >
+            <option value="">Any status</option>
+            {engagementStatuses.map((d) => (
+              <option key={d}>{d}</option>
+            ))}
+          </Select>
+        </div>
+        <div className="w-60 flex-none">
+          <Select
+            aria-label="Eligible for service"
+            className="h-9"
+            value={service}
+            onChange={(e) => setService(e.target.value)}
+          >
+            <option value="">Eligible for any service</option>
+            {services.map((d) => (
+              <option key={d}>{d}</option>
+            ))}
+          </Select>
+        </div>
+        <div className="w-48 flex-none">
+          <Select
+            aria-label="Sort"
+            className="h-9"
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+          >
+            <option value="name">Sort: name</option>
+            <option value="caseload">Sort: caseload</option>
+            <option value="expiry">Sort: credential expiry</option>
+          </Select>
+        </div>
+        {filtering && (
+          <button
+            type="button"
+            onClick={() => {
+              setDiscipline("");
+              setStatus("");
+              setService("");
+            }}
+            className="h-9 cursor-pointer px-2 text-small font-semibold text-accent"
+          >
+            Clear filters
+          </button>
+        )}
+        <label className="ml-auto flex h-9 w-72 max-w-full items-center gap-2 rounded-control border border-border-strong bg-surface px-3 focus-within:shadow-focus">
           <Search className="size-4 text-ink-500" aria-hidden="true" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             aria-label="Search therapists"
-            placeholder="Search by name"
+            placeholder="Name, staff ID, discipline or service"
             className="min-w-0 flex-1 bg-transparent text-small outline-none placeholder:text-ink-500"
           />
         </label>
       </div>
-      {error && !data ? (
-        <ErrorNote message={error} onRetry={reload} />
-      ) : loading && !data ? (
-        <Skeleton className="h-64" />
-      ) : rows.length === 0 ? (
-        <EmptyNote title="No therapists match." />
-      ) : (
-        <div className="overflow-x-auto rounded-card border border-border bg-surface">
-          <table className="table-stack w-full text-left text-small md:min-w-220">
+      <TableFrame>
+        {error && !data ? (
+          <ErrorNote message={error} onRetry={reload} />
+        ) : loading && !data ? (
+          <Skeleton className="h-64" />
+        ) : rows.length === 0 ? (
+          <EmptyNote title="No therapists match.">Try another filter or search.</EmptyNote>
+        ) : (
+          <table className="table-stack w-full text-left text-small md:min-w-240">
             <thead className="border-b border-border text-caption text-ink-500">
               <tr>
                 <th className="px-4 py-3 font-medium">Therapist</th>
+                <th className="px-4 py-3 font-medium">Status</th>
                 <th className="px-4 py-3 font-medium">Works</th>
-                <th className="px-4 py-3 font-medium">Time off</th>
+                <th className="px-4 py-3 font-medium">Approved services</th>
+                <th className="px-4 py-3 font-medium">Credentials</th>
                 <th className="px-4 py-3 font-medium">Caseload</th>
                 <th className="px-4 py-3 font-medium">Rating</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {rows.map((t) => (
-                <tr key={t.id} className="hover:bg-canvas">
+                <tr key={t.id}>
                   <td className="px-4 py-3">
                     <Link href={`/care/therapists/${t.id}`} className="font-semibold text-ink-900">
                       {t.name}
                     </Link>
-                    <span className="block text-caption text-ink-500">
-                      {t.discipline} · {t.region}
+                    <span className="block text-caption whitespace-nowrap text-ink-500">
+                      {t.staffId && <span className="font-mono">{t.staffId} · </span>}
+                      {t.discipline}
                     </span>
-                    {!t.active && (
-                      <span className="mt-1 inline-block rounded-tag bg-canvas px-1.5 py-0.5 text-label font-semibold text-ink-500">
-                        Inactive
-                      </span>
-                    )}
+                    <span className="block text-caption text-ink-500">{t.region}</span>
                   </td>
-                  <td className="px-4 py-3 text-ink-700">{t.availability.pattern}</td>
                   <td className="px-4 py-3">
-                    {t.availability.away.length === 0 ? (
-                      <span className="text-ink-500">None booked</span>
-                    ) : (
-                      t.availability.away.map((a) => (
+                    <span className="flex flex-col items-start gap-1">
+                      <Tag
+                        tone={
+                          engagementTone[t.engagement as keyof typeof engagementTone] ?? "neutral"
+                        }
+                      >
+                        {t.engagement}
+                      </Tag>
+                      {t.blocks.length > 0 && (
                         <span
-                          key={`${a.from}-${a.to}`}
-                          className="flex items-center gap-1.5 text-caption"
+                          className="inline-flex items-center gap-1 text-caption text-over"
+                          title={t.blocks.join(" · ")}
                         >
-                          <CalendarOff className="size-3.5 text-watch" aria-hidden="true" />
-                          {day(a.from)}
-                          {a.to !== a.from && `–${day(a.to)}`} · {a.reason}
+                          <Lock className="size-3" aria-hidden="true" /> No new patients
                         </span>
-                      ))
+                      )}
+                    </span>
+                  </td>
+                  <td className="max-w-56 px-4 py-3 text-caption text-ink-700">
+                    {t.availability.pattern}
+                    {t.availability.away.map((a) => (
+                      <span
+                        key={`${a.from}-${a.to}`}
+                        className="mt-0.5 flex items-center gap-1.5 text-caption"
+                      >
+                        <CalendarOff className="size-3.5 text-watch" aria-hidden="true" />
+                        {day(a.from)}
+                        {a.to !== a.from && `–${day(a.to)}`} · {a.reason}
+                      </span>
+                    ))}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className="text-small font-semibold text-ink-900">
+                      {t.approvedServices.length}
+                    </span>
+                    <span
+                      className="block max-w-56 truncate text-caption text-ink-500"
+                      title={t.approvedServices.join(", ")}
+                    >
+                      {t.approvedServices.join(", ") || "None approved"}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    {t.credentialDays === null ? (
+                      <span className="text-ink-500">None</span>
+                    ) : t.credentialDays < 0 ? (
+                      <Tag tone="over">Expired</Tag>
+                    ) : t.credentialDays <= 30 ? (
+                      <Tag tone="watch">{t.credentialDays} days left</Tag>
+                    ) : (
+                      <Tag tone="healthy">Current</Tag>
                     )}
                   </td>
                   <td className="px-4 py-3">
@@ -126,15 +267,15 @@ export function TherapistDirectory() {
                         </span>
                       </span>
                     ) : (
-                      <span className="text-ink-500">No ratings yet</span>
+                      <span className="whitespace-nowrap text-ink-500">None yet</span>
                     )}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
-      )}
+        )}
+      </TableFrame>
     </>
   );
 }
@@ -144,6 +285,26 @@ export function TherapistProfilePage({ id }: { id: string }) {
     `/api/care/therapists/${id}`,
     (e) => e.type === "care",
   );
+  const staff = useStaff(id, reload);
+  const s = staff.data?.staff;
+  const tabs = [
+    { id: "overview", label: "Overview" },
+    {
+      id: "credentials",
+      label: "Credentials",
+      count: s?.credentials.filter((c) => c.status !== "Verified").length,
+      alert: true,
+    },
+    {
+      id: "eligibility",
+      label: "Service eligibility",
+      count: s?.competencies.filter((c) => c.status === "Approved").length,
+    },
+    { id: "capacity", label: "Capacity and coverage" },
+    { id: "details", label: "Staff profile" },
+    { id: "activity", label: "Activity" },
+  ] as const;
+  const [tab, setTab] = useTab(tabs);
   if (error && !data) return <ErrorNote message={error} onRetry={reload} />;
   if (loading || !data) return <Skeleton className="h-96" />;
   const t = data.therapist;
@@ -156,17 +317,45 @@ export function TherapistProfilePage({ id }: { id: string }) {
             Therapists
           </ButtonLink>
         }
-        title={t.name}
-        description={`${t.discipline} · ${t.region} · ${t.availability.pattern}`}
+        title="Staff record"
+        description={`${t.discipline} · ${t.availability.pattern}`}
         actions={
           <div className="flex items-center gap-3">
             <LiveBadge />
             <ResetPassword therapistId={t.id} name={t.name} />
-            <TherapistActiveToggle id={t.id} name={t.name} active={t.active} onChanged={reload} />
           </div>
         }
       />
-      <TherapistRecord t={t} patientLinks />
+      {s ? (
+        <StaffIdentity s={s} busy={staff.busy} act={staff.act} />
+      ) : staff.error ? (
+        <ErrorNote message={staff.error} onRetry={staff.reload} />
+      ) : (
+        <Skeleton className="mb-6 h-56" />
+      )}
+      <Tabs label="Staff record" tabs={tabs} value={tab} onChange={setTab} />
+      <TabPanel id="overview" value={tab}>
+        <TherapistRecord t={t} patientLinks />
+      </TabPanel>
+      {s && (
+        <>
+          <TabPanel id="credentials" value={tab}>
+            <CredentialsTab s={s} busy={staff.busy} act={staff.act} />
+          </TabPanel>
+          <TabPanel id="eligibility" value={tab}>
+            <EligibilityTab s={s} busy={staff.busy} act={staff.act} />
+          </TabPanel>
+          <TabPanel id="capacity" value={tab}>
+            <CapacityTab s={s} busy={staff.busy} act={staff.act} />
+          </TabPanel>
+          <TabPanel id="details" value={tab}>
+            <StaffDetailsTab s={s} busy={staff.busy} act={staff.act} />
+          </TabPanel>
+          <TabPanel id="activity" value={tab}>
+            <StaffActivity s={s} />
+          </TabPanel>
+        </>
+      )}
     </>
   );
 }

@@ -205,7 +205,8 @@ export function Select({
         onClick={() => (open ? setOpen(false) : show())}
         onKeyDown={onKeyDown}
         className={cn(
-          field,
+          // A width given by the page replaces the full-width default.
+          /(^|\s)(w-|min-w-)/.test(className ?? "") ? field.replace("w-full ", "") : field,
           className,
           "flex cursor-pointer items-center justify-between gap-2 text-left transition-colors hover:border-accent disabled:cursor-not-allowed disabled:opacity-50",
           open && "border-accent shadow-focus",

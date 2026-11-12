@@ -10,6 +10,7 @@ import type { SessionUser, TherapistDetailDto } from "@/lib/live/types";
 import { AvailabilityEditor } from "./availability-editor";
 import { ErrorNote, LiveBadge, Panel, Skeleton } from "./bits";
 import { TherapistRecord } from "./therapist-record";
+import { MyCredentials } from "./staff-profile";
 
 type Profile = {
   user: SessionUser & { phone: string | null };
@@ -65,6 +66,7 @@ export function ProfilePage() {
       </div>
       {therapist && (
         <>
+          <MyCredentials />
           <h2 className="mb-4 text-section font-semibold text-ink-900">Your record</h2>
           <TherapistRecord t={therapist} patientLinks={false} />
         </>

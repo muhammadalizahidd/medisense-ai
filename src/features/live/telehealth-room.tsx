@@ -23,7 +23,7 @@ import { Button, ButtonLink } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page";
 import { Avatar } from "@/components/ui/premium";
 import { Tag } from "@/components/ui/tag";
-import { api, useResource } from "@/lib/live/client";
+import { api, useNow, useResource } from "@/lib/live/client";
 import type { TelehealthDto } from "@/lib/live/telehealth";
 import { relativeTime, slotLabel, timeOfDay } from "@/lib/live/time";
 import type { AppointmentDto } from "@/lib/live/types";
@@ -116,6 +116,7 @@ export function TelehealthRoom({ visitId }: { visitId: string }) {
   const [safety, setSafety] = useState("");
   const [noting, setNoting] = useState<AppointmentDto | null>(null);
 
+  const now = useNow();
   // A guest in the waiting room has no live connection of their own: check every few seconds too.
   useEffect(() => {
     const t = setInterval(reload, 4000);
@@ -151,6 +152,8 @@ export function TelehealthRoom({ visitId }: { visitId: string }) {
   if (error && !data) return <ErrorNote message={error} onRetry={reload} />;
   if (!data) return <Skeleton className="h-150" />;
   const c = data.call;
+  const closed =
+    now !== null && c.state !== "In call" && now > new Date(c.end).getTime() + 60 * 60_000;
   const inCall = c.state === "In call";
   const rec = c.recording.status;
 
@@ -417,13 +420,20 @@ export function TelehealthRoom({ visitId }: { visitId: string }) {
                 </Button>
               </div>
             )}
-            <Button
-              size="sm"
-              disabled={busy || !c.suitability?.ok}
-              onClick={() => act({ action: "send-link" })}
-            >
-              {c.linkSent ? "Create a new link" : "Create and send link"}
-            </Button>
+            {closed ? (
+              <p className="rounded-control bg-watch-bg px-3 py-2 text-small text-watch">
+                This visit was {slotLabel(c.start)}. Its video window closed an hour after it ended,
+                so links no longer work. Move the visit to a new time to run the call.
+              </p>
+            ) : (
+              <Button
+                size="sm"
+                disabled={busy || !c.suitability?.ok}
+                onClick={() => act({ action: "send-link" })}
+              >
+                {c.linkSent ? "Create a new link" : "Create and send link"}
+              </Button>
+            )}
           </Panel>
           <Panel title="3. Waiting room">
             {c.guest ? (

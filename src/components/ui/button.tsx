@@ -3,7 +3,7 @@ import Link from "next/link";
 import type { ComponentProps } from "react";
 import { cn } from "@/lib/cn";
 
-type Variant = "primary" | "secondary" | "ghost" | "danger";
+type Variant = "primary" | "secondary" | "ghost" | "danger" | "soft" | "soft-danger";
 type Size = "md" | "sm" | "icon" | "icon-sm";
 
 /**
@@ -22,6 +22,11 @@ const variants: Record<Variant, string> = {
     "border-transparent bg-transparent text-accent hover:bg-accent-tint hover:text-accent-hover disabled:text-ink-500 disabled:hover:bg-transparent",
   danger:
     "border-transparent bg-transparent text-over hover:bg-over-bg disabled:text-ink-500 disabled:hover:bg-transparent",
+  /** A coloured action that isn't the page's main one. */
+  soft: "border-accent-tint bg-accent-tint text-accent hover:border-accent-fill hover:bg-accent-fill hover:text-on-accent disabled:border-border disabled:bg-sunken disabled:text-ink-500",
+  /** A coloured destructive action, still behind a confirmation. */
+  "soft-danger":
+    "border-over-bg bg-over-bg text-over hover:border-over hover:bg-over hover:text-surface disabled:border-border disabled:bg-sunken disabled:text-ink-500",
 };
 
 const sizes: Record<Size, string> = {

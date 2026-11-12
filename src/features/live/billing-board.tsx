@@ -10,6 +10,7 @@ import { Tag, type TagTone } from "@/components/ui/tag";
 import { useResource } from "@/lib/live/client";
 import { money, type InvoiceDto, type InvoiceStatus } from "@/lib/live/clinical";
 import { relativeTime } from "@/lib/live/time";
+import { TableFrame } from "@/components/ui/table-frame";
 import { EmptyNote, ErrorNote, LiveBadge, Skeleton } from "./bits";
 
 export const invoiceTone: Record<InvoiceStatus, TagTone> = {
@@ -112,18 +113,18 @@ export function BillingBoard() {
           />
         </label>
       </div>
-      {error && !data ? (
-        <ErrorNote message={error} onRetry={reload} />
-      ) : loading && !data ? (
-        <Skeleton className="h-40" />
-      ) : rows.length === 0 ? (
-        <EmptyNote title={all.length ? "No invoices here." : "No invoices yet."}>
-          {all.length
-            ? "Try another filter."
-            : "They appear when a therapist signs the note for a checked-out visit."}
-        </EmptyNote>
-      ) : (
-        <div className="overflow-x-auto rounded-card border border-border bg-surface">
+      <TableFrame>
+        {error && !data ? (
+          <ErrorNote message={error} onRetry={reload} />
+        ) : loading && !data ? (
+          <Skeleton className="h-40" />
+        ) : rows.length === 0 ? (
+          <EmptyNote title={all.length ? "No invoices here." : "No invoices yet."}>
+            {all.length
+              ? "Try another filter."
+              : "They appear when a therapist signs the note for a checked-out visit."}
+          </EmptyNote>
+        ) : (
           <table className="table-stack w-full text-left text-small md:min-w-220">
             <thead className="border-b border-border text-caption text-ink-500">
               <tr>
@@ -174,8 +175,8 @@ export function BillingBoard() {
               ))}
             </tbody>
           </table>
-        </div>
-      )}
+        )}
+      </TableFrame>
     </>
   );
 }

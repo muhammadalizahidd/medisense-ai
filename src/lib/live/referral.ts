@@ -13,6 +13,7 @@ import {
   supportInfo,
   supports,
   yesNoUnknown,
+  yesNoUnsure,
 } from "./catalogue";
 
 /**
@@ -147,7 +148,12 @@ export const referralSchema = z
       ndisNumber: text(20),
       planEndDate: day,
       planType: z.union([z.literal(""), z.enum(planTypes)]),
-      fundingPeriods: z.union([z.literal(""), z.enum(yesNoUnknown)]),
+      fundingPeriods: z.union([z.literal(""), z.enum(yesNoUnsure)]),
+      /** F05: only when the plan has funding periods. Dates only; no balance is inferred. */
+      periods: z
+        .array(z.object({ start: day, end: day }))
+        .max(12)
+        .default([]),
       planManagerCompany: text(120),
       planManagerEmail: optionalEmail,
       otherDetails: text(300),
@@ -203,6 +209,18 @@ export const referralSchema = z
       if (!r.funding.ndisNumber) issue(["funding", "ndisNumber"], "Enter the NDIS number");
       if (!r.funding.planEndDate) issue(["funding", "planEndDate"], "Enter the plan end date");
       if (!r.funding.planType) issue(["funding", "planType"], "Choose the plan type");
+      if (r.funding.fundingPeriods === "Yes") {
+        if (!r.funding.periods.length) {
+          issue(["funding", "periods"], "Add at least one funding period");
+        }
+        r.funding.periods.forEach((p, i) => {
+          if (!p.start) issue(["funding", "periods", i, "start"], "Enter the start date");
+          if (!p.end) issue(["funding", "periods", i, "end"], "Enter the end date");
+          if (p.start && p.end && p.start > p.end) {
+            issue(["funding", "periods", i, "end"], "The end date must be after the start date");
+          }
+        });
+      }
     }
     if (r.location.type !== "Telehealth" && !r.location.sameAsHome && !r.location.address.street) {
       issue(["location", "address", "street"], "Enter the address of the service location");
@@ -259,7 +277,7 @@ export function completenessGaps(r: ReferralInput, documents: { kind: string }[]
     if (r.funding.planType === "Plan Managed" && !r.funding.planManagerEmail) {
       add("funding.planManagerEmail", "Plan manager email for invoices");
     }
-    if (!r.funding.fundingPeriods || r.funding.fundingPeriods === "Unknown") {
+    if (!r.funding.fundingPeriods || r.funding.fundingPeriods === "Unsure") {
       add("funding.fundingPeriods", "Whether the plan has funding periods");
     }
   } else if (!r.funding.otherDetails) {
@@ -326,6 +344,7 @@ export function emptyReferral(): ReferralInput {
       planEndDate: "",
       planType: "",
       fundingPeriods: "",
+      periods: [],
       planManagerCompany: "",
       planManagerEmail: "",
       otherDetails: "",
@@ -398,6 +417,7 @@ export function sampleReferral(): ReferralInput {
       planEndDate: `${nextYear}-06-30`,
       planType: "Plan Managed",
       fundingPeriods: "No",
+      periods: [],
       planManagerCompany: "Example Plan Partners",
       planManagerEmail: "invoices@example.test",
       otherDetails: "",

@@ -1,12 +1,22 @@
 "use client";
 
-import { CalendarClock, Check, ChevronRight, MessageCircle, Star } from "lucide-react";
+import {
+  BellRing,
+  CalendarCheck,
+  CalendarClock,
+  Check,
+  ChevronRight,
+  HeartHandshake,
+  MessageCircle,
+  Star,
+} from "lucide-react";
 import { Avatar } from "@/components/ui/premium";
-import { AppCard, AppHeader } from "@/features/mobile/phone-frame";
+import { Tag } from "@/components/ui/tag";
+import { AppCard, AppEmpty, AppHeader, AppSection } from "@/features/mobile/phone-frame";
 import { useLiveStatus, useNow } from "@/lib/live/client";
 import { practitioner } from "@/lib/live/catalogue";
 import { brisbaneDay, shortDate, slotLabel, timeOfDay } from "@/lib/live/time";
-import type { AppointmentDto, ClientHomeDto, ConversationDto } from "@/lib/live/types";
+import type { AppointmentDto, ClientHomeDto, ConversationDto, NeedDto } from "@/lib/live/types";
 import { cn } from "@/lib/cn";
 import { Skeleton } from "./bits";
 
@@ -99,47 +109,138 @@ function NextVisit({
   );
 }
 
-const steps = ["Referral received", "Therapist asked", "Visits booked"];
+function todayLabel(now: number | null) {
+  if (now === null) return "Medisense";
+  return new Intl.DateTimeFormat("en-AU", {
+    timeZone: "Australia/Brisbane",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  }).format(now);
+}
 
-function Matching({
-  discipline,
-  status,
-  therapist,
-}: {
-  discipline: string;
-  status: string;
-  therapist: string | null;
-}) {
-  const at = status === "waiting" ? 1 : 0;
+/** Where one service is on its way to the first visit, as a vertical timeline. */
+function Journey({ need }: { need: NeedDto }) {
+  const asked = need.status === "waiting";
+  const steps = [
+    { title: "Referral approved", detail: "Your care team has approved this service." },
+    {
+      title: asked ? `${need.therapistName ?? "A therapist"} asked` : "Finding your therapist",
+      detail: asked
+        ? "Chosen for their experience and availability near you."
+        : "We're matching you with the right clinician for your needs.",
+    },
+    {
+      title: "Therapist confirms",
+      detail: "You'll see who they are here, and can message them straight away.",
+    },
+    { title: "First visit booked", detail: "The date and time appear on your home screen." },
+  ];
+  const current = asked ? 2 : 1;
   return (
-    <AppCard title={discipline}>
-      <ol className="mb-2 flex items-center gap-1">
-        {steps.map((s, i) => (
-          <li key={s} className="flex flex-1 items-center gap-1">
-            <span
-              className={cn(
-                "flex size-5 flex-none items-center justify-center rounded-full text-label font-bold",
-                i <= at ? "bg-accent-fill text-on-accent" : "bg-canvas text-ink-500",
-                i === at + 1 && "ring-2 ring-accent-tint",
+    <section className="mb-3 overflow-hidden rounded-card border border-border bg-surface shadow-lift">
+      <header className="flex items-start gap-3 border-b border-border px-4 py-3.5">
+        <span
+          aria-hidden="true"
+          className="flex size-10 flex-none items-center justify-center rounded-control bg-accent-tint text-accent"
+        >
+          <HeartHandshake className="size-5" strokeWidth={1.75} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h3 className="text-small leading-5 font-semibold text-ink-900">{need.support}</h3>
+          <p className="truncate text-caption text-ink-500">
+            {need.frequency} · {need.location}
+          </p>
+        </div>
+        <Tag tone={asked ? "watch" : "neutral"}>{asked ? "Confirming" : "Matching"}</Tag>
+      </header>
+      <ol className="px-4 pt-4 pb-1">
+        {steps.map((step, i) => {
+          const done = i < current;
+          const now = i === current;
+          return (
+            <li key={step.title} className="relative flex gap-3 pb-4 last:pb-3">
+              {i < steps.length - 1 && (
+                <i
+                  aria-hidden="true"
+                  className={cn(
+                    "absolute top-6 bottom-0 left-[11px] w-0.5 rounded-full",
+                    done ? "bg-accent-fill" : "bg-border",
+                  )}
+                />
               )}
-            >
-              {i <= at ? <Check className="size-3" strokeWidth={3} aria-hidden="true" /> : i + 1}
-            </span>
-            {i < steps.length - 1 && (
-              <i
+              <span
                 aria-hidden="true"
-                className={cn("h-0.5 flex-1 rounded-full", i < at ? "bg-accent-fill" : "bg-border")}
-              />
-            )}
-          </li>
-        ))}
+                className={cn(
+                  "relative flex size-6 flex-none items-center justify-center rounded-full text-label font-bold",
+                  done && "bg-accent-fill text-on-accent",
+                  now && "bg-surface text-accent ring-2 ring-accent-fill",
+                  !done && !now && "bg-sunken text-ink-500",
+                )}
+              >
+                {done ? (
+                  <Check className="size-3.5" strokeWidth={3} />
+                ) : now ? (
+                  <i className="size-2 animate-pulse rounded-full bg-accent-fill" />
+                ) : (
+                  i + 1
+                )}
+              </span>
+              <div className="min-w-0 pt-0.5">
+                <p
+                  className={cn(
+                    "text-small leading-5",
+                    done || now ? "font-semibold text-ink-900" : "font-medium text-ink-500",
+                  )}
+                >
+                  {step.title}
+                  <span className="sr-only">
+                    {done ? " (done)" : now ? " (in progress)" : " (to come)"}
+                  </span>
+                </p>
+                {now && <p className="mt-0.5 text-caption text-ink-700">{step.detail}</p>}
+              </div>
+            </li>
+          );
+        })}
       </ol>
-      <p className="text-small text-ink-700">
-        {status === "waiting"
-          ? `We've asked ${therapist ?? "a therapist"}. You'll see them here the moment they accept.`
-          : "We're finding the right therapist for you."}
-      </p>
-    </AppCard>
+      {asked && need.therapistName && (
+        <footer className="flex items-center gap-3 border-t border-border bg-canvas px-4 py-3">
+          <Avatar name={need.therapistName} size={32} />
+          <p className="min-w-0 flex-1 text-caption text-ink-700">
+            <span className="block font-semibold text-ink-900">{need.therapistName}</span>
+            Reviewing your request
+          </p>
+        </footer>
+      )}
+    </section>
+  );
+}
+
+/** Three numbers at a glance: services, visits booked, unread messages. */
+function CareSummary({
+  services,
+  visits,
+  unread,
+}: {
+  services: number;
+  visits: number;
+  unread: number;
+}) {
+  const cells = [
+    { label: services === 1 ? "Service" : "Services", value: services },
+    { label: visits === 1 ? "Visit booked" : "Visits booked", value: visits },
+    { label: "Unread", value: unread },
+  ];
+  return (
+    <dl className="mb-3 grid grid-cols-3 divide-x divide-border rounded-card border border-border bg-surface py-3.5 shadow-lift">
+      {cells.map((c) => (
+        <div key={c.label} className="flex flex-col-reverse items-center gap-0.5 px-2">
+          <dt className="text-label font-medium text-ink-500">{c.label}</dt>
+          <dd className="type-display text-[26px] leading-8 text-ink-900 num">{c.value}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }
 
@@ -172,29 +273,37 @@ export function PatientHome({
   return (
     <>
       <AppHeader
-        eyebrow={greeting(now)}
-        title={`Hi ${first}`}
+        eyebrow={todayLabel(now)}
+        title={`${greeting(now)}, ${first}`}
         aside={
           <span className="relative mt-1">
-            <Avatar name={data?.name ?? first} size={42} className="ring-2 ring-surface" />
+            <Avatar name={data?.name ?? first} size={42} className="ring-4 ring-surface" />
             <i
               aria-hidden="true"
               className={cn(
-                "absolute -right-0.5 -bottom-0.5 size-3 rounded-full border-2 border-white",
+                "absolute -right-0.5 -bottom-0.5 size-3 rounded-full border-2 border-surface",
                 status === "live" ? "bg-healthy-dot" : "bg-watch-dot",
               )}
             />
           </span>
         }
       />
-      <div className="relative -mt-4 px-4 pb-4">
+      <div className="px-4 pb-4">
         {!data ? (
           <>
+            <Skeleton className="mb-3 h-20" />
             <Skeleton className="mb-3 h-36" />
-            <Skeleton className="h-20" />
+            <Skeleton className="h-24" />
           </>
         ) : (
           <>
+            {!data.discharged && (data.needs.length > 0 || data.upcoming.length > 0) && (
+              <CareSummary
+                services={data.needs.filter((n) => n.status !== "completed").length}
+                visits={data.upcoming.length}
+                unread={conversations.reduce((sum, c) => sum + c.unread, 0)}
+              />
+            )}
             {data.discharged && (
               <AppCard title="Your care has finished">
                 <p className="text-small text-ink-700">
@@ -217,12 +326,11 @@ export function PatientHome({
             ) : (
               !data.discharged &&
               waiting.length === 0 && (
-                <AppCard>
-                  <p className="flex items-center gap-2 text-small text-ink-700">
-                    <CalendarClock className="size-4 text-accent" aria-hidden="true" />
-                    No visits booked right now.
-                  </p>
-                </AppCard>
+                <AppEmpty icon={CalendarClock} title="No visits booked yet">
+                  {data.needs.length === 0
+                    ? "There are no services on your record yet. Once your care team adds one, it shows here."
+                    : "Your next visit will appear here as soon as it's booked."}
+                </AppEmpty>
               )
             )}
 
@@ -248,10 +356,8 @@ export function PatientHome({
 
             {data.team.length > 0 && (
               <>
-                <h3 className="mt-4 mb-2 px-1 text-caption font-semibold tracking-wide text-ink-500 uppercase">
-                  Your care team
-                </h3>
-                <ul className="mb-3 overflow-hidden rounded-card bg-surface shadow-hairline">
+                <AppSection title="Your care team" />
+                <ul className="mb-3 overflow-hidden rounded-card border border-border bg-surface shadow-lift">
                   {data.team.map((t) => {
                     const unread = unreadFor(t.conversationId);
                     return (
@@ -286,22 +392,40 @@ export function PatientHome({
               </>
             )}
 
-            {waiting.map((n) => (
-              <Matching
-                key={n.id}
-                discipline={n.support}
-                status={n.status}
-                therapist={n.therapistName}
-              />
-            ))}
+            {waiting.length > 0 && (
+              <>
+                <AppSection
+                  title={next ? "Also getting started" : "Getting you started"}
+                  action={
+                    <span className="text-caption text-ink-500">{waiting.length} in progress</span>
+                  }
+                />
+                {waiting.map((n) => (
+                  <Journey key={n.id} need={n} />
+                ))}
+                <div className="mb-3 flex gap-3 rounded-card bg-accent-tint px-4 py-3.5">
+                  <BellRing className="mt-0.5 size-4.5 flex-none text-accent" aria-hidden="true" />
+                  <p className="text-caption leading-5 text-ink-700">
+                    <span className="block font-semibold text-ink-900">
+                      Nothing for you to do right now
+                    </span>
+                    We&apos;ll let you know the moment a therapist confirms. You can message your
+                    care team any time.
+                  </p>
+                </div>
+              </>
+            )}
 
             {data.upcoming.length > 1 && (
               <button
                 type="button"
                 onClick={onOpenVisits}
-                className="flex w-full cursor-pointer items-center justify-between rounded-card bg-surface px-4 py-3 text-small font-semibold shadow-hairline"
+                className="flex w-full cursor-pointer items-center justify-between rounded-card border border-border bg-surface px-4 py-3.5 text-small font-semibold shadow-lift"
               >
-                {data.upcoming.length - 1} more visits booked
+                <span className="flex items-center gap-2.5">
+                  <CalendarCheck className="size-4.5 text-accent" aria-hidden="true" />
+                  {data.upcoming.length - 1} more visits booked
+                </span>
                 <span className="flex items-center gap-1 text-caption text-ink-500">
                   {next && `after ${slotLabel(next.start)}`}
                   <ChevronRight className="size-4" aria-hidden="true" />

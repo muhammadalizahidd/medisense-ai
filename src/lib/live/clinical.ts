@@ -208,7 +208,7 @@ export function templateFor(support: Support, discipline: Discipline): Assessmen
       ...fromBank("SIL/ILO / SDA housing"),
     ]);
   }
-  if (support === "Home Modification Assessment") {
+  if (support === "Home Mod Assessment") {
     return withConsent("Home modification assessment", [
       ...otBank.slice(0, 2),
       ...fromBank("Home Modification"),

@@ -34,6 +34,7 @@ export async function clientHome(user: UserDoc): Promise<ClientHomeDto> {
     .slice(-5);
   return {
     name: client.name,
+    mrn: client.mrn ?? null,
     phone: client.phone,
     emergencyContact: client.emergencyContact ?? null,
     discharged: client.discharged

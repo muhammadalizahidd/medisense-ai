@@ -13,7 +13,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/premium";
-import { AppCard, AppHeader, AppSheet, PhoneFrame } from "@/features/mobile/phone-frame";
+import { AppCard, AppEmpty, AppHeader, AppSheet, PhoneFrame } from "@/features/mobile/phone-frame";
 import { api, signOut, useLiveEvents, useResource, useSession } from "@/lib/live/client";
 import type {
   AppointmentDto,
@@ -46,7 +46,7 @@ const frame = {
   description:
     "For patients and families: who their therapist is, when they're coming, and a direct line to them.",
   features: [
-    "Activate with the code from the care team",
+    "Sign in with your MRN from the care team",
     "See your therapist as soon as they accept",
     "Upcoming home visits in one place",
     "Message your therapist in real time",
@@ -113,7 +113,10 @@ export function ClientApp() {
         onTab={() => undefined}
         overlay={referralOverlay}
       >
-        <AppHeader eyebrow="Medisense" title="Welcome" />
+        <AppHeader
+          eyebrow={pending ? "Referral progress" : "Medisense"}
+          title={pending ? "Your referral" : "Welcome"}
+        />
         <div className="p-4">
           {user && (
             <p className="mb-3 rounded-control bg-watch-bg px-3 py-2 text-small text-watch">
@@ -271,18 +274,24 @@ function ClientTabs({
     return (
       <>
         <AppHeader eyebrow="Messages" title="Your care team" />
-        <div className="p-4">
-          <AppCard className="overflow-hidden p-0!">
-            <ConversationList
-              conversations={chats.data?.conversations}
-              error={chats.error}
-              loading={chats.loading}
-              onRetry={chats.reload}
-              selected={null}
-              onSelect={onChat}
-              emptyText="You can message your therapist once they accept."
-            />
-          </AppCard>
+        <div className="px-4 pb-4">
+          {chats.data && chats.data.conversations.length === 0 ? (
+            <AppEmpty icon={MessageCircle} title="No messages yet">
+              You can message your therapist here as soon as they accept. We&apos;ll let you know.
+            </AppEmpty>
+          ) : (
+            <AppCard className="overflow-hidden p-0!">
+              <ConversationList
+                conversations={chats.data?.conversations}
+                error={chats.error}
+                loading={chats.loading}
+                onRetry={chats.reload}
+                selected={null}
+                onSelect={onChat}
+                emptyText="You can message your therapist once they accept."
+              />
+            </AppCard>
+          )}
         </div>
       </>
     );
@@ -292,8 +301,17 @@ function ClientTabs({
     return (
       <>
         <AppHeader eyebrow="Account" title={user.name} />
-        <div className="p-4">
+        <div className="px-4 pb-4">
           <AppCard>
+            {data?.mrn && (
+              <div className="mb-3 border-b border-border pb-3">
+                <p className="text-caption text-ink-500">Medical record number (MRN)</p>
+                <p className="font-mono text-section font-semibold">{data.mrn}</p>
+                <p className="mt-1 text-caption text-ink-500">
+                  Use it to sign in. Keep it private, like a password.
+                </p>
+              </div>
+            )}
             <p className="text-caption text-ink-500">Signed in as</p>
             <p className="text-small font-semibold break-all">{user.email}</p>
           </AppCard>

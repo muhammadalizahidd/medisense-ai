@@ -32,7 +32,7 @@ const promises = [
 
 /**
  * One sign-in for everyone: admins and therapists with their work email, patients with the
- * invite code their care team gave them.
+ * MRN (medical record number) their care team gave them.
  */
 export function SignInScreen({
   next,
@@ -88,8 +88,8 @@ export function SignInScreen({
           </div>
           <h1 className="type-display text-h1">Sign in</h1>
           <p className="mt-1.5 mb-6 text-small text-ink-700">
-            Staff and therapists use their work email. Patients and families start with the invite
-            code from their care team.
+            Staff and therapists use their work email. Patients and families sign in with the MRN
+            (medical record number) from their care team.
           </p>
           {offline && (
             <p
@@ -113,17 +113,15 @@ export function SignInScreen({
             <p className="flex items-start gap-2">
               <ShieldCheck className="mt-0.5 size-4 flex-none text-accent" aria-hidden="true" />
               Forgotten your password? Staff can ask a Medisense admin for a temporary one. Patients
-              can ask their care team for a new invite code.
+              can ask their care team for their MRN.
             </p>
           </div>
           {testAccounts && (
             <details className="mt-6 rounded-control border border-dashed border-border-strong bg-surface px-4 py-3">
-              <summary className="cursor-pointer text-small font-semibold">
-                Test accounts (local only)
-              </summary>
+              <summary className="cursor-pointer text-small font-semibold">Demo accounts</summary>
               <p className="mt-2 mb-3 text-caption text-ink-500">
-                Every staff account uses <code>SEED_PASSWORD</code> from <code>.env.local</code>.
-                Choose one to fill in the email.
+                Choose an account to fill in its email, then enter the demo password your Medisense
+                contact gave you.
               </p>
               <ul className="grid gap-1.5 sm:grid-cols-2">
                 {testAccounts.map((a) => (

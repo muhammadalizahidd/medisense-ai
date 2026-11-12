@@ -1502,6 +1502,70 @@ input:-webkit-autofill:focus {
     border: 0 !important;
   }
 }
+/* List tables in a fixed-height frame (TableFrame): pinned headings, a hover accent and a soft
+   entrance for the first rows. Empty, loading and error states sit in the middle of the frame. */
+.table-frame {
+  scrollbar-gutter: stable;
+}
+.table-frame:not(:has(> table)) {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 1.5rem;
+}
+.table-frame > table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--color-surface);
+  box-shadow: inset 0 -1px 0 var(--color-border);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.table-frame > table tbody tr {
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+  animation: row-in var(--duration-base) var(--ease-out) both;
+}
+.table-frame > table tbody tr:hover {
+  background: var(--color-canvas);
+  box-shadow: inset 3px 0 0 var(--color-accent-fill);
+}
+.table-frame > table tbody tr:nth-child(2) { animation-delay: 30ms; }
+.table-frame > table tbody tr:nth-child(3) { animation-delay: 60ms; }
+.table-frame > table tbody tr:nth-child(4) { animation-delay: 90ms; }
+.table-frame > table tbody tr:nth-child(5) { animation-delay: 120ms; }
+.table-frame > table tbody tr:nth-child(6) { animation-delay: 150ms; }
+.table-frame > table tbody tr:nth-child(n + 7) { animation-delay: 180ms; }
+.table-frame > table tbody tr a {
+  transition: color var(--duration-fast) var(--ease-out);
+}
+.table-frame > table tbody tr:hover a {
+  color: var(--color-accent);
+}
+@keyframes row-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .table-frame > table tbody tr {
+    animation: none;
+  }
+}
+@media (max-width: 767px) {
+  .table-frame {
+    height: auto;
+    min-height: 0;
+  }
+}
+
 /* Print: only the page content, on white (progress reports and invoices). */
 @media print {
   html,

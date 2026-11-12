@@ -1,27 +1,46 @@
 "use client";
 
-import { Check, ChevronDown, LogIn, LogOut } from "lucide-react";
+import {
+  Briefcase,
+  ChevronDown,
+  ClipboardList,
+  LayoutGrid,
+  LogIn,
+  LogOut,
+  Palette,
+  Stethoscope,
+  UserCheck,
+  UserRound,
+  type LucideIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { Avatar } from "@/components/ui/premium";
 import { cn } from "@/lib/cn";
 import { signOut, useSession } from "@/lib/live/client";
 import { homeFor } from "@/lib/live/routes";
 import { roleHome, roleUsers, type Role } from "@/lib/navigation";
 import { useDemoStore } from "@/state/demo-store";
 
-const workspaces: { id: Role; label: string }[] = [
-  { id: "Leadership", label: "Director" },
-  { id: "Clinician", label: "Therapist" },
-  { id: "Admin", label: "Admin" },
-  { id: "Supervisor", label: "Supervisor" },
+const workspaces: { id: Role; label: string; detail: string; icon: LucideIcon }[] = [
+  { id: "Leadership", label: "Director", detail: "Organisation overview", icon: Briefcase },
+  { id: "Clinician", label: "Therapist", detail: "Caseload, visits and notes", icon: Stethoscope },
+  { id: "Admin", label: "Admin", detail: "Intake and operations", icon: ClipboardList },
+  { id: "Supervisor", label: "Supervisor", detail: "Team and supervision", icon: UserCheck },
 ];
+
+/** A row in the menu: icon, label, optional hint. */
+const rowClass =
+  "flex h-10 w-full cursor-pointer items-center gap-3 rounded-control px-2.5 text-left text-small font-medium text-ink-900 transition-colors duration-(--duration-fast) hover:bg-canvas hover:no-underline";
 
 const sessionWorkspace: Record<"admin" | "therapist" | "client", Role | null> = {
   admin: "Admin",
   therapist: "Clinician",
   client: null,
 };
+
+const SYNC_KEY = "ms-workspace-synced";
 
 const accountLabel = {
   admin: "Administration",
@@ -45,16 +64,29 @@ export function WorkspaceMenu() {
           .map((p) => p[0])
           .slice(0, 2)
           .join(""),
-        title: accountLabel[account.role],
+        title: account.staffRoles?.length
+          ? account.staffRoles.join(" · ")
+          : accountLabel[account.role],
       }
     : sample;
   const [open, setOpen] = useState(false);
-  const synced = useRef<string | null>(null);
 
-  // The menu follows whoever signs in: admins get the admin workspace, therapists the therapist one.
+  // The menu follows whoever signs in, once per browser session: admins start in the admin
+  // workspace, therapists in the therapist one. After that, a preview someone picks stays put.
   useEffect(() => {
-    if (!account || account.id === synced.current) return;
-    synced.current = account.id;
+    if (!account) return;
+    let synced: string | null = null;
+    try {
+      synced = sessionStorage.getItem(SYNC_KEY);
+    } catch {
+      // Private windows can block storage; then the menu follows the account each time.
+    }
+    if (synced === account.id) return;
+    try {
+      sessionStorage.setItem(SYNC_KEY, account.id);
+    } catch {
+      // See above.
+    }
     const workspace = sessionWorkspace[account.role];
     if (workspace && workspace !== role) setRole(workspace);
   }, [account, role, setRole]);
@@ -106,90 +138,144 @@ export function WorkspaceMenu() {
       {open && (
         <div
           ref={panel}
-          className="absolute top-12 right-0 z-30 w-72 max-w-[calc(100vw-2rem)] overflow-hidden rounded-card border border-border bg-raised p-1.5 shadow-overlay"
+          className="absolute top-12 right-0 z-30 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-card border border-border bg-raised shadow-overlay"
         >
-          <div className="mb-1.5 border-b border-border px-2.5 pt-1.5 pb-2.5">
-            {account ? (
-              <>
-                <p className="text-small font-semibold">{account.name}</p>
-                <p className="truncate text-caption text-ink-500">{account.email}</p>
-                <div className="mt-2 flex gap-1.5">
-                  <Link
-                    href={homeFor(account.role)}
-                    onClick={() => setOpen(false)}
-                    className="rounded-control border border-border-strong px-2.5 py-1.5 text-caption font-semibold text-ink-900 hover:bg-canvas hover:no-underline"
-                  >
-                    My workspace
-                  </Link>
-                  {account.role !== "client" && (
-                    <Link
-                      href="/profile"
-                      onClick={() => setOpen(false)}
-                      className="rounded-control border border-border-strong px-2.5 py-1.5 text-caption font-semibold text-ink-900 hover:bg-canvas hover:no-underline"
-                    >
+          {account ? (
+            <>
+              <div className="flex items-center gap-3 px-4 pt-4 pb-3.5">
+                <span className="relative flex-none">
+                  <Avatar name={account.name} size={44} />
+                  <i
+                    aria-hidden="true"
+                    className="absolute -right-0.5 -bottom-0.5 size-3 rounded-full border-2 border-raised bg-healthy-dot"
+                  />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-body font-semibold text-ink-900">{account.name}</p>
+                  <p className="truncate text-caption text-ink-500">{account.email}</p>
+                  <p className="mt-1 truncate text-label font-semibold tracking-[0.06em] text-accent uppercase">
+                    {user.title}
+                  </p>
+                </div>
+              </div>
+              <nav aria-label="Account" className="border-t border-border p-1.5">
+                <Link
+                  href={homeFor(account.role)}
+                  onClick={() => setOpen(false)}
+                  className={rowClass}
+                >
+                  <LayoutGrid className="size-4 flex-none text-ink-500" aria-hidden="true" />
+                  My workspace
+                </Link>
+                {account.role !== "client" && (
+                  <>
+                    <Link href="/profile" onClick={() => setOpen(false)} className={rowClass}>
+                      <UserRound className="size-4 flex-none text-ink-500" aria-hidden="true" />
                       My profile
                     </Link>
-                  )}
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      await signOut();
-                      setOpen(false);
-                      live.reload();
-                      router.push("/login");
-                    }}
-                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-control px-2.5 py-1.5 text-caption font-semibold text-accent hover:bg-accent-tint"
-                  >
-                    <LogOut className="size-3.5" aria-hidden="true" />
-                    Sign out
-                  </button>
-                </div>
-              </>
-            ) : (
-              <Link
-                href="/login"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-2 text-small font-semibold"
-              >
-                <LogIn className="size-4" aria-hidden="true" />
+                    <Link
+                      href="/profile#appearance"
+                      onClick={() => setOpen(false)}
+                      className={rowClass}
+                    >
+                      <Palette className="size-4 flex-none text-ink-500" aria-hidden="true" />
+                      Appearance
+                    </Link>
+                  </>
+                )}
+              </nav>
+            </>
+          ) : (
+            <div className="p-1.5">
+              <Link href="/login" onClick={() => setOpen(false)} className={rowClass}>
+                <LogIn className="size-4 flex-none text-ink-500" aria-hidden="true" />
                 Sign in to your account
               </Link>
+            </div>
+          )}
+
+          <div className="border-t border-border bg-canvas/60 p-1.5">
+            <div className="flex items-center justify-between gap-2 px-2.5 pt-2 pb-1.5">
+              <h2 className="text-label font-semibold tracking-[0.1em] text-ink-500 uppercase">
+                Preview workspaces
+              </h2>
+              <span className="rounded-tag border border-border-strong px-1.5 py-0.5 text-label font-medium text-ink-500">
+                Sample data
+              </span>
+            </div>
+            <div role="radiogroup" aria-label="Preview workspace" className="flex flex-col gap-0.5">
+              {workspaces.map((w) => {
+                const on = role === w.id;
+                const Icon = w.icon;
+                return (
+                  <button
+                    key={w.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={on}
+                    title={`Sample screens as ${roleUsers[w.id].name}`}
+                    onClick={() => {
+                      setRole(w.id);
+                      setOpen(false);
+                      router.push(roleHome[w.id]);
+                    }}
+                    className={cn(
+                      "flex h-12 cursor-pointer items-center gap-3 rounded-control px-2.5 text-left transition-colors duration-(--duration-fast)",
+                      on ? "bg-surface shadow-lift ring-1 ring-border" : "hover:bg-surface",
+                    )}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={cn(
+                        "flex size-8 flex-none items-center justify-center rounded-control",
+                        on
+                          ? "bg-accent-fill text-on-accent"
+                          : "bg-surface text-ink-700 ring-1 ring-border",
+                      )}
+                    >
+                      <Icon className="size-4" strokeWidth={1.75} />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-small font-semibold text-ink-900">{w.label}</span>
+                      <span className="block truncate text-caption text-ink-500">{w.detail}</span>
+                    </span>
+                    <span
+                      aria-hidden="true"
+                      className={cn(
+                        "flex size-4 flex-none items-center justify-center rounded-full border",
+                        on ? "border-accent-fill" : "border-border-strong",
+                      )}
+                    >
+                      {on && <i className="size-2 rounded-full bg-accent-fill" />}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            {account && (
+              <p className="px-2.5 pt-2 pb-1.5 text-caption text-ink-500">
+                Previews show sample screens. You stay signed in as {account.name.split(" ")[0]}.
+              </p>
             )}
           </div>
-          <h2 className="px-2.5 pt-1.5 pb-2 text-small font-semibold">Switch workspace</h2>
-          <div role="radiogroup" aria-label="Workspace" className="flex flex-col gap-0.5">
-            {workspaces.map((w) => (
+
+          {account && (
+            <div className="border-t border-border p-1.5">
               <button
-                key={w.id}
                 type="button"
-                role="radio"
-                aria-checked={role === w.id}
-                onClick={() => {
-                  setRole(w.id);
+                onClick={async () => {
+                  await signOut();
                   setOpen(false);
-                  router.push(roleHome[w.id]);
+                  live.reload();
+                  router.push("/login");
                 }}
-                className={cn(
-                  "flex h-12 cursor-pointer items-center gap-2.5 rounded-control px-2.5 text-left",
-                  role === w.id ? "bg-accent-tint" : "hover:bg-canvas",
-                )}
+                className={cn(rowClass, "text-ink-700 hover:bg-over-bg hover:text-over")}
               >
-                <span className="min-w-0 flex-1">
-                  <span className="block text-small font-semibold">{w.label}</span>
-                  <span className="block truncate text-caption text-ink-500">
-                    {roleUsers[w.id].name}
-                  </span>
-                </span>
-                {role === w.id && (
-                  <Check
-                    className="size-4 flex-none text-accent"
-                    strokeWidth={2}
-                    aria-hidden="true"
-                  />
-                )}
+                <LogOut className="size-4 flex-none" aria-hidden="true" />
+                Sign out
               </button>
-            ))}
-          </div>
+            </div>
+          )}
         </div>
       )}
     </div>

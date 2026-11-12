@@ -45,7 +45,7 @@ function IconField({
 const inputBare =
   "h-full min-w-0 flex-1 bg-transparent text-small text-ink-900 outline-none placeholder:text-ink-500";
 
-/** Sign in, or set a password with the invite code the care team gave a patient. */
+/** Staff sign in with email and password; patients and families with their MRN. */
 export function SignInForm({
   onSignedIn,
   onPending,
@@ -81,7 +81,7 @@ export function SignInForm({
       return;
     }
     if (activating && code.trim().length < 6) {
-      setError("Enter the code from your referral or your care team.");
+      setError("Enter the MRN from your referral or your care team, like MRN-12112026-0001.");
       return;
     }
     setBusy(true);
@@ -132,14 +132,14 @@ export function SignInForm({
         }}
         options={[
           { id: "sign-in", label: "Sign in" },
-          { id: "activate", label: "I have a code" },
+          { id: "activate", label: "I have an MRN" },
         ]}
       />
       {activating && (
         <p className="rounded-control bg-accent-tint px-3 py-2 text-caption text-ink-700">
-          Enter the 8-character code from your referral or from your care team. That&apos;s all you
-          need: before the referral is accepted it shows its progress, and after that it opens your
-          app.
+          Enter your medical record number (MRN) from your referral or your care team. That&apos;s
+          all you need: before the referral is accepted it shows its progress, and after that it
+          opens your app.
         </p>
       )}
       {!activating && (
@@ -158,17 +158,17 @@ export function SignInForm({
         </IconField>
       )}
       {activating && (
-        <IconField id="code" label="Code" icon={<KeyRound className="size-4" />}>
+        <IconField id="code" label="MRN" icon={<KeyRound className="size-4" />}>
           <input
             id="code"
             required
             autoComplete="one-time-code"
             autoFocus
-            placeholder="ABCD2345"
+            placeholder="MRN-12112026-0001"
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
-            maxLength={12}
-            className={cn(inputBare, "font-semibold tracking-widest uppercase")}
+            maxLength={24}
+            className={cn(inputBare, "font-semibold tracking-wide uppercase")}
           />
         </IconField>
       )}

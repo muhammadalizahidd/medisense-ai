@@ -43,7 +43,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
       <head>
         <ThemeScript />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         <DemoStoreHydrator />
         <Toaster />
         <AppearanceSync />

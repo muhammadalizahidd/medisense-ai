@@ -7,11 +7,16 @@ import { ButtonLink } from "@/components/ui/button";
 import { MetricBand } from "@/components/ui/metric-band";
 import { PageHeader } from "@/components/ui/page";
 import { Segmented } from "@/components/ui/segmented";
+import { Select } from "@/components/ui/select";
 import { Tag } from "@/components/ui/tag";
 import { useNow, useResource } from "@/lib/live/client";
 import { relativeTime } from "@/lib/live/time";
 import type { ClientStage, ClientSummaryDto, ReferralSummaryDto } from "@/lib/live/types";
+import { participantStatuses } from "@/lib/live/participant";
+import { TableFrame } from "@/components/ui/table-frame";
+import { cn } from "@/lib/cn";
 import { EmptyNote, ErrorNote, LiveBadge, needTone, Skeleton, StageTag } from "./bits";
+import { statusTone } from "./participant-profile";
 
 type Filter = "all" | ClientStage;
 
@@ -29,27 +34,64 @@ export function CareBoard() {
   );
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
+  const [status, setStatus] = useState("");
+  const [service, setService] = useState("");
+  const [clinician, setClinician] = useState("");
+  const [incomplete, setIncomplete] = useState(false);
   const now = useNow();
   const weekAgo = now === null ? Infinity : now - 7 * 86_400_000;
   const clients = data?.clients ?? [];
   const count = (stage: ClientStage) => clients.filter((c) => c.stage === stage).length;
+  const services = [...new Set(clients.flatMap((c) => c.needs.map((n) => n.support)))].sort();
+  const clinicians = [
+    ...new Set(
+      clients.flatMap((c) => c.needs.flatMap((n) => (n.therapistName ? [n.therapistName] : []))),
+    ),
+  ].sort();
+  const digits = (v: string) => v.replace(/\D/g, "");
+  const q = query.trim().toLowerCase();
   const rows = clients
     .filter((c) => filter === "all" || c.stage === filter)
-    .filter((c) =>
-      `${c.name} ${c.suburb} ${c.needs.map((n) => n.support).join(" ")}`
-        .toLowerCase()
-        .includes(query.trim().toLowerCase()),
+    .filter((c) => !status || c.participantStatus === status)
+    .filter((c) => !service || c.needs.some((n) => n.support === service))
+    .filter((c) => !clinician || c.needs.some((n) => n.therapistName === clinician))
+    .filter((c) => !incomplete || (c.completeness ?? 0) < 100)
+    .filter(
+      (c) =>
+        !q ||
+        `${c.name} ${c.mrn ?? ""} ${c.suburb} ${c.needs.map((n) => n.support).join(" ")}`
+          .toLowerCase()
+          .includes(q) ||
+        (digits(q).length >= 4 && digits(c.phone ?? "").includes(digits(q))),
     );
+  const filtering = Boolean(status || service || clinician || incomplete);
 
   return (
     <>
       <PageHeader
         eyebrow="Patient onboarding"
-        title="New patients and therapist matching"
+        title="Patients"
         description="Accepted referrals become patients with one service request per support. Choose a therapist for each by availability and follow the request until it's accepted."
         actions={
           <div className="flex items-center gap-3">
             <LiveBadge />
+            {waiting.length > 0 && (
+              <Link
+                href="/care/referrals"
+                title={
+                  waiting[0]
+                    ? `Latest: ${waiting[0].name}, ${relativeTime(waiting[0].createdAt)}`
+                    : undefined
+                }
+                className="group inline-flex h-10 items-center gap-2 rounded-control border border-accent bg-accent-tint px-3.5 text-small font-semibold text-accent transition-all duration-(--duration-fast) hover:-translate-y-px hover:bg-accent-fill hover:text-on-accent hover:no-underline active:scale-95"
+              >
+                <span className="relative flex size-2">
+                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-accent-fill opacity-60 group-hover:bg-on-accent motion-reduce:animate-none" />
+                  <span className="relative inline-flex size-2 rounded-full bg-accent-fill group-hover:bg-on-accent" />
+                </span>
+                {waiting.length} new referral{waiting.length === 1 ? "" : "s"} to review →
+              </Link>
+            )}
             <ButtonLink href="/care/referrals" variant="primary">
               <Plus className="size-4" aria-hidden="true" />
               New referral
@@ -58,33 +100,8 @@ export function CareBoard() {
         }
       />
 
-      {waiting.length > 0 && (
-        <Link
-          href="/care/referrals"
-          className="mb-6 flex items-center justify-between gap-3 rounded-card border border-accent bg-accent-tint px-5 py-4 text-small hover:no-underline"
-        >
-          <span className="flex items-center gap-3">
-            <span className="relative flex size-2.5">
-              <span className="absolute inline-flex size-full animate-ping rounded-full bg-accent-fill opacity-60 motion-reduce:animate-none" />
-              <span className="relative inline-flex size-2.5 rounded-full bg-accent-fill" />
-            </span>
-            <span className="text-ink-900">
-              <strong>
-                {waiting.length} new referral{waiting.length === 1 ? "" : "s"}
-              </strong>{" "}
-              waiting for intake
-              {waiting[0] && (
-                <span className="text-ink-700">
-                  {" "}
-                  · latest {waiting[0].name}, {relativeTime(waiting[0].createdAt)}
-                </span>
-              )}
-            </span>
-          </span>
-          <span className="font-semibold text-accent">Review →</span>
-        </Link>
-      )}
       <MetricBand
+        size="stat-sm"
         label="Onboarding figures"
         metrics={[
           {
@@ -96,9 +113,8 @@ export function CareBoard() {
           {
             label: "Waiting for therapist",
             value: count("Waiting for therapist"),
-            caption: "Requests sent, no reply yet",
           },
-          { label: "Active", value: count("Active"), caption: "Every therapy has a therapist" },
+          { label: "Active", value: count("Active") },
           {
             label: "Added this week",
             value: clients.filter((c) => new Date(c.createdAt).getTime() > weekAgo).length,
@@ -107,67 +123,152 @@ export function CareBoard() {
         ]}
       />
 
-      <div className="mt-6 mb-4 flex flex-wrap items-center justify-between gap-3">
-        <Segmented
-          label="Show"
-          value={filter}
-          onChange={setFilter}
-          options={[
-            { id: "all", label: "All" },
-            { id: "Needs a therapist", label: "Needs a therapist" },
-            { id: "Waiting for therapist", label: "Waiting" },
-            { id: "Active", label: "Active" },
-          ]}
-        />
-        <label className="flex h-9 w-72 items-center gap-2 rounded-control border border-border bg-surface px-3 focus-within:shadow-focus">
-          <Search className="size-4 text-ink-500" aria-hidden="true" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            aria-label="Search patients"
-            placeholder="Search name, suburb or therapy"
-            className="min-w-0 flex-1 bg-transparent text-small outline-none placeholder:text-ink-500"
+      <div className="mt-4 mb-4 flex flex-col gap-3 rounded-card border border-border bg-surface p-3 shadow-lift">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Segmented
+            label="Show"
+            value={filter}
+            onChange={setFilter}
+            options={[
+              { id: "all", label: "All" },
+              { id: "Needs a therapist", label: "Needs a therapist" },
+              { id: "Waiting for therapist", label: "Waiting" },
+              { id: "Active", label: "Active" },
+            ]}
           />
-        </label>
+          <label className="flex h-10 w-80 max-w-full items-center gap-2 rounded-control border border-border-strong bg-surface px-3 focus-within:shadow-focus">
+            <Search className="size-4 text-ink-500" aria-hidden="true" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              aria-label="Search patients"
+              placeholder="Search name, MRN, phone or therapy"
+              className="min-w-0 flex-1 bg-transparent text-small outline-none placeholder:text-ink-500"
+            />
+          </label>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
+          <span className="mr-1 text-caption font-semibold tracking-wide text-ink-500 uppercase">
+            Filter
+          </span>
+          <div className="w-40 flex-none">
+            <Select
+              aria-label="Participant status"
+              className="h-9"
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+            >
+              <option value="">Any status</option>
+              {participantStatuses.map((x) => (
+                <option key={x}>{x}</option>
+              ))}
+            </Select>
+          </div>
+          <div className="w-56 flex-none">
+            <Select
+              aria-label="Service"
+              className="h-9"
+              value={service}
+              onChange={(e) => setService(e.target.value)}
+            >
+              <option value="">Any service</option>
+              {services.map((x) => (
+                <option key={x}>{x}</option>
+              ))}
+            </Select>
+          </div>
+          <div className="w-48 flex-none">
+            <Select
+              aria-label="Clinician"
+              className="h-9"
+              value={clinician}
+              onChange={(e) => setClinician(e.target.value)}
+            >
+              <option value="">Any clinician</option>
+              {clinicians.map((x) => (
+                <option key={x}>{x}</option>
+              ))}
+            </Select>
+          </div>
+          <button
+            type="button"
+            aria-pressed={incomplete}
+            onClick={() => setIncomplete(!incomplete)}
+            className={cn(
+              "h-9 cursor-pointer rounded-control border px-3 text-small font-medium",
+              incomplete
+                ? "border-accent-fill bg-accent-tint text-accent"
+                : "border-border-strong bg-surface text-ink-700 hover:bg-canvas",
+            )}
+          >
+            Missing information
+          </button>
+          {filtering && (
+            <button
+              type="button"
+              onClick={() => {
+                setStatus("");
+                setService("");
+                setClinician("");
+                setIncomplete(false);
+              }}
+              className="h-9 cursor-pointer px-2 text-small font-semibold text-accent"
+            >
+              Clear filters
+            </button>
+          )}
+          <span className="ml-auto text-caption text-ink-500">
+            Showing {rows.length} of {clients.length}
+          </span>
+        </div>
       </div>
 
-      {error && !data ? (
-        <ErrorNote message={error} onRetry={reload} />
-      ) : loading && !data ? (
-        <div className="flex flex-col gap-2">
-          {[0, 1, 2].map((i) => (
-            <Skeleton key={i} className="h-14" />
-          ))}
-        </div>
-      ) : rows.length === 0 ? (
-        <EmptyNote title={clients.length ? "No patients match." : "No patients yet."}>
-          {clients.length ? (
-            "Try another filter or search."
-          ) : (
-            <Link href="/care/referrals">Accept a referral to add the first patient</Link>
-          )}
-        </EmptyNote>
-      ) : (
-        <div className="overflow-x-auto rounded-card border border-border bg-surface">
+      <TableFrame>
+        {error && !data ? (
+          <div className="p-6">
+            <ErrorNote message={error} onRetry={reload} />
+          </div>
+        ) : loading && !data ? (
+          <div className="flex flex-col gap-2 p-4" aria-busy="true">
+            {[0, 1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-14" />
+            ))}
+          </div>
+        ) : rows.length === 0 ? (
+          <div className="flex h-full items-center justify-center p-6">
+            <EmptyNote title={clients.length ? "No patients match." : "No patients yet."}>
+              {clients.length ? (
+                "Try another filter or search."
+              ) : (
+                <Link href="/care/referrals">Accept a referral to add the first patient</Link>
+              )}
+            </EmptyNote>
+          </div>
+        ) : (
           <table className="table-stack w-full text-left text-small md:min-w-200">
             <thead className="border-b border-border text-caption text-ink-500">
               <tr>
                 <th className="px-4 py-3 font-medium">Patient</th>
                 <th className="px-4 py-3 font-medium">Therapies</th>
-                <th className="px-4 py-3 font-medium">Funding</th>
+                <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium">Profile</th>
                 <th className="px-4 py-3 font-medium">Added</th>
                 <th className="px-4 py-3 font-medium">Stage</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {rows.map((c) => (
-                <tr key={c.id} className="hover:bg-canvas">
+                <tr
+                  key={c.id}
+                  className="transition-colors duration-(--duration-fast) hover:bg-canvas"
+                >
                   <td className="px-4 py-3">
                     <Link href={`/care/${c.id}`} className="font-semibold text-ink-900">
                       {c.name}
                     </Link>
                     <span className="block text-caption text-ink-500">
-                      {c.suburb} · {c.region}
+                      {c.mrn && <span className="font-mono">{c.mrn} · </span>}
+                      {c.suburb} · {c.funding}
                     </span>
                   </td>
                   <td className="px-4 py-3">
@@ -180,7 +281,30 @@ export function CareBoard() {
                       ))}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-ink-700">{c.funding}</td>
+                  <td className="px-4 py-3">
+                    <Tag tone={statusTone[c.participantStatus]}>{c.participantStatus}</Tag>
+                  </td>
+                  <td className="px-4 py-3">
+                    {c.completeness === null ? (
+                      <span className="text-caption text-ink-500">Not built</span>
+                    ) : (
+                      <span
+                        className="flex items-center gap-2"
+                        title={c.missing.length ? `Missing: ${c.missing.join(", ")}` : "Complete"}
+                      >
+                        <span className="h-1.5 w-16 overflow-hidden rounded-full bg-sunken">
+                          <span
+                            className={cn(
+                              "block h-full rounded-full",
+                              c.completeness === 100 ? "bg-healthy-dot" : "bg-accent-fill",
+                            )}
+                            style={{ width: `${c.completeness}%` }}
+                          />
+                        </span>
+                        <span className="text-caption text-ink-700 num">{c.completeness}%</span>
+                      </span>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-ink-700">{relativeTime(c.createdAt)}</td>
                   <td className="px-4 py-3">
                     <StageTag stage={c.stage} />
@@ -189,8 +313,8 @@ export function CareBoard() {
               ))}
             </tbody>
           </table>
-        </div>
-      )}
+        )}
+      </TableFrame>
     </>
   );
 }

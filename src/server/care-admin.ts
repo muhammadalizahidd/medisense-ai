@@ -3,8 +3,13 @@ import { MongoServerError, ObjectId } from "mongodb";
 import { z } from "zod";
 import type { ClientDetailDto, MatchDto } from "@/lib/live/types";
 import { slotLabel } from "@/lib/live/time";
-import { newInviteCode } from "./auth";
 import { collections } from "./db";
+import { mrnAccess, mrnHash, nextMrn } from "./mrn";
+import { documentDto } from "./referrals";
+import { ensureProfile } from "./participants";
+import { ensureStaff } from "./staff";
+import { orgSettings } from "./settings";
+import { appointmentPurposes, siteGaps, siteSchema } from "@/lib/live/scheduling";
 import { needsRiskReview } from "@/lib/live/referral";
 import { appointmentDto, assignmentDto, clientSummary, nameMap, seriesLookup } from "./dto";
 import { UserFacingError } from "./http";
@@ -13,11 +18,13 @@ import { ineligibility, isSlotFree, rankTherapists } from "./matching";
 import type { AppointmentDoc, UserDoc } from "./models";
 
 export async function listClients() {
-  const { clients, therapists } = await collections();
-  const [rows, team] = await Promise.all([
+  const { clients, therapists, db } = await collections();
+  const [found, team] = await Promise.all([
     clients.find().sort({ createdAt: -1 }).limit(200).toArray(),
     therapists.find({}, { projection: { name: 1 } }).toArray(),
   ]);
+  // Records from before Module 03 get their profile built from the referral, once.
+  const rows = await Promise.all(found.map((c) => ensureProfile(db, c)));
   const names = nameMap(team);
   return rows.map((c) => clientSummary(c, names));
 }
@@ -45,7 +52,7 @@ export async function clientDetail(id: ObjectId): Promise<ClientDetailDto> {
     therapists.find({}, { projection: { name: 1 } }).toArray(),
     assignments.find({ clientId: id }).sort({ createdAt: -1 }).toArray(),
     appointments.find({ clientId: id }).sort({ start: 1 }).toArray(),
-    log.find({ clientId: id }).sort({ at: -1 }).limit(30).toArray(),
+    log.find({ clientId: id }).sort({ at: -1 }).limit(300).toArray(),
     documents
       .find({ clientId: id }, { projection: { data: 0 } })
       .sort({ at: -1 })
@@ -78,14 +85,9 @@ export async function clientDetail(id: ObjectId): Promise<ClientDetailDto> {
       : null,
     emergencyContact: client.emergencyContact ?? null,
     precautions: client.precautions ?? null,
-    documents: docs.map((d) => ({
-      id: d._id.toHexString(),
-      kind: d.kind,
-      name: d.name,
-      size: d.size,
-      uploadedBy: d.uploadedBy,
-      at: d.at.toISOString(),
-    })),
+    mrn: client.mrn ?? null,
+    // Earlier versions stay on the referral; the record shows the current ones.
+    documents: docs.filter((d) => d.status !== "Superseded").map(documentDto),
     referrals: refs.map((r) => ({ id: r._id.toHexString(), reference: r.reference })),
     dateOfBirth: client.dateOfBirth,
     email: client.email,
@@ -119,9 +121,11 @@ export async function matchesFor(clientId: ObjectId, needId: string): Promise<Ma
   const client = await loadClient(clientId);
   const need = client.needs.find((n) => n.id === needId);
   if (!need) throw new UserFacingError("Service request not found.", 404);
-  const candidates = await therapists
+  const found = await therapists
     .find({ discipline: need.discipline, active: { $ne: false } })
     .toArray();
+  const { db } = await collections();
+  const candidates = await Promise.all(found.map((t) => ensureStaff(db, t)));
   const ids = candidates.map((c) => c._id);
   const upcoming = await appointments
     .find({ therapistId: { $in: ids }, holdsSlot: true, start: { $gte: new Date() } })
@@ -131,7 +135,14 @@ export async function matchesFor(clientId: ObjectId, needId: string): Promise<Ma
     const key = a.therapistId.toHexString();
     byTherapist.set(key, [...(byTherapist.get(key) ?? []), a]);
   }
-  return rankTherapists(candidates, byTherapist, client.region, need.support);
+  return rankTherapists(
+    candidates,
+    byTherapist,
+    client.region,
+    need.support,
+    need.location ?? null,
+    client.profile?.address.postcode ?? null,
+  );
 }
 
 /**
@@ -141,6 +152,13 @@ export async function matchesFor(clientId: ObjectId, needId: string): Promise<Ma
  */
 export async function autoAllocate(admin: UserDoc, clientId: ObjectId, needId: string) {
   const { referrals } = await collections();
+  const { assignmentMode } = await orgSettings();
+  if (assignmentMode !== "Rules-Based Auto") {
+    throw new UserFacingError(
+      `Automatic allocation is off: the assignment mode is ${assignmentMode}. Switch to Rules-Based Auto in Scheduling to use it.`,
+      409,
+    );
+  }
   const client = await loadClient(clientId);
   const need = client.needs.find((n) => n.id === needId);
   if (!need || need.status !== "needs-therapist")
@@ -178,6 +196,15 @@ export const requestSchema = z.object({
   needId: z.string().min(1),
   therapistId: z.string(),
   start: z.iso.datetime(),
+  /** Module 05 booking wizard: where the visit happens and what the site needs. */
+  site: siteSchema.optional(),
+  purpose: z.enum(appointmentPurposes).optional(),
+  /** Needed when a clinician outside the top suggestions is chosen (AC-15). */
+  overrideReason: z.string().trim().max(400).optional(),
+  /** A custom recurrence: every N days, M visits in all. */
+  series: z
+    .object({ visits: z.number().int().min(1).max(26), everyDays: z.number().int().min(7).max(56) })
+    .optional(),
 });
 
 /** Holds the chosen time and asks the therapist. Nothing is booked until they accept. */
@@ -196,12 +223,31 @@ export async function requestTherapist(
   if (!ObjectId.isValid(input.therapistId)) throw new UserFacingError("Therapist not found.", 404);
   const therapist = await db.therapists.findOne({ _id: new ObjectId(input.therapistId) });
   const blocked = therapist
-    ? ineligibility(therapist, need.support, new Date(Date.now() + 36e6).toISOString().slice(0, 10))
+    ? ineligibility(
+        therapist,
+        need.support,
+        new Date(Date.now() + 36e6).toISOString().slice(0, 10),
+        need.location ?? null,
+      )
     : [];
   if (blocked.length)
     throw new UserFacingError(`${therapist!.name} can't take this: ${blocked.join(", ")}.`, 409);
   if (!therapist || therapist.discipline !== need.discipline) {
     throw new UserFacingError("Therapist not found.", 404);
+  }
+  if (input.site) {
+    const gaps = siteGaps(input.site, need.location ?? "Home");
+    if (gaps.length) throw new UserFacingError(`Before booking: ${gaps.join("; ")}.`);
+  }
+  const { assignmentMode } = await orgSettings();
+  if (assignmentMode === "AI Assisted") {
+    const ranked = (await matchesFor(clientId, need.id)).filter((m) => m.eligible);
+    const top = ranked.slice(0, 3).map((m) => m.therapistId);
+    if (!top.includes(input.therapistId) && !input.overrideReason) {
+      throw new UserFacingError(
+        "This clinician isn't one of the top three suggestions. Give a reason for the override.",
+      );
+    }
   }
   const start = new Date(input.start);
   const held = await db.appointments
@@ -227,8 +273,13 @@ export async function requestTherapist(
           end: new Date(start.getTime() + therapist.sessionMinutes * 60_000),
           status: "tentative",
           holdsSlot: true,
-          modality: need.location === "Telehealth" ? "Telehealth" : "In person",
+          modality:
+            (input.site?.location ?? need.location) === "Telehealth" ? "Telehealth" : "In person",
           needId: need.id,
+          site: input.site ?? null,
+          purpose: input.purpose ?? null,
+          overrideReason: input.overrideReason || null,
+          seriesPlan: input.series ?? null,
           createdAt: now,
         },
         { session },
@@ -275,7 +326,15 @@ export async function requestTherapist(
     body: `${need.support}, ${need.frequency.toLowerCase()}. First visit ${slotLabel(start)}. Accept or decline.`,
     href: "/therapist",
   });
-  await audit(admin, `Asked ${therapist.name} to take ${need.support}`, clientId);
+  await audit(
+    admin,
+    `Asked ${therapist.name} to take ${need.support}${input.overrideReason ? ` (override: ${input.overrideReason})` : ""}${
+      input.site && input.site.location !== need.location
+        ? `; visit at ${input.site.location} instead of ${need.location}: ${input.site.locationChangeReason}`
+        : ""
+    }`,
+    clientId,
+  );
   await publish([...(await adminIds()), therapist.userId], "care", {
     clientId: clientId.toHexString(),
   });
@@ -315,21 +374,25 @@ export async function withdrawRequest(admin: UserDoc, assignmentId: ObjectId) {
 }
 
 /**
- * A fresh invite code. If the patient had already activated, this also resets their app access:
- * the old password stops working and they are signed out everywhere.
+ * Turns app access back on: the patient signs in with their MRN again for another year. If they
+ * had set a password, it stops working and they are signed out everywhere.
  */
 export async function reissueInvite(admin: UserDoc, clientId: ObjectId) {
-  const { users, sessions } = await collections();
+  const { users, sessions, clients, db } = await collections();
   const client = await loadClient(clientId);
   const account = await users.findOne({ _id: client.userId });
   const wasActive = Boolean(account?.passwordHash);
-  const { code, invite } = newInviteCode();
+  const mrn = client.mrn ?? (await nextMrn(db, client.createdAt));
+  if (!client.mrn) await clients.updateOne({ _id: clientId }, { $set: { mrn } });
+  const invite = { codeHash: mrnHash(mrn), ...mrnAccess() };
   await users.updateOne({ _id: client.userId }, { $set: { invite, passwordHash: null } });
   if (wasActive) await sessions.deleteMany({ userId: client.userId });
   await audit(
     admin,
-    wasActive ? "Reset app access with a new invite code" : "Created a new app invite code",
+    wasActive
+      ? "Reset app access; the patient signs in with their MRN"
+      : "Renewed app access by MRN",
     clientId,
   );
-  return { inviteCode: code, inviteExpires: invite.expiresAt };
+  return { mrn, inviteExpires: invite.expiresAt };
 }

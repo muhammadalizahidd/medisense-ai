@@ -1,7 +1,7 @@
 "use client";
 
 import { FileText, Receipt, Target } from "lucide-react";
-import { AppCard, AppHeader } from "@/features/mobile/phone-frame";
+import { AppCard, AppEmpty, AppHeader, AppSection } from "@/features/mobile/phone-frame";
 import { money } from "@/lib/live/clinical";
 import { shortDate } from "@/lib/live/time";
 import type { ClientHomeDto } from "@/lib/live/types";
@@ -15,8 +15,8 @@ import { Skeleton } from "./bits";
 export function PatientProgress({ data }: { data: ClientHomeDto | null }) {
   return (
     <>
-      <AppHeader eyebrow="My care" title="Goals and reports" />
-      <div className="relative -mt-4 flex flex-col gap-3 px-4 pb-4">
+      <AppHeader eyebrow="My care" title="Your progress" />
+      <div className="px-4 pb-4">
         {!data ? (
           <Skeleton className="h-40" />
         ) : (
@@ -28,13 +28,12 @@ export function PatientProgress({ data }: { data: ClientHomeDto | null }) {
                 </p>
               </AppCard>
             )}
+            <AppSection title="Goals and reports" />
             {data.progress.plans.length === 0 && data.progress.reports.length === 0 && (
-              <AppCard>
-                <p className="text-small text-ink-700">
-                  Your goals appear here once your therapist has assessed you and agreed a plan with
-                  you.
-                </p>
-              </AppCard>
+              <AppEmpty icon={Target} title="No goals or reports yet">
+                Your goals appear here once your therapist has assessed you and agreed a plan with
+                you.
+              </AppEmpty>
             )}
             {data.progress.plans.map((p) => (
               <AppCard key={p.id} title={p.support}>
@@ -82,8 +81,13 @@ export function PatientProgress({ data }: { data: ClientHomeDto | null }) {
                 </p>
               </AppCard>
             ))}
-            {data.invoices.length > 0 && (
-              <AppCard title="Invoices">
+            <AppSection title="Invoices" />
+            {data.invoices.length === 0 ? (
+              <AppEmpty icon={Receipt} title="No invoices yet" compact>
+                Invoices for your visits will be listed here once they&apos;re issued.
+              </AppEmpty>
+            ) : (
+              <AppCard>
                 <ul className="divide-y divide-border">
                   {data.invoices.map((i) => (
                     <li key={i.id} className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">

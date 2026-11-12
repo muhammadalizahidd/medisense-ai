@@ -10,7 +10,7 @@ import type { Role } from "./live/types";
  */
 
 /** Pages anyone can open, signed in or not: they handle their own sign-in or need none. */
-const PUBLIC = ["/login", "/refer", "/join/", "/mobile/patient"];
+const PUBLIC = ["/login", "/refer", "/join/", "/appointment/", "/contact/", "/mobile/patient"];
 
 /**
  * Staff pages a therapist may not open: admin, leadership and supervision screens. Kept in step

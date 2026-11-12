@@ -58,11 +58,11 @@ export function Tabs<T extends string>({
     document.getElementById(`tab-${next.id}`)?.focus();
   }
   return (
-    <div className={cn("sticky top-(--topbar-h) z-10 mb-6 bg-page", className)}>
+    <div className={cn("sticky top-(--topbar-h) z-10 mb-4 bg-page", className)}>
       <div
         role="tablist"
         aria-label={label}
-        className="no-scrollbar flex gap-6 overflow-x-auto border-b border-border"
+        className="no-scrollbar flex gap-1 overflow-x-auto rounded-card border border-border bg-surface px-2 shadow-lift"
       >
         {tabs.map((t, i) => {
           const active = t.id === value;
@@ -78,10 +78,10 @@ export function Tabs<T extends string>({
               onClick={() => onChange(t.id)}
               onKeyDown={(e) => onKey(e, i)}
               className={cn(
-                "-mb-px flex h-11 flex-none cursor-pointer items-center gap-2 border-b-2 px-0.5 text-small whitespace-nowrap transition-colors duration-(--duration-fast)",
+                "flex h-11 flex-none cursor-pointer items-center gap-2 border-b-[3px] px-3 text-small whitespace-nowrap transition-colors duration-(--duration-fast)",
                 active
-                  ? "border-accent-fill font-semibold text-ink-900"
-                  : "border-transparent font-medium text-ink-500 hover:text-ink-900",
+                  ? "border-accent-fill font-semibold text-accent"
+                  : "border-transparent font-medium text-ink-700 hover:bg-canvas hover:text-ink-900",
               )}
             >
               {t.label}

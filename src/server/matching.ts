@@ -10,6 +10,7 @@ import {
 import type { AvailabilitySummary, MatchDto } from "@/lib/live/types";
 import { addDays, atBrisbane, brisbaneDay, brisbaneMinutes, isoWeekday } from "@/lib/live/time";
 import type { AppointmentDoc, TherapistDoc } from "./models";
+import { outsideCoverage, staffBlocks } from "./staff";
 
 const STEP = 30;
 const TRAVEL_BUFFER = 15;
@@ -104,7 +105,15 @@ export function openSlots(
  * Why a clinician can't take this service: lapsed registration or screening, or an assessment
  * they aren't credentialed for. No one is assigned if these checks fail (section 1).
  */
-export function ineligibility(t: TherapistDoc, support: Support | null, today: string) {
+export function ineligibility(
+  t: TherapistDoc,
+  support: Support | null,
+  today: string,
+  location: string | null = null,
+  postcode: string | null = null,
+) {
+  // Module 04: the staff record's status, credential register and approved services decide.
+  if (t.staff) return staffBlocks(t, support, location, today, postcode);
   const c = t.credentials;
   const out: string[] = [];
   if (!c) return ["Credentials not on file"];
@@ -125,10 +134,12 @@ export function rankTherapists(
   appointmentsByTherapist: Map<string, AppointmentDoc[]>,
   clientRegion: Region,
   support: Support | null = null,
+  location: string | null = null,
+  postcode: string | null = null,
 ): MatchDto[] {
   const today = new Date(Date.now() + 10 * 3_600_000).toISOString().slice(0, 10);
   const matches = candidates.map((t): MatchDto => {
-    const blocked = ineligibility(t, support, today);
+    const blocked = ineligibility(t, support, today, location, postcode);
     const slots = blocked.length
       ? []
       : openSlots(t, appointmentsByTherapist.get(t._id.toHexString()) ?? []);
@@ -138,6 +149,10 @@ export function rankTherapists(
     let score = blocked.length ? -1000 : 0;
     if (!blocked.length && t.credentials) {
       reasons.push({ label: "Registration and screening current", tone: "good" });
+    }
+    if (!blocked.length && outsideCoverage(t, location, postcode)) {
+      score -= 25;
+      reasons.push({ label: `Outside coverage (${postcode}): needs approval`, tone: "warn" });
     }
 
     if (t.region === clientRegion) {

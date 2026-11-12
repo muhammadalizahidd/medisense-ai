@@ -1,6 +1,15 @@
 "use client";
 
-import { ArrowLeft, Check, ClipboardList, Copy, Hourglass } from "lucide-react";
+import {
+  ArrowLeft,
+  BellRing,
+  Check,
+  CircleAlert,
+  ClipboardList,
+  Copy,
+  PauseCircle,
+  RefreshCw,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { AppCard } from "@/features/mobile/phone-frame";
@@ -56,7 +65,7 @@ export function ReferralOverlay({
   );
 }
 
-/** Shown after a referral is sent from the app: the reference and the code to sign in with. */
+/** Shown after a referral is sent from the app: the reference and the MRN to sign in with. */
 export function SentCard({ sent, onUseCode }: { sent: SentReferral; onUseCode: () => void }) {
   const [copied, setCopied] = useState(false);
   return (
@@ -65,10 +74,12 @@ export function SentCard({ sent, onUseCode }: { sent: SentReferral; onUseCode: (
         <Check className="size-4" aria-hidden="true" /> Referral {sent.reference} sent
       </p>
       <p className="mt-2 text-caption text-ink-700">
-        Your app code. Keep it: it signs you in here.
+        Your MRN (medical record number). Keep it: it signs you in here.
       </p>
       <div className="mt-1 flex items-center gap-2">
-        <span className="flex-1 font-mono text-h2 tracking-[0.2em]">{sent.appCode}</span>
+        <span className="flex-1 font-mono text-section font-semibold tracking-wide">
+          {sent.appCode}
+        </span>
         <Button
           size="sm"
           onClick={() => {
@@ -87,15 +98,50 @@ export function SentCard({ sent, onUseCode }: { sent: SentReferral; onUseCode: (
   );
 }
 
-const path: { label: string; statuses: ReferralStatus[] }[] = [
-  { label: "Received", statuses: ["Submitted"] },
-  { label: "Intake review", statuses: ["Under Admin Review", "Needs Information"] },
-  { label: "Clinical review", statuses: ["Clinical Triage"] },
-  { label: "Funding and agreement", statuses: ["Funding Review"] },
-  { label: "Accepted", statuses: ["Accepted", "Closed"] },
+const path: { label: string; detail: string; statuses: ReferralStatus[] }[] = [
+  {
+    label: "Referral received",
+    detail: "We have your referral and everything you sent with it.",
+    statuses: ["Submitted"],
+  },
+  {
+    label: "Intake review",
+    detail: "Our intake team checks the details and funding. We'll ask if anything is missing.",
+    statuses: ["Under Admin Review", "Needs Information"],
+  },
+  {
+    label: "Clinical review",
+    detail: "A senior clinician confirms we're the right fit and plans for a safe first visit.",
+    statuses: ["Clinical Triage"],
+  },
+  {
+    label: "Funding and agreement",
+    detail: "We confirm funding and your service agreement.",
+    statuses: ["Funding Review"],
+  },
+  {
+    label: "Accepted",
+    detail: "Your care team is set up and we match you with a therapist.",
+    statuses: ["Accepted", "Closed"],
+  },
 ];
 
-/** Progress of a referral that isn't accepted yet, seen with its app code. */
+const stoppedCopy: Partial<Record<ReferralStatus, { title: string; body: string }>> = {
+  Waitlisted: {
+    title: "On the waitlist",
+    body: "We can't start just yet. Your referral keeps its place and we'll be in touch as soon as there's capacity.",
+  },
+  Declined: {
+    title: "Not able to go ahead",
+    body: "We're not able to provide this service. Your care team will contact you with the reason and other options.",
+  },
+  Withdrawn: {
+    title: "Referral withdrawn",
+    body: "This referral was withdrawn. You can send a new one at any time.",
+  },
+};
+
+/** Progress of a referral that isn't accepted yet, seen with its MRN. */
 export function PendingReferral({
   referral: r,
   onRefresh,
@@ -105,65 +151,187 @@ export function PendingReferral({
   onRefresh: () => void;
   onBack: () => void;
 }) {
-  const at = path.findIndex((p) => p.statuses.includes(r.status));
-  const stopped = ["Declined", "Withdrawn", "Waitlisted"].includes(r.status);
+  const [checking, setChecking] = useState(false);
+  const at = Math.max(
+    0,
+    path.findIndex((p) => p.statuses.includes(r.status)),
+  );
+  const stopped = stoppedCopy[r.status];
+  const accepted = r.status === "Accepted" || r.status === "Closed";
+  const percent = accepted ? 100 : Math.round(((at + 0.5) / path.length) * 100);
+
+  async function refresh() {
+    setChecking(true);
+    try {
+      await onRefresh();
+    } finally {
+      setChecking(false);
+    }
+  }
+
   return (
-    <AppCard>
-      <p className="flex items-center gap-2 text-caption font-semibold text-ink-500">
-        <ClipboardList className="size-4 text-accent" aria-hidden="true" />
-        Referral {r.reference}
-      </p>
-      <p role="status" className="mt-2 text-small font-semibold">
-        {r.statusText}
-      </p>
-      <p className="mt-0.5 text-caption text-ink-500">Updated {relativeTime(r.updatedAt)}</p>
+    <div className="flex flex-col gap-3">
+      <section className="overflow-hidden rounded-card border border-border bg-surface shadow-lift">
+        <div className="px-4 pt-4 pb-4">
+          <div className="flex items-center justify-between gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-sunken px-2.5 py-1 font-mono text-label font-semibold text-ink-700">
+              <ClipboardList className="size-3.5 text-accent" aria-hidden="true" />
+              {r.reference}
+            </span>
+            <span className="text-caption text-ink-500">Updated {relativeTime(r.updatedAt)}</span>
+          </div>
+          {stopped ? (
+            <div className="mt-4 flex gap-3">
+              <span
+                aria-hidden="true"
+                className="flex size-10 flex-none items-center justify-center rounded-full bg-watch-bg text-watch"
+              >
+                <PauseCircle className="size-5" strokeWidth={1.75} />
+              </span>
+              <div>
+                <h3 role="status" className="text-body font-semibold text-ink-900">
+                  {stopped.title}
+                </h3>
+                <p className="mt-1 text-small text-ink-700">{stopped.body}</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              <p className="mt-4 text-label font-semibold tracking-[0.1em] text-ink-500 uppercase">
+                {accepted ? "Complete" : `Step ${at + 1} of ${path.length}`}
+              </p>
+              <h3 role="status" className="mt-1 type-display text-[24px] leading-7 text-ink-900">
+                {path[at]!.label}
+              </h3>
+              <p className="mt-1.5 text-small text-ink-700">{r.statusText}</p>
+              <div
+                className="mt-4 h-2 overflow-hidden rounded-full bg-sunken"
+                role="progressbar"
+                aria-label="Referral progress"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={percent}
+              >
+                <div
+                  className="h-full rounded-full bg-accent-fill transition-[width] duration-500"
+                  style={{ width: `${percent}%` }}
+                />
+              </div>
+              <div className="mt-1.5 flex justify-between text-label text-ink-500">
+                <span>Received</span>
+                <span>{percent}%</span>
+                <span>Accepted</span>
+              </div>
+            </>
+          )}
+        </div>
+        {r.openRequest && (
+          <div className="flex gap-3 border-t border-border bg-watch-bg px-4 py-3">
+            <CircleAlert className="mt-0.5 size-4.5 flex-none text-watch" aria-hidden="true" />
+            <p className="text-caption leading-5 text-ink-900">
+              <span className="block font-semibold">We need a little more information</span>
+              Open the tracking link from your referral to answer. Your referral continues as soon
+              as you do.
+            </p>
+          </div>
+        )}
+      </section>
+
       {!stopped && (
-        <ol className="mt-4 flex flex-col gap-2.5">
-          {path.map((p, i) => {
-            const done = i < at;
-            const now = i === at;
-            return (
-              <li key={p.label} className="flex items-center gap-2.5 text-small">
-                <span
-                  className={cn(
-                    "flex size-6 flex-none items-center justify-center rounded-full text-label font-bold",
-                    done
-                      ? "bg-accent-fill text-on-accent"
-                      : now
-                        ? "bg-ink-900 text-surface"
-                        : "bg-canvas text-ink-500",
-                  )}
+        <section className="rounded-card border border-border bg-surface px-4 pt-4 pb-1 shadow-lift">
+          <h3 className="mb-3 text-label font-semibold tracking-[0.1em] text-ink-500 uppercase">
+            Your referral&apos;s journey
+          </h3>
+          <ol>
+            {path.map((step, i) => {
+              const done = i < at || accepted;
+              const now = i === at && !accepted;
+              return (
+                <li
+                  key={step.label}
+                  aria-current={now ? "step" : undefined}
+                  className="relative flex gap-3 pb-4"
                 >
-                  {done ? (
-                    <Check className="size-3.5" strokeWidth={3} />
-                  ) : now ? (
-                    <Hourglass className="size-3" />
-                  ) : (
-                    i + 1
+                  {i < path.length - 1 && (
+                    <i
+                      aria-hidden="true"
+                      className={cn(
+                        "absolute top-7 bottom-0 left-[13px] w-0.5 rounded-full",
+                        done ? "bg-accent-fill" : "bg-border",
+                      )}
+                    />
                   )}
-                </span>
-                <span className={cn(now ? "font-semibold" : "text-ink-700")}>{p.label}</span>
-              </li>
-            );
-          })}
-        </ol>
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      "relative flex size-7 flex-none items-center justify-center rounded-full text-label font-bold",
+                      done && "bg-accent-fill text-on-accent",
+                      now &&
+                        "bg-surface text-accent ring-2 ring-accent-fill ring-offset-2 ring-offset-surface",
+                      !done && !now && "bg-sunken text-ink-500",
+                    )}
+                  >
+                    {done ? (
+                      <Check className="size-3.5" strokeWidth={3} />
+                    ) : now ? (
+                      <i className="size-2.5 animate-pulse rounded-full bg-accent-fill" />
+                    ) : (
+                      i + 1
+                    )}
+                  </span>
+                  <div className="min-w-0 flex-1 pt-0.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <p
+                        className={cn(
+                          "text-small leading-6",
+                          done || now ? "font-semibold text-ink-900" : "font-medium text-ink-500",
+                        )}
+                      >
+                        {step.label}
+                      </p>
+                      <span
+                        className={cn(
+                          "text-label font-semibold",
+                          done ? "text-healthy" : now ? "text-accent" : "text-ink-500",
+                        )}
+                      >
+                        {done ? "Done" : now ? "In progress" : "Next"}
+                      </span>
+                    </div>
+                    {now && (
+                      <p className="mt-0.5 rounded-control bg-accent-tint px-3 py-2 text-caption leading-5 text-ink-700">
+                        {step.detail}
+                      </p>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        </section>
       )}
-      {r.openRequest && (
-        <p className="mt-4 rounded-control bg-watch-bg px-3 py-2 text-caption">
-          We&apos;ve asked for more information. Use the tracking link from your referral to answer.
+
+      <div className="flex gap-3 rounded-card bg-accent-tint px-4 py-3.5">
+        <BellRing className="mt-0.5 size-4.5 flex-none text-accent" aria-hidden="true" />
+        <p className="text-caption leading-5 text-ink-700">
+          <span className="block font-semibold text-ink-900">
+            {accepted ? "Your app is ready" : "Nothing to do right now"}
+          </span>
+          {accepted
+            ? "Enter your MRN again to open your app and meet your therapist."
+            : "When your referral is accepted, enter the same MRN again and your app opens."}
         </p>
-      )}
-      <p className="mt-4 text-caption text-ink-700">
-        When it&apos;s accepted, enter the same code again and your app opens.
-      </p>
-      <div className="mt-3 flex gap-2">
-        <Button size="sm" onClick={onRefresh}>
-          Check again
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Button variant="primary" className="w-full" loading={checking} onClick={refresh}>
+          {!checking && <RefreshCw className="size-4" aria-hidden="true" />}
+          Check for updates
         </Button>
-        <Button size="sm" variant="ghost" onClick={onBack}>
-          Back
+        <Button variant="ghost" className="w-full" onClick={onBack}>
+          Use a different MRN
         </Button>
       </div>
-    </AppCard>
+    </div>
   );
 }

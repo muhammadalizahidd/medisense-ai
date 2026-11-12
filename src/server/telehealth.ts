@@ -240,6 +240,7 @@ export async function host(user: UserDoc, visitId: ObjectId, input: z.infer<type
     case "send-link": {
       if (!doc.suitability?.ok)
         throw new UserFacingError("Confirm telehealth is clinically suitable first.", 409);
+      assertWindowOpen(visit);
       const token = randomBytes(24).toString("base64url");
       await set(
         { tokenHash: sha256(token), linkSentAt: new Date() },
@@ -477,6 +478,16 @@ export async function host(user: UserDoc, visitId: ObjectId, input: z.infer<type
   return result;
 }
 
+/** A link can't be made once the visit's video window has closed: move the visit first. */
+function assertWindowOpen(visit: { start: Date; end: Date }) {
+  if (Date.now() > visit.end.getTime() + LINK_CLOSES_MIN * 60_000) {
+    throw new UserFacingError(
+      `This visit was ${slotLabel(visit.start)} and its video window has closed. Move the visit to a new time, then create a link.`,
+      409,
+    );
+  }
+}
+
 /* --------------------------------------------------------------- guest */
 
 async function byToken(token: string) {
@@ -657,6 +668,7 @@ export async function patientJoinLink(user: UserDoc, visitId: ObjectId) {
   const doc = await load(visit);
   if (!doc.suitability?.ok)
     throw new UserFacingError("Your clinician hasn't opened the video visit yet.", 409);
+  assertWindowOpen(visit);
   const token = randomBytes(24).toString("base64url");
   const { telehealth } = await collections();
   await telehealth.updateOne(

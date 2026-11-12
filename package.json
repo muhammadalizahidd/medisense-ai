@@ -12,7 +12,8 @@
     "format:check": "prettier --check .",
     "check": "pnpm lint && pnpm typecheck && pnpm format:check && pnpm test",
     "test": "vitest run",
-    "check:design": "node scripts/check-design.mjs"
+    "check:design": "node scripts/check-design.mjs",
+    "demo:passwords": "node scripts/reset-demo-passwords.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.3.0",

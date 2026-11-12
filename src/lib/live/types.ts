@@ -3,14 +3,17 @@ import type {
   CaseloadStatus,
   Discipline,
   DocumentKind,
+  DocumentStatus,
   Frequency,
   FundingStream,
   Region,
   ServiceLocation,
   StaffRole,
   SubmitterRole,
+  ServiceDecision,
   Support,
 } from "./catalogue";
+import type { ParticipantStatus } from "./participant";
 import type { Gap, ReferralInput, ReferralStatus } from "./referral";
 
 /** JSON shapes the API returns. Dates are ISO strings. */
@@ -50,6 +53,13 @@ export type ClientSummaryDto = {
   needs: NeedDto[];
   stage: ClientStage;
   createdAt: string;
+  mrn: string | null;
+  phone: string | null;
+  /** Module 03 participant status, separate from each service. */
+  participantStatus: ParticipantStatus;
+  /** Profile completeness, 0–100; null before the profile is built. */
+  completeness: number | null;
+  missing: string[];
 };
 
 export type VisitStatus =
@@ -123,6 +133,11 @@ export type AssignmentDto = {
 
 export type DocumentDto = {
   id: string;
+  status?: DocumentStatus;
+  version?: number;
+  supersedes?: string | null;
+  replacedBy?: string | null;
+  review?: { byName: string; at: string; reason: string } | null;
   kind: DocumentKind;
   name: string;
   size: number;
@@ -131,6 +146,8 @@ export type DocumentDto = {
 };
 
 export type ClientDetailDto = ClientSummaryDto & {
+  /** Medical record number; the patient signs in to the app with it. */
+  mrn: string | null;
   precautions: string | null;
   documents: DocumentDto[];
   referrals: { id: string; reference: string }[];
@@ -223,6 +240,7 @@ export type TherapistHomeDto = {
 
 export type ClientHomeDto = {
   name: string;
+  mrn: string | null;
   phone: string | null;
   emergencyContact: { name: string; relationship: string; phone: string } | null;
   discharged: { at: string; reason: string } | null;
@@ -325,6 +343,14 @@ export type TimeOffDto = { id: string; from: string; to: string; reason: string 
 export type TherapistCardDto = {
   id: string;
   active: boolean;
+  /** Module 04. */
+  staffId: string | null;
+  engagement: string;
+  approvedServices: string[];
+  /** Hard stops now (status, credentials); empty when they can take new patients. */
+  blocks: string[];
+  /** Days until the soonest required credential expires; null when none expire. */
+  credentialDays: number | null;
   registrationExpiry: string | null;
   name: string;
   discipline: Discipline;
@@ -422,6 +448,17 @@ export type ReferralDetailDto = ReferralSummaryDto & {
   } | null;
   outcome: { reason: string; byName: string; at: string } | null;
   clientId: string | null;
+  mrn: string | null;
+  /** Intake's decision for each requested support; empty until the referral is accepted. */
+  services: {
+    index: number;
+    support: string;
+    decision: ServiceDecision;
+    reason: string;
+    needId: string | null;
+    byName: string;
+    at: string;
+  }[];
   documents: DocumentDto[];
   history: { status: ReferralStatus; byName: string; note: string; at: string }[];
   activity: { id: string; action: string; actor: string; at: string }[];

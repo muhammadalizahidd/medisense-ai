@@ -21,7 +21,7 @@ export function Segmented<T extends string>({
     <div
       role="group"
       aria-label={label}
-      className="flex max-w-full flex-wrap gap-0.5 rounded-control border border-border bg-sunken p-0.5"
+      className="flex max-w-full flex-wrap gap-1 rounded-control border border-border-strong bg-surface p-1 shadow-lift"
     >
       {options.map((o) => (
         <button
@@ -30,10 +30,10 @@ export function Segmented<T extends string>({
           aria-pressed={value === o.id}
           onClick={() => onChange(o.id)}
           className={cn(
-            "h-7 cursor-pointer rounded-tag px-2.5 text-small whitespace-nowrap transition-colors duration-(--duration-fast)",
+            "h-8 cursor-pointer rounded-[8px] px-3.5 text-small whitespace-nowrap transition-colors duration-(--duration-fast)",
             value === o.id
-              ? "bg-surface font-semibold text-ink-900 ring-1 ring-border"
-              : "font-medium text-ink-700 hover:text-ink-900",
+              ? "bg-accent-fill font-semibold text-on-accent shadow-lift"
+              : "font-medium text-ink-700 hover:bg-canvas hover:text-ink-900",
           )}
         >
           {o.label}

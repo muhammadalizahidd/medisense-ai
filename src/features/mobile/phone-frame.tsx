@@ -1,6 +1,16 @@
 "use client";
 
-import { ArrowLeft, BatteryFull, Signal, Wifi, X, type LucideIcon } from "lucide-react";
+import {
+  ArrowLeft,
+  BatteryFull,
+  Check,
+  HeartPulse,
+  LockKeyhole,
+  Signal,
+  Wifi,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 import type { ReactNode } from "react";
 import { ButtonLink } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
@@ -20,7 +30,7 @@ function StatusBar() {
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none absolute inset-x-0 top-0 z-20 hidden h-11 items-center justify-between px-7 text-caption font-semibold text-white md:flex"
+      className="pointer-events-none absolute inset-x-0 top-0 z-20 hidden h-11 items-center justify-between px-7 text-caption font-semibold text-ink-900 md:flex"
     >
       <span>{time}</span>
       <span className="flex items-center gap-1">
@@ -61,23 +71,38 @@ export function PhoneFrame({
         </ButtonLink>
       </div>
 
-      <div className="hidden max-w-92 lg:block">
-        <h1 className="type-display text-[44px] leading-13">{name}</h1>
-        <p className="mt-3 text-body text-ink-700">{description}</p>
-        <ul className="mt-6 flex flex-col gap-2.5 text-small text-ink-700">
+      <div className="hidden max-w-96 lg:block">
+        <p className="flex items-center gap-2.5 text-label font-semibold tracking-[0.12em] text-ink-500 uppercase">
+          <span
+            aria-hidden="true"
+            className="flex size-7 items-center justify-center rounded-control bg-ink-900 text-page"
+          >
+            <HeartPulse className="size-3.5" strokeWidth={2} />
+          </span>
+          Medisense
+        </p>
+        <h1 className="mt-6 type-display text-[52px] leading-[1.02] tracking-tight">{name}</h1>
+        <p className="mt-4 text-body leading-relaxed text-ink-700">{description}</p>
+        <ul className="mt-8 flex flex-col divide-y divide-border border-y border-border">
           {features.map((f) => (
-            <li key={f} className="flex gap-2.5">
+            <li key={f} className="flex items-center gap-3 py-3 text-small text-ink-900">
               <span
                 aria-hidden="true"
-                className="mt-2 size-1.5 flex-none rounded-full bg-accent-fill"
-              />
+                className="flex size-6 flex-none items-center justify-center rounded-full bg-accent-tint text-accent"
+              >
+                <Check className="size-3.5" strokeWidth={2.5} />
+              </span>
               {f}
             </li>
           ))}
         </ul>
+        <p className="mt-6 flex items-center gap-2 text-caption text-ink-500">
+          <LockKeyhole className="size-3.5" aria-hidden="true" />
+          Private to you and your care team. Clinical notes stay with your clinicians.
+        </p>
       </div>
 
-      <div className="relative flex h-dvh w-full flex-col overflow-hidden bg-canvas md:h-197 md:max-h-[calc(100dvh-4rem)] md:w-95 md:rounded-[44px] md:border-10 md:border-ink-900 md:shadow-overlay">
+      <div className="relative flex h-dvh w-full flex-col overflow-hidden bg-page md:h-197 md:max-h-[calc(100dvh-4rem)] md:w-95 md:rounded-[48px] md:border-[11px] md:border-ink-900 md:shadow-overlay md:ring-1 md:ring-border-strong">
         <span
           aria-hidden="true"
           className="absolute top-2.5 left-1/2 z-30 hidden h-6 w-24 -translate-x-1/2 rounded-full bg-ink-900 md:block"
@@ -158,11 +183,15 @@ export function AppHeader({
   children?: ReactNode;
 }) {
   return (
-    <header className="border-b border-border bg-surface px-5 pt-12 pb-4">
+    <header className="bg-page px-5 pt-14 pb-5 md:pt-16">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          {eyebrow && <p className="text-caption font-medium text-ink-700">{eyebrow}</p>}
-          <h2 className="mt-0.5 type-display text-[28px] leading-8.5">{title}</h2>
+          {eyebrow && (
+            <p className="text-label font-semibold tracking-[0.1em] text-ink-500 uppercase">
+              {eyebrow}
+            </p>
+          )}
+          <h2 className="mt-1.5 type-display text-[30px] leading-9 tracking-tight">{title}</h2>
         </div>
         {aside}
       </div>
@@ -183,7 +212,9 @@ export function AppCard({
   className?: string;
 }) {
   return (
-    <section className={cn("mb-3 rounded-card border border-border bg-surface p-4", className)}>
+    <section
+      className={cn("mb-3 rounded-card border border-border bg-surface p-4 shadow-lift", className)}
+    >
       {(title || action) && (
         <div className="mb-2.5 flex items-center justify-between gap-2">
           {title && <h3 className="text-section font-semibold">{title}</h3>}
@@ -192,6 +223,53 @@ export function AppCard({
       )}
       {children}
     </section>
+  );
+}
+
+/** A small uppercase heading between groups of cards. */
+export function AppSection({ title, action }: { title: string; action?: ReactNode }) {
+  return (
+    <div className="mt-5 mb-2.5 flex items-center justify-between gap-2 px-1">
+      <h3 className="text-label font-semibold tracking-[0.1em] text-ink-500 uppercase">{title}</h3>
+      {action}
+    </div>
+  );
+}
+
+/** What a screen shows when there is nothing yet: never a blank screen. */
+export function AppEmpty({
+  icon: Icon,
+  title,
+  children,
+  action,
+  compact,
+}: {
+  icon: LucideIcon;
+  title: string;
+  children?: ReactNode;
+  action?: ReactNode;
+  compact?: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "mb-3 flex flex-col items-center rounded-card border border-dashed border-border-strong bg-surface text-center",
+        compact ? "px-5 py-5" : "px-6 py-9",
+      )}
+    >
+      <span
+        aria-hidden="true"
+        className={cn(
+          "flex items-center justify-center rounded-full bg-accent-tint text-accent ring-8 ring-accent-tint/40",
+          compact ? "mb-3 size-10" : "mb-4 size-12",
+        )}
+      >
+        <Icon className={compact ? "size-4.5" : "size-5.5"} strokeWidth={1.75} />
+      </span>
+      <p className="text-body font-semibold text-ink-900">{title}</p>
+      {children && <p className="mt-1 max-w-68 text-small text-ink-700">{children}</p>}
+      {action && <div className="mt-4">{action}</div>}
+    </div>
   );
 }
 
