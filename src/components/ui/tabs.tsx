@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type KeyboardEvent, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
 export type TabDef<T extends string> = {
@@ -16,12 +16,16 @@ export type TabDef<T extends string> = {
  * tab. Falls back to the first tab.
  */
 export function useTab<T extends string>(tabs: readonly TabDef<T>[], fallback?: T) {
-  const [tab, setTabState] = useState<T>(() => {
-    const first = fallback ?? tabs[0]!.id;
-    if (typeof window === "undefined") return first;
+  // Start on the default tab, as the server does, so hydration matches; then open the tab named
+  // in the address.
+  const [tab, setTabState] = useState<T>(fallback ?? tabs[0]!.id);
+  useEffect(() => {
     const wanted = new URLSearchParams(window.location.search).get("tab");
-    return (tabs.find((t) => t.id === wanted)?.id ?? first) as T;
-  });
+    const found = tabs.find((t) => t.id === wanted)?.id;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- read the address once after mount
+    if (found) setTabState(found);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only on mount
+  }, []);
   const setTab = useCallback((next: T) => {
     setTabState(next);
     const url = new URL(window.location.href);

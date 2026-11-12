@@ -3,7 +3,7 @@
 import { ChevronDown, HeartPulse } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, type CSSProperties } from "react";
+import { useSyncExternalStore, type CSSProperties } from "react";
 import { caseNotes } from "@/data/case-note";
 import { cn } from "@/lib/cn";
 import { isActive, isStandalone, navigationFor, roleUsers } from "@/lib/navigation";
@@ -16,30 +16,48 @@ export const darkFocus = { "--shadow-focus": "var(--shadow-focus-dark)" } as CSS
 const LIVE = "Live care";
 const COLLAPSED_KEY = "ms-nav-collapsed";
 
-function readCollapsed(): string[] {
-  if (typeof window === "undefined") return [];
+const collapsedListeners = new Set<() => void>();
+
+/** The saved value as a string, so the snapshot stays stable between renders. */
+function readCollapsed(): string {
   try {
-    return JSON.parse(localStorage.getItem(COLLAPSED_KEY) ?? "[]") as string[];
+    return localStorage.getItem(COLLAPSED_KEY) ?? "[]";
   } catch {
-    return [];
+    return "[]";
   }
 }
 
-/** Groups a person has folded away, remembered on this device. */
+function subscribeCollapsed(listener: () => void) {
+  collapsedListeners.add(listener);
+  window.addEventListener("storage", listener);
+  return () => {
+    collapsedListeners.delete(listener);
+    window.removeEventListener("storage", listener);
+  };
+}
+
+/**
+ * Groups a person has folded away, remembered on this device. The server (and the first client
+ * render) shows every group open, so hydration matches; the saved state applies right after.
+ */
 function useCollapsed() {
-  const [collapsed, setCollapsed] = useState<string[]>(readCollapsed);
+  const raw = useSyncExternalStore(subscribeCollapsed, readCollapsed, () => "[]");
+  let collapsed: string[] = [];
+  try {
+    collapsed = JSON.parse(raw) as string[];
+  } catch {
+    // Ignore a damaged saved value.
+  }
   function toggle(group: string) {
-    setCollapsed((current) => {
-      const next = current.includes(group)
-        ? current.filter((g) => g !== group)
-        : [...current, group];
-      try {
-        localStorage.setItem(COLLAPSED_KEY, JSON.stringify(next));
-      } catch {
-        // Private windows can block storage.
-      }
-      return next;
-    });
+    const next = collapsed.includes(group)
+      ? collapsed.filter((g) => g !== group)
+      : [...collapsed, group];
+    try {
+      localStorage.setItem(COLLAPSED_KEY, JSON.stringify(next));
+    } catch {
+      // Private windows can block storage.
+    }
+    collapsedListeners.forEach((l) => l());
   }
   return [collapsed, toggle] as const;
 }
