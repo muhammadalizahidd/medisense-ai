@@ -140,7 +140,7 @@ function Finance() {
                   <span className="block text-small font-semibold">{r.from}</span>
                   <Caption>{r.age}</Caption>
                 </span>
-                <span className="headline text-section">{money(r.amount)}</span>
+                <span className="type-display text-section">{money(r.amount)}</span>
               </li>
             ))}
           </ul>
@@ -173,7 +173,7 @@ function People() {
           {clinicians.map((c) => (
             <article
               key={c.id}
-              className="flex items-center gap-3 rounded-card border border-border bg-surface p-3.5 surface-lift"
+              className="flex items-center gap-3 rounded-card border border-border bg-surface p-3.5"
             >
               <Avatar name={c.name} size={44} />
               <div className="min-w-0 flex-1">

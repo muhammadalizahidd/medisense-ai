@@ -67,7 +67,7 @@ export function TherapistDirectory() {
       ) : rows.length === 0 ? (
         <EmptyNote title="No therapists match." />
       ) : (
-        <div className="overflow-x-auto rounded-card border border-border bg-surface surface-lift">
+        <div className="overflow-x-auto rounded-card border border-border bg-surface">
           <table className="w-full min-w-220 text-left text-small">
             <thead className="border-b border-border text-caption text-ink-500">
               <tr>
@@ -89,7 +89,7 @@ export function TherapistDirectory() {
                       {t.discipline} · {t.region}
                     </span>
                     {!t.active && (
-                      <span className="mt-1 inline-block rounded-tag bg-canvas px-1.5 py-0.5 text-eyebrow font-semibold text-ink-500">
+                      <span className="mt-1 inline-block rounded-tag bg-canvas px-1.5 py-0.5 text-label font-semibold text-ink-500">
                         Inactive
                       </span>
                     )}

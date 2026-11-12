@@ -81,7 +81,7 @@ export function SinceBrief() {
             href={t.href}
             className="group flex flex-col gap-1 bg-surface px-5 py-4 hover:bg-canvas hover:no-underline"
           >
-            <span className="flex items-center justify-between eyebrow">
+            <span className="flex items-center justify-between label-caps">
               {t.label}
               <ArrowRight
                 className="size-3.5 text-ink-400 group-hover:text-accent"
@@ -89,7 +89,7 @@ export function SinceBrief() {
                 aria-hidden="true"
               />
             </span>
-            <span className="headline text-stat font-normal text-ink-900">{t.value}</span>
+            <span className="type-display text-h1-compact font-normal text-ink-900">{t.value}</span>
             <Caption>{t.caption}</Caption>
           </Link>
         ))}

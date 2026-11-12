@@ -61,7 +61,7 @@ export function ProfilePage() {
       </div>
       {therapist && (
         <>
-          <h2 className="mb-4 headline text-h2">Your record</h2>
+          <h2 className="mb-4 type-display text-h2">Your record</h2>
           <TherapistRecord t={therapist} patientLinks={false} />
         </>
       )}

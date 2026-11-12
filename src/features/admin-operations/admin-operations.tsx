@@ -110,11 +110,13 @@ export function AdminOperations() {
           <Link
             key={q.label}
             href={q.href}
-            className="group flex items-center justify-between rounded-card border border-border bg-surface px-5 py-4 surface-lift hover:border-border-strong hover:no-underline"
+            className="group flex items-center justify-between rounded-card border border-border bg-surface px-5 py-4 hover:border-border-strong hover:no-underline"
           >
             <span>
-              <span className="block eyebrow">{q.label}</span>
-              <span className="headline text-stat font-normal text-ink-900">{q.value}</span>
+              <span className="block label-caps">{q.label}</span>
+              <span className="type-display text-h1-compact font-normal text-ink-900">
+                {q.value}
+              </span>
             </span>
             <ArrowRight
               className="size-4 text-ink-400 group-hover:text-accent"
@@ -131,8 +133,8 @@ export function AdminOperations() {
       >
         {metrics.map((m) => (
           <div key={m.label} className="flex flex-col gap-1.5 bg-surface px-5 py-4">
-            <span className="eyebrow">{m.label}</span>
-            <span className={cn("headline text-stat font-normal", m.over && "text-over")}>
+            <span className="label-caps">{m.label}</span>
+            <span className={cn("type-display text-h1-compact font-normal", m.over && "text-over")}>
               {m.value}
             </span>
             <Caption>{m.caption}</Caption>
@@ -197,7 +199,7 @@ export function AdminOperations() {
         </div>
         <div className="overflow-x-auto">
           <div className="min-w-240">
-            <div className="grid grid-cols-[200px_repeat(5,minmax(0,1fr))] border-y border-border bg-surface-sunken px-5 py-2 eyebrow">
+            <div className="grid grid-cols-[200px_repeat(5,minmax(0,1fr))] border-y border-border bg-sunken px-5 py-2 label-caps">
               <span>Clinician</span>
               {staffRequirements.map((r) => (
                 <span key={r.id} title={r.detail}>
@@ -219,7 +221,7 @@ export function AdminOperations() {
                     <Tag tone={stateTone[i.state]}>
                       {i.state === "Current" ? "Current" : i.state}
                     </Tag>
-                    <span className="text-eyebrow text-ink-500">
+                    <span className="text-label text-ink-500">
                       {i.daysLeft < 0 ? `Expired ${i.expires}` : i.expires}
                     </span>
                   </span>

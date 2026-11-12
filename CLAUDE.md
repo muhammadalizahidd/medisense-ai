@@ -117,3 +117,7 @@ Read these before changing data, UI or copy:
 - Conventional Commits, lower-case subject, ≤72 chars, e.g. `feat(case-notes): call claude api with scripted fallback`.
 - **No attribution trailers** (`Co-Authored-By`, "Generated with…", `noreply@`) in commits or PRs. There are no commit hooks; run `pnpm check` before committing.
 - Don't commit `.env.local`.
+
+## Design rules
+
+@CLAUDE.design.md

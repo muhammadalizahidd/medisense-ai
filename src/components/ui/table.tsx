@@ -15,7 +15,7 @@ export function TableHeader({
       role="row"
       style={{ gridTemplateColumns: columns } as CSSProperties}
       className={cn(
-        "grid min-h-9 items-center gap-x-3 border-b border-border bg-surface-sunken px-4 eyebrow whitespace-nowrap",
+        "grid min-h-9 items-center gap-x-3 border-b border-border bg-sunken px-4 label-caps whitespace-nowrap",
         className,
       )}
       {...props}

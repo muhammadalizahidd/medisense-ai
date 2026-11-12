@@ -106,7 +106,7 @@ export function WorkspaceMenu() {
       {open && (
         <div
           ref={panel}
-          className="absolute top-12 right-0 z-30 w-72 max-w-[calc(100vw-2rem)] overflow-hidden rounded-card border border-border bg-surface-raised p-1.5 shadow-overlay"
+          className="absolute top-12 right-0 z-30 w-72 max-w-[calc(100vw-2rem)] overflow-hidden rounded-card border border-border bg-raised p-1.5 shadow-overlay"
         >
           <div className="mb-1.5 border-b border-border px-2.5 pt-1.5 pb-2.5">
             {account ? (

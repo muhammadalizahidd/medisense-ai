@@ -61,7 +61,7 @@ export function SupervisionView() {
                   className="border-t border-border py-4 first:border-t-0"
                 >
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <h3 className="font-serif text-section font-medium">{item.heading}</h3>
+                    <h3 className="font-display text-section font-medium">{item.heading}</h3>
                     {item.updated && (
                       <span className="text-caption font-semibold text-brass">{item.updated}</span>
                     )}
@@ -88,7 +88,7 @@ export function SupervisionView() {
 
           <div className="flex flex-col gap-6 xl:col-span-4">
             <Card aria-labelledby="session-facts" className="px-5 pt-4.5 pb-4.5">
-              <h2 id="session-facts" className="headline text-h2">
+              <h2 id="session-facts" className="type-display text-h2">
                 This session
               </h2>
               <dl className="mt-2">
@@ -107,7 +107,7 @@ export function SupervisionView() {
               aria-labelledby="ai-points"
               className={cn(draftSurface(false), "px-5 pt-4.5 pb-4.5")}
             >
-              <h2 id="ai-points" className="headline text-h2">
+              <h2 id="ai-points" className="type-display text-h2">
                 AI-suggested discussion points
               </h2>
               <ul className="mt-2 flex list-disc flex-col gap-1.5 pl-4.5 text-small">
@@ -119,7 +119,7 @@ export function SupervisionView() {
             </section>
             <Card aria-labelledby="for-you" className="px-5 pt-4.5 pb-4.5">
               <div className="flex items-start justify-between gap-2">
-                <h2 id="for-you" className="headline text-h2">
+                <h2 id="for-you" className="type-display text-h2">
                   Escalated to you
                 </h2>
                 <Tag tone="over">Escalated</Tag>

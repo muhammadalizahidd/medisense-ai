@@ -49,12 +49,12 @@ export function Panel({
     <section
       aria-label={title}
       className={cn(
-        "flex min-w-0 flex-col rounded-card border border-border bg-surface p-5 surface-lift",
+        "flex min-w-0 flex-col rounded-card border border-border bg-surface p-5",
         className,
       )}
     >
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="headline text-section">{title}</h2>
+        <h2 className="type-display text-section">{title}</h2>
         {action && (
           <Link href={action.href} className="text-caption font-medium whitespace-nowrap">
             {action.label}
@@ -76,7 +76,7 @@ function BriefingCard() {
     >
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <h2 className="headline text-section">Today&apos;s briefing</h2>
+          <h2 className="type-display text-section">Today&apos;s briefing</h2>
           <AiMark>AI briefing, recommendation only</AiMark>
         </div>
         {briefing.loading ? (
@@ -136,11 +136,11 @@ function TeamStatus({ className }: { className?: string }) {
       <dl className="mt-auto grid grid-cols-2 gap-3 border-t border-border pt-4">
         <div>
           <dt className="text-caption text-ink-500">Team utilisation</dt>
-          <dd className="headline text-figure">{utilisation}%</dd>
+          <dd className="type-display text-section">{utilisation}%</dd>
         </div>
         <div>
           <dt className="text-caption text-ink-500">Peak caseload</dt>
-          <dd className="headline text-figure">{highest}%</dd>
+          <dd className="type-display text-section">{highest}%</dd>
         </div>
       </dl>
     </Panel>
@@ -334,7 +334,7 @@ export function BlueOverview({ children }: { children: ReactNode }) {
       </div>
 
       <section aria-labelledby="team-detail" className="mt-12">
-        <h2 id="team-detail" className="mb-5 headline text-h1">
+        <h2 id="team-detail" className="mb-5 type-display text-h1">
           Team detail
         </h2>
         {children}

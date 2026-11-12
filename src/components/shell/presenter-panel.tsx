@@ -18,7 +18,7 @@ const roles: { id: Role; label: string }[] = [
 ];
 
 const control =
-  "h-9 cursor-pointer rounded-control border border-dashed border-sidebar-faint px-3 text-left text-caption text-sidebar-ink hover:border-accent-fill hover:text-accent-fill";
+  "h-9 cursor-pointer rounded-control border border-dashed border-sidebar-muted px-3 text-left text-caption text-sidebar-ink hover:border-accent-fill hover:text-accent-fill";
 
 function Group({ title, children }: { title: string; children: ReactNode }) {
   return (

@@ -242,8 +242,8 @@ export function AssistantPanel({
                 <PenNib className="size-4 text-accent-fill" />
               </span>
               <div>
-                <p className="eyebrow text-accent-fill">Medisense intelligence</p>
-                <h2 className="mt-0.5 font-serif text-h2 font-medium text-sidebar-ink">
+                <p className="label-caps text-accent-fill">Medisense intelligence</p>
+                <h2 className="mt-0.5 font-display text-h2 font-medium text-sidebar-ink">
                   Ask Medisense AI
                 </h2>
               </div>
@@ -274,7 +274,7 @@ export function AssistantPanel({
               onChange={(e) => setQuestion(e.target.value)}
               placeholder="e.g. Which NDIS patients have a plan review this month?"
               aria-label="Question"
-              className="h-9 min-w-0 flex-1 bg-transparent px-2.5 text-small text-sidebar-ink outline-none placeholder:text-sidebar-faint focus-visible:shadow-none focus-visible:outline-none"
+              className="h-9 min-w-0 flex-1 bg-transparent px-2.5 text-small text-sidebar-ink outline-none placeholder:text-sidebar-muted focus-visible:shadow-none focus-visible:outline-none"
             />
             <button
               type="submit"
@@ -296,8 +296,8 @@ export function AssistantPanel({
                   onClick={() => ask(featured)}
                   className="group block w-full cursor-pointer rounded-card border border-accent-fill/50 bg-accent-tint px-4 py-3.5 text-left transition-colors hover:border-accent-fill"
                 >
-                  <span className="eyebrow text-accent">Start here</span>
-                  <span className="mt-1 flex items-center justify-between gap-3 font-serif text-section font-medium text-ink-900">
+                  <span className="label-caps text-accent">Start here</span>
+                  <span className="mt-1 flex items-center justify-between gap-3 font-display text-section font-medium text-ink-900">
                     {featured}
                     <ArrowRight
                       className="size-4 flex-none text-accent transition-transform group-hover:translate-x-0.5"
@@ -311,7 +311,7 @@ export function AssistantPanel({
                 </button>
               )}
 
-              <div className="mt-6 mb-2 eyebrow">Workflow guides</div>
+              <div className="mt-6 mb-2 label-caps">Workflow guides</div>
               <div className="grid gap-2.5 sm:grid-cols-2">
                 {workflowGuides.map((g) => {
                   const Icon = {
@@ -328,7 +328,7 @@ export function AssistantPanel({
                       key={g.id}
                       type="button"
                       onClick={() => ask(g.question)}
-                      className={`group flex cursor-pointer flex-col items-start gap-2 rounded-card border border-border bg-surface px-4 py-3.5 text-left surface-lift transition-colors hover:border-accent-fill ${g.id === "try" ? "sm:col-span-2" : ""}`}
+                      className={`group flex cursor-pointer flex-col items-start gap-2 rounded-card border border-border bg-surface px-4 py-3.5 text-left transition-colors hover:border-accent-fill ${g.id === "try" ? "sm:col-span-2" : ""}`}
                     >
                       <span className="flex size-8 items-center justify-center rounded-control bg-accent-tint text-accent">
                         <Icon className="size-4" strokeWidth={1.75} aria-hidden="true" />
@@ -342,8 +342,8 @@ export function AssistantPanel({
                 })}
               </div>
 
-              <div className="mt-6 mb-2 eyebrow">Most asked by {role.toLowerCase()}</div>
-              <ol className="overflow-hidden rounded-card border border-border bg-surface surface-lift">
+              <div className="mt-6 mb-2 label-caps">Most asked by {role.toLowerCase()}</div>
+              <ol className="overflow-hidden rounded-card border border-border bg-surface">
                 {popular.map((q, i) => (
                   <li key={q} className="border-t border-border first:border-t-0">
                     <button
@@ -351,7 +351,7 @@ export function AssistantPanel({
                       onClick={() => ask(q)}
                       className="group flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-canvas"
                     >
-                      <span className="w-5 flex-none font-serif text-small text-accent">
+                      <span className="w-5 flex-none font-display text-small text-accent">
                         {String(i + 1).padStart(2, "0")}
                       </span>
                       <span className="flex-1 text-small font-medium text-ink-900">{q}</span>
@@ -381,7 +381,7 @@ export function AssistantPanel({
 
               <article className="mt-3 overflow-hidden rounded-card border border-l-2 border-border border-l-accent-fill bg-surface shadow-hairline">
                 <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-2.5">
-                  <span className="flex items-center gap-1.5 eyebrow text-brass">
+                  <span className="flex items-center gap-1.5 label-caps text-brass">
                     {engine === GUIDE ? (
                       <BookOpen
                         className="size-3.5 text-brass"
@@ -405,14 +405,14 @@ export function AssistantPanel({
 
                 {!answer ? (
                   <div className="flex flex-col gap-2.5 px-4 py-4" aria-label="Reading the records">
-                    <span className="h-4 w-3/5 animate-pulse rounded-tag bg-surface-sunken" />
-                    <span className="h-3 w-full animate-pulse rounded-tag bg-surface-sunken" />
-                    <span className="h-3 w-4/5 animate-pulse rounded-tag bg-surface-sunken" />
+                    <span className="h-4 w-3/5 animate-pulse rounded-tag bg-sunken" />
+                    <span className="h-3 w-full animate-pulse rounded-tag bg-sunken" />
+                    <span className="h-3 w-4/5 animate-pulse rounded-tag bg-sunken" />
                     <span className="mt-1 text-caption text-ink-500">Reading your records…</span>
                   </div>
                 ) : (
                   <div className="px-4 pt-3.5 pb-3">
-                    <h3 className="font-serif text-section font-medium text-ink-900">
+                    <h3 className="font-display text-section font-medium text-ink-900">
                       {answer.title}
                     </h3>
                     <p className="mt-1.5 text-small leading-relaxed text-ink-700">{answer.intro}</p>
@@ -421,7 +421,7 @@ export function AssistantPanel({
                       <ol className="mt-3 flex flex-col gap-0.5">
                         {answer.items.map((item, i) => {
                           const marker = (
-                            <span className="mt-0.5 flex size-5 flex-none items-center justify-center rounded-full bg-accent-tint text-eyebrow font-semibold text-accent">
+                            <span className="mt-0.5 flex size-5 flex-none items-center justify-center rounded-full bg-accent-tint text-label font-semibold text-accent">
                               {i + 1}
                             </span>
                           );
@@ -485,7 +485,7 @@ export function AssistantPanel({
                         rows={10}
                         value={answer.draft}
                         aria-label="Draft email"
-                        className="mt-3 w-full resize-y rounded-control border border-border-strong bg-surface-sunken px-3 py-2 text-small text-ink-900"
+                        className="mt-3 w-full resize-y rounded-control border border-border-strong bg-sunken px-3 py-2 text-small text-ink-900"
                       />
                     )}
 
@@ -500,7 +500,7 @@ export function AssistantPanel({
 
               {index === 0 && answer && next.length > 0 && (
                 <div className="mt-4">
-                  <div className="mb-2 eyebrow">Ask next</div>
+                  <div className="mb-2 label-caps">Ask next</div>
                   <div className="flex flex-wrap gap-1.5">
                     {next.map((n) => (
                       <button

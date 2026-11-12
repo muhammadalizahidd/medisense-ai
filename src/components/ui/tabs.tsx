@@ -56,14 +56,14 @@ export function Tabs<T extends string>({
   return (
     <div
       className={cn(
-        "sticky top-0 z-10 -mx-1 mb-6 bg-page/90 px-1 pt-1 pb-2 backdrop-blur blue:top-16",
+        "sticky top-16 z-10 -mx-1 mb-6 bg-page/90 px-1 pt-1 pb-2 backdrop-blur",
         className,
       )}
     >
       <div
         role="tablist"
         aria-label={label}
-        className="flex gap-1 overflow-x-auto rounded-card border border-border bg-surface p-1 surface-lift"
+        className="flex gap-1 overflow-x-auto rounded-card border border-border bg-surface p-1"
       >
         {tabs.map((t, i) => {
           const active = t.id === value;
@@ -89,7 +89,7 @@ export function Tabs<T extends string>({
               {t.count !== undefined && t.count > 0 && (
                 <span
                   className={cn(
-                    "flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-eyebrow font-bold",
+                    "flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-label font-bold",
                     active
                       ? "bg-white/25 text-on-accent"
                       : t.alert

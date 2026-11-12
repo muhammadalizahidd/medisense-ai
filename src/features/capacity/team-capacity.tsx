@@ -241,7 +241,7 @@ export function TeamCapacity() {
           >
             <div
               role="row"
-              className="grid grid-cols-[minmax(0,1fr)_64px_56px_56px_72px] gap-2 pb-1.5 eyebrow"
+              className="grid grid-cols-[minmax(0,1fr)_64px_56px_56px_72px] gap-2 pb-1.5 label-caps"
             >
               <span>Group</span>
               <span className="text-right">Clinicians</span>
@@ -274,7 +274,7 @@ export function TeamCapacity() {
 
         <Card aria-labelledby="caseload-balance" className="overflow-hidden lg:col-span-12">
           <div className="flex flex-wrap items-end justify-between gap-3 px-5 pt-4.5 pb-3.5">
-            <h2 id="caseload-balance" className="headline text-h2">
+            <h2 id="caseload-balance" className="type-display text-h2">
               Caseload balance
             </h2>
             <Caption>
@@ -368,7 +368,7 @@ export function TeamCapacity() {
         <Card aria-labelledby="candidates" className="overflow-hidden lg:col-span-12">
           <div className="flex flex-wrap items-end justify-between gap-3 px-5 pt-4.5 pb-3.5">
             <div>
-              <h2 id="candidates" className="headline text-h2">
+              <h2 id="candidates" className="type-display text-h2">
                 Patients a supervisor could review for transfer
               </h2>
               <Caption className="mt-1">

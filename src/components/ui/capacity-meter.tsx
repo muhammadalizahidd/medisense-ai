@@ -23,7 +23,7 @@ export function CapacityMeter({
       aria-valuemax={SCALE}
       aria-valuenow={utilisation}
       aria-label={`${utilisation}% of configured capacity`}
-      className={cn("relative h-1.5 rounded-full bg-surface-sunken", className)}
+      className={cn("relative h-1.5 rounded-full bg-sunken", className)}
     >
       <div
         className={cn(

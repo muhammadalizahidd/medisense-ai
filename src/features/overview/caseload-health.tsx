@@ -149,7 +149,7 @@ export function CaseloadHealth({
                   height={30}
                   unit="score"
                 />
-                <div className="text-right font-serif text-figure">
+                <div className="text-right font-display text-section">
                   {c.score}
                   {previous?.get(c.id)?.score !== undefined &&
                     previous.get(c.id)?.score !== c.score && (

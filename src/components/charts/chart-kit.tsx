@@ -24,7 +24,7 @@ export const colour = {
   surface: "var(--color-surface)",
 } as const;
 
-export const axisTick = { className: "fill-ink-500 text-eyebrow" } as const;
+export const axisTick = { className: "fill-ink-500 text-label" } as const;
 
 export const axisProps = {
   tickLine: false,
@@ -50,8 +50,8 @@ export function TooltipCard({
   footer?: ReactNode;
 }) {
   return (
-    <div className="min-w-40 rounded-control border border-border bg-surface-raised px-3 py-2.5 shadow-overlay">
-      {title !== undefined && <div className="mb-1.5 eyebrow">{title}</div>}
+    <div className="min-w-40 rounded-control border border-border bg-raised px-3 py-2.5 shadow-overlay">
+      {title !== undefined && <div className="mb-1.5 label-caps">{title}</div>}
       <div className="flex flex-col gap-1">
         {rows.map((row) => (
           <div key={row.key} className="flex items-center gap-2 text-small">

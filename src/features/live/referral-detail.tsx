@@ -173,7 +173,7 @@ export function ReferralDetail({ id }: { id: string }) {
               >
                 <span
                   className={cn(
-                    "flex size-5 flex-none items-center justify-center rounded-full text-eyebrow",
+                    "flex size-5 flex-none items-center justify-center rounded-full text-label",
                     done
                       ? "bg-accent-fill text-on-accent"
                       : now

@@ -117,10 +117,10 @@ export function Panel({
   return (
     <section
       aria-label={title}
-      className={cn("rounded-card border border-border bg-surface p-5 surface-lift", className)}
+      className={cn("rounded-card border border-border bg-surface p-5", className)}
     >
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="headline text-section">{title}</h2>
+        <h2 className="type-display text-section">{title}</h2>
         {action}
       </div>
       {children}

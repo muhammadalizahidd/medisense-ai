@@ -50,7 +50,7 @@ function AiBriefing({ stage }: { stage: OverviewStage }) {
             AI briefing
           </h2>
           <AiMark state="Draft">AI briefing, recommendation only</AiMark>
-          <p className="mt-1.5 headline text-h2 font-normal">{aiBriefing[stage]}</p>
+          <p className="mt-1.5 type-display text-h2 font-normal">{aiBriefing[stage]}</p>
         </div>
         {stage !== "start" && (
           <div className="flex flex-wrap items-center gap-2">
@@ -101,7 +101,7 @@ function Figures({ stage }: { stage: OverviewStage }) {
         return (
           <div key={f.id} className="flex min-h-33 flex-col gap-2 bg-surface px-6 py-5">
             <div className="text-small font-semibold text-ink-700">{f.label}</div>
-            <div className="headline text-kpi font-normal">
+            <div className="type-display text-h1 font-normal">
               <Changed value={now} was={moved ? was : undefined} />
             </div>
             <Caption>{f.caption[stage]}</Caption>
@@ -116,7 +116,7 @@ function Caseload({ stage }: { stage: OverviewStage }) {
   return (
     <Card aria-labelledby="caseload-health" className="overflow-hidden">
       <div className="px-5 pt-5 pb-4">
-        <h2 id="caseload-health" className="headline text-h2">
+        <h2 id="caseload-health" className="type-display text-h2">
           Caseload health
         </h2>
         <p className="mt-1 max-w-140 text-small text-ink-700">
@@ -200,7 +200,7 @@ function Caseload({ stage }: { stage: OverviewStage }) {
                     unit="score"
                   />
                 </div>
-                <div role="cell" className="text-right font-serif text-figure">
+                <div role="cell" className="text-right font-display text-section">
                   {score}
                   {scoreMoved && (
                     <span className="block font-sans text-caption font-medium text-ink-500">
@@ -256,7 +256,7 @@ function Attention({ stage }: { stage: OverviewStage }) {
   ];
   return (
     <Card aria-labelledby="needs-attention" className="flex h-full flex-col">
-      <h2 id="needs-attention" className="px-5 pt-5 pb-3.5 headline text-h2">
+      <h2 id="needs-attention" className="px-5 pt-5 pb-3.5 type-display text-h2">
         Needs your attention
       </h2>
       {items.map((item) => (
@@ -268,7 +268,7 @@ function Attention({ stage }: { stage: OverviewStage }) {
           </ButtonLink>
         </div>
       ))}
-      <p className="mt-auto rounded-b-card border-t border-border bg-surface-sunken px-5 pt-3.5 pb-4 text-caption font-medium text-ink-500">
+      <p className="mt-auto rounded-b-card border-t border-border bg-sunken px-5 pt-3.5 pb-4 text-caption font-medium text-ink-500">
         Operational indicators only, not clinical risk assessments.
       </p>
     </Card>
@@ -284,12 +284,12 @@ function LedgerRow({
     <div className="grid gap-x-6 gap-y-1 border-t border-border py-4 md:grid-cols-12 md:items-baseline">
       <div className="font-semibold md:col-span-3">{row.measure}</div>
       <div className="flex items-baseline gap-3 md:col-span-2">
-        <span className="headline text-stat font-normal text-ink-500">{row.before}</span>
+        <span className="type-display text-h1-compact font-normal text-ink-500">{row.before}</span>
         <span className="sr-only">changed to</span>
         <span aria-hidden="true" className="text-small text-ink-500">
           to
         </span>
-        <span className="headline text-stat font-normal">{row.after}</span>
+        <span className="type-display text-h1-compact font-normal">{row.after}</span>
       </div>
       <p className="text-small text-ink-700 md:col-span-5">{row.why}</p>
       <div className="md:col-span-2 md:text-right">
@@ -309,7 +309,7 @@ function BeforeAndAfter() {
   return (
     <>
       <header className="mb-8 max-w-200">
-        <h1 className="headline text-display">Before and after</h1>
+        <h1 className="type-display text-display">Before and after</h1>
         <div className="mt-3">
           <AiMark state="Draft" source="Figures come from rules and the audit trail">
             AI summary
@@ -322,7 +322,7 @@ function BeforeAndAfter() {
       </header>
 
       <Card aria-labelledby="from-note" className="px-6 pt-5 pb-2">
-        <h2 id="from-note" className="headline text-h2">
+        <h2 id="from-note" className="type-display text-h2">
           Because Sarah approved Oliver Grant&apos;s note
         </h2>
         <p className="mt-0.5 mb-4 text-small text-ink-700">
@@ -344,7 +344,7 @@ function BeforeAndAfter() {
 
       <div className="mt-6 grid items-start gap-6 xl:grid-cols-12">
         <Card aria-labelledby="from-day" className="px-6 pt-5 pb-2 xl:col-span-8">
-          <h2 id="from-day" className="headline text-h2">
+          <h2 id="from-day" className="type-display text-h2">
             Because a day passed
           </h2>
           <p className="mt-0.5 mb-4 text-small text-ink-700">
@@ -355,7 +355,7 @@ function BeforeAndAfter() {
           ))}
         </Card>
         <Card aria-labelledby="same" className="px-6 pt-5 pb-5 xl:col-span-4">
-          <h2 id="same" className="headline text-h2">
+          <h2 id="same" className="type-display text-h2">
             What hasn&apos;t changed
           </h2>
           <p className="mt-2 text-small leading-5.5 text-ink-700">{beforeAfter.unchanged}</p>

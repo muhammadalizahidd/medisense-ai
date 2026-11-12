@@ -48,13 +48,10 @@ export function MonthCalendar({ className }: { className?: string }) {
   return (
     <section
       aria-label="Calendar"
-      className={cn(
-        "flex flex-col rounded-card border border-border bg-surface p-5 surface-lift",
-        className,
-      )}
+      className={cn("flex flex-col rounded-card border border-border bg-surface p-5", className)}
     >
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="headline text-section" aria-live="polite">
+        <h2 className="type-display text-section" aria-live="polite">
           {MONTHS[month]} {year}
         </h2>
         <div className="flex gap-1">
@@ -134,7 +131,7 @@ export function UpcomingSupervision({ className }: { className?: string }) {
               </Link>
               <span className="block truncate text-caption text-ink-500">{c.discipline}</span>
             </span>
-            <span className="flex-none rounded-tag bg-monitor-bg px-1.5 py-0.5 text-eyebrow leading-4 font-semibold text-monitor">
+            <span className="flex-none rounded-tag bg-monitor-bg px-1.5 py-0.5 text-label leading-4 font-semibold text-monitor">
               {c.supervisionNote}
             </span>
           </li>
@@ -152,10 +149,10 @@ export function Notifications({ className }: { className?: string }) {
   return (
     <section
       aria-label="Notifications"
-      className={cn("rounded-card border border-border bg-surface p-5 surface-lift", className)}
+      className={cn("rounded-card border border-border bg-surface p-5", className)}
     >
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="headline text-section">Notifications</h2>
+        <h2 className="type-display text-section">Notifications</h2>
         <button
           type="button"
           onClick={() => setAuditOpen(true)}
@@ -225,10 +222,7 @@ export function AssistantCard({ className }: { className?: string }) {
   return (
     <section
       aria-label="Ask Medisense AI"
-      className={cn(
-        "flex flex-col rounded-card border border-border bg-surface p-5 surface-lift",
-        className,
-      )}
+      className={cn("flex flex-col rounded-card border border-border bg-surface p-5", className)}
     >
       <AiMark>Ask Medisense AI</AiMark>
       <div className="mt-3 flex-1" role="status">

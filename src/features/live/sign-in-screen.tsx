@@ -57,7 +57,7 @@ export function SignInScreen({
         <div className="relative flex h-full flex-col justify-between p-12 text-surface">
           <Brand light />
           <div className="max-w-120">
-            <h2 className="headline text-[40px] leading-12 font-semibold text-surface">
+            <h2 className="type-display text-[40px] leading-12 font-semibold text-surface">
               Allied health that comes to you.
             </h2>
             <ul className="mt-8 flex flex-col gap-5">
@@ -86,7 +86,7 @@ export function SignInScreen({
           <div className="mb-8 lg:hidden">
             <Brand />
           </div>
-          <h1 className="headline text-h1">Sign in</h1>
+          <h1 className="type-display text-h1">Sign in</h1>
           <p className="mt-1.5 mb-6 text-small text-ink-700">
             Staff and therapists use their work email. Patients and families start with the invite
             code from their care team.
@@ -99,7 +99,7 @@ export function SignInScreen({
               Sign-in is unavailable because the database can&apos;t be reached. Try again shortly.
             </p>
           )}
-          <div className="rounded-card border border-border bg-surface p-6 surface-lift sm:p-7">
+          <div className="rounded-card border border-border bg-surface p-6 sm:p-7">
             <SignInForm
               key={prefill?.key ?? 0}
               initialEmail={prefill?.email}
@@ -160,7 +160,7 @@ export function Brand({ light = false }: { light?: boolean }) {
         <HeartPulse className="size-6" strokeWidth={2} />
       </span>
       <span>
-        <span className={cn("block headline text-h2 leading-6", light && "text-surface")}>
+        <span className={cn("block type-display text-h2 leading-6", light && "text-surface")}>
           Medisense
         </span>
         <span className={cn("block text-caption", light ? "text-surface/75" : "text-ink-500")}>

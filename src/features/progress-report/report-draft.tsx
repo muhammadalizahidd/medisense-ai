@@ -36,7 +36,7 @@ function ReportSection({
           </Button>
         </div>
       )}
-      <h3 className="relative mb-2.5 font-serif text-report-heading font-medium">{title}</h3>
+      <h3 className="relative mb-2.5 font-display text-section font-medium">{title}</h3>
       <div className="relative">{children}</div>
     </section>
   );
@@ -56,7 +56,7 @@ function CopmFigure() {
   return (
     <figure className="m-0 mt-4 rounded-control border border-border bg-surface px-4 py-3.5">
       <figcaption className="mb-2.5 flex justify-between gap-3">
-        <span className="eyebrow">COPM · scored 1–10</span>
+        <span className="label-caps">COPM · scored 1–10</span>
         <span className="flex gap-3 text-caption font-medium text-ink-500">
           <span className="flex items-center gap-1.5">
             <span className="h-1.5 w-2.5 rounded-full bg-ink-400" />
@@ -109,7 +109,7 @@ export function ReportSources() {
 
   return (
     <Card aria-labelledby="sources" className="px-5 pt-5 pb-4.5">
-      <h2 id="sources" className="headline text-h2">
+      <h2 id="sources" className="type-display text-h2">
         Approved sources
       </h2>
       <Caption className="mt-1 mb-3">Only approved clinical information is used.</Caption>
@@ -161,8 +161,8 @@ export function ReportDraft() {
           )}
         </div>
 
-        <p className="eyebrow">Medisense · Occupational Therapy</p>
-        <h2 className="mt-1.5 mb-4 headline text-report-title">Progress Report</h2>
+        <p className="label-caps">Medisense · Occupational Therapy</p>
+        <h2 className="mt-1.5 mb-4 type-display text-h1-compact">Progress Report</h2>
         <dl className="mb-2 grid overflow-hidden rounded-control border border-border bg-surface sm:grid-cols-2">
           {emilyReport.details.map((d, i) => (
             <div
@@ -184,7 +184,7 @@ export function ReportDraft() {
               key={g.text}
               className="grid grid-cols-[24px_minmax(0,1fr)_150px] items-baseline gap-2.5 py-1.5"
             >
-              <span className="font-serif text-report-heading text-ink-500">{i + 1}</span>
+              <span className="font-display text-section text-ink-500">{i + 1}</span>
               <span>{g.text}</span>
               <span className="inline-flex items-center gap-1.5 text-caption font-semibold text-ink-700">
                 <i

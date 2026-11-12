@@ -27,7 +27,7 @@ function Escalation() {
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 id="escalated" className="headline text-h2">
+          <h2 id="escalated" className="type-display text-h2">
             Isla Murphy&apos;s call-back was escalated to Grace Liu
           </h2>
           <p className="mt-0.5 text-small text-ink-700">
@@ -147,7 +147,7 @@ export function TimeSkipView() {
                       aria-hidden="true"
                     />
                     <div>
-                      <h2 id="reminder" className="text-h3 font-semibold">
+                      <h2 id="reminder" className="text-section font-semibold">
                         A reminder went to the admin team
                       </h2>
                       <p className="text-small text-ink-700">
@@ -168,7 +168,7 @@ export function TimeSkipView() {
                       aria-hidden="true"
                     />
                     <div>
-                      <h2 id="newly-overdue" className="text-h3 font-semibold">
+                      <h2 id="newly-overdue" className="text-section font-semibold">
                         One task became overdue
                       </h2>
                       <p className="text-small text-ink-700">
@@ -182,7 +182,7 @@ export function TimeSkipView() {
               </Card>
             </div>
             <Card aria-labelledby="audit-side" className="px-5 pt-4.5 pb-5 xl:col-span-5">
-              <h2 id="audit-side" className="mb-3 headline text-h2">
+              <h2 id="audit-side" className="mb-3 type-display text-h2">
                 Audit trail
               </h2>
               <AuditList limit={4} />

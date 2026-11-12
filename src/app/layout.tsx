@@ -1,36 +1,14 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import { Suspense, type ReactNode } from "react";
-import { Instrument_Sans, Instrument_Serif, JetBrains_Mono } from "next/font/google";
 import { Sidebar } from "@/components/shell/sidebar";
 import { PresenterPanel } from "@/components/shell/presenter-panel";
 import { TabBar } from "@/components/shell/tab-bar";
 import { TopBar } from "@/components/shell/top-bar";
-import { themeInitScript } from "@/lib/theme";
 import { DemoStoreHydrator } from "@/state/demo-store-hydrator";
+import { fontVariables } from "./fonts";
+import { ThemeScript } from "./theme-script";
 import "./globals.css";
-
-/** Headings and large figures. */
-const instrumentSerif = Instrument_Serif({
-  subsets: ["latin"],
-  weight: "400",
-  style: ["normal", "italic"],
-  variable: "--font-instrument-serif",
-});
-
-/** The interface. */
-const instrumentSans = Instrument_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-instrument-sans",
-});
-
-/** Codes, references and keyboard hints. */
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500"],
-  variable: "--font-jetbrains-mono",
-});
 
 export const metadata: Metadata = {
   title: "Medisense · Clinical Operations & Supervision",
@@ -51,12 +29,17 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
   return (
     <html
       lang="en-AU"
-      data-theme="clear-blue"
+      data-theme="premium-light"
+      data-scheme="light"
+      data-accent="paired"
+      data-type="instrument"
+      data-density="comfortable"
+      data-text="default"
       suppressHydrationWarning
-      className={`${instrumentSerif.variable} ${instrumentSans.variable} ${jetbrainsMono.variable}`}
+      className={fontVariables}
     >
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <ThemeScript />
       </head>
       <body>
         <DemoStoreHydrator />

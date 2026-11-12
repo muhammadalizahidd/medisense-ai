@@ -55,7 +55,7 @@ export function SourceLink({
       aria-pressed={active}
       aria-label={`Show dictated line ${line}`}
       className={cn(
-        "ml-1 inline-flex h-4.5 cursor-pointer items-center rounded-tag px-1 align-baseline font-mono text-eyebrow font-medium",
+        "ml-1 inline-flex h-4.5 cursor-pointer items-center rounded-tag px-1 align-baseline font-mono text-label font-medium",
         active
           ? "bg-accent-fill text-on-accent"
           : "bg-accent-tint text-accent hover:bg-accent-fill hover:text-on-accent",

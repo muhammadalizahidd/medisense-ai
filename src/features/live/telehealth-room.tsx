@@ -178,7 +178,7 @@ export function TelehealthRoom({ visitId }: { visitId: string }) {
       <div className="grid gap-6 xl:grid-cols-12">
         <div className="flex flex-col gap-4 xl:col-span-8">
           <section aria-label="Call" className="rounded-card bg-ink-900 p-3">
-            <p className="mb-2 text-center text-eyebrow font-semibold tracking-wide text-surface/70 uppercase">
+            <p className="mb-2 text-center text-label font-semibold tracking-wide text-surface/70 uppercase">
               DEMO ONLY · simulated video
             </p>
             <div className={cn("grid gap-3", c.screenShare ? "md:grid-cols-3" : "md:grid-cols-2")}>

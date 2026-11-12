@@ -110,7 +110,7 @@ export function HospitalOperations() {
                 {column.map((p) => (
                   <article
                     key={p.id}
-                    className="rounded-control border border-border bg-surface p-3 surface-lift"
+                    className="rounded-control border border-border bg-surface p-3"
                   >
                     <button
                       type="button"
@@ -288,7 +288,7 @@ export function HospitalOperations() {
             aria-label="Team note"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            className="w-full rounded-control border border-border-strong bg-surface-raised px-3 py-2 text-small outline-none focus:border-accent focus:shadow-focus"
+            className="w-full rounded-control border border-border-strong bg-raised px-3 py-2 text-small outline-none focus:border-accent focus:shadow-focus"
           />
           <Button
             size="sm"

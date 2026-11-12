@@ -110,7 +110,7 @@ export function MessagesPage({ myId }: { myId: string }) {
             <MessageSquareText className="size-5" aria-hidden="true" />
           </span>
           <div>
-            <h1 className="headline text-h2 leading-7">Messages</h1>
+            <h1 className="type-display text-h2 leading-7">Messages</h1>
             <p className="text-caption text-ink-500">
               {conversations.length} conversation{conversations.length === 1 ? "" : "s"}
               {unread > 0 && <span className="font-semibold text-over"> · {unread} unread</span>}
@@ -120,7 +120,7 @@ export function MessagesPage({ myId }: { myId: string }) {
         <LiveBadge />
       </header>
 
-      <div className="grid min-h-0 flex-1 overflow-hidden rounded-card border border-border bg-surface surface-lift md:grid-cols-[340px_1fr]">
+      <div className="grid min-h-0 flex-1 overflow-hidden rounded-card border border-border bg-surface md:grid-cols-[340px_1fr]">
         <aside
           aria-label="Conversations"
           className={cn(
@@ -196,7 +196,7 @@ export function MessagesPage({ myId }: { myId: string }) {
               <>
                 {grouped(shown, by, now).map(([group, list]) => (
                   <section key={group} aria-label={group}>
-                    <h2 className="sticky top-0 z-1 border-b border-border bg-surface/95 px-4 py-1.5 text-eyebrow font-semibold tracking-wide text-ink-500 uppercase backdrop-blur">
+                    <h2 className="sticky top-0 z-1 border-b border-border bg-surface/95 px-4 py-1.5 text-label font-semibold tracking-wide text-ink-500 uppercase backdrop-blur">
                       {group} · {list.length}
                     </h2>
                     <ul className="divide-y divide-border">
@@ -233,7 +233,7 @@ export function MessagesPage({ myId }: { myId: string }) {
                                   <Mark text={c.lastMessage ?? c.subtitle} q={q} />
                                 </span>
                                 {c.unread > 0 && (
-                                  <span className="flex h-5 min-w-5 flex-none items-center justify-center rounded-full bg-accent-fill px-1.5 text-eyebrow font-semibold text-on-accent">
+                                  <span className="flex h-5 min-w-5 flex-none items-center justify-center rounded-full bg-accent-fill px-1.5 text-label font-semibold text-on-accent">
                                     <span className="sr-only">Unread: </span>
                                     {c.unread}
                                   </span>
@@ -253,7 +253,7 @@ export function MessagesPage({ myId }: { myId: string }) {
                 )}
                 {messageHits.length > 0 && (
                   <section aria-label="Messages found">
-                    <h2 className="sticky top-0 z-1 border-b border-border bg-surface/95 px-4 py-1.5 text-eyebrow font-semibold tracking-wide text-ink-500 uppercase backdrop-blur">
+                    <h2 className="sticky top-0 z-1 border-b border-border bg-surface/95 px-4 py-1.5 text-label font-semibold tracking-wide text-ink-500 uppercase backdrop-blur">
                       In messages · {messageHits.length}
                     </h2>
                     <ul className="divide-y divide-border">

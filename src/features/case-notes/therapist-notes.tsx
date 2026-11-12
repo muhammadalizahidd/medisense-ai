@@ -145,7 +145,7 @@ ${text}`
             value={rawNotes}
             disabled={generating}
             onChange={(e) => setRawNotes(sample.id, e.target.value)}
-            className="w-full resize-y rounded-control border border-border-strong bg-surface-raised px-3 py-2.5 font-mono text-small leading-6 text-ink-900 outline-none focus:border-accent focus:shadow-focus disabled:opacity-60"
+            className="w-full resize-y rounded-control border border-border-strong bg-raised px-3 py-2.5 font-mono text-small leading-6 text-ink-900 outline-none focus:border-accent focus:shadow-focus disabled:opacity-60"
           />
           <div className="flex justify-between">
             <Caption>
@@ -190,7 +190,7 @@ ${text}`
         </ol>
       )}
 
-      <p className="rounded-control bg-surface-sunken px-3 py-2.5 text-caption font-medium text-ink-700">
+      <p className="rounded-control bg-sunken px-3 py-2.5 text-caption font-medium text-ink-700">
         Uses only this note. Nothing is saved to the clinical record until you approve.
       </p>
       <div className="flex flex-wrap items-center gap-3">

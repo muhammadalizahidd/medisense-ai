@@ -56,7 +56,7 @@ function Stat({
       <span className="text-caption font-medium text-ink-700">{label}</span>
       <span
         className={cn(
-          "headline text-stat font-semibold",
+          "type-display text-h1-compact font-semibold",
           tone === "over" && "text-over",
           tone === "monitor" && "text-monitor",
         )}
@@ -91,13 +91,10 @@ function LiveFigures() {
   const utilisation = team.capacity ? Math.round((team.activeClients / team.capacity) * 100) : 0;
 
   return (
-    <section
-      aria-label="Live care"
-      className="rounded-card border border-border bg-surface p-5 surface-lift"
-    >
+    <section aria-label="Live care" className="rounded-card border border-border bg-surface p-5">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <h2 className="headline text-section">Live care</h2>
+          <h2 className="type-display text-section">Live care</h2>
           <LiveBadge />
         </div>
         <Link href="/care" className="inline-flex items-center gap-1 text-caption font-medium">

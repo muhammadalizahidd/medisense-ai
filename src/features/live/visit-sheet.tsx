@@ -316,7 +316,7 @@ export function VisitSheet({
                     type="datetime-local"
                     value={inAt}
                     onChange={(e) => setInAt(e.target.value)}
-                    className="h-9 rounded-control border border-border-strong bg-surface-raised px-3 text-small"
+                    className="h-9 rounded-control border border-border-strong bg-raised px-3 text-small"
                   />
                 </label>
               )}
@@ -406,7 +406,7 @@ export function VisitSheet({
                     type="datetime-local"
                     value={outAt}
                     onChange={(e) => setOutAt(e.target.value)}
-                    className="h-9 rounded-control border border-border-strong bg-surface-raised px-3 text-small"
+                    className="h-9 rounded-control border border-border-strong bg-raised px-3 text-small"
                   />
                 </label>
               )}

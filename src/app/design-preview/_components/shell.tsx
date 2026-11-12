@@ -130,7 +130,7 @@ function NavRow({ item, active }: { item: NavItem; active: boolean }) {
   const content = (
     <>
       <Icon
-        className={cn("size-5 flex-none", active ? "text-accent-fill" : "text-sidebar-faint")}
+        className={cn("size-5 flex-none", active ? "text-accent-fill" : "text-sidebar-muted")}
         strokeWidth={1.5}
         aria-hidden="true"
       />
@@ -178,22 +178,22 @@ export function Shell({
       <nav
         aria-label="Primary"
         style={darkSurfaceFocus}
-        className="hidden h-full w-16 flex-none flex-col gap-5 overflow-y-auto border-r border-sidebar-border bg-sidebar px-2 pt-5 pb-4 md:flex xl:w-sidebar xl:px-3"
+        className="hidden h-full w-16 flex-none flex-col gap-5 overflow-y-auto border-r border-sidebar-border bg-sidebar px-2 pt-5 pb-4 md:flex xl:w-(--sidebar-w) xl:px-3"
       >
         <Link
           href="/design-preview"
           aria-label="Medisense"
           className="flex flex-col px-1 pt-1 text-center text-sidebar-ink hover:text-sidebar-ink hover:no-underline xl:px-3 xl:text-left"
         >
-          <span className="headline text-h2 leading-6 xl:hidden">M</span>
-          <span className="hidden headline text-h2 leading-6 xl:block">Medisense</span>
+          <span className="type-display text-h2 leading-6 xl:hidden">M</span>
+          <span className="hidden type-display text-h2 leading-6 xl:block">Medisense</span>
           <span className="mt-0.5 hidden text-caption font-medium text-sidebar-muted xl:block">
             Clinical Operations &amp; Supervision
           </span>
         </Link>
         {person.nav.map(({ group, items }) => (
           <div key={group} className="flex flex-col gap-0.5">
-            <div className="hidden px-3 pb-1.5 text-caption font-medium text-sidebar-faint xl:block">
+            <div className="hidden px-3 pb-1.5 text-caption font-medium text-sidebar-muted xl:block">
               {group}
             </div>
             {items.map((item) => (
@@ -244,7 +244,7 @@ export function Shell({
                 {bellCount > 0 && (
                   <span
                     aria-hidden="true"
-                    className="absolute -top-1.5 -right-1.5 flex size-4.5 items-center justify-center rounded-full bg-over-dot text-eyebrow font-semibold text-surface-raised"
+                    className="absolute -top-1.5 -right-1.5 flex size-4.5 items-center justify-center rounded-full bg-over-dot text-label font-semibold text-raised"
                   >
                     {bellCount}
                   </span>
@@ -316,7 +316,7 @@ export function ScreenTitle({
   return (
     <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
       <div className="max-w-180">
-        <h1 className={cn("headline", display ? "text-display" : "text-h1")}>{title}</h1>
+        <h1 className={cn("type-display", display ? "text-display" : "text-h1")}>{title}</h1>
         {description && <p className="mt-1.5 text-body text-ink-700">{description}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}

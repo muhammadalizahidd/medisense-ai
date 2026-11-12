@@ -43,7 +43,7 @@ const outputTone: Record<AutomationOutput, TagTone> = {
 };
 
 const selectClass =
-  "h-9 w-full cursor-pointer rounded-control border border-border-strong bg-surface-raised px-2.5 text-small text-ink-900";
+  "h-9 w-full cursor-pointer rounded-control border border-border-strong bg-raised px-2.5 text-small text-ink-900";
 
 export function AutomationsWorkspace() {
   const enabled = useDemoStore((s) => s.automations);
@@ -128,8 +128,8 @@ export function AutomationsWorkspace() {
       >
         {metrics.map((m) => (
           <div key={m.label} className="flex flex-col gap-1.5 bg-surface px-5 py-4">
-            <span className="eyebrow">{m.label}</span>
-            <span className={cn("headline text-stat font-normal", m.over && "text-over")}>
+            <span className="label-caps">{m.label}</span>
+            <span className={cn("type-display text-h1-compact font-normal", m.over && "text-over")}>
               {m.value}
             </span>
             <Caption>{m.caption}</Caption>
@@ -201,7 +201,7 @@ export function AutomationsWorkspace() {
                 key={r.id}
                 className={cn(
                   "grid items-start gap-x-4 gap-y-2 border-t border-border px-5 py-3.5 md:grid-cols-[40px_minmax(0,1fr)_150px]",
-                  !isOn && "bg-surface-sunken/60",
+                  !isOn && "bg-sunken/60",
                 )}
               >
                 <Switch
@@ -255,7 +255,7 @@ export function AutomationsWorkspace() {
               description="Built from plain-language steps"
             />
             <label className="flex flex-col gap-1">
-              <span className="eyebrow">When</span>
+              <span className="label-caps">When</span>
               <Select
                 className={selectClass}
                 value={triggerId}
@@ -272,7 +272,7 @@ export function AutomationsWorkspace() {
               </Select>
             </label>
             <label className="flex flex-col gap-1">
-              <span className="eyebrow">If</span>
+              <span className="label-caps">If</span>
               <Select
                 className={selectClass}
                 value={condition}
@@ -287,7 +287,7 @@ export function AutomationsWorkspace() {
               </Select>
             </label>
             <label className="flex flex-col gap-1">
-              <span className="eyebrow">Then</span>
+              <span className="label-caps">Then</span>
               <Select
                 className={selectClass}
                 value={actionIndex}
@@ -303,7 +303,7 @@ export function AutomationsWorkspace() {
                 ))}
               </Select>
             </label>
-            <p className="rounded-control bg-surface-sunken px-3 py-2.5 text-small text-ink-700">
+            <p className="rounded-control bg-sunken px-3 py-2.5 text-small text-ink-700">
               <Zap
                 className="mr-1 inline size-3.5 text-accent"
                 strokeWidth={1.5}
@@ -377,8 +377,8 @@ export function AutomationsWorkspace() {
           },
         ].map((g, i) => (
           <div key={g.title} className="flex flex-col gap-2 bg-surface px-6 py-5.5">
-            <span className="eyebrow">Guardrail {i + 1}</span>
-            <span className="headline text-h2 font-normal">{g.title}</span>
+            <span className="label-caps">Guardrail {i + 1}</span>
+            <span className="type-display text-h2 font-normal">{g.title}</span>
             <span className="text-small text-ink-700">{g.body}</span>
           </div>
         ))}

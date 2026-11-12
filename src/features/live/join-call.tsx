@@ -163,8 +163,8 @@ type Act = (body: Record<string, unknown>) => Promise<boolean>;
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-card border border-border bg-surface p-6 surface-lift">
-      <h2 className="mb-4 headline text-h2">{title}</h2>
+    <section className="rounded-card border border-border bg-surface p-6">
+      <h2 className="mb-4 type-display text-h2">{title}</h2>
       {children}
     </section>
   );
@@ -402,7 +402,7 @@ function InCall({
   return (
     <section className="rounded-card bg-ink-900 p-3">
       <div className="mb-2 flex items-center justify-between">
-        <p className="text-eyebrow font-semibold tracking-wide text-surface/70 uppercase">
+        <p className="text-label font-semibold tracking-wide text-surface/70 uppercase">
           DEMO ONLY · simulated video
         </p>
         <RecordingBadge status={c.recording.status} />

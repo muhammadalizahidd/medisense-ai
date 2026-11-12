@@ -121,7 +121,7 @@ function NotePanel({ visit, ended }: { visit: ScheduleItem; ended: boolean }) {
         {noteSectionTitles.map(({ id, title }) =>
           note.sections[id].length ? (
             <div key={id}>
-              <h4 className="headline text-section">{title}</h4>
+              <h4 className="type-display text-section">{title}</h4>
               <ul className="mt-1 flex flex-col gap-1 text-small">
                 {note.sections[id].map((s) => (
                   <li key={s.id}>{s.text}</li>
@@ -159,7 +159,7 @@ function NotePanel({ visit, ended }: { visit: ScheduleItem; ended: boolean }) {
           rows={9}
           value={text}
           onChange={(e) => setText(e.target.value)}
-          className="w-full rounded-control border border-border-strong bg-surface-raised px-3 py-2 text-small font-normal text-ink-900 outline-none focus:border-accent focus:shadow-focus"
+          className="w-full rounded-control border border-border-strong bg-raised px-3 py-2 text-small font-normal text-ink-900 outline-none focus:border-accent focus:shadow-focus"
         />
       </label>
       {error && (
@@ -194,7 +194,7 @@ function ClientPanel({ visit }: { visit: ScheduleItem }) {
       <div className="mb-3 flex items-center gap-3">
         <Avatar name={visit.title} size={48} />
         <div>
-          <p className="headline text-h2">{visit.title}</p>
+          <p className="type-display text-h2">{visit.title}</p>
           <Caption>
             {formatTime(visit.start)}, {visit.duration} minutes
           </Caption>
@@ -313,7 +313,7 @@ function Room({ visit, onLeave }: { visit: ScheduleItem; onLeave: () => void }) 
         <div className="relative aspect-video overflow-hidden rounded-sheet bg-[radial-gradient(circle_at_30%_20%,var(--room-glow),var(--room-deep)_60%)] text-white shadow-overlay">
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center">
             <Avatar name={visit.title} size={112} className="ring-4 ring-white/25" />
-            <p className="headline text-h1">{visit.title}</p>
+            <p className="type-display text-h1">{visit.title}</p>
             <p className="text-small text-white/80">{ended ? "Visit ended" : "Waiting to join"}</p>
           </div>
           <video
@@ -327,13 +327,13 @@ function Room({ visit, onLeave }: { visit: ScheduleItem; onLeave: () => void }) 
               !cameraOn && "hidden",
             )}
           />
-          <span className="bg-black/35 absolute top-4 left-4 flex items-center gap-2 rounded-full px-3 py-1 text-caption font-semibold backdrop-blur">
+          <span className="absolute top-4 left-4 flex items-center gap-2 rounded-full bg-black/35 px-3 py-1 text-caption font-semibold backdrop-blur">
             {!ended && <i aria-hidden="true" className="size-2 rounded-full bg-over-dot" />}
             {ended ? "Ended" : clock(seconds)}
           </span>
           {!ended && (
             <div className="absolute inset-x-0 bottom-4 flex justify-center">
-              <div className="bg-black/40 flex items-center gap-2 rounded-full p-2 backdrop-blur">
+              <div className="flex items-center gap-2 rounded-full bg-black/40 p-2 backdrop-blur">
                 <DockButton
                   on={muted}
                   label={muted ? "Unmute" : "Mute"}
@@ -446,14 +446,14 @@ export function Telehealth() {
       {next && (
         <section
           aria-label="Next video visit"
-          className="mt-6 flex flex-wrap items-center gap-5 rounded-sheet border border-border bg-surface p-5 surface-lift"
+          className="mt-6 flex flex-wrap items-center gap-5 rounded-sheet border border-border bg-surface p-5"
         >
           <Avatar name={next.title} size={64} />
           <div className="min-w-0 flex-1">
             <p className="text-caption font-semibold text-accent">
               Next up, {formatTime(next.start)}
             </p>
-            <h2 className="headline text-h1">{next.title}</h2>
+            <h2 className="type-display text-h1">{next.title}</h2>
             <Caption>
               {clinicianName(next.clinicianId)}, {next.duration} minutes
             </Caption>

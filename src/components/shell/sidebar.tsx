@@ -29,20 +29,20 @@ export function Sidebar() {
     <nav
       aria-label="Primary"
       style={darkFocus}
-      className="sticky top-0 hidden h-screen w-16 flex-none flex-col gap-5 overflow-y-auto border-r border-sidebar-border bg-sidebar px-2 pt-5 pb-4 md:flex xl:w-sidebar xl:px-3"
+      className="sticky top-0 hidden h-screen w-16 flex-none flex-col gap-5 overflow-y-auto border-r border-sidebar-border bg-sidebar px-2 pt-5 pb-4 md:flex xl:w-(--sidebar-w) xl:px-3"
     >
       <Link
         href="/"
         aria-label="Medisense home"
         className="flex flex-col px-1 pt-1 text-center text-sidebar-ink hover:text-sidebar-ink hover:no-underline xl:px-3 xl:text-left"
       >
-        <span aria-hidden="true" className="headline text-h2 leading-6 xl:hidden">
+        <span aria-hidden="true" className="type-display text-h2 leading-6 xl:hidden">
           M
         </span>
-        <span className="hidden items-center gap-2 headline text-h2 leading-6 xl:flex">
+        <span className="hidden items-center gap-2 type-display text-h2 leading-6 xl:flex">
           <span
             aria-hidden="true"
-            className="primary-glow hidden size-8 flex-none items-center justify-center rounded-control bg-accent-fill text-on-accent blue:flex"
+            className="flex size-8 flex-none items-center justify-center rounded-control bg-accent-fill text-on-accent"
           >
             <HeartPulse className="size-5" strokeWidth={2} />
           </span>
@@ -55,7 +55,7 @@ export function Sidebar() {
 
       {navigationFor(role).map(({ group, items }) => (
         <div key={group} className="flex flex-col gap-0.5">
-          <div className="hidden px-3 pb-1.5 text-caption font-medium text-sidebar-faint xl:block">
+          <div className="hidden px-3 pb-1.5 text-caption font-medium text-sidebar-muted xl:block">
             {group}
           </div>
           {items.map(({ href, label, icon: Icon, badge }) => {
@@ -68,15 +68,18 @@ export function Sidebar() {
                 aria-label={label}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex h-9 items-center justify-center gap-2.5 rounded-nav px-3 text-body hover:no-underline xl:justify-start",
+                  "flex h-9 items-center justify-center gap-2.5 rounded-control px-3 text-body hover:no-underline xl:justify-start",
                   active
-                    ? "bg-nav-active nav-active-rule font-semibold text-nav-active-ink"
+                    ? "bg-sidebar-active font-semibold text-sidebar-active-ink"
                     : "font-medium text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-ink",
                 )}
               >
                 <span className="relative flex-none">
                   <Icon
-                    className={cn("size-5", active ? "text-nav-active-ink" : "text-sidebar-faint")}
+                    className={cn(
+                      "size-5",
+                      active ? "text-sidebar-active-ink" : "text-sidebar-muted",
+                    )}
                     strokeWidth={1.5}
                     aria-hidden="true"
                   />
@@ -89,7 +92,7 @@ export function Sidebar() {
                 </span>
                 <span className="hidden flex-1 truncate xl:block">{label}</span>
                 {href === "/messages" && unreadMessages > 0 && (
-                  <span className="hidden h-5 min-w-5 items-center justify-center rounded-full bg-over-dot px-1.5 text-eyebrow font-semibold text-surface motion-safe:animate-pulse xl:flex">
+                  <span className="hidden h-5 min-w-5 items-center justify-center rounded-full bg-over-dot px-1.5 text-label font-semibold text-surface motion-safe:animate-pulse xl:flex">
                     {unreadMessages}
                     <span className="sr-only"> unread</span>
                   </span>
@@ -98,7 +101,7 @@ export function Sidebar() {
                   <span
                     className={cn(
                       "hidden text-caption font-medium xl:inline",
-                      active ? "text-nav-active-ink" : "text-sidebar-faint",
+                      active ? "text-sidebar-active-ink" : "text-sidebar-muted",
                     )}
                   >
                     {href.startsWith("/case-notes") ? notesLeft : badge}
@@ -110,7 +113,7 @@ export function Sidebar() {
         </div>
       ))}
 
-      <div className="mt-auto flex items-center justify-center gap-2.5 border-t border-sidebar-border px-1 pt-4 xl:justify-start xl:px-3 md:blue:hidden">
+      <div className="mt-auto flex items-center justify-center gap-2.5 border-t border-sidebar-border px-1 pt-4 md:hidden xl:justify-start xl:px-3">
         <span
           aria-hidden="true"
           className="flex size-8 flex-none items-center justify-center rounded-full bg-accent-fill text-caption font-semibold text-on-accent"

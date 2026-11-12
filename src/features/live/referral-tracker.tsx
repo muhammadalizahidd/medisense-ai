@@ -48,10 +48,10 @@ export function ReferralTracker({ token }: { token: string }) {
   return (
     <div className="grid max-w-240 gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
       <div className="flex flex-col gap-6">
-        <section className="rounded-card border border-border bg-surface p-6 surface-lift">
+        <section className="rounded-card border border-border bg-surface p-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="eyebrow">Reference</p>
+              <p className="label-caps">Reference</p>
               <p className="mt-1 font-mono text-h2 tracking-widest">{data.reference}</p>
             </div>
             <Button size="sm" onClick={() => void load()}>
@@ -192,7 +192,7 @@ function AnswerRequest({
   return (
     <section
       aria-label="We need more information"
-      className="rounded-card border border-monitor-bg bg-surface p-6 surface-lift"
+      className="rounded-card border border-monitor-bg bg-surface p-6"
     >
       <h2 className="flex items-center gap-2 text-body font-semibold">
         <MessageSquareWarning className="size-5 text-monitor" aria-hidden="true" />

@@ -126,7 +126,7 @@ export function PendingReferral({
               <li key={p.label} className="flex items-center gap-2.5 text-small">
                 <span
                   className={cn(
-                    "flex size-6 flex-none items-center justify-center rounded-full text-eyebrow font-bold",
+                    "flex size-6 flex-none items-center justify-center rounded-full text-label font-bold",
                     done
                       ? "bg-accent-fill text-on-accent"
                       : now

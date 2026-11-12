@@ -125,7 +125,7 @@ export function InvoiceDetail({ id }: { id: string }) {
                               value={codes[l.id] ?? (l.itemCode === "To confirm" ? "" : l.itemCode)}
                               placeholder="To confirm"
                               onChange={(e) => setCodes((c) => ({ ...c, [l.id]: e.target.value }))}
-                              className="h-8 w-40 rounded-control border border-border-strong bg-surface-raised px-2 font-mono text-caption"
+                              className="h-8 w-40 rounded-control border border-border-strong bg-raised px-2 font-mono text-caption"
                             />
                             {codes[l.id] && codes[l.id] !== l.itemCode && (
                               <Button

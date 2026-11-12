@@ -62,14 +62,14 @@ export function PhoneFrame({
       </div>
 
       <div className="hidden max-w-92 lg:block">
-        <h1 className="headline text-[44px] leading-13 blue:text-white">{name}</h1>
-        <p className="mt-3 text-body text-ink-700 blue:text-white/85">{description}</p>
-        <ul className="mt-6 flex flex-col gap-2.5 text-small text-ink-700 blue:text-white/85">
+        <h1 className="type-display text-[44px] leading-13">{name}</h1>
+        <p className="mt-3 text-body text-ink-700">{description}</p>
+        <ul className="mt-6 flex flex-col gap-2.5 text-small text-ink-700">
           {features.map((f) => (
             <li key={f} className="flex gap-2.5">
               <span
                 aria-hidden="true"
-                className="mt-2 size-1.5 flex-none rounded-full bg-accent-fill blue:bg-white"
+                className="mt-2 size-1.5 flex-none rounded-full bg-accent-fill"
               />
               {f}
             </li>
@@ -115,7 +115,7 @@ export function PhoneFrame({
                       aria-hidden="true"
                     />
                     {badge ? (
-                      <span className="absolute -top-1 right-2 flex h-4.5 min-w-4.5 items-center justify-center rounded-full border-2 border-surface bg-over-dot px-1 text-eyebrow leading-none font-bold text-white">
+                      <span className="absolute -top-1 right-2 flex h-4.5 min-w-4.5 items-center justify-center rounded-full border-2 border-surface bg-over-dot px-1 text-label leading-none font-bold text-white">
                         {badge > 9 ? "9+" : badge}
                         <span className="sr-only"> unread</span>
                       </span>
@@ -123,7 +123,7 @@ export function PhoneFrame({
                   </span>
                   <span
                     className={cn(
-                      "max-w-full truncate text-eyebrow",
+                      "max-w-full truncate text-label",
                       current ? "font-bold text-accent" : "font-medium text-ink-500",
                     )}
                   >
@@ -158,11 +158,11 @@ export function AppHeader({
   children?: ReactNode;
 }) {
   return (
-    <header className="page-hero rounded-t-none! pt-12!">
+    <header className="page-hero border-b border-border bg-surface px-5 pt-12 pb-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           {eyebrow && <p className="text-caption font-medium text-ink-700">{eyebrow}</p>}
-          <h2 className="mt-0.5 headline text-[28px] leading-8.5">{title}</h2>
+          <h2 className="mt-0.5 type-display text-[28px] leading-8.5">{title}</h2>
         </div>
         {aside}
       </div>
@@ -183,15 +183,10 @@ export function AppCard({
   className?: string;
 }) {
   return (
-    <section
-      className={cn(
-        "mb-3 rounded-card border border-border bg-surface p-4 surface-lift",
-        className,
-      )}
-    >
+    <section className={cn("mb-3 rounded-card border border-border bg-surface p-4", className)}>
       {(title || action) && (
         <div className="mb-2.5 flex items-center justify-between gap-2">
-          {title && <h3 className="headline text-section">{title}</h3>}
+          {title && <h3 className="type-display text-section">{title}</h3>}
           {action}
         </div>
       )}
@@ -225,10 +220,10 @@ export function AppSheet({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="relative flex max-h-[88%] flex-col rounded-t-[28px] bg-surface-raised"
+        className="relative flex max-h-[88%] flex-col rounded-t-[28px] bg-raised"
       >
         <header className="flex items-center justify-between gap-3 px-5 pt-5 pb-3">
-          <h3 className="headline text-h2">{title}</h3>
+          <h3 className="type-display text-h2">{title}</h3>
           <button
             type="button"
             onClick={onClose}

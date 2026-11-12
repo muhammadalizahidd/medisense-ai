@@ -12,7 +12,7 @@ import { cn } from "@/lib/cn";
 import { useDemoStore, type FormState } from "@/state/demo-store";
 
 const input =
-  "w-full rounded-control border bg-surface-raised px-2.5 py-1.5 text-small text-ink-900 outline-none focus:border-accent focus:shadow-focus";
+  "w-full rounded-control border bg-raised px-2.5 py-1.5 text-small text-ink-900 outline-none focus:border-accent focus:shadow-focus";
 
 function completeness(draft: FormDraft, state: FormState | undefined) {
   const required = draft.fields.filter((f) => f.required);
@@ -82,8 +82,8 @@ export function FormsWorkspace() {
       >
         {metrics.map((m) => (
           <div key={m.label} className="flex flex-col gap-1.5 bg-surface px-5 py-4">
-            <span className="eyebrow">{m.label}</span>
-            <span className="headline text-stat font-normal">{m.value}</span>
+            <span className="label-caps">{m.label}</span>
+            <span className="type-display text-h1-compact font-normal">{m.value}</span>
             <Caption>{m.caption}</Caption>
           </div>
         ))}
@@ -122,7 +122,7 @@ export function FormsWorkspace() {
                         {d.template} · {d.funding}
                       </span>
                       <span
-                        className="h-1 overflow-hidden rounded-full bg-surface-sunken"
+                        className="h-1 overflow-hidden rounded-full bg-sunken"
                         aria-hidden="true"
                       >
                         <span
@@ -206,23 +206,20 @@ function FormDetail({ draft }: { draft: FormDraft }) {
     <Card aria-labelledby="form-title" className="overflow-hidden">
       <div className="flex flex-wrap items-start justify-between gap-3 px-6 pt-5 pb-4">
         <div>
-          <p className="eyebrow">
+          <p className="label-caps">
             {draft.funding} · {draft.template}
           </p>
-          <h2 id="form-title" className="mt-1.5 headline text-h2">
+          <h2 id="form-title" className="mt-1.5 type-display text-h2">
             {draft.client}
           </h2>
           <Caption className="mt-1">{draft.purpose}</Caption>
         </div>
         <div className="w-48 text-right">
-          <div className="headline text-stat-sm font-normal">{c.percent}%</div>
+          <div className="type-display text-h2 font-normal">{c.percent}%</div>
           <Caption>
             {c.filled} of {c.required} required fields complete
           </Caption>
-          <div
-            className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-surface-sunken"
-            aria-hidden="true"
-          >
+          <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-sunken" aria-hidden="true">
             <span
               className={cn(
                 "block h-full rounded-full",
@@ -335,7 +332,7 @@ function FormDetail({ draft }: { draft: FormDraft }) {
         )}
         {log.length > 0 && (
           <div className="border-t border-border pt-3">
-            <div className="mb-1.5 eyebrow">Submission history</div>
+            <div className="mb-1.5 label-caps">Submission history</div>
             <ol className="flex flex-col gap-1">
               {log.map((e) => (
                 <li key={e.id} className="grid grid-cols-[48px_minmax(0,1fr)] gap-2 text-small">

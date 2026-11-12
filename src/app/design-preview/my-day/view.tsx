@@ -28,14 +28,17 @@ function VisitRow({ visit, state }: { visit: Visit; state: State }) {
       )}
     >
       <div>
-        <div className={cn("headline text-h2 leading-6 font-normal", done && "text-ink-500")}>
+        <div className={cn("type-display text-h2 leading-6 font-normal", done && "text-ink-500")}>
           {visit.start}
         </div>
         <Caption>to {visit.end}</Caption>
       </div>
       <div className="min-w-0">
         <div
-          className={cn("font-semibold", current && !approved && "headline text-h2 font-medium")}
+          className={cn(
+            "font-semibold",
+            current && !approved && "type-display text-h2 font-medium",
+          )}
         >
           {visit.client}
         </div>
@@ -78,7 +81,7 @@ function VisitRow({ visit, state }: { visit: Visit; state: State }) {
 
 function Drive({ minutes, leaveBy }: { minutes: number; leaveBy?: string }) {
   return (
-    <div className="grid grid-cols-[76px_minmax(0,1fr)] gap-x-4 border-y border-border bg-surface-sunken px-5 py-1.5 md:grid-cols-[96px_minmax(0,1fr)]">
+    <div className="grid grid-cols-[76px_minmax(0,1fr)] gap-x-4 border-y border-border bg-sunken px-5 py-1.5 md:grid-cols-[96px_minmax(0,1fr)]">
       <span />
       <span className="flex items-center gap-1.5 text-caption font-medium text-ink-500">
         <Car className="size-3.5" strokeWidth={1.5} aria-hidden="true" />
@@ -92,7 +95,7 @@ function SideTasks() {
   const [done, setDone] = useState<string[]>([]);
   return (
     <Card aria-labelledby="my-tasks" className="overflow-hidden">
-      <h2 id="my-tasks" className="px-5 pt-4.5 pb-3 headline text-h2">
+      <h2 id="my-tasks" className="px-5 pt-4.5 pb-3 type-display text-h2">
         My tasks
       </h2>
       {sarahTasks.map((t) => {
@@ -162,7 +165,7 @@ export function MyDayView() {
             </h2>
             {empty ? (
               <div className="px-5 py-10">
-                <p className="headline text-h2">No visits booked today.</p>
+                <p className="type-display text-h2">No visits booked today.</p>
                 <p className="mt-1 text-small text-ink-700">
                   Your next visit is Wednesday at 8:30 am with Lucas Brennan in Stafford.
                 </p>
@@ -189,7 +192,7 @@ export function MyDayView() {
 
           <div className="flex flex-col gap-6 xl:col-span-4">
             <Card aria-labelledby="notes-due" className="overflow-hidden">
-              <h2 id="notes-due" className="px-5 pt-4.5 pb-3 headline text-h2">
+              <h2 id="notes-due" className="px-5 pt-4.5 pb-3 type-display text-h2">
                 Notes still due
               </h2>
               {notes.map((n) => (
@@ -210,7 +213,7 @@ export function MyDayView() {
             <SideTasks />
 
             <Card aria-labelledby="next-supervision" className="px-5 pt-4.5 pb-4.5">
-              <h2 id="next-supervision" className="headline text-h2">
+              <h2 id="next-supervision" className="type-display text-h2">
                 Next supervision
               </h2>
               <p className="mt-2 flex items-start gap-2 text-small">

@@ -51,7 +51,7 @@ function Exception({ retrying, onRetry }: { retrying: boolean; onRetry: () => vo
             aria-hidden="true"
           />
           <div>
-            <h2 id="exceptions" className="headline text-h2">
+            <h2 id="exceptions" className="type-display text-h2">
               1 exception: a form didn&apos;t sync
             </h2>
             <p className="mt-0.5 max-w-180 text-small text-ink-700">
@@ -83,7 +83,7 @@ function Reassign({ row, onClose }: { row: QueueRow; onClose: () => void }) {
     <div
       role="group"
       aria-label={`Reassign ${row.title}`}
-      className="flex flex-wrap items-center gap-3 border-b border-border bg-surface-sunken px-4 py-3"
+      className="flex flex-wrap items-center gap-3 border-b border-border bg-sunken px-4 py-3"
     >
       <span className="text-small font-semibold">Reassign this task</span>
       <span className="text-caption font-medium text-brass">
@@ -236,7 +236,7 @@ export function AdminQueueView() {
                 );
               })}
               {rows.length === 0 && (
-                <p className="px-5 py-10 headline text-h2 font-normal">{emptyCopy[filter]}</p>
+                <p className="px-5 py-10 type-display text-h2 font-normal">{emptyCopy[filter]}</p>
               )}
             </div>
           </div>

@@ -35,7 +35,7 @@ function firstSentence(text: string) {
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div>
-      <h3 className="mb-1.5 font-serif text-section font-medium">{title}</h3>
+      <h3 className="mb-1.5 font-display text-section font-medium">{title}</h3>
       {children}
     </div>
   );
@@ -59,7 +59,7 @@ function Summary({ text, pairedLine }: { text: string; pairedLine: number | null
   return (
     <p className="leading-5.5">
       <span className="rounded-xs bg-accent-tint py-px shadow-underline-accent">{lead}</span>{" "}
-      <span className="inline-flex h-4.5 items-center rounded-tag bg-accent-fill px-1.5 align-baseline text-eyebrow font-semibold text-on-accent">
+      <span className="inline-flex h-4.5 items-center rounded-tag bg-accent-fill px-1.5 align-baseline text-label font-semibold text-on-accent">
         Line {pairedLine}
       </span>{" "}
       {text.slice(lead.length).trim()}
@@ -78,7 +78,7 @@ function EmptyState({ error }: { error: string | null }) {
   return (
     <div className="flex min-h-130 flex-col items-start justify-center gap-2.5 rounded-card border border-dashed border-border-strong bg-surface p-10">
       <PenNib className="size-5 text-brass" />
-      <p className="max-w-95 headline text-h2 text-ink-700">
+      <p className="max-w-95 type-display text-h2 text-ink-700">
         The structured draft will appear here for your review.
       </p>
       <p className="max-w-95 text-small text-ink-500">
@@ -112,9 +112,9 @@ function Generating() {
       <DraftLabel meta="Drafting from the therapist note…" />
       {SECTIONS.map((s) => (
         <div key={s.key} className="flex flex-col gap-2">
-          <span className="font-serif text-section font-medium text-ink-400">{s.label}</span>
-          <span className="h-3 w-11/12 animate-pulse rounded-full bg-surface-sunken" />
-          <span className="h-3 w-3/4 animate-pulse rounded-full bg-surface-sunken" />
+          <span className="font-display text-section font-medium text-ink-400">{s.label}</span>
+          <span className="h-3 w-11/12 animate-pulse rounded-full bg-sunken" />
+          <span className="h-3 w-3/4 animate-pulse rounded-full bg-sunken" />
         </div>
       ))}
     </section>
@@ -136,13 +136,13 @@ function EditForm({ id, draft }: { id: string; draft: CaseNoteDraft }) {
       </DraftLabel>
       {SECTIONS.map((field, index) => (
         <label key={field.key} className="flex flex-col gap-1.5">
-          <span className="font-serif text-section font-medium">{field.label}</span>
+          <span className="font-display text-section font-medium">{field.label}</span>
           <textarea
             rows={field.rows}
             autoFocus={index === 0}
             value={value[field.key]}
             onChange={(e) => setValue({ ...value, [field.key]: e.target.value })}
-            className="w-full resize-y rounded-control border border-border-strong bg-surface-raised px-3 py-2.5 text-body text-ink-900 outline-none focus:border-accent focus:shadow-focus"
+            className="w-full resize-y rounded-control border border-border-strong bg-raised px-3 py-2.5 text-body text-ink-900 outline-none focus:border-accent focus:shadow-focus"
           />
         </label>
       ))}

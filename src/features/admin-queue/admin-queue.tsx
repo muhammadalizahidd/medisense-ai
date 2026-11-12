@@ -91,7 +91,7 @@ function Exception() {
   return (
     <section
       aria-labelledby="exceptions"
-      className="mb-6 rounded-card border border-border bg-surface shadow-rule-over surface-lift"
+      className="mb-6 rounded-card border border-border bg-surface shadow-rule-over"
     >
       <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3 px-5 py-4">
         <div className="flex min-w-0 flex-1 items-start gap-3">
@@ -101,7 +101,7 @@ function Exception() {
             aria-hidden="true"
           />
           <div>
-            <h2 id="exceptions" className="headline text-h2">
+            <h2 id="exceptions" className="type-display text-h2">
               1 exception: a form didn&apos;t sync
             </h2>
             <p className="mt-0.5 max-w-180 text-small text-ink-700">
@@ -153,7 +153,7 @@ function Reassign({
     <div
       role="group"
       aria-label={`Reassign ${task.title}`}
-      className="flex flex-wrap items-center gap-3 border-b border-border bg-surface-sunken px-4 py-3"
+      className="flex flex-wrap items-center gap-3 border-b border-border bg-sunken px-4 py-3"
     >
       <span className="text-small font-semibold">Reassign this task</span>
       {suggestion && (
@@ -370,7 +370,7 @@ export function AdminQueue() {
               );
             })}
             {rows.length === 0 && (
-              <p className="px-5 py-10 headline text-h2 font-normal">{emptyCopy[filter]}</p>
+              <p className="px-5 py-10 type-display text-h2 font-normal">{emptyCopy[filter]}</p>
             )}
           </div>
         </div>

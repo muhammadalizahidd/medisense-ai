@@ -68,11 +68,11 @@ export function Sheet({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="relative flex h-full w-120 max-w-full flex-col bg-surface-raised shadow-overlay"
+        className="relative flex h-full w-120 max-w-full flex-col bg-raised shadow-overlay"
       >
         <header className="flex items-start justify-between gap-3 border-b border-border px-5 py-4">
           <div className="min-w-0">
-            <h2 className="headline text-h2">{title}</h2>
+            <h2 className="type-display text-h2">{title}</h2>
             {description && <div className="mt-1 text-small text-ink-700">{description}</div>}
           </div>
           <button
@@ -97,7 +97,7 @@ export function Sheet({
 }
 
 export const inputClass =
-  "h-9 w-full rounded-control border border-border-strong bg-surface-raised px-3 text-small text-ink-900 outline-none focus:border-accent focus:shadow-focus";
+  "h-9 w-full rounded-control border border-border-strong bg-raised px-3 text-small text-ink-900 outline-none focus:border-accent focus:shadow-focus";
 
 export function Field({
   label,

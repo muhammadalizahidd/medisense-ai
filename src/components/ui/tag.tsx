@@ -9,7 +9,7 @@ const tones: Record<TagTone, { tag: string; dot: string }> = {
   monitor: { tag: "bg-monitor-bg text-monitor", dot: "bg-monitor-dot" },
   over: { tag: "bg-over-bg text-over", dot: "bg-over-dot" },
   available: { tag: "bg-available-bg text-available", dot: "bg-available-dot" },
-  neutral: { tag: "bg-surface-sunken text-ink-700", dot: "bg-ink-400" },
+  neutral: { tag: "bg-sunken text-ink-700", dot: "bg-ink-400" },
   outline: { tag: "text-ink-700 ring-1 ring-border-strong ring-inset", dot: "bg-available-dot" },
   live: { tag: "bg-accent-tint text-accent", dot: "bg-accent" },
 };

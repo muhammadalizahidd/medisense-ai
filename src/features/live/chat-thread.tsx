@@ -217,7 +217,7 @@ export function ChatThread({
                     state={mine ? (m.seen ? "seen" : "sent") : null}
                   />
                   {m.id === lastMine?.id && m.seen && (
-                    <span className="mt-0.5 self-end text-eyebrow text-ink-500">Seen</span>
+                    <span className="mt-0.5 self-end text-label text-ink-500">Seen</span>
                   )}
                 </li>
               );
@@ -322,7 +322,7 @@ function Bubble({
       <p className="break-words whitespace-pre-wrap">{body}</p>
       <p
         className={cn(
-          "mt-0.5 flex items-center justify-end gap-1 text-eyebrow",
+          "mt-0.5 flex items-center justify-end gap-1 text-label",
           mine ? "text-on-accent/80" : "text-ink-500",
         )}
       >

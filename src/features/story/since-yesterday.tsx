@@ -60,11 +60,11 @@ export function SinceYesterday() {
             <section
               key={e.id}
               aria-label={`Escalation: ${e.client}`}
-              className="rounded-card border border-border bg-surface px-6 pt-5 pb-5 shadow-rule-over surface-lift"
+              className="rounded-card border border-border bg-surface px-6 pt-5 pb-5 shadow-rule-over"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                  <h2 className="headline text-h2">
+                  <h2 className="type-display text-h2">
                     {e.client}&apos;s task was escalated to Grace Liu
                   </h2>
                   <p className="mt-0.5 text-small text-ink-700">
@@ -107,7 +107,7 @@ export function SinceYesterday() {
 
           {reminders.length > 0 && (
             <Card aria-labelledby="reminders" className="px-6 pt-4.5 pb-3.5">
-              <h2 id="reminders" className="flex items-center gap-2 text-h3 font-semibold">
+              <h2 id="reminders" className="flex items-center gap-2 text-section font-semibold">
                 <Bell className="size-4 text-ink-500" strokeWidth={1.5} aria-hidden="true" />
                 {plural(reminders.length, "reminder")} sent
               </h2>
@@ -125,7 +125,7 @@ export function SinceYesterday() {
 
           {overdue.length > 0 && (
             <Card aria-labelledby="newly-overdue" className="px-6 pt-4.5 pb-3.5">
-              <h2 id="newly-overdue" className="flex items-center gap-2 text-h3 font-semibold">
+              <h2 id="newly-overdue" className="flex items-center gap-2 text-section font-semibold">
                 <CircleAlert className="size-4 text-ink-500" strokeWidth={1.5} aria-hidden="true" />
                 {plural(overdue.length, "task")} became overdue
               </h2>
@@ -142,7 +142,7 @@ export function SinceYesterday() {
         </div>
 
         <Card aria-labelledby="audit-side" className="px-5 pt-4.5 pb-5 xl:col-span-5">
-          <h2 id="audit-side" className="mb-3 headline text-h2">
+          <h2 id="audit-side" className="mb-3 type-display text-h2">
             Audit trail
           </h2>
           <ol className="border-l border-border">

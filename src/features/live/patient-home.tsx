@@ -54,18 +54,18 @@ function NextVisit({
     >
       <div className="flex items-center gap-4 p-4">
         <div className="flex w-16 flex-none flex-col items-center rounded-control bg-accent-fill py-2 text-on-accent">
-          <span className="text-eyebrow font-semibold uppercase">{part("weekday")}</span>
-          <span className="headline text-h1 font-semibold">{part("day")}</span>
-          <span className="text-eyebrow uppercase">{part("month")}</span>
+          <span className="text-label font-semibold uppercase">{part("weekday")}</span>
+          <span className="type-display text-h1 font-semibold">{part("day")}</span>
+          <span className="text-label uppercase">{part("month")}</span>
         </div>
         <div className="min-w-0 flex-1">
           <p className="flex items-center gap-2 text-caption font-semibold text-accent">
             Next visit
             {soon && (
-              <span className="rounded-full bg-accent-tint px-2 py-0.5 text-eyebrow">{soon}</span>
+              <span className="rounded-full bg-accent-tint px-2 py-0.5 text-label">{soon}</span>
             )}
           </p>
-          <p className="headline text-h2 leading-7">{timeOfDay(visit.start)}</p>
+          <p className="type-display text-h2 leading-7">{timeOfDay(visit.start)}</p>
           <p className="truncate text-caption text-ink-700">
             {visit.discipline} · at home
             {visit.series && ` · visit ${visit.series.index} of ${visit.series.total}`}
@@ -118,7 +118,7 @@ function Matching({
           <li key={s} className="flex flex-1 items-center gap-1">
             <span
               className={cn(
-                "flex size-5 flex-none items-center justify-center rounded-full text-eyebrow font-bold",
+                "flex size-5 flex-none items-center justify-center rounded-full text-label font-bold",
                 i <= at ? "bg-accent-fill text-on-accent" : "bg-canvas text-ink-500",
                 i === at + 1 && "ring-2 ring-accent-tint",
               )}
@@ -272,7 +272,7 @@ export function PatientHome({
                             </span>
                           </span>
                           {unread > 0 ? (
-                            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-over-dot px-1.5 text-eyebrow font-bold text-white">
+                            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-over-dot px-1.5 text-label font-bold text-white">
                               {unread}
                             </span>
                           ) : (

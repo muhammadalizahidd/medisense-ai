@@ -53,7 +53,7 @@ export function QuickAdd() {
         New
       </Button>
       {open && (
-        <div className="absolute top-11 right-0 z-30 w-72 max-w-[calc(100vw-2rem)] rounded-card border border-border bg-surface-raised p-1.5 shadow-overlay">
+        <div className="absolute top-11 right-0 z-30 w-72 max-w-[calc(100vw-2rem)] rounded-card border border-border bg-raised p-1.5 shadow-overlay">
           {actions.map(({ id, label, detail, icon: Icon }) => (
             <button
               key={id}

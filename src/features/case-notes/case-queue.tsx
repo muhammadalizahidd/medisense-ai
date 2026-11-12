@@ -38,14 +38,14 @@ export function CaseQueue({ activeId }: { activeId: string }) {
   return (
     <section aria-labelledby="note-queue" className="mb-6">
       <div className="mb-2.5 flex flex-wrap items-baseline justify-between gap-3">
-        <h2 id="note-queue" className="eyebrow">
+        <h2 id="note-queue" className="label-caps">
           Sarah’s documentation backlog · {caseNotes.length} notes
         </h2>
         <Caption>
           {approved.length} of {caseNotes.length} approved · ≈{minutes} min of writing saved
         </Caption>
       </div>
-      <div className="mb-3 h-1.5 overflow-hidden rounded-full bg-surface-sunken" aria-hidden="true">
+      <div className="mb-3 h-1.5 overflow-hidden rounded-full bg-sunken" aria-hidden="true">
         <span
           className="block h-full rounded-full bg-healthy-dot transition-all duration-300"
           style={{ width: `${(approved.length / caseNotes.length) * 100}%` }}

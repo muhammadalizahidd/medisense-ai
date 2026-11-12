@@ -17,7 +17,7 @@ export default function SarahCaseloadPage() {
         leading={
           <span
             aria-hidden="true"
-            className="flex size-14 flex-none items-center justify-center rounded-full bg-chart-sand text-figure font-semibold text-ink-900"
+            className="flex size-14 flex-none items-center justify-center rounded-full bg-chart-sand text-section font-semibold text-ink-900"
           >
             {sarahProfile.initials}
           </span>

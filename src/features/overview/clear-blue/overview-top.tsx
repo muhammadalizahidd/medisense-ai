@@ -92,7 +92,7 @@ export function Hero() {
   return (
     <section
       aria-label="Welcome"
-      className="relative isolate overflow-hidden rounded-card border border-border bg-linear-to-r from-surface via-surface to-accent-tint surface-lift"
+      className="relative isolate overflow-hidden rounded-card border border-border bg-linear-to-r from-surface via-surface to-accent-tint"
     >
       {/* Photograph, faded in from the left so the greeting stays on a clean surface. */}
       <div
@@ -126,7 +126,7 @@ export function Hero() {
 
       <div className="relative px-6 py-7 sm:px-8 sm:py-8">
         <p className="text-h2 font-medium text-ink-900">Good morning,</p>
-        <h1 className="mt-1 headline text-[40px] leading-11 font-semibold text-accent">
+        <h1 className="mt-1 type-display text-[40px] leading-11 font-semibold text-accent">
           {currentUser.name}
         </h1>
         <p className="mt-2 text-body text-ink-700">
@@ -214,7 +214,7 @@ function KpiCard({
   return (
     <Link
       href={href}
-      className="flex min-w-0 flex-col rounded-card border border-border bg-surface p-5 text-ink-900 surface-lift hover:border-border-strong hover:text-ink-900 hover:no-underline"
+      className="flex min-w-0 flex-col rounded-card border border-border bg-surface p-5 text-ink-900 hover:border-border-strong hover:text-ink-900 hover:no-underline"
     >
       <span className="flex items-center gap-3">
         <IconBubble icon={icon} />
@@ -222,7 +222,7 @@ function KpiCard({
       </span>
       <span className="mt-3 flex items-end gap-3">
         <span className="min-w-0 flex-1">
-          <span className="block headline text-[34px] leading-10 font-semibold">{value}</span>
+          <span className="block type-display text-[34px] leading-10 font-semibold">{value}</span>
           <span className="mt-1.5 block">{footer}</span>
         </span>
         <span className="w-[46%] max-w-32 flex-none">{visual}</span>
@@ -301,13 +301,13 @@ export function KpiCards() {
       />
       <Link
         href="/team-capacity"
-        className="flex min-w-0 flex-col rounded-card border border-border bg-surface p-5 text-ink-900 surface-lift hover:border-border-strong hover:text-ink-900 hover:no-underline"
+        className="flex min-w-0 flex-col rounded-card border border-border bg-surface p-5 text-ink-900 hover:border-border-strong hover:text-ink-900 hover:no-underline"
       >
         <span className="flex items-center gap-3">
           <IconBubble icon={Users} />
           <span className="text-small font-semibold">Team capacity</span>
         </span>
-        <span className="mt-3 block headline text-[34px] leading-10 font-semibold">
+        <span className="mt-3 block type-display text-[34px] leading-10 font-semibold">
           {utilisation}%
         </span>
         <span
@@ -344,7 +344,7 @@ const actions: Action[] = [
 ];
 
 const actionTile =
-  "flex min-w-0 cursor-pointer flex-col items-center justify-center gap-2.5 rounded-card border border-border bg-surface px-3 py-5 text-small font-semibold text-ink-900 surface-lift hover:border-border-strong hover:text-accent hover:no-underline";
+  "flex min-w-0 cursor-pointer flex-col items-center justify-center gap-2.5 rounded-card border border-border bg-surface px-3 py-5 text-small font-semibold text-ink-900 hover:border-border-strong hover:text-accent hover:no-underline";
 
 export function QuickActions() {
   const router = useRouter();

@@ -97,10 +97,10 @@ export function TasksWorkspace() {
       >
         {metrics.map((m) => (
           <div key={m.label} className="flex flex-col gap-1.5 bg-surface px-5 py-4">
-            <span className="eyebrow">{m.label}</span>
+            <span className="label-caps">{m.label}</span>
             <span
               className={cn(
-                "headline text-stat font-normal",
+                "type-display text-h1-compact font-normal",
                 "tone" in m && m.value > 0 && "text-over",
               )}
             >

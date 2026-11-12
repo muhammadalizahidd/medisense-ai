@@ -65,7 +65,7 @@ export function WorkloadPanel({
         description="Weighted caseload units · Low 1.0 · Medium 1.5 · High 2.5"
         aside={
           <div className="flex items-center gap-3">
-            <span className="headline text-stat-sm text-over">+{change}%</span>
+            <span className="type-display text-h2 text-over">+{change}%</span>
             <Segmented
               label="Range"
               value={range}
@@ -96,7 +96,7 @@ export function WorkloadPanel({
       </div>
       <div className="mt-3.5 border-t border-border pt-3.5">
         <div className="flex items-baseline justify-between gap-3">
-          <span className="eyebrow">Admin hours / week · {adminTarget}h target</span>
+          <span className="label-caps">Admin hours / week · {adminTarget}h target</span>
           <Caption>
             {weeksOver} of {rows.length} weeks above target · active patients {first.activeClients}{" "}
             → {last.activeClients}

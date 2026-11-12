@@ -127,9 +127,12 @@ export function ReportsLibrary() {
       >
         {metrics.map((m) => (
           <div key={m.label} className="flex flex-col gap-1.5 bg-surface px-5 py-4">
-            <span className="eyebrow">{m.label}</span>
+            <span className="label-caps">{m.label}</span>
             <span
-              className={cn("headline text-stat font-normal", m.over && m.value > 0 && "text-over")}
+              className={cn(
+                "type-display text-h1-compact font-normal",
+                m.over && m.value > 0 && "text-over",
+              )}
             >
               {m.value}
             </span>
@@ -291,7 +294,7 @@ export function ReportsLibrary() {
             )}
           >
             {selected.current === "Not started" ? (
-              <span className="eyebrow">Not started</span>
+              <span className="label-caps">Not started</span>
             ) : selected.current === "Approved" || selected.current === "Sent" ? (
               <span className="flex items-center gap-1.5 text-small font-semibold text-healthy">
                 <Check className="size-4" strokeWidth={2} aria-hidden="true" />
@@ -301,13 +304,13 @@ export function ReportsLibrary() {
               <DraftLabel>AI draft — clinician review required</DraftLabel>
             )}
             <div>
-              <h2 className="headline text-h2">{selected.client}</h2>
+              <h2 className="type-display text-h2">{selected.client}</h2>
               <Caption className="mt-1">
                 {selected.type} · {selected.funding} · {selected.clinician} · due {selected.due}
               </Caption>
             </div>
             <div className="border-t border-border pt-3">
-              <div className="mb-1.5 eyebrow">Sections</div>
+              <div className="mb-1.5 label-caps">Sections</div>
               <ul className="flex flex-col gap-1">
                 {selected.sections.map((s) => (
                   <li key={s} className="flex items-center gap-2 text-small">
@@ -326,7 +329,7 @@ export function ReportsLibrary() {
               </ul>
             </div>
             <div className="border-t border-border pt-3">
-              <div className="mb-1.5 eyebrow">Built from</div>
+              <div className="mb-1.5 label-caps">Built from</div>
               <ul className="flex flex-col gap-1">
                 {selected.sources.map((s) => (
                   <li key={s.label} className="flex justify-between text-small">

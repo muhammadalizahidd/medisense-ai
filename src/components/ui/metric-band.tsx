@@ -32,7 +32,7 @@ export function MetricBand({
     <section
       aria-label={label}
       className={cn(
-        "stat-band grid gap-px overflow-hidden rounded-card border border-border bg-border surface-lift",
+        "stat-band grid gap-px overflow-hidden rounded-card border border-border bg-border",
         columns[count],
       )}
     >
@@ -44,9 +44,12 @@ export function MetricBand({
             metric.flagged && "shadow-flag",
           )}
         >
-          <span className="eyebrow">{metric.label}</span>
+          <span className="label-caps">{metric.label}</span>
           <span
-            className={cn("headline font-normal", size === "stat" ? "text-stat" : "text-stat-sm")}
+            className={cn(
+              "type-display font-normal",
+              size === "stat" ? "text-h1-compact" : "text-h2",
+            )}
           >
             {metric.value}
           </span>

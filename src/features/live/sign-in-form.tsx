@@ -30,7 +30,7 @@ function IconField({
       <label htmlFor={id} className="text-caption font-semibold text-ink-700">
         {label}
       </label>
-      <div className="flex h-11 items-center gap-2.5 rounded-control border border-border-strong bg-surface-raised px-3 focus-within:border-accent focus-within:shadow-focus">
+      <div className="flex h-11 items-center gap-2.5 rounded-control border border-border-strong bg-raised px-3 focus-within:border-accent focus-within:shadow-focus">
         <span className="flex-none text-ink-500" aria-hidden="true">
           {icon}
         </span>

@@ -100,7 +100,7 @@ function ApprovedNote({ selected }: { selected: Selection | null }) {
   return (
     <section aria-labelledby="the-note" className="rounded-card border border-border bg-surface">
       <div className="border-b border-border px-5 pt-4.5 pb-3.5">
-        <h2 id="the-note" className="headline text-h2">
+        <h2 id="the-note" className="type-display text-h2">
           Oliver&apos;s approved note
         </h2>
         <div className="mt-1">
@@ -110,7 +110,7 @@ function ApprovedNote({ selected }: { selected: Selection | null }) {
       <div className="flex flex-col gap-4 px-5 pt-4 pb-5">
         {noteSections.map((section) => (
           <div key={section.id}>
-            <h3 className="mb-1 font-serif text-section font-medium">{section.title}</h3>
+            <h3 className="mb-1 font-display text-section font-medium">{section.title}</h3>
             <div className="flex flex-col gap-1">
               {section.sentences.map((s) => (
                 <p
@@ -171,7 +171,7 @@ function ItemHead({
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-        <h3 className="headline text-h2">{title}</h3>
+        <h3 className="type-display text-h2">{title}</h3>
         <div className="flex items-center gap-2">
           {children}
           {tag}
@@ -225,7 +225,7 @@ function ReportItem({ selected, onSelect }: { selected: boolean; onSelect: () =>
         <div className="mt-3 flex flex-col gap-3 border-t border-border pt-3">
           {reportDrafts.map(([heading, text]) => (
             <div key={heading}>
-              <h4 className="font-serif text-section font-medium">{heading}</h4>
+              <h4 className="font-display text-section font-medium">{heading}</h4>
               <p className="mt-0.5 text-small leading-5.5">{text}</p>
             </div>
           ))}
@@ -427,7 +427,9 @@ function Preparing() {
   return (
     <section aria-busy="true" aria-label="Preparing" className="max-w-200">
       <Card className="px-6 py-5">
-        <h2 className="headline text-h2">Note approved. AI is preparing what follows from it.</h2>
+        <h2 className="type-display text-h2">
+          Note approved. AI is preparing what follows from it.
+        </h2>
         <ul className="mt-4 flex flex-col gap-3">
           {steps.map((s) => (
             <li key={s}>
@@ -510,7 +512,7 @@ export function PreparedView() {
                   className="rounded-card border border-l-2 border-border border-l-draft-rule bg-draft"
                 >
                   <div className="px-5 pt-4.5 pb-3.5">
-                    <h3 id="follow-ups" className="headline text-h2">
+                    <h3 id="follow-ups" className="type-display text-h2">
                       3 follow-ups AI found
                     </h3>
                     <p className="text-small text-ink-700">
@@ -541,7 +543,7 @@ export function PreparedView() {
               className="mt-8 grid gap-x-16 gap-y-3 border-t border-border-strong pt-5 lg:grid-cols-12"
             >
               <div className="lg:col-span-5">
-                <h2 id="not-repeated" className="headline text-h2">
+                <h2 id="not-repeated" className="type-display text-h2">
                   Steps you didn&apos;t have to repeat
                 </h2>
                 <ButtonLink href="/design-preview/my-day?state=approved" className="mt-3">

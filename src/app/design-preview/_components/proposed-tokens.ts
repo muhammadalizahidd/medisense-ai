@@ -11,7 +11,7 @@ export const proposedTokens = {
   "--color-monitor": "#875208",
   "--color-over": "#ad3724",
   "--color-available": "#28609f",
-  "--color-sidebar-faint": "rgb(245 243 238 / 0.55)",
+  "--color-sidebar-muted": "rgb(245 243 238 / 0.55)",
   "--shadow-focus": "0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-accent-hover)",
 } as CSSProperties;
 

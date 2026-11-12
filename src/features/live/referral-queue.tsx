@@ -170,7 +170,7 @@ export function ReferralQueue() {
           )}
         </EmptyNote>
       ) : (
-        <div className="overflow-x-auto rounded-card border border-border bg-surface surface-lift">
+        <div className="overflow-x-auto rounded-card border border-border bg-surface">
           <table className="w-full min-w-240 text-left text-small">
             <thead className="border-b border-border text-caption text-ink-500">
               <tr>

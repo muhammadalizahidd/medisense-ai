@@ -49,7 +49,7 @@ export function TrendCards({
   return (
     <section
       aria-label="Trends"
-      className="stat-band mt-6 grid grid-cols-1 gap-px overflow-hidden rounded-card border border-border bg-border surface-lift sm:grid-cols-2 lg:grid-cols-4"
+      className="stat-band mt-6 grid grid-cols-1 gap-px overflow-hidden rounded-card border border-border bg-border sm:grid-cols-2 lg:grid-cols-4"
     >
       {cards.map((card) => {
         const last = card.values[card.values.length - 1] ?? 0;
@@ -58,11 +58,11 @@ export function TrendCards({
         return (
           <div key={card.id} className="flex flex-col gap-2 bg-surface px-5 pt-4 pb-3">
             <div className="flex items-baseline justify-between gap-2">
-              <span className="eyebrow">{card.eyebrow}</span>
+              <span className="label-caps">{card.eyebrow}</span>
               <span className="text-caption font-medium text-ink-500">{periodLabel}</span>
             </div>
             <div className="flex items-baseline gap-2.5">
-              <span className="headline text-stat font-normal">
+              <span className="type-display text-h1-compact font-normal">
                 {card.format ? card.format(last) : last}
               </span>
               <Change values={card.values} upIsGood={card.upIsGood} format={card.format} />

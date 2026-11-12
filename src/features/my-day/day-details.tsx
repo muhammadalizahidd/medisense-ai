@@ -31,7 +31,7 @@ function Details({ rows }: { rows: [string, ReactNode][] }) {
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="mt-6 border-t border-border pt-5">
-      <h3 className="mb-3 font-serif text-section font-medium text-ink-900">{title}</h3>
+      <h3 className="mb-3 font-display text-section font-medium text-ink-900">{title}</h3>
       {children}
     </section>
   );
@@ -135,7 +135,7 @@ export function VisitDetailSheet({
       />
 
       {visit.note && !nextDay && (
-        <div className="mt-5 flex items-start gap-2.5 rounded-control bg-surface-sunken px-3.5 py-3 text-small text-ink-900">
+        <div className="mt-5 flex items-start gap-2.5 rounded-control bg-sunken px-3.5 py-3 text-small text-ink-900">
           <Quote
             className="mt-0.5 size-3.5 flex-none text-ink-500"
             strokeWidth={1.75}
@@ -276,7 +276,7 @@ export function TaskDetailSheet({
       />
       {task.sentence && (
         <Section title="From the approved note">
-          <div className="flex items-start gap-2.5 rounded-control bg-surface-sunken px-3.5 py-3 text-small text-ink-900">
+          <div className="flex items-start gap-2.5 rounded-control bg-sunken px-3.5 py-3 text-small text-ink-900">
             <Quote
               className="mt-0.5 size-3.5 flex-none text-ink-500"
               strokeWidth={1.75}

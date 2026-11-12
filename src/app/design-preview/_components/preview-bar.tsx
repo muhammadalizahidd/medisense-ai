@@ -30,7 +30,7 @@ export function PreviewBar({ href }: { href: string }) {
   const current = params.get("state") ?? screen.states[0]?.id;
 
   return (
-    <div className="z-30 flex-none border-b border-dashed border-border-strong bg-surface-raised px-4 py-2 font-mono text-caption">
+    <div className="z-30 flex-none border-b border-dashed border-border-strong bg-raised px-4 py-2 font-mono text-caption">
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <Link href="/design-preview" className="font-medium text-accent hover:underline">
@@ -65,7 +65,7 @@ export function PreviewBar({ href }: { href: string }) {
               className={cn(
                 "rounded-tag border border-dashed px-2 py-0.5 hover:no-underline",
                 current === s.id
-                  ? "border-ink-900 bg-ink-900 text-surface-raised"
+                  ? "border-ink-900 bg-ink-900 text-raised"
                   : "border-border-strong text-ink-700 hover:border-ink-700",
               )}
             >

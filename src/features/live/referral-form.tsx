@@ -947,7 +947,7 @@ function ReferralFormBody({ mode, staffName, embedded = false }: Props) {
               <Wand2 className="size-3" aria-hidden="true" /> Fill sample data
             </button>
           </div>
-          <h2 id="step-title" className="mt-1 headline text-[26px] leading-[1.1]">
+          <h2 id="step-title" className="mt-1 type-display text-[26px] leading-[1.1]">
             {current.title}
           </h2>
           <p className="mt-0.5 text-caption text-ink-500">{current.caption}</p>
@@ -1060,12 +1060,12 @@ function ReferralFormBody({ mode, staffName, embedded = false }: Props) {
 
       <section
         aria-labelledby="step-title"
-        className="min-w-0 rounded-card border border-border bg-surface p-5 surface-lift sm:p-7"
+        className="min-w-0 rounded-card border border-border bg-surface p-5 sm:p-7"
       >
-        <p className="eyebrow">
+        <p className="label-caps">
           Step {step + 1} of {steps.length}
         </p>
-        <h2 id="step-title" className="mt-1 headline text-h2">
+        <h2 id="step-title" className="mt-1 type-display text-h2">
           {current.title}
         </h2>
         {restoredNote}
@@ -1165,15 +1165,13 @@ function ReferralSent({
     <div className={embedded ? "px-5 py-8" : "mx-auto max-w-160"}>
       <div
         className={
-          embedded
-            ? "text-center"
-            : "rounded-card border border-border bg-surface p-7 text-center surface-lift"
+          embedded ? "text-center" : "rounded-card border border-border bg-surface p-7 text-center"
         }
       >
         <span className="mx-auto flex size-14 items-center justify-center rounded-full bg-healthy-bg text-healthy">
           <CheckCircle2 className="size-8" aria-hidden="true" />
         </span>
-        <h2 className="mt-4 headline text-h1">Referral received</h2>
+        <h2 className="mt-4 type-display text-h1">Referral received</h2>
         <p className="mt-2 text-small text-ink-700">
           Thank you. {name ? `${name}'s` : "The"} referral is with our intake team. Your reference
           is

@@ -32,8 +32,8 @@ export function PageHeader({
       <div className="flex items-center gap-4">
         {leading}
         <div>
-          <p className="eyebrow">{eyebrow}</p>
-          <h1 className={cn("headline", display ? "mt-2 text-display" : "mt-2 text-h1")}>
+          <p className="label-caps">{eyebrow}</p>
+          <h1 className={cn("type-display", display ? "mt-2 text-display" : "mt-2 text-h1")}>
             {title}
           </h1>
           {description && (
@@ -63,7 +63,7 @@ export function ScreenTitle({
   return (
     <header className="page-hero mb-8 flex flex-wrap items-end justify-between gap-4">
       <div className="max-w-180">
-        <h1 className={cn("headline", display ? "text-display" : "text-h1")}>{title}</h1>
+        <h1 className={cn("type-display", display ? "text-display" : "text-h1")}>{title}</h1>
         {description && <div className="mt-1.5 text-body text-ink-700">{description}</div>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}

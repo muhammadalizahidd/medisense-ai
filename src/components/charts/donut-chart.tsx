@@ -95,7 +95,7 @@ export function DonutChart({
           </PieChart>
         </ResponsiveContainer>
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-          <span className="headline text-stat font-normal">{centre}</span>
+          <span className="type-display text-h1-compact font-normal">{centre}</span>
           <span className="text-caption font-medium text-ink-500">{centreCaption}</span>
         </div>
       </div>

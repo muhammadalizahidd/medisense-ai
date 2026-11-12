@@ -118,12 +118,12 @@ export function MatchPicker({
                 <p className="flex flex-wrap items-center gap-2 text-small font-semibold">
                   {m.name}
                   {!m.eligible && (
-                    <span className="rounded-tag bg-over-bg px-1.5 py-0.5 text-eyebrow text-over">
+                    <span className="rounded-tag bg-over-bg px-1.5 py-0.5 text-label text-over">
                       Unavailable
                     </span>
                   )}
                   {index === 0 && m.eligible && (
-                    <span className="rounded-tag bg-accent-fill px-1.5 py-0.5 text-eyebrow text-on-accent">
+                    <span className="rounded-tag bg-accent-fill px-1.5 py-0.5 text-label text-on-accent">
                       Best match
                     </span>
                   )}
@@ -215,7 +215,7 @@ export function MatchPicker({
         </p>
       )}
       {choice && (
-        <div className="sticky bottom-4 mt-4 flex flex-wrap items-center justify-between gap-3 rounded-control border border-accent bg-surface-raised px-4 py-3 shadow-overlay">
+        <div className="sticky bottom-4 mt-4 flex flex-wrap items-center justify-between gap-3 rounded-control border border-accent bg-raised px-4 py-3 shadow-overlay">
           <p className="text-small">
             Ask <strong>{choice.therapist.name}</strong> to take this patient, first visit{" "}
             <strong>{slotLabel(choice.start)}</strong>. The time is held until they reply.

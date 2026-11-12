@@ -41,7 +41,7 @@ export function LiveProfile({ profile: seed }: { profile: ClientProfile }) {
         title={profile.name}
         description={`${profile.age} yrs · ${profile.service} · ${profile.clinician} · ${profile.suburb}, ${profile.region} · ${profile.visitType}`}
         leading={
-          <span className="flex size-14 flex-none items-center justify-center rounded-full bg-accent-tint font-serif text-h2 text-accent">
+          <span className="flex size-14 flex-none items-center justify-center rounded-full bg-accent-tint font-display text-h2 text-accent">
             {profile.initials}
           </span>
         }

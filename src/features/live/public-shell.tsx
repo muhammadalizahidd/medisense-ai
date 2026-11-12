@@ -23,7 +23,7 @@ export function PublicShell({
         </div>
       </header>
       <main className="mx-auto max-w-300 px-4 pt-8 pb-16 sm:px-8">
-        <h1 className="headline text-h1">{title}</h1>
+        <h1 className="type-display text-h1">{title}</h1>
         {description && (
           <p className="mt-1.5 mb-8 max-w-180 text-small text-ink-700">{description}</p>
         )}

@@ -21,7 +21,7 @@ export default function RoadmapPage() {
           >
             <div className="lg:col-span-4">
               <p className="text-small font-semibold text-ink-700">Phase {i + 1}</p>
-              <h2 className="headline text-h1">{phase.phase}</h2>
+              <h2 className="type-display text-h1">{phase.phase}</h2>
               <p className="mt-1.5 max-w-80 text-small text-ink-700">{phase.why}</p>
             </div>
             <ul className="lg:col-span-8">
@@ -31,7 +31,7 @@ export default function RoadmapPage() {
                   className="flex flex-wrap items-start justify-between gap-x-6 gap-y-1 border-t border-border py-3 first:border-t-0 first:pt-0"
                 >
                   <div className="min-w-0 flex-1">
-                    <h3 className="text-h3 font-semibold">{m.name}</h3>
+                    <h3 className="text-section font-semibold">{m.name}</h3>
                     <p className="max-w-140 text-small text-ink-700">{m.does}</p>
                   </div>
                   <span className="flex items-center gap-3">

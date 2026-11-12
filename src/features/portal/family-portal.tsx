@@ -26,8 +26,8 @@ export function SignIn() {
   return (
     <main className="hero-page flex min-h-screen items-center justify-center bg-canvas px-4 py-10">
       <div className="w-full max-w-100 rounded-sheet border border-border bg-surface px-6 py-7 shadow-overlay">
-        <p className="headline text-h2">Medisense</p>
-        <h1 className="mt-5 headline text-h1">Family portal</h1>
+        <p className="type-display text-h2">Medisense</p>
+        <h1 className="mt-5 type-display text-h1">Family portal</h1>
         <p className="mt-1 text-small text-ink-700">
           See visits, home practice, goals and approved reports for your family member.
         </p>
@@ -103,7 +103,7 @@ export function FamilyPortal() {
   return (
     <div className="min-h-screen bg-canvas">
       <header className="flex items-center justify-between gap-3 border-b border-border bg-surface px-4 py-3 md:px-6">
-        <span className="headline text-h2">Medisense</span>
+        <span className="type-display text-h2">Medisense</span>
         <Button size="sm" onClick={() => signOut(false)}>
           <LogOut className="size-3.5" strokeWidth={1.5} aria-hidden="true" />
           Sign out
