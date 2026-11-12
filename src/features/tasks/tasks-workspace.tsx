@@ -207,8 +207,8 @@ export function TasksWorkspace() {
                 </div>
                 <div>
                   {t.source.startsWith("AI") ? (
-                    <span className="inline-flex items-center gap-1 text-caption font-semibold text-brass">
-                      <PenNib className="size-3.5 text-brass" />
+                    <span className="inline-flex items-center gap-1 text-caption font-semibold text-ink-700">
+                      <PenNib className="size-3.5 text-ink-700" />
                       {t.source}
                     </span>
                   ) : (

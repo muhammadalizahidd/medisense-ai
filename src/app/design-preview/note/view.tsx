@@ -335,7 +335,7 @@ function ReviewedNote({ state, setState }: { state: State; setState: (s: State) 
                       onSelect={() => setLine(s.line)}
                     />
                     {s.edited && showEdit && (
-                      <span className="ml-1.5 text-caption font-semibold text-brass">
+                      <span className="ml-1.5 text-caption font-semibold text-ink-700">
                         Edited by you
                       </span>
                     )}

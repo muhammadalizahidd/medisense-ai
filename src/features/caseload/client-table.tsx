@@ -67,16 +67,16 @@ function Documentation({ value, href }: { value: DocumentationStatus; href?: str
     case "ai-draft": {
       const label = (
         <>
-          <PenNib className="text-brass" />
+          <PenNib className="text-ink-700" />
           AI draft awaiting review
         </>
       );
       return href ? (
-        <Link href={href} className="inline-flex items-center gap-1.5 font-semibold text-brass">
+        <Link href={href} className="inline-flex items-center gap-1.5 font-semibold text-ink-700">
           {label}
         </Link>
       ) : (
-        <span className="inline-flex items-center gap-1.5 font-semibold text-brass">{label}</span>
+        <span className="inline-flex items-center gap-1.5 font-semibold text-ink-700">{label}</span>
       );
     }
   }
@@ -213,7 +213,7 @@ export function ClientTable({ clients }: { clients: CaseloadClient[] }) {
                   size="sm"
                   className="absolute top-1/2 right-4 -translate-y-1/2 text-accent opacity-0 shadow-overlay transition-opacity duration-160 ease-out group-focus-within:opacity-100 group-hover:opacity-100"
                 >
-                  <PenNib className="text-brass" />
+                  <PenNib className="text-ink-700" />
                   Summarise notes
                 </ButtonLink>
               )}

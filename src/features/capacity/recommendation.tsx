@@ -51,8 +51,8 @@ export function Recommendation({
       className="flex h-full flex-col gap-3.5 px-5 pt-5 pb-4.5"
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="flex items-center gap-1.5 label-caps text-brass">
-          <PenNib className="size-3.5 text-brass" />
+        <span className="flex items-center gap-1.5 label-caps text-ink-700">
+          <PenNib className="size-3.5 text-ink-700" />
           Suggestion
         </span>
         <Caption>

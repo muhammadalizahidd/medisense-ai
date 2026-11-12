@@ -1,9 +1,9 @@
 "use client";
 
-import { HeartPulse } from "lucide-react";
+import { ChevronDown, HeartPulse } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { CSSProperties } from "react";
+import { useState, type CSSProperties } from "react";
 import { caseNotes } from "@/data/case-note";
 import { cn } from "@/lib/cn";
 import { isActive, isStandalone, navigationFor, roleUsers } from "@/lib/navigation";
@@ -13,7 +13,41 @@ import { useDemoStore } from "@/state/demo-store";
 
 export const darkFocus = { "--shadow-focus": "var(--shadow-focus-dark)" } as CSSProperties;
 
-/** Labelled sidebar from 1280 px, an icon rail down to 768 px, and a tab bar below that. */
+const LIVE = "Live care";
+const COLLAPSED_KEY = "ms-nav-collapsed";
+
+function readCollapsed(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    return JSON.parse(localStorage.getItem(COLLAPSED_KEY) ?? "[]") as string[];
+  } catch {
+    return [];
+  }
+}
+
+/** Groups a person has folded away, remembered on this device. */
+function useCollapsed() {
+  const [collapsed, setCollapsed] = useState<string[]>(readCollapsed);
+  function toggle(group: string) {
+    setCollapsed((current) => {
+      const next = current.includes(group)
+        ? current.filter((g) => g !== group)
+        : [...current, group];
+      try {
+        localStorage.setItem(COLLAPSED_KEY, JSON.stringify(next));
+      } catch {
+        // Private windows can block storage.
+      }
+      return next;
+    });
+  }
+  return [collapsed, toggle] as const;
+}
+
+/**
+ * Labelled sidebar from 1280 px, an icon rail down to 768 px, and a tab bar below that.
+ * "Live care" (the real workflow) comes first; the other groups run on sample data and say so.
+ */
 export function Sidebar() {
   const pathname = usePathname();
   const role = useDemoStore((s) => s.role);
@@ -22,101 +56,127 @@ export function Sidebar() {
   const notesLeft = caseNotes.filter((c) => notes[c.id]?.mode !== "approved").length;
   const { user: account } = useSession();
   const unreadMessages = useUnreadMessages(account?.role === "therapist");
+  const [collapsed, toggle] = useCollapsed();
 
   if (isStandalone(pathname)) return null;
+
+  const groups = [...navigationFor(role)].sort(
+    (a, b) => Number(b.group === LIVE) - Number(a.group === LIVE),
+  );
 
   return (
     <nav
       aria-label="Primary"
       style={darkFocus}
-      className="sticky top-0 hidden h-screen w-16 flex-none flex-col gap-5 overflow-y-auto border-r border-sidebar-border bg-sidebar px-2 pt-5 pb-4 md:flex xl:w-(--sidebar-w) xl:px-3"
+      className="no-scrollbar sticky top-0 hidden h-screen w-(--rail-w) flex-none flex-col gap-4 overflow-y-auto border-r border-sidebar-border bg-sidebar px-2 pt-4 pb-4 md:flex xl:w-(--sidebar-w) xl:px-3"
     >
       <Link
         href="/"
         aria-label="Medisense home"
-        className="flex flex-col px-1 pt-1 text-center text-sidebar-ink hover:text-sidebar-ink hover:no-underline xl:px-3 xl:text-left"
+        className="flex items-center justify-center gap-2.5 px-1 pb-2 text-sidebar-ink hover:text-sidebar-ink hover:no-underline xl:justify-start xl:px-2"
       >
-        <span aria-hidden="true" className="type-display text-h2 leading-6 xl:hidden">
-          M
+        <span
+          aria-hidden="true"
+          className="flex size-8 flex-none items-center justify-center rounded-control bg-ink-900 text-page"
+        >
+          <HeartPulse className="size-4.5" strokeWidth={2} />
         </span>
-        <span className="hidden items-center gap-2 type-display text-h2 leading-6 xl:flex">
-          <span
-            aria-hidden="true"
-            className="flex size-8 flex-none items-center justify-center rounded-control bg-accent-fill text-on-accent"
-          >
-            <HeartPulse className="size-5" strokeWidth={2} />
+        <span className="hidden min-w-0 flex-col leading-tight xl:flex">
+          <span className="text-[15px] font-bold">Medisense</span>
+          <span className="truncate text-label text-sidebar-muted">
+            Clinical Operations &amp; Supervision
           </span>
-          Medisense
-        </span>
-        <span className="mt-0.5 hidden text-caption font-medium text-sidebar-muted xl:block">
-          Clinical Operations &amp; Supervision
         </span>
       </Link>
 
-      {navigationFor(role).map(({ group, items }) => (
-        <div key={group} className="flex flex-col gap-0.5">
-          <div className="hidden px-3 pb-1.5 text-caption font-medium text-sidebar-muted xl:block">
-            {group}
-          </div>
-          {items.map(({ href, label, icon: Icon, badge }) => {
-            const active = isActive(pathname, href);
-            return (
-              <Link
-                key={href}
-                href={href}
-                title={label}
-                aria-label={label}
-                aria-current={active ? "page" : undefined}
-                className={cn(
-                  "flex h-9 items-center justify-center gap-2.5 rounded-control px-3 text-body hover:no-underline xl:justify-start",
-                  active
-                    ? "bg-sidebar-active font-semibold text-sidebar-active-ink"
-                    : "font-medium text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-ink",
-                )}
+      {groups.map(({ group, items }) => {
+        const live = group === LIVE;
+        const folded = !live && collapsed.includes(group);
+        return (
+          <div key={group} className="flex flex-col gap-0.5">
+            {live ? (
+              <div className="hidden items-center gap-1.5 px-2.5 pb-1 text-label font-semibold tracking-[0.08em] text-sidebar-muted uppercase xl:flex">
+                <i aria-hidden="true" className="size-1.5 rounded-full bg-live-dot" />
+                {group}
+              </div>
+            ) : (
+              <button
+                type="button"
+                aria-expanded={!folded}
+                onClick={() => toggle(group)}
+                className="hidden h-7 cursor-pointer items-center justify-between gap-2 rounded-control px-2.5 text-label font-semibold tracking-[0.08em] text-sidebar-muted uppercase hover:text-sidebar-ink xl:flex"
               >
-                <span className="relative flex-none">
-                  <Icon
+                <span className="truncate">{group}</span>
+                <span className="flex items-center gap-1.5 font-medium tracking-normal normal-case">
+                  Sample
+                  <ChevronDown
                     className={cn(
-                      "size-5",
-                      active ? "text-sidebar-active-ink" : "text-sidebar-muted",
+                      "size-3.5 transition-transform duration-(--duration-fast)",
+                      folded && "-rotate-90",
                     )}
-                    strokeWidth={1.5}
                     aria-hidden="true"
                   />
-                  {href === "/messages" && unreadMessages > 0 && (
-                    <i
-                      aria-hidden="true"
-                      className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full border-2 border-sidebar bg-over-dot xl:hidden"
-                    />
-                  )}
                 </span>
-                <span className="hidden flex-1 truncate xl:block">{label}</span>
-                {href === "/messages" && unreadMessages > 0 && (
-                  <span className="hidden h-5 min-w-5 items-center justify-center rounded-full bg-over-dot px-1.5 text-label font-semibold text-surface motion-safe:animate-pulse xl:flex">
-                    {unreadMessages}
-                    <span className="sr-only"> unread</span>
-                  </span>
-                )}
-                {badge !== undefined && (
-                  <span
-                    className={cn(
-                      "hidden text-caption font-medium xl:inline",
-                      active ? "text-sidebar-active-ink" : "text-sidebar-muted",
+              </button>
+            )}
+            {items.map(({ href, label, icon: Icon, badge }) => {
+              const active = isActive(pathname, href);
+              const count = href.startsWith("/case-notes") ? notesLeft : badge;
+              const unread = href === "/messages" ? unreadMessages : 0;
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  title={label}
+                  aria-label={label}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "h-9 items-center justify-center gap-2.5 rounded-control px-2.5 text-small transition-colors duration-(--duration-fast) hover:no-underline xl:justify-start",
+                    folded ? "flex xl:hidden" : "flex",
+                    active
+                      ? "bg-sidebar-active font-semibold text-sidebar-active-ink shadow-[inset_3px_0_0_var(--color-accent-fill)]"
+                      : "font-medium text-sidebar-ink hover:bg-sidebar-hover",
+                  )}
+                >
+                  <span className="relative flex-none">
+                    <Icon
+                      className={cn(
+                        "size-4.5",
+                        active ? "text-sidebar-active-ink" : "text-sidebar-muted",
+                      )}
+                      strokeWidth={1.75}
+                      aria-hidden="true"
+                    />
+                    {unread > 0 && (
+                      <i
+                        aria-hidden="true"
+                        className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full border-2 border-sidebar bg-over-dot xl:hidden"
+                      />
                     )}
-                  >
-                    {href.startsWith("/case-notes") ? notesLeft : badge}
                   </span>
-                )}
-              </Link>
-            );
-          })}
-        </div>
-      ))}
+                  <span className="hidden flex-1 truncate xl:block">{label}</span>
+                  {unread > 0 && (
+                    <span className="hidden h-5 min-w-5 items-center justify-center rounded-full bg-over-bg px-1.5 text-label font-semibold text-over xl:flex">
+                      {unread}
+                      <span className="sr-only"> unread</span>
+                    </span>
+                  )}
+                  {count !== undefined && count > 0 && (
+                    <span className="hidden h-5 min-w-5 items-center justify-center rounded-full bg-accent-tint px-1.5 text-label font-semibold text-accent xl:flex">
+                      {count}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        );
+      })}
 
       <div className="mt-auto flex items-center justify-center gap-2.5 border-t border-sidebar-border px-1 pt-4 md:hidden xl:justify-start xl:px-3">
         <span
           aria-hidden="true"
-          className="flex size-8 flex-none items-center justify-center rounded-full bg-accent-fill text-caption font-semibold text-on-accent"
+          className="flex size-8 flex-none items-center justify-center rounded-full bg-accent-tint text-caption font-semibold text-accent"
         >
           {user.initials}
         </span>

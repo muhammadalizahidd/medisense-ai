@@ -93,7 +93,7 @@ export function WorkspaceMenu() {
       >
         <span
           aria-hidden="true"
-          className="flex size-8 flex-none items-center justify-center rounded-full bg-accent-fill text-caption font-semibold text-on-accent"
+          className="flex size-8 flex-none items-center justify-center rounded-full bg-accent-tint text-caption font-semibold text-accent"
         >
           {user.initials}
         </span>

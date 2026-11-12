@@ -377,7 +377,7 @@ function FormItem({
                 className="h-8 w-full rounded-control border border-border-strong bg-raised px-2.5 text-small text-ink-900 outline-none focus:border-accent disabled:bg-sunken"
               />
             </dd>
-            <dd className="text-caption font-medium text-brass md:text-right">
+            <dd className="text-caption font-medium text-ink-700 md:text-right">
               AI, from this note
             </dd>
           </div>

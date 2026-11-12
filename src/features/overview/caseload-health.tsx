@@ -134,7 +134,7 @@ export function CaseloadHealth({
                       </div>
                     )}
                   {c.draftsAwaiting > 0 && (
-                    <div className="text-caption text-brass">{c.draftsAwaiting} draft</div>
+                    <div className="text-caption text-ink-700">{c.draftsAwaiting} draft</div>
                   )}
                 </div>
                 <div className="text-right">{c.followUpsOverdue}</div>

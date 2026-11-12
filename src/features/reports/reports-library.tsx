@@ -357,7 +357,7 @@ export function ReportsLibrary() {
               )}
               {!selected.href && selected.current === "AI draft" && (
                 <Caption className="flex items-center gap-1.5">
-                  <PenNib className="size-3.5 text-brass" />
+                  <PenNib className="size-3.5 text-ink-700" />
                   Draft ready for {selected.clinician.split(" ")[0]} to review. Emily Carter&apos;s
                   report shows the full review flow.
                 </Caption>

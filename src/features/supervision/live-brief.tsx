@@ -123,7 +123,7 @@ export function LiveBrief() {
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <h3 className="font-display text-section font-medium">{item.heading}</h3>
                   {changedHeadings.has(item.heading) && (
-                    <span className="text-caption font-semibold text-brass">AI updated</span>
+                    <span className="text-caption font-semibold text-ink-700">AI updated</span>
                   )}
                 </div>
                 <p

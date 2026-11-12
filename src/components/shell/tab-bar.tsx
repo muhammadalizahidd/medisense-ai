@@ -15,7 +15,10 @@ export function TabBar() {
   const pathname = usePathname();
   const role = useDemoStore((s) => s.role);
   const [more, setMore] = useState(false);
-  const groups = navigationFor(role);
+  // Live care first, as in the sidebar, so the real workflow is one tap away.
+  const groups = [...navigationFor(role)].sort(
+    (a, b) => Number(b.group === "Live care") - Number(a.group === "Live care"),
+  );
   const items = groups.flatMap((g) => g.items).slice(0, 4);
 
   if (isStandalone(pathname)) return null;
@@ -58,7 +61,7 @@ export function TabBar() {
           <nav aria-label="All screens" className="flex flex-col gap-4">
             {groups.map(({ group, items: links }) => (
               <div key={group}>
-                <h3 className="mb-1 text-caption font-semibold text-ink-500">{group}</h3>
+                <h3 className="mb-1 label-caps">{group}</h3>
                 {links.map(({ href, label, icon: Icon }) => (
                   <Link
                     key={href}

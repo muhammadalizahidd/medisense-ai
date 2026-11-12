@@ -72,7 +72,7 @@ export function VersionHistory({ sample }: { sample: CaseNoteSample }) {
             <span className="font-semibold text-ink-500">v{i + 1}</span>
             <span className="font-mono text-caption leading-5 text-ink-700">{v.time}</span>
             <span>
-              <span className={cn("font-semibold", v.isAi ? "text-brass" : "text-ink-900")}>
+              <span className={cn("font-semibold", v.isAi ? "text-ink-700" : "text-ink-900")}>
                 {v.actor}
               </span>{" "}
               · {v.action}
@@ -143,7 +143,7 @@ export function FollowUpSuggestions({
     >
       <div className="mb-2 flex items-center justify-between gap-2">
         <span className="flex items-center gap-1.5 text-small font-semibold">
-          <PenNib className="size-3.5 text-brass" />
+          <PenNib className="size-3.5 text-ink-700" />
           Follow-ups found in this note
         </span>
         <Caption>Nothing is created until you confirm</Caption>

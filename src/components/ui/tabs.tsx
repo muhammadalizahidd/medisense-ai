@@ -54,7 +54,7 @@ export function Tabs<T extends string>({
     document.getElementById(`tab-${next.id}`)?.focus();
   }
   return (
-    <div className={cn("sticky top-16 z-10 mb-6 bg-page", className)}>
+    <div className={cn("sticky top-(--topbar-h) z-10 mb-6 bg-page", className)}>
       <div
         role="tablist"
         aria-label={label}

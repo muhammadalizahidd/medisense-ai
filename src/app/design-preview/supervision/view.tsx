@@ -63,7 +63,9 @@ export function SupervisionView() {
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
                     <h3 className="font-display text-section font-medium">{item.heading}</h3>
                     {item.updated && (
-                      <span className="text-caption font-semibold text-brass">{item.updated}</span>
+                      <span className="text-caption font-semibold text-ink-700">
+                        {item.updated}
+                      </span>
                     )}
                   </div>
                   <p className={cn("mt-1 leading-5.5", item.updated && "font-medium")}>

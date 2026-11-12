@@ -74,7 +74,7 @@ function Legend() {
         Open slot (cancelled)
       </span>
       <span className="flex items-center gap-1.5">
-        <PenNib className="size-3 text-brass" />
+        <PenNib className="size-3 text-ink-700" />
         Booked from AI suggestion
       </span>
     </div>
@@ -110,7 +110,7 @@ function Block({
           cancelled && "text-ink-500 line-through",
         )}
       >
-        {item.fromSuggestion && <PenNib className="size-3 text-brass" />}
+        {item.fromSuggestion && <PenNib className="size-3 text-ink-700" />}
         <span className="truncate">{item.title}</span>
       </div>
       {!compact && (

@@ -229,7 +229,7 @@ export function Shell({
             </nav>
             <div className="flex flex-wrap items-center gap-3">
               <div className="hidden h-9 w-72 items-center gap-2 rounded-control border border-border bg-surface pr-1 pl-2.5 lg:flex">
-                <PenNib className="text-brass" />
+                <PenNib className="text-ink-700" />
                 <span className="flex-1 text-small text-ink-500">Ask Medisense AI</span>
                 <span className="flex h-7 items-center rounded-tag bg-accent-fill px-2 text-caption font-semibold text-on-accent">
                   Ask

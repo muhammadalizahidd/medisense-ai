@@ -23,7 +23,9 @@ export default function DesignPreviewIndex() {
                 href={s.href}
                 className="grid gap-x-4 gap-y-1 px-2 py-4 hover:bg-surface hover:no-underline md:grid-cols-12 md:items-baseline"
               >
-                <span className="font-display text-section text-brass md:col-span-1">{i + 1}</span>
+                <span className="font-display text-section text-ink-700 md:col-span-1">
+                  {i + 1}
+                </span>
                 <span className="md:col-span-4">
                   <span className="block font-semibold text-ink-900">{s.title}</span>
                   <span className="block text-caption font-medium text-ink-500">{s.story}</span>

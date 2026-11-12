@@ -73,7 +73,7 @@ function AuditList({ limit }: { limit?: number }) {
             aria-hidden="true"
             className={cn(
               "absolute top-1.5 -left-1 size-1.75 rounded-full",
-              e.actor === "Medisense AI" ? "bg-brass" : "bg-accent",
+              e.actor === "Medisense AI" ? "bg-ink-700" : "bg-accent",
             )}
           />
           <div className="flex flex-wrap items-baseline gap-x-2">

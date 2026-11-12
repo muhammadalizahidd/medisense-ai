@@ -24,13 +24,13 @@ export function AiMark({
       <span
         className={cn(
           "flex items-center gap-1.5 text-caption font-semibold",
-          state === "Approved" ? "text-healthy" : "text-brass",
+          state === "Approved" ? "text-healthy" : "text-ink-700",
         )}
       >
         {state === "Approved" ? (
           <Check className="size-3.5" strokeWidth={2} aria-hidden="true" />
         ) : (
-          <PenNib className="size-3.5 text-brass" />
+          <PenNib className="size-3.5 text-ink-700" />
         )}
         {children ?? (state === "Draft" ? "AI draft, needs your approval" : `${state} by you`)}
       </span>

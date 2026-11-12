@@ -101,9 +101,9 @@ export function ThemeMenu() {
         aria-label="Appearance"
         title="Appearance"
         onClick={() => setOpen(!open)}
-        className="flex size-9 cursor-pointer items-center justify-center rounded-control border border-border bg-surface hover:bg-canvas"
+        className="flex size-9 cursor-pointer items-center justify-center rounded-control text-ink-700 transition-colors duration-(--duration-fast) hover:bg-sunken hover:text-ink-900"
       >
-        <Palette className="size-4 text-ink-700" strokeWidth={1.5} aria-hidden="true" />
+        <Palette className="size-4.5" strokeWidth={1.75} aria-hidden="true" />
       </button>
       {open && (
         <div

@@ -144,8 +144,8 @@ export function MyDayView() {
           description={
             <>
               {!empty && (
-                <span className="mr-1.5 inline-flex items-center gap-1 align-text-bottom text-caption font-semibold text-brass">
-                  <PenNib className="size-3.5 text-brass" />
+                <span className="mr-1.5 inline-flex items-center gap-1 align-text-bottom text-caption font-semibold text-ink-700">
+                  <PenNib className="size-3.5 text-ink-700" />
                   AI day summary
                 </span>
               )}

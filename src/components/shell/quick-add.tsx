@@ -48,9 +48,9 @@ export function QuickAdd() {
 
   return (
     <div ref={panel} className="relative">
-      <Button variant="primary" aria-expanded={open} onClick={() => setOpen(!open)}>
+      <Button size="sm" className="mr-1 h-9" aria-expanded={open} onClick={() => setOpen(!open)}>
         <Plus className="size-4" strokeWidth={2} aria-hidden="true" />
-        New
+        <span className="sr-only sm:not-sr-only">New</span>
       </Button>
       {open && (
         <div className="absolute top-11 right-0 z-30 w-72 max-w-[calc(100vw-2rem)] rounded-card border border-border bg-raised p-1.5 shadow-overlay">

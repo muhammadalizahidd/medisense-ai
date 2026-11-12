@@ -20,8 +20,8 @@ function Status({ mode }: { mode: CaseNoteMode | undefined }) {
   }
   if (mode === "draft" || mode === "edit" || mode === "generating") {
     return (
-      <span className="inline-flex items-center gap-1 text-caption font-semibold text-brass">
-        <PenNib className="size-3.5 text-brass" />
+      <span className="inline-flex items-center gap-1 text-caption font-semibold text-ink-700">
+        <PenNib className="size-3.5 text-ink-700" />
         Draft ready for review
       </span>
     );

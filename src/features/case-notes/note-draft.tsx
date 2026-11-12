@@ -77,7 +77,7 @@ function provenance(g: CaseNoteGeneration | null, sample: CaseNoteSample) {
 function EmptyState({ error }: { error: string | null }) {
   return (
     <div className="flex min-h-130 flex-col items-start justify-center gap-2.5 rounded-card border border-dashed border-border-strong bg-surface p-10">
-      <PenNib className="size-5 text-brass" />
+      <PenNib className="size-5 text-ink-700" />
       <p className="max-w-95 type-display text-h2 text-ink-700">
         The structured draft will appear here for your review.
       </p>

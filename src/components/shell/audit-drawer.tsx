@@ -81,17 +81,17 @@ export function AuditDrawer({ open, onClose }: { open: boolean; onClose: () => v
                       aria-hidden="true"
                       className={cn(
                         "absolute top-1.5 -left-1 size-1.75 rounded-full",
-                        e.isAi ? "bg-brass" : "bg-accent",
+                        e.isAi ? "bg-ink-700" : "bg-accent",
                       )}
                     />
                     <div className="flex min-w-0 flex-col gap-0.5">
                       <div
                         className={cn(
                           "flex items-center gap-1.5 text-small font-semibold",
-                          e.isAi ? "text-brass" : "text-ink-900",
+                          e.isAi ? "text-ink-700" : "text-ink-900",
                         )}
                       >
-                        {e.isAi && <PenNib className="size-3.5 text-brass" />}
+                        {e.isAi && <PenNib className="size-3.5 text-ink-700" />}
                         {e.actor}
                       </div>
                       <div className="text-small text-ink-900">{e.action}</div>

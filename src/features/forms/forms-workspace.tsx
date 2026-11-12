@@ -176,8 +176,8 @@ function SourceBadge({ field, empty }: { field: FormField; empty: boolean }) {
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 text-caption font-medium text-brass">
-      <PenNib className="size-3 text-brass" />
+    <span className="inline-flex items-center gap-1 text-caption font-medium text-ink-700">
+      <PenNib className="size-3 text-ink-700" />
       {field.sourceDetail ?? field.source}
     </span>
   );

@@ -233,9 +233,9 @@ export function AssistantPanel({
         role="dialog"
         aria-modal="true"
         aria-label="Ask Medisense AI"
-        className="fixed inset-y-0 right-0 z-41 flex w-130 max-w-full flex-col overflow-hidden rounded-l-sheet bg-canvas shadow-overlay"
+        className="fixed inset-y-0 right-0 z-41 flex w-130 max-w-full flex-col overflow-hidden rounded-l-sheet bg-page shadow-overlay"
       >
-        <header className="bg-sidebar px-6 pt-6 pb-5">
+        <header className="border-b border-border bg-surface px-6 pt-6 pb-5">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3">
               <span className="flex size-10 flex-none items-center justify-center rounded-full border border-accent-fill/40 bg-accent-fill/10">
@@ -243,26 +243,24 @@ export function AssistantPanel({
               </span>
               <div>
                 <p className="label-caps text-accent-fill">Medisense intelligence</p>
-                <h2 className="mt-0.5 font-display text-h2 font-medium text-sidebar-ink">
-                  Ask Medisense AI
-                </h2>
+                <h2 className="mt-0.5 type-display text-h2 text-ink-900">Ask Medisense AI</h2>
               </div>
             </div>
             <button
               type="button"
               aria-label="Close assistant"
               onClick={onClose}
-              className="flex size-8 cursor-pointer items-center justify-center rounded-control text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-ink"
+              className="flex size-8 cursor-pointer items-center justify-center rounded-control text-ink-500 hover:bg-sunken hover:text-ink-900"
             >
               <X className="size-4" strokeWidth={1.5} aria-hidden="true" />
             </button>
           </div>
-          <p className="mt-3 text-small text-sidebar-muted">
+          <p className="mt-3 text-small text-ink-500">
             Your practice, in plain English. Ask about patients, the team, the schedule, reports or
             compliance.
           </p>
           <form
-            className="mt-4 flex items-center gap-1.5 rounded-card border border-sidebar-border bg-sidebar-hover p-1.5 transition-colors focus-within:border-accent-fill/60"
+            className="mt-4 flex items-center gap-1.5 rounded-card border border-border bg-surface p-1.5 transition-colors focus-within:border-accent-fill/60"
             onSubmit={(e) => {
               e.preventDefault();
               ask(question);
@@ -274,7 +272,7 @@ export function AssistantPanel({
               onChange={(e) => setQuestion(e.target.value)}
               placeholder="e.g. Which NDIS patients have a plan review this month?"
               aria-label="Question"
-              className="h-9 min-w-0 flex-1 bg-transparent px-2.5 text-small text-sidebar-ink outline-none placeholder:text-sidebar-muted focus-visible:shadow-none focus-visible:outline-none"
+              className="h-9 min-w-0 flex-1 bg-transparent px-2.5 text-small text-ink-900 outline-none placeholder:text-ink-500 focus-visible:shadow-none focus-visible:outline-none"
             />
             <button
               type="submit"
@@ -374,22 +372,22 @@ export function AssistantPanel({
           {history.map(({ id, question: q, answer, engine, toolCalls, notice }, index) => (
             <section key={id} className="mb-7">
               <div className="flex justify-end">
-                <p className="max-w-[85%] rounded-card rounded-br-control bg-sidebar px-3.5 py-2 text-small text-sidebar-ink">
+                <p className="max-w-[85%] rounded-card rounded-br-control bg-accent-tint px-3.5 py-2 text-small text-ink-900">
                   {q}
                 </p>
               </div>
 
               <article className="mt-3 overflow-hidden rounded-card border border-l-2 border-border border-l-accent-fill bg-surface shadow-hairline">
                 <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-2.5">
-                  <span className="flex items-center gap-1.5 label-caps text-brass">
+                  <span className="flex items-center gap-1.5 label-caps text-ink-700">
                     {engine === GUIDE ? (
                       <BookOpen
-                        className="size-3.5 text-brass"
+                        className="size-3.5 text-ink-700"
                         strokeWidth={1.75}
                         aria-hidden="true"
                       />
                     ) : (
-                      <PenNib className="size-3.5 text-brass" />
+                      <PenNib className="size-3.5 text-ink-700" />
                     )}
                     {engine === GUIDE ? "Medisense guide" : "Medisense AI"}
                   </span>

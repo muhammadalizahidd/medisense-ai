@@ -86,7 +86,7 @@ function Reassign({ row, onClose }: { row: QueueRow; onClose: () => void }) {
       className="flex flex-wrap items-center gap-3 border-b border-border bg-sunken px-4 py-3"
     >
       <span className="text-small font-semibold">Reassign this task</span>
-      <span className="text-caption font-medium text-brass">
+      <span className="text-caption font-medium text-ink-700">
         AI suggests Sam Doyle, who has the fewest open tasks
       </span>
       <SelectField label="To" value={to} onChange={setTo}>
@@ -177,7 +177,7 @@ export function AdminQueueView() {
                           {r.title}
                         </div>
                         <div className="mt-0.5 flex items-center gap-1 text-caption font-medium text-ink-500">
-                          {r.fromAi && <PenNib className="size-3 text-brass" />}
+                          {r.fromAi && <PenNib className="size-3 text-ink-700" />}
                           {r.isNew ? (
                             <Link
                               href="/design-preview/prepared?state=confirmed"

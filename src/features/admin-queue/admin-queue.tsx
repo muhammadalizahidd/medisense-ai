@@ -157,7 +157,7 @@ function Reassign({
     >
       <span className="text-small font-semibold">Reassign this task</span>
       {suggestion && (
-        <span className="text-caption font-medium text-brass">
+        <span className="text-caption font-medium text-ink-700">
           AI suggests {suggestion.owner}: {suggestion.reason}
         </span>
       )}
@@ -259,7 +259,7 @@ export function AdminQueue() {
             { id: "escalated", label: "Escalated", count: count("escalated") },
           ]}
         />
-        <Caption className={cn(aiSorted && "text-brass")}>
+        <Caption className={cn(aiSorted && "text-ink-700")}>
           {advice.loading
             ? "AI is sorting these…"
             : aiSorted
@@ -299,7 +299,7 @@ export function AdminQueue() {
                     <div role="cell" className="min-w-0 py-2.5">
                       <div className={cn("font-semibold", t.done && "line-through")}>{t.title}</div>
                       <div className="mt-0.5 flex items-center gap-1 text-caption font-medium text-ink-500">
-                        {t.source.startsWith("AI") && <PenNib className="size-3 text-brass" />}
+                        {t.source.startsWith("AI") && <PenNib className="size-3 text-ink-700" />}
                         {t.href && t.source === "AI from note" ? (
                           <Link href={t.href} className="font-semibold">
                             {sourceLabel(t)}

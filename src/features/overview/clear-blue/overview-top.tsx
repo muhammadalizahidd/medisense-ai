@@ -57,10 +57,6 @@ import { useDemoStore } from "@/state/demo-store";
 import { adjustClinician } from "@/state/story-selectors";
 import { Panel } from "./blue-overview";
 
-/** Stock photograph from Unsplash (free licence), faded into the hero wash. */
-const HERO_PHOTO =
-  "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=1400&q=80";
-
 export function useFigures() {
   const notes = useDemoStore((s) => s.caseNotes);
   const tasks = useDemoStore((s) => s.tasks);
@@ -88,64 +84,30 @@ function useVisits() {
 export function Hero() {
   const dayOffset = useDemoStore((s) => s.story.dayOffset);
   const [place] = organisation.location.split(" · ");
+  const first = currentUser.name.split(" ")[0];
 
   return (
     <section
       aria-label="Welcome"
-      className="relative isolate overflow-hidden rounded-card border border-border bg-linear-to-r from-surface via-surface to-accent-tint"
+      className="flex flex-wrap items-end justify-between gap-6 rounded-card border border-border bg-surface px-5 py-6 md:px-8 md:py-7"
     >
-      {/* Photograph, faded in from the left so the greeting stays on a clean surface. */}
-      <div
-        aria-hidden="true"
-        className="absolute inset-y-0 right-0 -z-10 hidden w-[48%] bg-cover opacity-75 mix-blend-multiply sm:block"
-        style={{
-          backgroundImage: `url(${HERO_PHOTO})`,
-          backgroundPosition: "58% 62%",
-          maskImage: "linear-gradient(to right, transparent 0%, black 38%)",
-          WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 38%)",
-        }}
-      />
-      {/* Soft accent wave along the bottom edge. */}
-      <svg
-        aria-hidden="true"
-        viewBox="0 0 1200 220"
-        preserveAspectRatio="none"
-        className="pointer-events-none absolute right-0 bottom-0 -z-10 h-[70%] w-[78%] text-accent-fill"
-      >
-        <path
-          d="M0 220 C 260 220 380 120 620 110 C 820 102 900 190 1200 150 L1200 220 Z"
-          fill="currentColor"
-          fillOpacity="0.1"
-        />
-        <path
-          d="M300 220 C 520 210 620 150 800 150 C 960 150 1040 210 1200 196 L1200 220 Z"
-          fill="currentColor"
-          fillOpacity="0.16"
-        />
-      </svg>
-
-      <div className="relative px-6 py-7 sm:px-8 sm:py-8">
-        <p className="text-h2 font-medium text-ink-900">Good morning,</p>
-        <h1 className="mt-1 type-display text-[40px] leading-11 font-semibold text-accent">
-          {currentUser.name}
+      <div className="min-w-0">
+        <p className="flex flex-wrap items-center gap-x-3 gap-y-1 label-caps">
+          <span className="flex items-center gap-1.5">
+            <CalendarDays className="size-3.5" strokeWidth={1.75} aria-hidden="true" />
+            {longDate(dayOffset)} · {formatTime(NOW)}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <MapPin className="size-3.5" strokeWidth={1.75} aria-hidden="true" />
+            {place}
+          </span>
+        </p>
+        <h1 className="mt-2 type-display text-h1 text-ink-900 md:text-display">
+          Good morning, {first}
         </h1>
-        <p className="mt-2 text-body text-ink-700">
+        <p className="mt-2 text-body text-ink-700 md:text-[15px]">
           Here&apos;s what&apos;s happening across your service today.
         </p>
-        <dl className="mt-5 flex flex-wrap gap-x-8 gap-y-2 text-small text-ink-700">
-          <div className="flex items-center gap-2">
-            <CalendarDays className="size-5 text-ink-700" strokeWidth={1.5} aria-hidden="true" />
-            <dt className="sr-only">Today</dt>
-            <dd>
-              {longDate(dayOffset)} · {formatTime(NOW)}
-            </dd>
-          </div>
-          <div className="flex items-center gap-2">
-            <MapPin className="size-5 text-ink-700" strokeWidth={1.5} aria-hidden="true" />
-            <dt className="sr-only">Location</dt>
-            <dd>{place}</dd>
-          </div>
-        </dl>
       </div>
     </section>
   );

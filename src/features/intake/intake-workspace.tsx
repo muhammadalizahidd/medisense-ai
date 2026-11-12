@@ -367,8 +367,8 @@ function ReferralDetail({
 
         <div className="bg-surface px-5 py-4">
           <div className="mb-2 flex items-center justify-between gap-2">
-            <span className="flex items-center gap-1.5 label-caps text-brass">
-              <PenNib className="size-3.5 text-brass" />
+            <span className="flex items-center gap-1.5 label-caps text-ink-700">
+              <PenNib className="size-3.5 text-ink-700" />
               AI-extracted details
             </span>
             <Caption>Hover to see the source line</Caption>
