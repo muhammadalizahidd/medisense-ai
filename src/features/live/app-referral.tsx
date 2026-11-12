@@ -95,7 +95,7 @@ const path: { label: string; statuses: ReferralStatus[] }[] = [
   { label: "Accepted", statuses: ["Accepted", "Closed"] },
 ];
 
-/** Progress of a referral that isn't accepted yet, seen with the email and app code. */
+/** Progress of a referral that isn't accepted yet, seen with its app code. */
 export function PendingReferral({
   referral: r,
   onRefresh,
@@ -154,7 +154,7 @@ export function PendingReferral({
         </p>
       )}
       <p className="mt-4 text-caption text-ink-700">
-        When it&apos;s accepted, sign in again with the same email and code and choose a password.
+        When it&apos;s accepted, enter the same code again and your app opens.
       </p>
       <div className="mt-3 flex gap-2">
         <Button size="sm" onClick={onRefresh}>

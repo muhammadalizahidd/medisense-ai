@@ -1200,9 +1200,8 @@ function ReferralSent({
           </div>
           <p className="mt-2 text-caption text-ink-700">
             {mode === "staff" ? "Give this to the family. They" : "Keep this code. You"} open the
-            Medisense patient app, choose <strong>I have a code</strong>, and enter{" "}
-            <strong>{sent.appEmail}</strong> with this code. Until the referral is accepted it shows
-            progress; once accepted, the same code sets up the app account.
+            Medisense patient app, choose <strong>I have a code</strong> and enter this code. Until
+            the referral is accepted it shows progress; once accepted, the same code opens the app.
           </p>
         </div>
         <div className="mt-5 rounded-control border border-border bg-canvas p-4 text-left">

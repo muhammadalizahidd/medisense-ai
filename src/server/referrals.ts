@@ -1042,6 +1042,16 @@ export async function aiReferralReview(id: ObjectId) {
  * The app code before acceptance: with the email from the referral, it shows the referral's
  * progress in the patient app. Nothing personal is shown, as with the tracking link.
  */
+/** A referral that isn't accepted yet, found by its app code alone. */
+export async function referralByCodeOnly(code: string) {
+  const { referrals } = await collections();
+  const r = await referrals.findOne({
+    "access.codeHash": sha256(code.trim().toUpperCase()),
+    "access.expiresAt": { $gt: new Date() },
+  });
+  return r ? publicView(r) : null;
+}
+
 export async function referralByCode(email: string, code: string) {
   const { referrals } = await collections();
   const hash = sha256(code.trim().toUpperCase());

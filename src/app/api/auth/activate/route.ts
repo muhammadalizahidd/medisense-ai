@@ -1,45 +1,71 @@
+import { createHash } from "node:crypto";
 import { z } from "zod";
 import { allowAttempt, hashPassword, inviteMatches, startSession } from "@/server/auth";
 import { collections } from "@/server/db";
 import { handle, readJson, UserFacingError } from "@/server/http";
-import { referralByCode } from "@/server/referrals";
+import { referralByCode, referralByCodeOnly } from "@/server/referrals";
 import { sessionUser } from "@/server/session-user";
 
 const schema = z.object({
-  email: z.string().trim().toLowerCase().min(3),
+  /** Optional: the code alone identifies the patient. */
+  email: z.string().trim().toLowerCase().max(200).default(""),
   code: z.string().trim().min(6).max(12),
-  /** Not needed to check a referral's progress; required to activate an account. */
+  /** Optional. A patient can also set a password to sign in with email later. */
   password: z.string().max(200).default(""),
 });
 
+const sha256 = (value: string) => createHash("sha256").update(value).digest("hex");
+
+/** How long a code keeps working after each sign-in with it. */
+const CODE_DAYS = 90;
+
 /**
- * A patient signs in for the first time with their email and code (from their referral, or from
- * the care team), choosing a password. Before the referral is accepted, the same email and code
- * show its progress instead.
+ * A patient signs in with the code from their referral or from the care team. The code alone is
+ * enough: once the referral is accepted it opens the patient app; before that it shows the
+ * referral's progress. Each sign-in keeps the code working for another 90 days.
  */
 export async function POST(request: Request) {
   return handle(async () => {
     const { email, code, password } = await readJson(request, schema);
-    if (!allowAttempt(`activate:${email}`)) {
+    const from = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
+    if (!allowAttempt(`activate:${email || from}`)) {
       throw new UserFacingError("Too many attempts. Wait a minute and try again.");
     }
     const { users } = await collections();
-    const user = await users.findOne({ email, role: "client" });
-    if (!user || user.passwordHash || !inviteMatches(user, code)) {
-      const pending = !user ? await referralByCode(email, code) : null;
+    const now = new Date();
+
+    const user = email
+      ? await users.findOne({ email, role: "client" })
+      : await users.findOne({
+          role: "client",
+          "invite.codeHash": sha256(code.toUpperCase()),
+          "invite.expiresAt": { $gt: now },
+        });
+
+    if (!user || !inviteMatches(user, code)) {
+      const pending = user
+        ? null
+        : email
+          ? await referralByCode(email, code)
+          : await referralByCodeOnly(code);
       if (pending) return { pending: true, referral: pending };
       throw new UserFacingError(
-        "That email and code don't match a referral or an open invite. Check them, or ask your care team for a new code.",
+        "That code doesn't match a referral or an account. Check it, or ask your care team for a new code.",
       );
     }
-    if (password.length < 10) {
-      throw new UserFacingError(
-        "Your referral is accepted. Choose a password of at least 10 characters.",
-      );
+    if (user.disabled) throw new UserFacingError("This account is closed. Ask your care team.");
+    if (password && password.length < 10) {
+      throw new UserFacingError("A password needs at least 10 characters, or leave it blank.");
     }
+
     await users.updateOne(
       { _id: user._id },
-      { $set: { passwordHash: await hashPassword(password), invite: null } },
+      {
+        $set: {
+          ...(password ? { passwordHash: await hashPassword(password) } : {}),
+          "invite.expiresAt": new Date(now.getTime() + CODE_DAYS * 86_400_000),
+        },
+      },
     );
     await startSession(user._id);
     return { user: sessionUser(user) };

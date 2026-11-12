@@ -64,7 +64,6 @@ export function SignInForm({
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
   const [code, setCode] = useState(initialCode);
-  const [confirm, setConfirm] = useState("");
   const [show, setShow] = useState(false);
   const [capsLock, setCapsLock] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -77,12 +76,12 @@ export function SignInForm({
   async function submit(event: FormEvent) {
     event.preventDefault();
     setError(null);
-    if (!email.includes("@")) {
+    if (!activating && !email.includes("@")) {
       setError("Enter the email address for your account.");
       return;
     }
-    if (activating && password && password !== confirm) {
-      setError("The two passwords don't match.");
+    if (activating && code.trim().length < 6) {
+      setError("Enter the code from your referral or your care team.");
       return;
     }
     setBusy(true);
@@ -92,10 +91,10 @@ export function SignInForm({
         pending?: boolean;
         referral?: PublicReferralDto;
       }>(activating ? "/api/auth/activate" : "/api/auth/login", {
-        body: activating ? { email, code, password } : { email, password },
+        body: activating ? { code } : { email, password },
       });
       if (result.pending && result.referral) {
-        onPending?.(result.referral, { email, code });
+        onPending?.(result.referral, { email: "", code });
         setBusy(false);
         return;
       }
@@ -138,30 +137,33 @@ export function SignInForm({
       />
       {activating && (
         <p className="rounded-control bg-accent-tint px-3 py-2 text-caption text-ink-700">
-          Use your email and the 8-character code from your referral (or from your care team). Leave
-          the password blank to see your referral&apos;s progress; once it&apos;s accepted, choose a
-          password to set up your account.
+          Enter the 8-character code from your referral or from your care team. That&apos;s all you
+          need: before the referral is accepted it shows its progress, and after that it opens your
+          app.
         </p>
       )}
-      <IconField id="email" label="Email" icon={<Mail className="size-4" />}>
-        <input
-          id="email"
-          type="email"
-          autoComplete="email"
-          inputMode="email"
-          required
-          placeholder="name@example.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className={inputBare}
-        />
-      </IconField>
+      {!activating && (
+        <IconField id="email" label="Email" icon={<Mail className="size-4" />}>
+          <input
+            id="email"
+            type="email"
+            autoComplete="email"
+            inputMode="email"
+            required
+            placeholder="name@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className={inputBare}
+          />
+        </IconField>
+      )}
       {activating && (
         <IconField id="code" label="Code" icon={<KeyRound className="size-4" />}>
           <input
             id="code"
             required
             autoComplete="one-time-code"
+            autoFocus
             placeholder="ABCD2345"
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
@@ -170,39 +172,23 @@ export function SignInForm({
           />
         </IconField>
       )}
-      <IconField
-        id="password"
-        label={activating ? "Choose a password" : "Password"}
-        icon={<Lock className="size-4" />}
-        trailing={eye}
-        hint={
-          capsLock ? (
-            <span className="text-watch">Caps Lock is on.</span>
-          ) : activating ? (
-            "At least 10 characters. Leave blank to check a referral."
-          ) : undefined
-        }
-      >
-        <input
+      {!activating && (
+        <IconField
           id="password"
-          type={show ? "text" : "password"}
-          required={!activating}
-          autoComplete={activating ? "new-password" : "current-password"}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          onKeyUp={watchCaps}
-          onKeyDown={watchCaps}
-          className={inputBare}
-        />
-      </IconField>
-      {activating && (
-        <IconField id="confirm" label="Confirm password" icon={<Lock className="size-4" />}>
+          label="Password"
+          icon={<Lock className="size-4" />}
+          trailing={eye}
+          hint={capsLock ? <span className="text-watch">Caps Lock is on.</span> : undefined}
+        >
           <input
-            id="confirm"
+            id="password"
             type={show ? "text" : "password"}
-            autoComplete="new-password"
-            value={confirm}
-            onChange={(e) => setConfirm(e.target.value)}
+            required
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            onKeyUp={watchCaps}
+            onKeyDown={watchCaps}
             className={inputBare}
           />
         </IconField>
@@ -220,13 +206,7 @@ export function SignInForm({
         {busy && (
           <Loader2 className="size-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
         )}
-        {busy
-          ? "Signing in…"
-          : activating
-            ? password
-              ? "Activate and sign in"
-              : "Continue"
-            : "Sign in"}
+        {busy ? "Signing in…" : activating ? "Continue" : "Sign in"}
       </Button>
     </form>
   );
