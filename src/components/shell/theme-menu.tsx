@@ -2,11 +2,13 @@
 
 import { Check, Palette } from "lucide-react";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import Link from "next/link";
 import {
   DEFAULT_APPEARANCE,
+  loadAppearance,
+  persistAppearance,
   saveAppearance,
   THEMES,
-  type Appearance,
   type ThemeId,
 } from "@/app/theme-script";
 import { cn } from "@/lib/cn";
@@ -36,18 +38,6 @@ const groups = [
   { label: "Light", ids: ids.filter((id) => !THEMES[id].dark) },
   { label: "Dark", ids: ids.filter((id) => THEMES[id].dark) },
 ];
-
-/** The saved appearance on this device, merged with the defaults. */
-function savedAppearance(): Appearance {
-  try {
-    const saved = JSON.parse(
-      localStorage.getItem("ms-appearance") ?? "null",
-    ) as Partial<Appearance>;
-    return { ...DEFAULT_APPEARANCE, ...saved };
-  } catch {
-    return DEFAULT_APPEARANCE;
-  }
-}
 
 /** The theme on <html>, kept in step by watching its data-theme attribute. */
 function subscribe(listener: () => void) {
@@ -89,7 +79,9 @@ export function ThemeMenu() {
 
   function choose(id: ThemeId) {
     // Choosing a theme brings its paired accent with it.
-    saveAppearance({ ...savedAppearance(), theme: id, accent: "paired" });
+    const next = { ...loadAppearance(), theme: id, accent: "paired" as const };
+    saveAppearance(next);
+    persistAppearance(next);
   }
 
   return (
@@ -147,6 +139,13 @@ export function ThemeMenu() {
               ))}
             </div>
           ))}
+          <Link
+            href="/profile#appearance"
+            onClick={() => setOpen(false)}
+            className="mt-1.5 flex h-9 items-center justify-center rounded-control border-t border-border text-small font-semibold text-accent hover:bg-sunken hover:no-underline"
+          >
+            All appearance settings
+          </Link>
         </div>
       )}
     </div>

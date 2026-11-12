@@ -38,6 +38,7 @@ import {
   Skeleton,
   Stars,
 } from "@/features/live/bits";
+import { AppearanceSettings } from "@/features/appearance/appearance-settings";
 import { Choice, TextArea, TextField, Tick } from "@/features/live/form-bits";
 
 function Row({ label, children }: { label: string; children: ReactNode }) {
@@ -361,6 +362,8 @@ export function Gallery() {
           <Skeleton className="h-3 w-2/3" />
         </div>
       </div>
+
+      <AppearanceSettings />
 
       {sheet && (
         <Sheet

@@ -22,6 +22,8 @@ import type {
 import type { Gap, ReferralInput, ReferralStatus } from "@/lib/live/referral";
 import type { RecordingStatus } from "@/lib/live/telehealth";
 
+import type { Appearance } from "@/app/theme-script";
+
 export type UserRole = "admin" | "therapist" | "client";
 
 export interface UserDoc {
@@ -39,6 +41,8 @@ export interface UserDoc {
   disabled?: boolean;
   /** Admin responsibilities; a Clinical Lead or Super Admin makes clinical triage decisions. */
   staffRoles?: StaffRole[];
+  /** Theme, accent, typeface, density and text size, saved from Appearance. */
+  appearance?: Appearance;
   createdAt: Date;
 }
 

@@ -5,9 +5,11 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, extname } from "node:path";
 
 const ROOTS = ["src"];
-// design-preview holds retired mock-ups that only redirect.
+// design-preview holds retired mock-ups that only redirect. lib/appearance.ts holds colour previews
+// of other themes and the custom-accent maths, which need literal values.
 const SKIP = [
   /design-preview/,
+  /lib[\\/]appearance\.ts$/,
   /globals\.css$/,
   /theme-script\.tsx$/,
   /fonts\.ts$/,

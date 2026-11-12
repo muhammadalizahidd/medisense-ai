@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page";
 import { Field, inputClass } from "@/components/ui/sheet";
+import { AppearanceSettings } from "@/features/appearance/appearance-settings";
 import { api, useResource } from "@/lib/live/client";
 import type { SessionUser, TherapistDetailDto } from "@/lib/live/types";
 import { AvailabilityEditor } from "./availability-editor";
@@ -58,6 +59,9 @@ export function ProfilePage() {
         <div className="xl:col-span-5">
           <PasswordForm />
         </div>
+      </div>
+      <div className="mb-6">
+        <AppearanceSettings />
       </div>
       {therapist && (
         <>

@@ -1,3 +1,4 @@
+import type { Appearance } from "@/app/theme-script";
 import type {
   CaseloadStatus,
   Discipline,
@@ -22,6 +23,7 @@ export type SessionUser = {
   email: string;
   role: Role;
   staffRoles: StaffRole[];
+  appearance: Appearance | null;
 };
 
 export type NeedStatus = "needs-therapist" | "waiting" | "assigned" | "completed";

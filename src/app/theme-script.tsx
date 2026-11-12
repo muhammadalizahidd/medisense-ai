@@ -102,6 +102,27 @@ export function ThemeScript() {
   return <script dangerouslySetInnerHTML={{ __html: script }} />;
 }
 
+/** The appearance saved on this device, merged with the defaults. */
+export function loadAppearance(): Appearance {
+  try {
+    const saved = JSON.parse(
+      localStorage.getItem("ms-appearance") ?? "null",
+    ) as Partial<Appearance> | null;
+    return { ...DEFAULT_APPEARANCE, ...(saved ?? {}) };
+  } catch {
+    return DEFAULT_APPEARANCE;
+  }
+}
+
+/** Saves to the signed-in person's profile so the choice follows them; quiet if signed out. */
+export function persistAppearance(next: Appearance) {
+  void fetch("/api/me/appearance", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(next),
+  }).catch(() => undefined);
+}
+
 /** Call from the Appearance page / top-bar menu after a change. */
 export function saveAppearance(next: Appearance) {
   const h = document.documentElement;
@@ -130,5 +151,6 @@ export function saveAppearance(next: Appearance) {
   if (next.accent === "custom" && next.custom)
     for (const [k, v] of Object.entries(next.custom)) h.style.setProperty(k, v);
   window.setTimeout(() => h.classList.remove("theme-transition"), 300);
+  window.dispatchEvent(new Event("ms-appearance"));
   // Then persist to the user's profile (server action / API) so it follows them across devices.
 }
