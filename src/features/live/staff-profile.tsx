@@ -29,6 +29,7 @@ import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/premium";
+import { PhotoEdit } from "@/components/ui/photo-picker";
 import { Select } from "@/components/ui/select";
 import { Field, Sheet } from "@/components/ui/sheet";
 import { Tag } from "@/components/ui/tag";
@@ -200,7 +201,14 @@ export function StaffIdentity({
     <section className="mb-6 overflow-hidden rounded-card border border-border bg-surface shadow-lift">
       <div className="flex flex-wrap items-start gap-5 p-6">
         <div className="relative flex-none">
-          <Avatar name={s.name} size={72} className="ring-4 ring-accent-tint" />
+          <PhotoEdit
+            owner="therapist"
+            id={s.id}
+            name={s.name}
+            photoUrl={s.photoUrl}
+            kind="staff"
+            className="ring-4 ring-accent-tint"
+          />
           <span
             aria-hidden="true"
             className={cn(
@@ -1359,11 +1367,7 @@ export function StaffActivity({ s }: { s: StaffRecordDto }) {
 }
 
 /** A therapist's own credentials: they add evidence for review; only a Clinical Lead verifies. */
-export function MyCredentials() {
-  const resource = useResource<{ staff: StaffRecordDto }>(
-    "/api/me/staff",
-    (e) => e.type === "care",
-  );
+export function MyCredentials({ s, onSaved }: { s: StaffRecordDto; onSaved: () => void }) {
   const [busy, setBusy] = useState(false);
   const act: StaffAct = async (body) => {
     setBusy(true);
@@ -1372,7 +1376,7 @@ export function MyCredentials() {
         body: { credential: (body as { credential: unknown }).credential },
       });
       toast("Submitted for review", { tone: "success", detail: "A Clinical Lead verifies it." });
-      resource.reload();
+      onSaved();
       return true;
     } catch (e) {
       toast("Couldn't submit", { tone: "error", detail: e instanceof Error ? e.message : "" });
@@ -1381,11 +1385,5 @@ export function MyCredentials() {
       setBusy(false);
     }
   };
-  const s = resource.data?.staff;
-  if (!s) return null;
-  return (
-    <div className="mb-6">
-      <CredentialsTab s={s} busy={busy} act={act} />
-    </div>
-  );
+  return <CredentialsTab s={s} busy={busy} act={act} />;
 }

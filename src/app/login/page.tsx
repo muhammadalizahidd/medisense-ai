@@ -28,6 +28,16 @@ function testAccounts(): TestAccount[] | null {
       role: "Admin · Intake, scheduling, finance",
       email: "jo.marsh@medisense.test",
     },
+    {
+      name: "Morgan Blake",
+      role: "Admin · Finance Manager (approvals)",
+      email: "morgan.blake@medisense.test",
+    },
+    {
+      name: "Sam Rivera",
+      role: "Admin · Intake and scheduling (no finance)",
+      email: "sam.rivera@medisense.test",
+    },
     ...clinicians
       .filter((c) => pick.includes(c.id))
       .map((c) => ({ name: c.name, role: c.discipline, email: staffEmail(c.name) })),
@@ -45,7 +55,14 @@ async function SignInGate({ searchParams }: { searchParams: Promise<{ next?: str
     if (!(error instanceof DatabaseUnavailable)) throw error;
     offline = true;
   }
-  return <SignInScreen next={next} offline={offline} testAccounts={testAccounts()} />;
+  return (
+    <SignInScreen
+      next={next}
+      offline={offline}
+      testAccounts={testAccounts()}
+      oneClick={process.env.HIDE_TEST_ACCOUNTS !== "1"}
+    />
+  );
 }
 
 export default function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {

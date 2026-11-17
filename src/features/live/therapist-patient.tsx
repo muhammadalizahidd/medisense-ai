@@ -14,6 +14,7 @@ import { DischargeSheet } from "./care-sheets";
 import { ClinicalPanel } from "./clinical-panel";
 import { DocumentList } from "./client-detail";
 import { useConversations } from "./conversations";
+import { ServiceLimits } from "./therapist-funding";
 import { VisitList } from "./visit-list";
 
 /**
@@ -164,6 +165,7 @@ export function TherapistPatient({ clientId }: { clientId: string }) {
       </TabPanel>
       <TabPanel id="details" value={tab}>
         <div className="grid gap-6 lg:grid-cols-2">
+          <ServiceLimits clientId={p.id} />
           <Panel title="Details">
             <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-small">
               <dt className="text-ink-500">Phone</dt>

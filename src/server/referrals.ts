@@ -1,4 +1,5 @@
 import "server-only";
+import { carryReferralPhoto } from "./photos";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { Binary, ObjectId } from "mongodb";
 import { z } from "zod";
@@ -177,7 +178,19 @@ async function tellAdmins(referralId: ObjectId, note?: { title: string; body: st
  * Lifecycle phases 1–2: a referral arrives (from anyone, no account needed), gets a reference and
  * a private tracking link, and the completeness and duplicate checks run straight away.
  */
-export async function submitReferral(raw: unknown, files: IncomingFile[], staff: UserDoc | null) {
+/** A referral sent by a signed-in patient: filed under their MRN and linked to their record. */
+async function patientReference(mrn: string, skip = 0) {
+  const { referrals } = await collections();
+  const taken = (await referrals.countDocuments({ mrn })) + skip;
+  return taken ? `${referralReferenceFor(mrn)}-${taken + 1}` : referralReferenceFor(mrn);
+}
+
+export async function submitReferral(
+  raw: unknown,
+  files: IncomingFile[],
+  staff: UserDoc | null,
+  patient: ClientDoc | null = null,
+) {
   const input = referralSchema.parse(raw);
   if (input.participant.dateOfBirth > brisbaneDay(new Date()).toISOString().slice(0, 10)) {
     throw new UserFacingError("The date of birth can't be in the future.");
@@ -189,14 +202,16 @@ export async function submitReferral(raw: unknown, files: IncomingFile[], staff:
   const _id = new ObjectId();
   const token = randomBytes(24).toString("base64url");
   const now = new Date();
-  let mrn = await nextMrn(db, now);
+  // A signed-in patient keeps their MRN, so the referral shows in their app straight away.
+  const known = patient?.mrn ? patient : null;
+  let mrn = known?.mrn ?? (await nextMrn(db, now));
   const stored = await storeFiles(files, { referralId: _id, clientId: null }, input.submitter.name);
   const gaps = completenessGaps(input, stored);
   const duplicates = await findDuplicates(input, _id);
   const by = staff?.name ?? input.submitter.name;
   const doc: ReferralDoc = {
     _id,
-    reference: referralReferenceFor(mrn),
+    reference: known ? await patientReference(mrn) : referralReferenceFor(mrn),
     mrn,
     trackingHash: sha256(token),
     access: { codeHash: mrnHash(mrn), ...mrnAccess(now) },
@@ -210,7 +225,10 @@ export async function submitReferral(raw: unknown, files: IncomingFile[], staff:
     gaps,
     infoRequests: [],
     duplicates,
-    duplicateDecision: null,
+    // The patient signed in with their MRN, so this is them: no duplicate to decide.
+    duplicateDecision: known
+      ? { clientId: known._id, byName: "Signed-in patient (MRN verified)", at: now }
+      : null,
     owner: staff ? { id: staff._id, name: staff.name } : null,
     triage: null,
     fundingReview: null,
@@ -237,6 +255,10 @@ export async function submitReferral(raw: unknown, files: IncomingFile[], staff:
       await referrals.insertOne(doc);
       break;
     } catch (error) {
+      if (attempt < 3 && (error as { code?: number }).code === 11000 && known) {
+        doc.reference = await patientReference(mrn, attempt + 1);
+        continue;
+      }
       if (attempt < 3 && (error as { code?: number }).code === 11000) {
         mrn = await nextMrn(db, now);
         doc.mrn = mrn;
@@ -322,7 +344,18 @@ async function setStatus(
 
 /** The submitter answers a request for information through their secure link. */
 export async function answerInfoRequest(token: string, answer: string, files: IncomingFile[]) {
-  const referral = await byToken(token);
+  await answerInfo(await byToken(token), answer, files);
+}
+
+/** A signed-in patient's own referral, found by its reference and their MRN. */
+export async function patientReferral(mrn: string, reference: string) {
+  const { referrals } = await collections();
+  const referral = await referrals.findOne({ reference, mrn });
+  if (!referral) throw new UserFacingError("Referral not found.", 404);
+  return referral;
+}
+
+export async function answerInfo(referral: ReferralDoc, answer: string, files: IncomingFile[]) {
   const open = referral.infoRequests.find((q) => !q.answeredAt);
   if (!open || referral.status !== "Needs Information") {
     throw new UserFacingError("There's nothing waiting for an answer.", 409);
@@ -375,24 +408,21 @@ export async function answerInfoRequest(token: string, answer: string, files: In
 }
 
 export async function withdrawByToken(token: string) {
-  const referral = await byToken(token);
-  const updated = await setStatus(
-    referral,
-    "Withdrawn",
-    referral.data.submitter.name,
-    "By the submitter",
-    {
-      outcome: {
-        reason: "Withdrawn by the submitter",
-        byName: referral.data.submitter.name,
-        at: new Date(),
-      },
+  await withdrawReferral(await byToken(token), "Withdrawn by the submitter");
+}
+
+export async function withdrawReferral(referral: ReferralDoc, reason: string) {
+  const updated = await setStatus(referral, "Withdrawn", referral.data.submitter.name, reason, {
+    outcome: {
+      reason,
+      byName: referral.data.submitter.name,
+      at: new Date(),
     },
-  );
+  });
   await log(referral.data.submitter.name, null, "Withdrew the referral", updated);
   await tellAdmins(referral._id, {
     title: `Referral ${referral.reference} withdrawn`,
-    body: "The submitter withdrew it through their tracking link.",
+    body: reason,
   });
 }
 
@@ -1043,7 +1073,14 @@ async function accept(
   }
 
   // Documents follow the participant, so the therapist sees them on the record.
+  await carryReferralPhoto(r._id, clientId);
   await db.documents.updateMany({ referralId: r._id }, { $set: { clientId } });
+  // Module 06, workflow step 1: the funding draft follows the participant (participant-reported).
+  {
+    const { planFromReferral } = await import("./funding");
+    await planFromReferral(r, clientId, admin.name);
+    await db.fundingPlans.updateMany({ referralId: r._id }, { $set: { clientId } });
+  }
   const updated = await setStatus(
     r,
     "Accepted",
@@ -1160,6 +1197,7 @@ export async function documentFile(user: UserDoc, id: ObjectId) {
   const doc = await documents.findOne({ _id: id });
   if (!doc) throw new UserFacingError("Document not found.", 404);
   if (user.role === "therapist") {
+    if (doc.area === "funding") throw new UserFacingError("Document not found.", 404);
     const client = doc.clientId ? await clients.findOne({ _id: doc.clientId }) : null;
     const mine = user.therapistId;
     if (

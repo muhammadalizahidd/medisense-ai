@@ -94,7 +94,8 @@ export function useLiveEvents(onEvent: Listener, enabled = true) {
 }
 
 export function useLiveStatus() {
-  const [value, setValue] = useState(status);
+  // Server and first client render agree on "connecting"; the real state arrives after mount.
+  const [value, setValue] = useState<typeof status>("connecting");
   useEffect(() => {
     const update = () => setValue(status);
     statusListeners.add(update);

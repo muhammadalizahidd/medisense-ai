@@ -1,6 +1,6 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
-import type { Db } from "mongodb";
+import { ObjectId, type Db } from "mongodb";
 import {
   fundingStreams,
   referralReferenceFor,
@@ -17,7 +17,7 @@ import type {
   TherapistDoc,
   UserDoc,
 } from "./models";
-import { seedAdmins } from "./seed";
+import { seedAdmins, staffPasswordHash } from "./seed";
 
 /** The support a discipline-only service request from before referrals most likely was. */
 const supportFor = (discipline: string): Support =>
@@ -64,6 +64,32 @@ export async function migrate(db: Db) {
       { email: admin.email, staffRoles: { $exists: false } },
       { $set: { staffRoles: admin.staffRoles } },
     );
+  }
+  // Module 07: invoice statuses renamed to the specification's names.
+  const invoices = db.collection("invoices");
+  for (const [from, to] of [
+    ["Ready for Review", "Pending Approval"],
+    ["Partially Paid", "Part-Paid"],
+    ["Adjusted", "Issued"],
+  ]) {
+    await invoices.updateMany({ status: from }, { $set: { status: to } });
+  }
+  // Admin accounts added to the seed later (Sam Rivera, Module 06) are created once.
+  for (const admin of seedAdmins) {
+    if (await users.findOne({ email: admin.email }, { projection: { _id: 1 } })) continue;
+    const passwordHash = await staffPasswordHash();
+    if (!passwordHash) continue;
+    await users.insertOne({
+      _id: new ObjectId(),
+      ...admin,
+      role: "admin",
+      passwordHash,
+      invite: null,
+      therapistId: null,
+      clientId: null,
+      createdAt: new Date(),
+    });
+    serverLog(`Added demo admin ${admin.name}.`);
   }
 
   const clients = db.collection<ClientDoc>("clients");

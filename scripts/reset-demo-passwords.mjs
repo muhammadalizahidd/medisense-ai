@@ -17,7 +17,8 @@ if (existsSync(".env.local")) {
 const uri = env.CONNECTION_STRING ?? env.MONGODB_URI;
 const password = env.SEED_PASSWORD;
 if (!uri) throw new Error("CONNECTION_STRING is not set.");
-if (!password || password.length < 10) throw new Error("SEED_PASSWORD needs at least 10 characters.");
+if (!password || password.length < 10)
+  throw new Error("SEED_PASSWORD needs at least 10 characters.");
 
 const client = await MongoClient.connect(uri);
 try {

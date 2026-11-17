@@ -1,4 +1,5 @@
 import "server-only";
+import { photoUrl } from "./photos";
 import type { ObjectId } from "mongodb";
 import type {
   AppointmentDto,
@@ -71,6 +72,7 @@ export function clientSummary(client: ClientDoc, therapists: NameLookup): Client
   return {
     id: client._id.toHexString(),
     name: client.name,
+    photoUrl: photoUrl("client", client._id, client.photoAt),
     suburb: client.suburb,
     region: client.region,
     funding: client.funding,

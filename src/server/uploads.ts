@@ -32,7 +32,13 @@ export async function readMultipart(request: Request) {
     }
   }
   const answer = form.get("answer");
-  return { referral, files, answer: typeof answer === "string" ? answer : "" };
+  const photo = form.get("photo");
+  return {
+    referral,
+    files,
+    answer: typeof answer === "string" ? answer : "",
+    photo: typeof photo === "string" && photo ? photo : null,
+  };
 }
 
 /** The caller's address, for the per-address limit on public submissions. */

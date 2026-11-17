@@ -13,7 +13,14 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/premium";
-import { AppCard, AppEmpty, AppHeader, AppSheet, PhoneFrame } from "@/features/mobile/phone-frame";
+import {
+  AppCard,
+  AppEmpty,
+  AppHeader,
+  AppSection,
+  AppSheet,
+  PhoneFrame,
+} from "@/features/mobile/phone-frame";
 import { api, signOut, useLiveEvents, useResource, useSession } from "@/lib/live/client";
 import type {
   AppointmentDto,
@@ -26,11 +33,11 @@ import { PendingReferral, ReferralOverlay, SentCard, type SentReferral } from ".
 import { ErrorNote, Skeleton } from "./bits";
 import { CancelVisitPanel } from "./cancel-visit";
 import { ChatOverlay } from "./chat-overlay";
-import { ClientVisits } from "./client-visits";
 import { PatientDetailsCard, RateVisitPanel } from "./patient-panels";
 import { ConversationList, useConversations, useUnreadMessages } from "./conversations";
 import { PatientHome } from "./patient-home";
 import { PatientProgress } from "./patient-progress";
+import { PortalCare, PortalHomeCards, PortalMe, PortalVisits } from "./patient-portal";
 import { SignInForm } from "./sign-in-form";
 
 const tabs = [
@@ -44,12 +51,13 @@ const tabs = [
 const frame = {
   name: "Patient app",
   description:
-    "For patients and families: who their therapist is, when they're coming, and a direct line to them.",
+    "For patients and families: what needs their attention, every visit, the plan their clinician shared, and their own details, documents and payments.",
   features: [
     "Sign in with your MRN from the care team",
-    "See your therapist as soon as they accept",
-    "Upcoming home visits in one place",
-    "Message your therapist in real time",
+    "Confirm, change or request visits",
+    "Read your plan, log home activities, check in weekly",
+    "Keep your details current; corrections go to staff",
+    "Documents, uploads, invoices and referrals in one place",
   ],
 };
 
@@ -70,6 +78,7 @@ export function ClientApp() {
   const signedIn = user?.role === "client";
   const referralOverlay = referring ? (
     <ReferralOverlay
+      signedIn={signedIn}
       onClose={() => setReferring(false)}
       onSent={(s) => {
         setSent(s);
@@ -225,6 +234,7 @@ export function ClientApp() {
         onOpenVisits={() => setTab("visits")}
         onSignedOut={reload}
         onRefer={() => setReferring(true)}
+        onTab={setTab}
         sent={sent}
       />
     </PhoneFrame>
@@ -240,6 +250,7 @@ function ClientTabs({
   onOpenVisits,
   onSignedOut,
   onRefer,
+  onTab,
   sent,
 }: {
   tab: string;
@@ -250,6 +261,7 @@ function ClientTabs({
   onOpenVisits: () => void;
   onSignedOut: () => void;
   onRefer: () => void;
+  onTab: (tab: string) => void;
   sent: SentReferral | null;
 }) {
   const home = useResource<ClientHomeDto>(
@@ -267,14 +279,37 @@ function ClientTabs({
     );
   const data = home.data;
 
-  if (tab === "visits") return <ClientVisits onCancel={onCancel} onRate={onRate} />;
-  if (tab === "care") return <PatientProgress data={data ?? null} />;
+  if (tab === "visits") return <PortalVisits />;
+  if (tab === "care") return <PortalCare progress={<PatientProgress data={data ?? null} bare />} />;
 
   if (tab === "messages") {
     return (
       <>
         <AppHeader eyebrow="Messages" title="Your care team" />
         <div className="px-4 pb-4">
+          {data && data.team.length > 0 && (
+            <ul className="no-scrollbar -mx-4 mb-4 flex gap-3 overflow-x-auto px-4">
+              {data.team.map((t) => (
+                <li
+                  key={t.therapistName}
+                  className="flex w-40 flex-none flex-col items-center rounded-card bg-ink-900 px-3 pt-4 pb-3 text-center text-page"
+                >
+                  <Avatar name={t.therapistName} size={64} className="ring-2 ring-page/30" />
+                  <p className="mt-2 w-full truncate text-small font-semibold">{t.therapistName}</p>
+                  <p className="text-caption opacity-70">{t.discipline}</p>
+                  <button
+                    type="button"
+                    disabled={!t.conversationId}
+                    onClick={() => t.conversationId && onChat(t.conversationId)}
+                    className="mt-3 flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full bg-page py-2 text-caption font-semibold text-ink-900 active:scale-95 disabled:opacity-50"
+                  >
+                    <MessageCircle className="size-3.5" aria-hidden="true" /> Message
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <AppSection title="Conversations" />
           {chats.data && chats.data.conversations.length === 0 ? (
             <AppEmpty icon={MessageCircle} title="No messages yet">
               You can message your therapist here as soon as they accept. We&apos;ll let you know.
@@ -299,62 +334,47 @@ function ClientTabs({
 
   if (tab === "me") {
     return (
-      <>
-        <AppHeader eyebrow="Account" title={user.name} />
-        <div className="px-4 pb-4">
-          <AppCard>
-            {data?.mrn && (
-              <div className="mb-3 border-b border-border pb-3">
-                <p className="text-caption text-ink-500">Medical record number (MRN)</p>
-                <p className="font-mono text-section font-semibold">{data.mrn}</p>
-                <p className="mt-1 text-caption text-ink-500">
-                  Use it to sign in. Keep it private, like a password.
-                </p>
-              </div>
+      <PortalMe
+        footer={
+          <>
+            <AppSection title="More" />
+            {data && (
+              <PatientDetailsCard
+                key={JSON.stringify([data.phone, data.emergencyContact])}
+                home={data}
+                onSaved={home.reload}
+              />
             )}
-            <p className="text-caption text-ink-500">Signed in as</p>
-            <p className="text-small font-semibold break-all">{user.email}</p>
-          </AppCard>
-          {data && (
-            <PatientDetailsCard
-              key={JSON.stringify([data.phone, data.emergencyContact])}
-              home={data}
-              onSaved={home.reload}
-            />
-          )}
-          <AppCard title="Need another service?">
-            {sent ? (
-              <p className="text-small text-ink-700">
-                Referral <strong>{sent.reference}</strong> sent. The care team will be in touch;
-                it&apos;s added to your record once accepted.
-              </p>
-            ) : (
+            <AppCard title="Need another service?">
               <p className="mb-3 text-small text-ink-700">
-                Ask for another therapy or assessment, for you or someone you care for.
+                {sent
+                  ? `Referral ${sent.reference} sent. The care team will be in touch.`
+                  : "Ask for another therapy or assessment, for you or someone you care for."}
               </p>
-            )}
-            <Button className="mt-2 w-full" onClick={onRefer}>
-              <ClipboardPlus className="size-4" aria-hidden="true" />
-              Request another service
+              <Button className="w-full" onClick={onRefer}>
+                <ClipboardPlus className="size-4" aria-hidden="true" />
+                Request another service
+              </Button>
+            </AppCard>
+            <Button
+              className="w-full"
+              onClick={async () => {
+                await signOut();
+                onSignedOut();
+              }}
+            >
+              <LogOut className="size-4" aria-hidden="true" />
+              Sign out
             </Button>
-          </AppCard>
-          <Button
-            className="w-full"
-            onClick={async () => {
-              await signOut();
-              onSignedOut();
-            }}
-          >
-            <LogOut className="size-4" aria-hidden="true" />
-            Sign out
-          </Button>
-        </div>
-      </>
+          </>
+        }
+      />
     );
   }
 
   return (
     <PatientHome
+      top={<PortalHomeCards onTab={onTab} />}
       first={first ?? ""}
       data={data ?? null}
       conversations={chats.data?.conversations ?? []}

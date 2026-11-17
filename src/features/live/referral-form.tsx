@@ -15,6 +15,7 @@ import {
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Button, ButtonLink } from "@/components/ui/button";
+import { PhotoPicker } from "@/components/ui/photo-picker";
 import { Field } from "@/components/ui/sheet";
 import { Select } from "@/components/ui/select";
 import { useNow, useToday } from "@/lib/live/client";
@@ -43,8 +44,9 @@ import {
 } from "@/lib/live/referral";
 import { cn } from "@/lib/cn";
 import { Skeleton } from "./bits";
-import { Choice, FormGroup, TextArea, TextField, Tick } from "./form-bits";
+import { Choice, DateField, FormGroup, TextArea, TextField, Tick } from "./form-bits";
 import { SupportPicker } from "./support-picker";
+import type { KnownPatient } from "@/lib/live/referral";
 
 type Step = { id: string; title: string; caption: string; paths: string[] };
 
@@ -104,6 +106,8 @@ type Props = {
   staffName?: string;
   /** Inside the patient app: tells the app when it's sent, and offers a way back. */
   embedded?: boolean;
+  /** A signed-in patient: their verified details start the form, and stay editable. */
+  known?: KnownPatient | null;
 };
 
 /** Sets a value deep inside the form by its dotted path, without mutating the original. */
@@ -147,12 +151,38 @@ function readDraft(key: string): Draft | null {
   }
 }
 
-function ReferralFormBody({ mode, staffName, embedded = false }: Props) {
-  const draftKey = `medisense-referral-draft-${embedded ? "app" : mode}`;
+function ReferralFormBody({ mode, staffName, embedded = false, known = null }: Props) {
+  const draftKey = `medisense-referral-draft-${known ? `app-${known.mrn}` : embedded ? "app" : mode}`;
   const [draft] = useState(() => readDraft(draftKey));
   const [form, setForm] = useState<ReferralInput>(() => {
     if (draft) return draft.form;
     const blank = emptyReferral();
+    if (known) {
+      const name = `${known.firstName} ${known.lastName}`.trim();
+      blank.submitter = {
+        ...blank.submitter,
+        role: "Participant",
+        name,
+        email: known.email,
+        phone: known.phone,
+      };
+      blank.participant = {
+        ...blank.participant,
+        firstName: known.firstName,
+        lastName: known.lastName,
+        dateOfBirth: known.dateOfBirth,
+        email: known.email,
+        phone: known.phone,
+        address: known.address,
+      };
+      blank.funding = {
+        ...blank.funding,
+        source: known.funding,
+        ndisNumber: known.ndisNumber,
+        planEndDate: known.planEndDate,
+        planType: known.planType,
+      };
+    }
     if (mode === "staff") {
       blank.submitter = {
         ...blank.submitter,
@@ -168,6 +198,8 @@ function ReferralFormBody({ mode, staffName, embedded = false }: Props) {
   const [step, setStep] = useState(draft?.step ?? 0);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [files, setFiles] = useState<Attached[]>([]);
+  /** Staff only: the participant's photo, moved to their record when the referral is accepted. */
+  const [photo, setPhoto] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -258,6 +290,7 @@ function ReferralFormBody({ mode, staffName, embedded = false }: Props) {
     try {
       const body = new FormData();
       body.set("referral", JSON.stringify(form));
+      if (mode === "staff" && photo) body.set("photo", photo);
       for (const f of files) {
         body.append("files", f.file);
         body.append("kinds", f.kind);
@@ -324,6 +357,13 @@ function ReferralFormBody({ mode, staffName, embedded = false }: Props) {
   );
   const body = (
     <div className="flex flex-col gap-6">
+      {known && (current.id === "you" || current.id === "participant") && (
+        <p className="rounded-control border border-accent/30 bg-accent-tint px-3 py-2.5 text-small text-ink-900">
+          Filled in from your Medisense record (<span className="font-mono">{known.mrn}</span>).
+          Check it and change anything that&apos;s out of date. This referral joins your record; it
+          doesn&apos;t create a new one.
+        </p>
+      )}
       {current.id === "you" && (
         <FormGroup
           title="Who is making this referral?"
@@ -383,6 +423,17 @@ function ReferralFormBody({ mode, staffName, embedded = false }: Props) {
       {current.id === "participant" && (
         <>
           <FormGroup title="Participant">
+            {mode === "staff" && (
+              <div className="md:col-span-2">
+                <PhotoPicker
+                  name={`${form.participant.firstName} ${form.participant.lastName}`.trim()}
+                  value={photo}
+                  onChange={setPhoto}
+                  kind="patient"
+                  label="Participant photo"
+                />
+              </div>
+            )}
             <TextField
               label="First name"
               required
@@ -397,12 +448,9 @@ function ReferralFormBody({ mode, staffName, embedded = false }: Props) {
               onChange={(v) => set("participant.lastName", v)}
               error={err("participant.lastName")}
             />
-            <TextField
+            <DateField
               label="Date of birth"
-              type="date"
               required
-              max={today}
-              min="1900-01-01"
               value={form.participant.dateOfBirth}
               onChange={(v) => set("participant.dateOfBirth", v)}
               error={err("participant.dateOfBirth")}
@@ -484,9 +532,8 @@ function ReferralFormBody({ mode, staffName, embedded = false }: Props) {
                 onChange={(v) => set("funding.ndisNumber", v)}
                 error={err("funding.ndisNumber")}
               />
-              <TextField
+              <DateField
                 label="Plan end date"
-                type="date"
                 required
                 value={form.funding.planEndDate}
                 onChange={(v) => set("funding.planEndDate", v)}
@@ -525,9 +572,8 @@ function ReferralFormBody({ mode, staffName, embedded = false }: Props) {
                       key={i}
                       className="grid items-end gap-3 rounded-control border border-border p-3 md:grid-cols-[1fr_1fr_auto]"
                     >
-                      <TextField
+                      <DateField
                         label={`Period ${i + 1} starts`}
-                        type="date"
                         required
                         value={period.start}
                         onChange={(v) =>
@@ -538,11 +584,9 @@ function ReferralFormBody({ mode, staffName, embedded = false }: Props) {
                         }
                         error={err(`funding.periods.${i}.start`)}
                       />
-                      <TextField
+                      <DateField
                         label="Ends"
-                        type="date"
                         required
-                        min={period.start || undefined}
                         value={period.end}
                         onChange={(v) =>
                           set(
@@ -948,6 +992,12 @@ function ReferralFormBody({ mode, staffName, embedded = false }: Props) {
               {form.participant.firstName} {form.participant.lastName},{" "}
               {form.participant.address.suburb}
             </dd>
+            {mode === "staff" && (
+              <>
+                <dt className="text-ink-500">Photo</dt>
+                <dd>{photo ? "Added; it moves to their record when accepted" : "None"}</dd>
+              </>
+            )}
             <dt className="text-ink-500">Funding</dt>
             <dd>
               {form.funding.source}

@@ -945,5 +945,22 @@ export async function contactAppointments(token: string) {
       mode: v.modality === "Telehealth" ? "Video visit" : "In person",
       place: v.modality === "Telehealth" ? "Online" : client.suburb,
     })),
+    // Module 07, AC-33: invoices only for a verified contact who is responsible for billing.
+    invoices:
+      c.state === "Verified" && c.responsibilities.includes("Billing")
+        ? await contactInvoices(client._id)
+        : null,
   };
+}
+
+async function contactInvoices(clientId: ObjectId) {
+  const { patientInvoices } = await import("./billing");
+  return (await patientInvoices(clientId)).map((i) => ({
+    number: i.number,
+    status: i.status,
+    issuedAt: i.issuedAt,
+    total: i.total,
+    balance: Math.round((i.total - i.paid) * 100) / 100,
+    services: [...new Set(i.lines.map((l) => l.description))],
+  }));
 }

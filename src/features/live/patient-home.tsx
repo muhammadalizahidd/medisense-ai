@@ -1,5 +1,7 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 import {
   BellRing,
   CalendarCheck,
@@ -60,39 +62,48 @@ function NextVisit({
   return (
     <section
       aria-label="Next visit"
-      className="mb-3 overflow-hidden rounded-card bg-surface shadow-overlay"
+      className="mb-4 overflow-hidden rounded-card bg-ink-900 text-page"
     >
-      <div className="flex items-center gap-4 p-4">
-        <div className="flex w-16 flex-none flex-col items-center rounded-control bg-accent-fill py-2 text-on-accent">
-          <span className="text-label font-semibold uppercase">{part("weekday")}</span>
-          <span className="type-display text-h1 font-semibold">{part("day")}</span>
-          <span className="text-label uppercase">{part("month")}</span>
+      <div className="flex items-center justify-between px-4 pt-4">
+        <span className="text-caption font-semibold tracking-[0.16em] uppercase opacity-70">
+          Your next visit
+        </span>
+        {soon && (
+          <span className="rounded-full bg-page/15 px-2.5 py-1 text-caption font-semibold">
+            {soon}
+          </span>
+        )}
+      </div>
+      <div className="flex items-end gap-4 px-4 pt-3 pb-4">
+        <div className="flex w-[72px] flex-none flex-col items-center rounded-card bg-page py-2.5 text-ink-900">
+          <span className="text-label font-semibold tracking-wide text-ink-500 uppercase">
+            {part("weekday")}
+          </span>
+          <span className="type-display text-[34px] leading-none">{part("day")}</span>
+          <span className="text-label font-semibold tracking-wide text-accent uppercase">
+            {part("month")}
+          </span>
         </div>
-        <div className="min-w-0 flex-1">
-          <p className="flex items-center gap-2 text-caption font-semibold text-accent">
-            Next visit
-            {soon && (
-              <span className="rounded-full bg-accent-tint px-2 py-0.5 text-label">{soon}</span>
-            )}
-          </p>
-          <p className="type-display text-h2 leading-7">{timeOfDay(visit.start)}</p>
-          <p className="truncate text-caption text-ink-700">
-            {visit.discipline} · at home
+        <div className="min-w-0 flex-1 pb-0.5">
+          <p className="type-display text-[30px] leading-none">{timeOfDay(visit.start)}</p>
+          <p className="mt-1.5 truncate text-small opacity-75">
+            {visit.discipline}
             {visit.series && ` · visit ${visit.series.index} of ${visit.series.total}`}
           </p>
         </div>
       </div>
-      <div className="flex items-center gap-2 border-t border-border bg-canvas/60 px-4 py-2.5">
-        <Avatar name={visit.therapistName} size={28} />
-        <span className="min-w-0 flex-1 truncate text-caption font-medium">
-          {visit.therapistName}
+      <div className="flex items-center gap-3 border-t border-page/15 px-4 py-3">
+        <Avatar name={visit.therapistName} size={40} className="ring-2 ring-page/30" />
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-small font-semibold">{visit.therapistName}</span>
+          <span className="block text-caption opacity-70">Your clinician</span>
         </span>
         {onMessage && (
           <button
             type="button"
             onClick={onMessage}
             aria-label={`Message ${visit.therapistName}`}
-            className="flex size-9 cursor-pointer items-center justify-center rounded-full bg-accent-fill text-on-accent active:scale-95"
+            className="flex size-10 cursor-pointer items-center justify-center rounded-full bg-page/15 active:scale-95"
           >
             <MessageCircle className="size-4.5" aria-hidden="true" />
           </button>
@@ -100,7 +111,7 @@ function NextVisit({
         <button
           type="button"
           onClick={onChange}
-          className="h-9 cursor-pointer rounded-full border border-border-strong bg-surface px-3.5 text-caption font-semibold active:scale-95"
+          className="h-10 cursor-pointer rounded-full bg-page px-4 text-caption font-semibold text-ink-900 active:scale-95"
         >
           Change
         </button>
@@ -218,34 +229,9 @@ function Journey({ need }: { need: NeedDto }) {
 }
 
 /** Three numbers at a glance: services, visits booked, unread messages. */
-function CareSummary({
-  services,
-  visits,
-  unread,
-}: {
-  services: number;
-  visits: number;
-  unread: number;
-}) {
-  const cells = [
-    { label: services === 1 ? "Service" : "Services", value: services },
-    { label: visits === 1 ? "Visit booked" : "Visits booked", value: visits },
-    { label: "Unread", value: unread },
-  ];
-  return (
-    <dl className="mb-3 grid grid-cols-3 divide-x divide-border rounded-card border border-border bg-surface py-3.5 shadow-lift">
-      {cells.map((c) => (
-        <div key={c.label} className="flex flex-col-reverse items-center gap-0.5 px-2">
-          <dt className="text-label font-medium text-ink-500">{c.label}</dt>
-          <dd className="type-display text-[26px] leading-8 text-ink-900 num">{c.value}</dd>
-        </div>
-      ))}
-    </dl>
-  );
-}
-
 /** The patient's home: the next visit, their care team, anything waiting, and visits to rate. */
 export function PatientHome({
+  top,
   first,
   data,
   conversations,
@@ -254,6 +240,7 @@ export function PatientHome({
   onRate,
   onOpenVisits,
 }: {
+  top?: ReactNode;
   first: string;
   data: ClientHomeDto | null;
   conversations: ConversationDto[];
@@ -297,21 +284,6 @@ export function PatientHome({
           </>
         ) : (
           <>
-            {!data.discharged && (data.needs.length > 0 || data.upcoming.length > 0) && (
-              <CareSummary
-                services={data.needs.filter((n) => n.status !== "completed").length}
-                visits={data.upcoming.length}
-                unread={conversations.reduce((sum, c) => sum + c.unread, 0)}
-              />
-            )}
-            {data.discharged && (
-              <AppCard title="Your care has finished">
-                <p className="text-small text-ink-700">
-                  {data.discharged.reason}. Thank you for choosing Medisense. Your visits and notes
-                  stay here.
-                </p>
-              </AppCard>
-            )}
             {next ? (
               <NextVisit
                 visit={next}
@@ -334,6 +306,15 @@ export function PatientHome({
               )
             )}
 
+            {data.discharged && (
+              <AppCard title="Your care has finished">
+                <p className="text-small text-ink-700">
+                  {data.discharged.reason}. Thank you for choosing Medisense. Your visits and notes
+                  stay here.
+                </p>
+              </AppCard>
+            )}
+            {top}
             {data.toRate.map((v) => (
               <button
                 key={v.id}

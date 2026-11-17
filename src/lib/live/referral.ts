@@ -318,6 +318,26 @@ export const frequencyFor = (s: ReferralSupportInput) =>
   supportInfo(s.support).kind === "assessment" ? "Assessment" : s.frequency;
 
 /** A blank referral for the form to start from. */
+/** A signed-in patient's verified details, used to fill a new referral (Module 18, scenario G). */
+export type KnownPatient = {
+  mrn: string;
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
+  email: string;
+  phone: string;
+  address: {
+    street: string;
+    suburb: string;
+    state: (typeof australianStates)[number];
+    postcode: string;
+  };
+  funding: (typeof fundingStreams)[number];
+  ndisNumber: string;
+  planEndDate: string;
+  planType: "" | (typeof planTypes)[number];
+};
+
 export function emptyReferral(): ReferralInput {
   const contactBlank = { role: "Participant" as const, name: "", email: "", phone: "" };
   const blankAddress = { street: "", suburb: "", state: "QLD" as const, postcode: "" };

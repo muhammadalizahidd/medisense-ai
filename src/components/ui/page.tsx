@@ -2,7 +2,10 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
 export function PageContainer({ children }: { children: ReactNode }) {
-  return <main className="w-full px-4 pt-4 pb-18 md:px-6 md:pt-5 xl:px-10">{children}</main>;
+  // One vertical rhythm for every page: each top-level section sits 24px below the last.
+  return (
+    <main className="w-full px-4 pt-4 pb-18 md:px-6 md:pt-5 xl:px-10 [&>*+*]:mt-6">{children}</main>
+  );
 }
 
 /**

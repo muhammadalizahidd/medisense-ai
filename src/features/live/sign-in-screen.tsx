@@ -38,10 +38,13 @@ export function SignInScreen({
   next,
   offline,
   testAccounts,
+  oneClick = false,
 }: {
   next: string | null;
   offline: boolean;
   testAccounts: TestAccount[] | null;
+  /** Local development: a demo account signs in with one click (no password in the browser). */
+  oneClick?: boolean;
 }) {
   const router = useRouter();
   const [prefill, setPrefill] = useState<{ email: string; key: number } | null>(null);
@@ -120,15 +123,31 @@ export function SignInScreen({
             <details className="mt-6 rounded-control border border-dashed border-border-strong bg-surface px-4 py-3">
               <summary className="cursor-pointer text-small font-semibold">Demo accounts</summary>
               <p className="mt-2 mb-3 text-caption text-ink-500">
-                Choose an account to fill in its email, then enter the demo password your Medisense
-                contact gave you.
+                {oneClick
+                  ? "Choose an account to sign in straight away."
+                  : "Choose an account to fill in its email, then enter the demo password your Medisense contact gave you."}
               </p>
               <ul className="grid gap-1.5 sm:grid-cols-2">
                 {testAccounts.map((a) => (
                   <li key={a.email}>
                     <button
                       type="button"
-                      onClick={() => setPrefill({ email: a.email, key: Date.now() })}
+                      onClick={async () => {
+                        if (!oneClick) return setPrefill({ email: a.email, key: Date.now() });
+                        setPrefill({ email: a.email, key: Date.now() });
+                        const res = await fetch("/api/auth/demo", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ email: a.email }),
+                        });
+                        const body = (await res.json().catch(() => ({}))) as {
+                          user?: { role: Parameters<typeof homeFor>[0] };
+                        };
+                        if (res.ok && body.user) {
+                          router.replace(next ?? homeFor(body.user.role));
+                          router.refresh();
+                        }
+                      }}
                       className={cn(
                         "w-full cursor-pointer rounded-control border border-border px-3 py-2 text-left hover:border-accent hover:bg-accent-tint",
                         prefill?.email === a.email && "border-accent bg-accent-tint",

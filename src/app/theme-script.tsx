@@ -76,7 +76,7 @@ const LEGACY_PALETTE: Record<string, ThemeId> = {
   mint: "mint",
 };
 
-const script = `(function(){try{
+const script = `(function(){try{if(window.self!==window.top)document.documentElement.setAttribute("data-embedded","")}catch(e){}})();(function(){try{
 var D=${JSON.stringify(DEFAULT_APPEARANCE)},DK=${JSON.stringify(Object.fromEntries(Object.entries(THEMES).map(([k, v]) => [k, v.dark])))},LP=${JSON.stringify(LEGACY_PALETTE)};
 var s=window.__MS_APPEARANCE__||null;
 if(!s){try{s=JSON.parse(localStorage.getItem("ms-appearance")||"null")}catch(e){}}

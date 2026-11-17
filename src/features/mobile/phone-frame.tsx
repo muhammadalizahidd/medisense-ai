@@ -2,6 +2,7 @@
 
 import {
   ArrowLeft,
+  ChevronLeft,
   BatteryFull,
   Check,
   HeartPulse,
@@ -11,7 +12,7 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { ButtonLink } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import { useNow } from "@/lib/live/client";
@@ -30,7 +31,7 @@ function StatusBar() {
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none absolute inset-x-0 top-0 z-20 hidden h-11 items-center justify-between px-7 text-caption font-semibold text-ink-900 md:flex"
+      className="pointer-events-none absolute inset-x-0 top-0 z-20 hidden h-11 items-center justify-between bg-page px-7 text-caption font-semibold text-ink-900 md:flex"
     >
       <span>{time}</span>
       <span className="flex items-center gap-1">
@@ -317,5 +318,95 @@ export function AppSheet({
         )}
       </div>
     </div>
+  );
+}
+
+/**
+ * A full portal screen inside the app: the same screen and data as the web, with the app's own
+ * back button. Pages opened here hide the desktop sidebar and top bar (html[data-embedded]).
+ */
+export function AppWebView({
+  title,
+  href,
+  onClose,
+}: {
+  title: string;
+  href: string;
+  onClose: () => void;
+}) {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <div className="absolute inset-0 z-40 flex flex-col bg-page">
+      <header className="flex items-center gap-3 border-b border-border bg-surface px-3 pt-12 pb-3">
+        <button
+          type="button"
+          aria-label="Back"
+          onClick={onClose}
+          className="flex size-9 cursor-pointer items-center justify-center rounded-full bg-sunken"
+        >
+          <ChevronLeft className="size-4.5" aria-hidden="true" />
+        </button>
+        <p className="min-w-0 flex-1 truncate text-body font-semibold text-ink-900">{title}</p>
+      </header>
+      <div className="relative min-h-0 flex-1">
+        {/* Behind the page: it shows until the page paints over it, not until every file loads. */}
+        {!loaded && (
+          <div className="absolute inset-0 flex flex-col gap-3 p-4" aria-hidden="true">
+            <div className="h-24 animate-pulse rounded-card bg-sunken" />
+            <div className="h-40 animate-pulse rounded-card bg-sunken" />
+            <div className="h-40 animate-pulse rounded-card bg-sunken" />
+          </div>
+        )}
+        <iframe
+          title={title}
+          src={href}
+          onLoad={() => setLoaded(true)}
+          allow="camera; microphone; display-capture; autoplay"
+          className="absolute inset-0 size-full border-0 bg-transparent"
+        />
+      </div>
+    </div>
+  );
+}
+
+export type BadgeTone =
+  "blue" | "orange" | "teal" | "violet" | "green" | "amber" | "red" | "indigo" | "ink";
+
+const badgeTones: Record<BadgeTone, string> = {
+  blue: "bg-series-1",
+  orange: "bg-series-2",
+  teal: "bg-series-3",
+  violet: "bg-series-4",
+  green: "bg-healthy",
+  amber: "bg-watch",
+  red: "bg-over",
+  indigo: "bg-available",
+  ink: "bg-ink-900",
+};
+
+/** A filled, rounded-square icon in one of the palette's colours: each kind of thing keeps its own. */
+export function IconBadge({
+  icon: Icon,
+  tone = "blue",
+  size = 40,
+  className,
+}: {
+  icon: LucideIcon;
+  tone?: BadgeTone;
+  size?: number;
+  className?: string;
+}) {
+  return (
+    <span
+      aria-hidden="true"
+      style={{ width: size, height: size }}
+      className={cn(
+        "flex flex-none items-center justify-center rounded-control text-page ring-1 ring-ink-900/5",
+        badgeTones[tone],
+        className,
+      )}
+    >
+      <Icon style={{ width: size * 0.46, height: size * 0.46 }} strokeWidth={2} />
+    </span>
   );
 }

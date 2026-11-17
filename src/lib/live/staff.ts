@@ -126,6 +126,8 @@ export type CapacityLine = { label: string; hours: number; source: string };
 
 export type StaffRecordDto = {
   id: string;
+  /** Uploaded profile photo; null falls back to the default photo or initials. */
+  photoUrl: string | null;
   staffId: string;
   name: string;
   email: string;

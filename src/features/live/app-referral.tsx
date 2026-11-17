@@ -27,9 +27,12 @@ export type SentReferral = { reference: string; appCode: string; appEmail: strin
 export function ReferralOverlay({
   onClose,
   onSent,
+  signedIn = false,
 }: {
   onClose: () => void;
   onSent: (sent: SentReferral) => void;
+  /** A signed-in patient: the form starts from their record. */
+  signedIn?: boolean;
 }) {
   useEffect(() => {
     function onMessage(event: MessageEvent) {
@@ -57,7 +60,11 @@ export function ReferralOverlay({
         </button>
         <div>
           <p className="text-body font-semibold">Make a referral</p>
-          <p className="text-caption text-ink-500">No account needed. Your draft is saved.</p>
+          <p className="text-caption text-ink-500">
+            {signedIn
+              ? "Your details are filled in from your record."
+              : "No account needed. Your draft is saved."}
+          </p>
         </div>
       </header>
       <iframe title="Referral form" src="/refer/app" className="min-h-0 w-full flex-1 border-0" />

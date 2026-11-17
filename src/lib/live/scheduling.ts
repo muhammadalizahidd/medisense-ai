@@ -147,6 +147,9 @@ export type ScheduleBoardDto = {
     since: string;
     risk: boolean;
     funding: "Verified" | "Exception" | "Not reviewed";
+    /** Module 06: independent gates rolled up for booking (Ready, Conditional, Blocked). */
+    readiness?: "Ready" | "Conditional" | "Blocked";
+    blockers?: string[];
   }[];
   pending: {
     clientId: string;

@@ -180,6 +180,7 @@ export const staffRoles = [
   "Intake Officer",
   "Scheduler",
   "Finance",
+  "Finance Manager",
   "Operations Manager",
   "Clinical Lead",
 ] as const;

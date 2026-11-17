@@ -17,6 +17,7 @@ import { ensureStaff, staffBlocks } from "./staff";
 import { collections } from "./db";
 import { UserFacingError } from "./http";
 import { adminIds, audit, publish } from "./live";
+import { photoUrl, putPhoto } from "./photos";
 import { availabilitySummary, isAway } from "./matching";
 import type { AppointmentDoc, TherapistDoc, UserDoc } from "./models";
 
@@ -164,6 +165,7 @@ function card(t: TherapistDoc, ratings: Ratings): TherapistCardDto {
     credentialDays: soonestExpiry(t),
     registrationExpiry: t.credentials?.registrationExpiry ?? null,
     name: t.name,
+    photoUrl: photoUrl("therapist", t._id, t.photoAt),
     discipline: t.discipline,
     region: t.region,
     seniority: t.seniority,
@@ -298,6 +300,8 @@ export const newTherapistSchema = z.object({
   registrationExpiry: z.string().regex(DAY, "Enter the registration expiry date"),
   screeningExpiry: z.string().regex(DAY, "Enter the worker screening expiry date"),
   assessmentScopes: z.array(z.enum(supports)).max(20),
+  /** Optional profile photo, already cropped in the browser (data URL). */
+  photo: z.string().max(600_000, "The photo is too large.").nullable().optional(),
 });
 
 /**
@@ -305,7 +309,7 @@ export const newTherapistSchema = z.object({
  * login with a temporary password shown once. They're offered in matching straight away.
  */
 export async function createTherapist(admin: UserDoc, input: z.infer<typeof newTherapistSchema>) {
-  const { users, therapists } = await collections();
+  const { users, therapists, db } = await collections();
   if (await users.findOne({ email: input.email })) {
     throw new UserFacingError("An account already uses this email.", 409);
   }
@@ -338,7 +342,7 @@ export async function createTherapist(admin: UserDoc, input: z.infer<typeof newT
     phone: input.phone || null,
     createdAt: new Date(),
   });
-  await therapists.insertOne({
+  const doc: TherapistDoc = {
     _id: therapistId,
     slug,
     name: input.name,
@@ -362,7 +366,11 @@ export async function createTherapist(admin: UserDoc, input: z.infer<typeof newT
     active: true,
     availabilityUpdatedAt: null,
     userId,
-  });
+  };
+  await therapists.insertOne(doc);
+  if (input.photo) await putPhoto("therapist", therapistId, input.photo);
+  // Module 04: they start Pending Verification until a Clinical Lead verifies and approves.
+  await ensureStaff(db, doc, true);
   await audit(admin, `Added therapist ${input.name} (${input.discipline}, ${input.region})`, null);
   await publish(await adminIds(), "care", {});
   return { id: therapistId.toHexString(), email: input.email, temporaryPassword: temporary };

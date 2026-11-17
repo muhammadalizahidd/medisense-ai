@@ -47,6 +47,8 @@ export type ClientStage = "Needs a therapist" | "Waiting for therapist" | "Activ
 export type ClientSummaryDto = {
   id: string;
   name: string;
+  /** Uploaded profile photo; null falls back to the default photo or initials. */
+  photoUrl: string | null;
   suburb: string;
   region: Region;
   funding: FundingStream;
@@ -342,6 +344,8 @@ export type TimeOffDto = { id: string; from: string; to: string; reason: string 
 
 export type TherapistCardDto = {
   id: string;
+  /** Uploaded profile photo; null falls back to the default photo or initials. */
+  photoUrl: string | null;
   active: boolean;
   /** Module 04. */
   staffId: string | null;

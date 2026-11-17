@@ -37,6 +37,7 @@ import {
 import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/premium";
+import { PhotoEdit } from "@/components/ui/photo-picker";
 import { Select } from "@/components/ui/select";
 import { Field, Sheet } from "@/components/ui/sheet";
 import { Tag } from "@/components/ui/tag";
@@ -357,7 +358,14 @@ export function ProfileTab({
       <section className="overflow-hidden rounded-card border border-border bg-surface shadow-lift">
         <div className="flex flex-wrap items-start gap-5 p-6">
           <div className="relative flex-none">
-            <Avatar name={d.name} size={72} className="ring-4 ring-accent-tint" />
+            <PhotoEdit
+              owner="client"
+              id={client.id}
+              name={d.name}
+              photoUrl={client.photoUrl}
+              kind="patient"
+              className="ring-4 ring-accent-tint"
+            />
             <span
               aria-hidden="true"
               className={cn(
@@ -519,7 +527,7 @@ export function ProfileTab({
                 <p className="flex items-center gap-2 text-small">
                   {n.therapistName ? (
                     <>
-                      <Avatar name={n.therapistName} size={28} />
+                      <Avatar name={n.therapistName} size={28} kind="staff" />
                       <span className="font-medium text-ink-900">{n.therapistName}</span>
                     </>
                   ) : (

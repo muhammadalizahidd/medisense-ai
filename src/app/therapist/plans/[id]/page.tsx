@@ -1,19 +1,22 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { PageContainer, PageLoading } from "@/components/ui/page";
-import { PlanEditor } from "@/features/live/plan-editor";
 import { OfflinePage } from "@/features/live/offline-page";
+import { PlanWorkspace } from "@/features/live/plan-workspace";
 import { requirePageUser } from "@/server/page-auth";
 
-export const metadata: Metadata = { title: "Treatment plan · Medisense" };
+export const metadata: Metadata = { title: "Treatment plan � Medisense" };
 
 async function PageContent({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  if (!(await requirePageUser(`/therapist/plans/${id}`, "therapist", "admin")))
-    return <OfflinePage />;
+  const user = await requirePageUser(`/therapist/plans/${id}`, "therapist", "admin");
+  if (!user) return <OfflinePage />;
+  // Older links send staff of either role here; each role has its own home for plans.
+  if (user.role !== "therapist") redirect(`/care/plans/${id}`);
   return (
     <PageContainer>
-      <PlanEditor id={id} />
+      <PlanWorkspace id={id} base="/therapist/plans" />
     </PageContainer>
   );
 }

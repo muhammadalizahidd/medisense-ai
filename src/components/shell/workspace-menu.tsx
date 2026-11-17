@@ -22,6 +22,7 @@ import { signOut, useSession } from "@/lib/live/client";
 import { homeFor } from "@/lib/live/routes";
 import { roleHome, roleUsers, type Role } from "@/lib/navigation";
 import { useDemoStore } from "@/state/demo-store";
+import { photoFor } from "@/lib/avatars";
 
 const workspaces: { id: Role; label: string; detail: string; icon: LucideIcon }[] = [
   { id: "Leadership", label: "Director", detail: "Organisation overview", icon: Briefcase },
@@ -125,9 +126,18 @@ export function WorkspaceMenu() {
       >
         <span
           aria-hidden="true"
-          className="flex size-8 flex-none items-center justify-center rounded-full bg-accent-tint text-caption font-semibold text-accent"
+          className="flex size-8 flex-none items-center justify-center overflow-hidden rounded-full bg-accent-tint text-caption font-semibold text-accent"
         >
-          {user.initials}
+          {photoFor(user.name) ? (
+            // eslint-disable-next-line @next/next/no-img-element -- small local portrait
+            <img
+              src={photoFor(user.name) ?? ""}
+              alt=""
+              className="size-full rounded-full object-cover"
+            />
+          ) : (
+            user.initials
+          )}
         </span>
         <span className="hidden max-w-44 min-w-0 flex-col md:flex">
           <span className="truncate text-small font-semibold">{user.name}</span>

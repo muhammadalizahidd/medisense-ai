@@ -113,22 +113,60 @@ function reminders(a: AppointmentDoc, client: ClientDoc | undefined, now: number
 }
 
 /** The scheduling board for a period: every visit with its flags, and what still needs booking. */
+/** Module 06 contract: booking readiness and its blockers for each service still to book. */
+async function withReadiness(list: ScheduleBoardDto["unscheduled"]) {
+  if (!list.length) return list;
+  const { readinessForClient } = await import("./funding");
+  const byClient = new Map<string, Awaited<ReturnType<typeof readinessForClient>>>();
+  for (const id of new Set(list.map((u) => u.clientId))) {
+    byClient.set(id, await readinessForClient(new ObjectId(id)));
+  }
+  return list.map((u) => {
+    const r = byClient.get(u.clientId)?.find((x) => x.needId === u.needId);
+    return r
+      ? {
+          ...u,
+          readiness: r.booking,
+          blockers: r.gates
+            .filter((g) => g.severity !== "ok")
+            .map((g) => `${g.label}: ${g.status} (${g.owner})`),
+        }
+      : u;
+  });
+}
+
 export async function scheduleBoard(from: Date, to: Date): Promise<ScheduleBoardDto> {
   const db = await collections();
   await ensureRefs(db.db);
-  const [visits, clients, rawTeam, refs, assigns, { assignmentMode }] = await Promise.all([
-    db.appointments
-      .find({ start: { $gte: from, $lt: to } })
-      .sort({ start: 1 })
-      .toArray(),
-    db.clients.find().toArray(),
-    db.therapists.find().toArray(),
-    db.referrals
-      .find({ clientId: { $ne: null } }, { projection: { clientId: 1, data: 1, fundingReview: 1 } })
-      .toArray(),
-    db.assignments.find().toArray(),
-    orgSettings(),
-  ]);
+  const [visits, clients, rawTeam, refs, assigns, { assignmentMode }, fundingPlans] =
+    await Promise.all([
+      db.appointments
+        .find({ start: { $gte: from, $lt: to } })
+        .sort({ start: 1 })
+        .toArray(),
+      // Consent history is the largest part of each record and the board never reads it.
+      db.clients.find({}, { projection: { consents: 0, fundingDetails: 0 } }).toArray(),
+      db.therapists.find().toArray(),
+      db.referrals
+        .find(
+          { clientId: { $ne: null } },
+          { projection: { clientId: 1, data: 1, fundingReview: 1 } },
+        )
+        .toArray(),
+      db.assignments.find().toArray(),
+      orgSettings(),
+      // Module 06: plan end dates and funding periods, for "beyond the plan" warnings (AT-34).
+      db.fundingPlans
+        .find(
+          { status: { $ne: "Superseded" } },
+          { projection: { clientId: 1, end: 1, periods: 1, ref: 1 } },
+        )
+        .toArray(),
+    ]);
+  const planEndOf = (clientId: ObjectId) =>
+    fundingPlans
+      .filter((p) => p.clientId?.equals(clientId) && p.end)
+      .sort((a, b) => b.end.localeCompare(a.end))[0] ?? null;
   const team = await Promise.all(rawTeam.map((t) => ensureStaff(db.db, t)));
   const shown = visits.filter((v) => !(v.status === "cancelled" && !v.cancellation));
   const clientById = new Map(clients.map((c) => [c._id.toHexString(), c]));
@@ -194,6 +232,22 @@ export async function scheduleBoard(from: Date, to: Date): Promise<ScheduleBoard
       if (blocks.length)
         flags.push({ kind: "blocked", label: `Clinician can't deliver: ${blocks[0]}` });
       if (c?.precautions) flags.push({ kind: "risk", label: `Precaution: ${c.precautions}` });
+      const plan = planEndOf(v.clientId);
+      const day = new Date(v.start.getTime() + 10 * HOUR).toISOString().slice(0, 10);
+      if (plan && day > plan.end) {
+        flags.push({
+          kind: "funding",
+          label: `After the NDIS plan ends (${plan.ref} ends ${plan.end}): check the new plan`,
+        });
+      } else if (
+        plan?.periods.some((p) => day > p.end) &&
+        !plan.periods.some((p) => day >= p.start && day <= p.end)
+      ) {
+        flags.push({
+          kind: "funding",
+          label: "Outside the plan's funding periods: check the next period",
+        });
+      }
       const funding = fundingOf(referral);
       if (funding !== "Verified") {
         flags.push({
@@ -381,7 +435,7 @@ export async function scheduleBoard(from: Date, to: Date): Promise<ScheduleBoard
     from: from.toISOString(),
     to: to.toISOString(),
     events,
-    unscheduled,
+    unscheduled: await withReadiness(unscheduled),
     pending,
     therapists: team
       .filter((t) => t.active !== false)

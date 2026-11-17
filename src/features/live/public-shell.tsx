@@ -14,7 +14,7 @@ export function PublicShell({
 }) {
   return (
     <div className="min-h-dvh bg-canvas">
-      <header className="border-b border-border bg-surface">
+      <header data-chrome className="border-b border-border bg-surface">
         <div className="mx-auto flex max-w-300 items-center justify-between gap-4 px-4 py-4 sm:px-8">
           <Brand />
           <Link href="/login" className="text-small font-semibold text-accent">
@@ -29,7 +29,10 @@ export function PublicShell({
         )}
         {children}
       </main>
-      <footer className="border-t border-border py-6 text-center text-caption text-ink-500">
+      <footer
+        data-chrome
+        className="border-t border-border py-6 text-center text-caption text-ink-500"
+      >
         Medisense allied health · Monday to Friday, 9:00 am to 5:00 pm
       </footer>
     </div>

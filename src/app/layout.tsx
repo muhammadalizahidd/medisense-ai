@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { connection } from "next/server";
 import { Suspense, type ReactNode } from "react";
 import { Sidebar } from "@/components/shell/sidebar";
+import { PageGuideFloating } from "@/components/shell/page-guide";
 import { PresenterPanel } from "@/components/shell/presenter-panel";
 import { TabBar } from "@/components/shell/tab-bar";
 import { TopBar } from "@/components/shell/top-bar";
@@ -50,14 +51,23 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
         <Suspense fallback={<div className="min-h-screen bg-page" />}>
           <Today>
             <div className="flex min-h-screen bg-page">
-              <Sidebar />
+              <div data-chrome className="contents">
+                <Sidebar />
+              </div>
               <div className="flex min-w-0 flex-1 flex-col">
-                <TopBar />
+                <div data-chrome className="contents">
+                  <TopBar />
+                </div>
                 <div className="min-w-0 flex-1">{children}</div>
-                <TabBar />
+                <div data-chrome className="contents">
+                  <TabBar />
+                </div>
               </div>
             </div>
-            <PresenterPanel />
+            <div data-chrome className="contents">
+              <PageGuideFloating />
+              <PresenterPanel />
+            </div>
           </Today>
         </Suspense>
       </body>

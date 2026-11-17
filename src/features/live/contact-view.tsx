@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, Lock, MapPin, MonitorPlay, UserRound } from "lucide-react";
+import { CalendarDays, Lock, MapPin, MonitorPlay, Receipt, UserRound } from "lucide-react";
 import { Tag } from "@/components/ui/tag";
 import { useResource } from "@/lib/live/client";
 import { ErrorNote, Skeleton } from "./bits";
@@ -20,7 +20,20 @@ type View = {
     mode: string;
     place: string;
   }[];
+  invoices:
+    | {
+        number: string;
+        status: string;
+        issuedAt: string | null;
+        total: number;
+        balance: number;
+        services: string[];
+      }[]
+    | null;
 };
+
+const money = (n: number) =>
+  new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD" }).format(n);
 
 const fmt = (v: string, o: Intl.DateTimeFormatOptions) =>
   new Intl.DateTimeFormat("en-AU", { timeZone: "Australia/Brisbane", ...o }).format(new Date(v));
@@ -92,8 +105,39 @@ export function ContactView({ token }: { token: string }) {
           ))}
         </ul>
       )}
+      {v.invoices && (
+        <div className="border-t border-border">
+          <p className="px-6 pt-4 text-label font-semibold tracking-[0.1em] text-ink-500 uppercase">
+            Invoices (you&apos;re the verified billing contact)
+          </p>
+          {v.invoices.length === 0 ? (
+            <p className="px-6 py-4 text-small text-ink-500">No invoices issued yet.</p>
+          ) : (
+            <ul className="divide-y divide-border">
+              {v.invoices.map((i) => (
+                <li key={i.number} className="flex items-center gap-4 px-6 py-3 text-small">
+                  <Receipt className="size-4 flex-none text-accent" aria-hidden="true" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-semibold text-ink-900">{i.number}</span>
+                    <span className="block truncate text-caption text-ink-500">
+                      {i.services.join(", ")}
+                    </span>
+                  </span>
+                  <span className="text-right">
+                    <span className="block font-semibold">{money(i.total)}</span>
+                    <span className="block text-caption text-ink-500">
+                      {i.status} · {money(i.balance)} owing
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
       <p className="flex items-center gap-2 border-t border-border px-6 py-3 text-caption text-ink-500">
-        <Lock className="size-3.5" aria-hidden="true" /> Appointments only. Notes, reports and
+        <Lock className="size-3.5" aria-hidden="true" />{" "}
+        {v.invoices ? "Appointments and invoices only." : "Appointments only."} Notes, reports and
         recordings aren&apos;t shared here. The link stops if access is revoked or expires.
       </p>
     </div>

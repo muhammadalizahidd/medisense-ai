@@ -105,6 +105,9 @@ export function ClientDetail({ clientId }: { clientId: string }) {
         actions={
           <div className="flex items-center gap-3">
             <LiveBadge />
+            <ButtonLink href={`/care/funding/${client.id}`} size="sm" variant="soft">
+              Funding and agreements
+            </ButtonLink>
             {profile && (
               <StatusControl profile={profile} busy={participant.busy} act={participant.act} />
             )}

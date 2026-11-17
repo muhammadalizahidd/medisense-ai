@@ -65,7 +65,7 @@ export const staffEmail = (name: string) =>
     .replace(/\s+/g, ".")}@medisense.test`;
 
 /** Staff accounts sign in with SEED_PASSWORD; without it they are created unable to sign in. */
-async function staffPasswordHash() {
+export async function staffPasswordHash() {
   const password = process.env.SEED_PASSWORD;
   if (!password) {
     serverLog("SEED_PASSWORD is not set, so seeded staff accounts cannot sign in yet.");
@@ -85,6 +85,30 @@ export const seedAdmins = [
     name: "Neil Hensley",
     email: "neil.hensley@medisense.test",
     staffRoles: ["Super Admin", "Clinical Lead"] as StaffRole[],
+  },
+  /** Module 07: approves credits, write-offs, refunds and rate overrides (AC-31). */
+  {
+    name: "Morgan Blake",
+    email: "morgan.blake@medisense.test",
+    staffRoles: ["Finance Manager"] as StaffRole[],
+  },
+  /** Module 06: intake and scheduling only, so funding verification is visibly Finance's (AT-10). */
+  {
+    name: "Sam Rivera",
+    email: "sam.rivera@medisense.test",
+    staffRoles: ["Intake Officer", "Scheduler"] as StaffRole[],
+  },
+  /** Module 08: reviews clinically flagged referrals and sees restricted tasks. */
+  {
+    name: "Helen Brooks",
+    email: "helen.brooks@medisense.test",
+    staffRoles: ["Clinical Lead"] as StaffRole[],
+  },
+  /** Module 08: approves workflow rules, travel and booking exceptions; no clinical access. */
+  {
+    name: "Marco Silva",
+    email: "marco.silva@medisense.test",
+    staffRoles: ["Operations Manager"] as StaffRole[],
   },
 ];
 

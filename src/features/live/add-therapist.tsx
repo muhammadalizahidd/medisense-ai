@@ -3,6 +3,7 @@
 import { Check, Copy, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { PhotoPicker } from "@/components/ui/photo-picker";
 import { Field, Sheet } from "@/components/ui/sheet";
 import { Select } from "@/components/ui/select";
 import { api } from "@/lib/live/client";
@@ -57,6 +58,7 @@ function AddTherapistSheet({ onClose, onAdded }: { onClose: () => void; onAdded:
   });
   const [days, setDays] = useState<number[]>([1, 2, 3, 4, 5]);
   const [scopes, setScopes] = useState<Support[]>([]);
+  const [photo, setPhoto] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<Created | null>(null);
@@ -77,6 +79,7 @@ function AddTherapistSheet({ onClose, onAdded }: { onClose: () => void; onAdded:
           sessionMinutes: Number(form.sessionMinutes),
           weekdays: days,
           assessmentScopes: scopes.filter((s) => assessments.some((a) => a.name === s)),
+          photo,
         },
       });
       setCreated(result);
@@ -151,6 +154,7 @@ function AddTherapistSheet({ onClose, onAdded }: { onClose: () => void; onAdded:
       }
     >
       <div className="flex flex-col gap-4">
+        <PhotoPicker name={form.name} value={photo} onChange={setPhoto} kind="staff" />
         <TextField label="Full name" required value={form.name} onChange={set("name")} />
         <div className="grid gap-4 sm:grid-cols-2">
           <TextField

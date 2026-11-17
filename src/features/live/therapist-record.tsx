@@ -302,7 +302,7 @@ export function TherapistRecord({
                       key={`${f.visit}-${f.at}`}
                       className="flex gap-3 px-5 py-3.5 transition-colors hover:bg-canvas"
                     >
-                      <Avatar name={f.patient} size={32} />
+                      <Avatar name={f.patient} size={32} kind="patient" />
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <span className="text-small font-semibold text-ink-900">{f.patient}</span>
@@ -406,7 +406,7 @@ export function TherapistRecord({
                 {t.patients.map((p) => {
                   const body = (
                     <>
-                      <Avatar name={p.name} size={36} />
+                      <Avatar name={p.name} size={36} kind="patient" />
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-small font-semibold text-ink-900">
                           {p.name}

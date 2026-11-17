@@ -10,6 +10,7 @@ import { isActive, isStandalone, navigationFor, roleUsers } from "@/lib/navigati
 import { useUnreadMessages } from "@/features/live/conversations";
 import { useSession } from "@/lib/live/client";
 import { useDemoStore } from "@/state/demo-store";
+import { photoFor } from "@/lib/avatars";
 
 export const darkFocus = { "--shadow-focus": "var(--shadow-focus-dark)" } as CSSProperties;
 
@@ -194,9 +195,18 @@ export function Sidebar() {
       <div className="mt-auto flex items-center justify-center gap-2.5 border-t border-sidebar-border px-1 pt-4 md:hidden xl:justify-start xl:px-3">
         <span
           aria-hidden="true"
-          className="flex size-8 flex-none items-center justify-center rounded-full bg-accent-tint text-caption font-semibold text-accent"
+          className="flex size-8 flex-none items-center justify-center overflow-hidden rounded-full bg-accent-tint text-caption font-semibold text-accent"
         >
-          {user.initials}
+          {photoFor(user.name) ? (
+            // eslint-disable-next-line @next/next/no-img-element -- small local portrait
+            <img
+              src={photoFor(user.name) ?? ""}
+              alt=""
+              className="size-full rounded-full object-cover"
+            />
+          ) : (
+            user.initials
+          )}
         </span>
         <span className="hidden min-w-0 flex-col xl:flex">
           <span className="text-small font-semibold text-sidebar-ink">{user.name}</span>

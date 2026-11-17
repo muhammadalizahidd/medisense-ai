@@ -1,6 +1,7 @@
 "use client";
 
-import { Bell, ChevronRight, History } from "lucide-react";
+import { PageGuideButton } from "./page-guide";
+import { ArrowUpRight, Bell, ChevronRight, History } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -206,7 +207,7 @@ export function TopBar() {
             e.preventDefault();
             openAssistant(draftQuestion);
           }}
-          className="hidden h-9 w-full max-w-105 flex-[0_1_420px] items-center gap-2 rounded-control border border-border bg-surface pr-1.5 pl-3 text-ink-500 focus-within:border-accent focus-within:shadow-focus lg:flex"
+          className="hidden h-9 w-full max-w-115 flex-[0_1_460px] items-center gap-2 rounded-control border border-border bg-surface pr-1.5 pl-3 text-ink-500 focus-within:border-accent focus-within:shadow-focus lg:flex"
         >
           <AiIcon className="size-4" />
           <input
@@ -219,12 +220,23 @@ export function TopBar() {
             placeholder="Ask Medisense about patients, referrals, visits…"
             className="min-w-0 flex-1 border-0 bg-transparent text-small text-ink-900 outline-none placeholder:text-ink-500 focus-visible:shadow-none"
           />
-          <kbd className="rounded-tag border border-border px-1.5 font-mono text-label text-ink-500">
+          <kbd className="hidden rounded-tag border border-border px-1.5 font-mono text-label text-ink-500 xl:block">
             ⌘K
           </kbd>
+          <button
+            type="submit"
+            className="group inline-flex h-7 flex-none cursor-pointer items-center gap-1 rounded-tag bg-accent-fill px-2.5 text-caption font-semibold text-on-accent shadow-lift transition-all duration-(--duration-fast) hover:-translate-y-px hover:bg-accent-fill-hover active:scale-95"
+          >
+            Ask
+            <ArrowUpRight
+              className="size-3.5 transition-transform duration-(--duration-fast) group-hover:translate-x-px group-hover:-translate-y-px"
+              aria-hidden="true"
+            />
+          </button>
         </form>
 
         <div className="flex flex-1 items-center justify-end gap-1">
+          <PageGuideButton />
           <QuickAdd />
 
           <Notifications />

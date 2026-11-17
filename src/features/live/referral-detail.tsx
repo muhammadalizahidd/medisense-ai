@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { AiChip, AiIcon, RuleMark } from "@/components/ai/provenance";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page";
@@ -20,6 +21,7 @@ import { Field } from "@/components/ui/sheet";
 import { Sheet } from "@/components/ui/sheet";
 import { TabPanel, Tabs, useTab } from "@/components/ui/tabs";
 import { Tag } from "@/components/ui/tag";
+import { toast } from "@/components/ui/toast";
 import { api, useResource, useSession } from "@/lib/live/client";
 import {
   disciplines,
@@ -485,7 +487,7 @@ function IntakeReview({ r, busy, act }: { r: ReferralDetailDto; busy: boolean; a
   ].filter(Boolean) as string[];
 
   return (
-    <div className="grid items-start gap-6 xl:grid-cols-12">
+    <div className="grid items-stretch gap-6 xl:grid-cols-12">
       <div className="flex min-w-0 flex-col gap-6 xl:col-span-8">
         <section
           aria-labelledby="intake-checks"
@@ -663,7 +665,7 @@ function IntakeReview({ r, busy, act }: { r: ReferralDetailDto; busy: boolean; a
         />
       </div>
 
-      <aside className="flex flex-col gap-4 xl:sticky xl:top-[calc(var(--topbar-h)+4rem)] xl:col-span-4">
+      <aside className="flex flex-col gap-4 xl:sticky xl:top-[calc(var(--topbar-h)+4rem)] xl:col-span-4 xl:self-start">
         <section
           aria-labelledby="decision"
           className="overflow-hidden rounded-card border border-border bg-surface"
@@ -1117,6 +1119,7 @@ function FundingReview({ r, busy, act }: { r: ReferralDetailDto; busy: boolean; 
             )}
           </div>
           <RegionPicker r={r} busy={busy} act={act} />
+          {f.source === "NDIS" && <FundingRecordLink referralId={r.id} />}
         </div>
       </Panel>
       <Panel title="Accept the referral">
@@ -1807,5 +1810,53 @@ function ReferralDocuments({
         </details>
       )}
     </Panel>
+  );
+}
+
+/**
+ * Module 06: opens (or starts) the detailed funding record for this referral, without needing a
+ * participant account (AT-01). Everything starts participant-reported.
+ */
+function FundingRecordLink({ referralId }: { referralId: string }) {
+  const [busy, setBusy] = useState(false);
+  const router = useRouter();
+  return (
+    <div className="mt-4 flex flex-wrap items-center gap-3 rounded-control border border-accent-tint bg-accent-tint/40 px-4 py-3">
+      <span className="min-w-0 flex-1 text-small text-ink-700">
+        Plan evidence, budgets, payers and the service agreement are kept in the funding record.
+      </span>
+      <Button
+        size="sm"
+        variant="soft"
+        disabled={busy}
+        onClick={async () => {
+          setBusy(true);
+          try {
+            const res = await api<{ planId: string; clientId: string | null }>(
+              "/api/care/funding",
+              {
+                body: { type: "from-referral", referralId },
+              },
+            );
+            if (res.clientId) router.push(`/care/funding/${res.clientId}`);
+            else {
+              toast("Funding draft created", {
+                tone: "success",
+                detail: "It joins the participant record when the referral is accepted.",
+              });
+            }
+          } catch (e) {
+            toast("Couldn't open the funding record", {
+              tone: "error",
+              detail: e instanceof Error ? e.message : "",
+            });
+          } finally {
+            setBusy(false);
+          }
+        }}
+      >
+        Open funding record
+      </Button>
+    </div>
   );
 }

@@ -1588,3 +1588,14 @@ input:-webkit-autofill:focus {
   --shadow-hairline: 0 0 0 1px var(--color-border);
   --shadow-underline-accent: inset 0 -1px 0 var(--color-accent);
 }
+
+/* Web screens opened inside the mobile apps: the app supplies its own navigation. */
+html[data-embedded] [data-chrome] {
+  display: none !important;
+}
+html[data-embedded] body {
+  scrollbar-width: none;
+}
+html[data-embedded] body::-webkit-scrollbar {
+  display: none;
+}

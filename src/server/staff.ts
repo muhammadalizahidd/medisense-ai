@@ -17,6 +17,7 @@ import { csvCell } from "@/lib/live/csv";
 import { collections } from "./db";
 import { UserFacingError } from "./http";
 import { adminIds, publish } from "./live";
+import { photoUrl } from "./photos";
 import { caseloadVisits, isAway } from "./matching";
 import type { StaffDoc, TherapistDoc, UserDoc } from "./models";
 
@@ -136,8 +137,13 @@ function initialStaff(t: TherapistDoc, staffId: string): StaffDoc {
   };
 }
 
-/** Builds the Module 04 record once (with the next STF number), then keeps it. */
-export async function ensureStaff(db: Db, t: TherapistDoc): Promise<TherapistDoc> {
+/**
+ * Builds the Module 04 record once (with the next STF number), then keeps it. Clinicians from
+ * before Module 04 carry over as verified; a newly added one starts Pending Verification, with
+ * every credential awaiting review and every service pending, until a Clinical Lead approves
+ * them (AC-01, AC-02).
+ */
+export async function ensureStaff(db: Db, t: TherapistDoc, isNew = false): Promise<TherapistDoc> {
   if (t.staff) return t;
   const counter = await db
     .collection<{ _id: string; seq: number }>("counters")
@@ -147,6 +153,23 @@ export async function ensureStaff(db: Db, t: TherapistDoc): Promise<TherapistDoc
       { upsert: true, returnDocument: "after" },
     );
   const staff = initialStaff(t, `STF-${String(counter?.seq ?? 1).padStart(4, "0")}`);
+  if (isNew) {
+    staff.status = "Pending Verification";
+    staff.credentials = staff.credentials.map((c) => ({
+      ...c,
+      status: c.required ? "Awaiting Review" : "Not Submitted",
+      reviewedBy: null,
+      reviewedAt: null,
+      note: "Submitted when the clinician was added",
+      evidence: c.required ? c.evidence : "",
+    }));
+    staff.competencies = staff.competencies.map((c) => ({
+      ...c,
+      status: "Pending",
+      reviewedBy: null,
+      reviewedAt: null,
+    }));
+  }
   await db
     .collection<TherapistDoc>("therapists")
     .updateOne({ _id: t._id, staff: { $exists: false } }, { $set: { staff } });
@@ -379,6 +402,7 @@ export async function staffRecord(id: ObjectId, viewer: UserDoc): Promise<StaffR
   ];
   return {
     id: t._id.toHexString(),
+    photoUrl: photoUrl("therapist", t._id, t.photoAt),
     staffId: s.staffId,
     name: t.name,
     email: account?.email ?? "",

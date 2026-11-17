@@ -457,6 +457,27 @@ export function ScheduleBoard() {
                               Funding {u.funding === "Exception" ? "exception" : "not reviewed"}
                             </Tag>
                           )}
+                          {u.readiness && (
+                            <Link
+                              href={`/care/funding/${u.clientId}?tab=readiness`}
+                              title={u.blockers?.join(" · ") || "All gates clear"}
+                              className="hover:no-underline"
+                            >
+                              <Tag
+                                tone={
+                                  u.readiness === "Ready"
+                                    ? "healthy"
+                                    : u.readiness === "Blocked"
+                                      ? "over"
+                                      : "watch"
+                                }
+                              >
+                                {u.readiness === "Ready"
+                                  ? "Booking ready"
+                                  : `Booking ${u.readiness.toLowerCase()}`}
+                              </Tag>
+                            </Link>
+                          )}
                         </p>
                       </div>
                       <Button size="sm" variant="primary" onClick={() => setBooking(u)}>

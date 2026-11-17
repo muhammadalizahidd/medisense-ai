@@ -15,6 +15,7 @@ import { disciplines } from "@/lib/live/catalogue";
 import { shortDate } from "@/lib/live/time";
 import type { TherapistCardDto, TherapistDetailDto } from "@/lib/live/types";
 import { TableFrame } from "@/components/ui/table-frame";
+import { Avatar } from "@/components/ui/premium";
 import { CaseloadTag, EmptyNote, ErrorNote, LiveBadge, Skeleton, Stars } from "./bits";
 import { AddTherapist } from "./add-therapist";
 import {
@@ -189,14 +190,22 @@ export function TherapistDirectory() {
               {rows.map((t) => (
                 <tr key={t.id}>
                   <td className="px-4 py-3">
-                    <Link href={`/care/therapists/${t.id}`} className="font-semibold text-ink-900">
-                      {t.name}
-                    </Link>
-                    <span className="block text-caption whitespace-nowrap text-ink-500">
-                      {t.staffId && <span className="font-mono">{t.staffId} · </span>}
-                      {t.discipline}
+                    <span className="flex items-center gap-3">
+                      <Avatar name={t.name} size={40} kind="staff" src={t.photoUrl} />
+                      <span className="min-w-0">
+                        <Link
+                          href={`/care/therapists/${t.id}`}
+                          className="font-semibold text-ink-900"
+                        >
+                          {t.name}
+                        </Link>
+                        <span className="block text-caption whitespace-nowrap text-ink-500">
+                          {t.staffId && <span className="font-mono">{t.staffId} · </span>}
+                          {t.discipline}
+                        </span>
+                        <span className="block text-caption text-ink-500">{t.region}</span>
+                      </span>
                     </span>
-                    <span className="block text-caption text-ink-500">{t.region}</span>
                   </td>
                   <td className="px-4 py-3">
                     <span className="flex flex-col items-start gap-1">

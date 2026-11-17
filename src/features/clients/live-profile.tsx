@@ -8,6 +8,7 @@ import { useDemoStore } from "@/state/demo-store";
 import { ClientActions } from "./client-actions";
 import { ClientProfileView } from "./client-profile";
 import { ClientVisits } from "./client-record";
+import { photoFor } from "@/lib/avatars";
 
 /** A full profile with any edits made in this session applied over the record. */
 export function LiveProfile({ profile: seed }: { profile: ClientProfile }) {
@@ -41,8 +42,17 @@ export function LiveProfile({ profile: seed }: { profile: ClientProfile }) {
         title={profile.name}
         description={`${profile.age} yrs · ${profile.service} · ${profile.clinician} · ${profile.suburb}, ${profile.region} · ${profile.visitType}`}
         leading={
-          <span className="flex size-14 flex-none items-center justify-center rounded-full bg-accent-tint font-display text-h2 text-accent">
-            {profile.initials}
+          <span className="flex size-14 flex-none items-center justify-center overflow-hidden rounded-full bg-accent-tint font-display text-h2 text-accent">
+            {photoFor(profile.name, "patient") ? (
+              // eslint-disable-next-line @next/next/no-img-element -- small local portrait
+              <img
+                src={photoFor(profile.name, "patient") ?? ""}
+                alt=""
+                className="size-full rounded-full object-cover"
+              />
+            ) : (
+              profile.initials
+            )}
           </span>
         }
         actions={

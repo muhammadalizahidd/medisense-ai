@@ -14,6 +14,7 @@ import { relativeTime } from "@/lib/live/time";
 import type { ClientStage, ClientSummaryDto, ReferralSummaryDto } from "@/lib/live/types";
 import { participantStatuses } from "@/lib/live/participant";
 import { TableFrame } from "@/components/ui/table-frame";
+import { Avatar } from "@/components/ui/premium";
 import { cn } from "@/lib/cn";
 import { EmptyNote, ErrorNote, LiveBadge, needTone, Skeleton, StageTag } from "./bits";
 import { statusTone } from "./participant-profile";
@@ -263,12 +264,17 @@ export function CareBoard() {
                   className="transition-colors duration-(--duration-fast) hover:bg-canvas"
                 >
                   <td className="px-4 py-3">
-                    <Link href={`/care/${c.id}`} className="font-semibold text-ink-900">
-                      {c.name}
-                    </Link>
-                    <span className="block text-caption text-ink-500">
-                      {c.mrn && <span className="font-mono">{c.mrn} · </span>}
-                      {c.suburb} · {c.funding}
+                    <span className="flex items-center gap-3">
+                      <Avatar name={c.name} size={40} kind="patient" src={c.photoUrl} />
+                      <span className="min-w-0">
+                        <Link href={`/care/${c.id}`} className="font-semibold text-ink-900">
+                          {c.name}
+                        </Link>
+                        <span className="block text-caption text-ink-500">
+                          {c.mrn && <span className="font-mono">{c.mrn} · </span>}
+                          {c.suburb} · {c.funding}
+                        </span>
+                      </span>
                     </span>
                   </td>
                   <td className="px-4 py-3">

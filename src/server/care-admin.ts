@@ -36,7 +36,10 @@ async function loadClient(id: ObjectId) {
   return client;
 }
 
-export async function clientDetail(id: ObjectId): Promise<ClientDetailDto> {
+export async function clientDetail(
+  id: ObjectId,
+  viewer: { therapist?: boolean } = {},
+): Promise<ClientDetailDto> {
   const {
     users,
     therapists,
@@ -87,7 +90,9 @@ export async function clientDetail(id: ObjectId): Promise<ClientDetailDto> {
     precautions: client.precautions ?? null,
     mrn: client.mrn ?? null,
     // Earlier versions stay on the referral; the record shows the current ones.
-    documents: docs.filter((d) => d.status !== "Superseded").map(documentDto),
+    documents: docs
+      .filter((d) => d.status !== "Superseded" && !(viewer.therapist && d.area === "funding"))
+      .map(documentDto),
     referrals: refs.map((r) => ({ id: r._id.toHexString(), reference: r.reference })),
     dateOfBirth: client.dateOfBirth,
     email: client.email,

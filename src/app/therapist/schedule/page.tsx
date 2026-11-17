@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { PageContainer, PageLoading } from "@/components/ui/page";
 import { MySchedule } from "@/features/live/my-schedule";
 import { OfflinePage } from "@/features/live/offline-page";
+import { TherapistBilling } from "@/features/live/therapist-billing";
 import { requirePageUser } from "@/server/page-auth";
 
 export const metadata: Metadata = { title: "My schedule · Medisense" };
@@ -12,6 +13,7 @@ async function MyScheduleContent() {
   return (
     <PageContainer>
       <MySchedule />
+      <TherapistBilling />
     </PageContainer>
   );
 }
