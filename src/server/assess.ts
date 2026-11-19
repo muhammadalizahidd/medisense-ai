@@ -370,11 +370,45 @@ export async function assessQueue(
     ...(clientId ? { clientId } : {}),
   };
   const list = await db.assessments.find(filter).sort({ updatedAt: -1 }).limit(400).toArray();
+  // The queue needs counts and states only; reports, histories and free text stay in the database.
   const extMap = new Map(
-    (await (await exts()).find({ _id: { $in: list.map((a) => a._id) } }).toArray()).map((e) => [
-      e._id.toHexString(),
-      e,
-    ]),
+    (
+      await (
+        await exts()
+      )
+        .find(
+          { _id: { $in: list.map((a) => a._id) } },
+          {
+            projection: {
+              caseCode: 1,
+              ref: 1,
+              purpose: 1,
+              mode: 1,
+              risk: 1,
+              dueAt: 1,
+              outcome: 1,
+              templateId: 1,
+              excluded: 1,
+              unable: 1,
+              consent: 1,
+              coSign: 1,
+              submitted: 1,
+              respondents: 1,
+              // Only how many there are; an element keeps its place even without the field.
+              "measurements.id": 1,
+              "scores.id": 1,
+              custom: 1,
+              "observations.domain": 1,
+              "observations.item": 1,
+              "observations.accepted": 1,
+              "observations.aiSuggested": 1,
+              "visits.id": 1,
+              "visits.paused": 1,
+            },
+          },
+        )
+        .toArray()
+    ).map((e) => [e._id.toHexString(), e]),
   );
   const clients = new Map(
     (

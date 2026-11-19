@@ -1616,8 +1616,9 @@ export async function scanAll(force = false) {
   const state = (g.__opsScan ??= { at: 0, running: null });
   if (state.running) return force ? state.running : 0;
   if (!force && Date.now() - state.at < 45_000) return 0;
-  // Pages show the last scan straight away; the next one runs in the background.
-  const background = !force && state.at > 0;
+  // Tasks from earlier scans are stored, so pages show them straight away and the scan runs in
+  // the background, including the first one after the server starts.
+  const background = !force;
   state.running = (async () => {
     await ensureRules();
     const ctx = await loadContext();

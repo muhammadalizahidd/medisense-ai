@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { cached, cacheKey } from "@/server/cache";
 import { adjustmentInputSchema, paymentInputSchema } from "@/lib/live/finance";
 import { requireUser } from "@/server/auth";
 import { prepareLines, rulesSchema, saveRules } from "@/server/finance";
@@ -12,8 +13,12 @@ import {
 import { handle, parseId, readJson } from "@/server/http";
 
 /** Module 07: the finance hub (queue, invoices, claims, payments, reconciliation, adjustments). */
-export async function GET() {
-  return handle(async () => ({ hub: await financeHub(await requireUser("admin")) }));
+export async function GET(request: Request) {
+  return handle(() =>
+    cached(cacheKey(request), 60_000, async () => ({
+      hub: await financeHub(await requireUser("admin")),
+    })),
+  );
 }
 
 const actionSchema = z.discriminatedUnion("type", [

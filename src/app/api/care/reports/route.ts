@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { cached, cacheKey } from "@/server/cache";
 import { exportInputSchema, scheduleInputSchema, viewInputSchema } from "@/lib/live/report-dto";
 import { requireUser } from "@/server/auth";
 import { handle, objectId, readJson } from "@/server/http";
@@ -15,8 +16,12 @@ import { saveReportSettings, settingsInputSchema } from "@/server/report-setting
  * Module 09: reports hub (scoped facts, saved views, schedules, exports, insights). Therapists
  * get their own caseload only (section 8); participants have no reporting area.
  */
-export async function GET() {
-  return handle(async () => ({ hub: await reportsHub(await requireUser("admin", "therapist")) }));
+export async function GET(request: Request) {
+  return handle(() =>
+    cached(cacheKey(request), 60_000, async () => ({
+      hub: await reportsHub(await requireUser("admin", "therapist")),
+    })),
+  );
 }
 
 const actionSchema = z.discriminatedUnion("type", [

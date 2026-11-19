@@ -82,7 +82,7 @@ def walkthrough(s: AppStage):
     s.click(sheet(s).get_by_role("button", name="Book visit"), 600)
     s.settle(sheet(s).get_by_text("Visit booked").first)
     s.say("Book someone new", "Booked. A provisional record opens with an MRN, Emma is told, and intake completes the rest.", 3200)
-    s.click(L.get_by_role("button", name="Close Book someone new"), 900)
+    s.click(L.get_by_role("button", name=re.compile("^Close Book")), 900)
 
     # 3 Schedule
     s.chapter(2)
@@ -90,14 +90,22 @@ def walkthrough(s: AppStage):
     s.say("The team's schedule", "Every clinician's visits, day by day: home visits and video calls.", 300)
     s.settle(L.locator("ol li button").first)
     s.wait(1600)
-    s.click(L.get_by_role("group", name="Choose a day").get_by_role("button").nth(1), 1600)
     s.say("The team's schedule", "Filter by clinician; Peter's new visit is already on Emma's day.", 300)
-    s.click(L.get_by_role("group", name="Clinician").get_by_role("button", name="Emma Clarke"), 1800)
+    s.click(L.get_by_role("group", name="Clinician").get_by_role("button", name="Emma Clarke"), 1400)
+    # Peter was booked into Emma's next free time, whichever day that is: step through the week.
     peter = L.locator("ol li button").filter(has_text="Peter Lawson")
-    if peter.count():
-        s.click(peter.first, 1600)
-    else:
-        s.click(L.locator("ol li button").first, 1600)
+    days = L.get_by_role("group", name="Choose a day").get_by_role("button")
+    with_visits = None
+    for i in range(days.count()):
+        if peter.count():
+            break
+        if i:
+            s.click(days.nth(i), 700)
+        if with_visits is None and L.locator("ol li button").count():
+            with_visits = i
+    if not peter.count() and with_visits is not None:
+        s.click(days.nth(with_visits), 900)
+    s.click(peter.first if peter.count() else L.locator("ol li button").first, 1600)
     s.say("The team's schedule", "Each visit with its time, service, confirmation and reference.", 2400)
     s.click(L.get_by_role("button", name=re.compile("^Close ")).last, 900)
 

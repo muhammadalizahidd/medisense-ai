@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { cached, cacheKey } from "@/server/cache";
 import { ruleInputSchema, settingsSchema, taskInputSchema } from "@/lib/live/operations";
 import { requireUser } from "@/server/auth";
 import { handle, parseId, readJson } from "@/server/http";
@@ -13,8 +14,12 @@ import {
 } from "@/server/operations-hub";
 
 /** Module 08: the operations hub (queue, rules, run log, approvals, notifications, reports). */
-export async function GET() {
-  return handle(async () => ({ hub: await opsHub(await requireUser("admin")) }));
+export async function GET(request: Request) {
+  return handle(() =>
+    cached(cacheKey(request), 60_000, async () => ({
+      hub: await opsHub(await requireUser("admin")),
+    })),
+  );
 }
 
 const actionSchema = z.discriminatedUnion("type", [

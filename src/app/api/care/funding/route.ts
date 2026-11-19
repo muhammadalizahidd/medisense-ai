@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { cached, cacheKey } from "@/server/cache";
 import { priceItemInputSchema } from "@/lib/live/funding";
 import { requireUser } from "@/server/auth";
 import {
@@ -13,8 +14,12 @@ import { collections } from "@/server/db";
 import { handle, parseId, readJson, UserFacingError } from "@/server/http";
 
 /** Module 06 funding workspace: plans, alerts, agreements, payers and the price catalogue. */
-export async function GET() {
-  return handle(async () => ({ overview: await fundingOverview(await requireUser("admin")) }));
+export async function GET(request: Request) {
+  return handle(() =>
+    cached(cacheKey(request), 60_000, async () => ({
+      overview: await fundingOverview(await requireUser("admin")),
+    })),
+  );
 }
 
 const actionSchema = z.discriminatedUnion("type", [

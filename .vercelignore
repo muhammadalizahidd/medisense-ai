@@ -4,3 +4,9 @@
 .next
 node_modules
 tsconfig.tsbuildinfo
+# Local production build and demo recordings: Vercel builds the app itself.
+.next-prod
+.tmp-check
+scripts/demo-videos/output
+scripts/demo-videos/*.zip
+scripts/**/*.webm
