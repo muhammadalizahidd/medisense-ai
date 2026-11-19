@@ -52,6 +52,7 @@ export function SignInForm({
   initialMode = "sign-in",
   initialEmail = "",
   initialCode = "",
+  staffOnly = false,
 }: {
   onSignedIn: (user: SessionUser) => void;
   /** A referral code whose referral isn't accepted yet: show its progress instead. */
@@ -59,6 +60,8 @@ export function SignInForm({
   initialMode?: Mode;
   initialEmail?: string;
   initialCode?: string;
+  /** Staff apps (the therapist app): email and password only, no patient MRN option. */
+  staffOnly?: boolean;
 }) {
   const [mode, setMode] = useState<Mode>(initialMode);
   const [email, setEmail] = useState(initialEmail);
@@ -123,18 +126,20 @@ export function SignInForm({
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
-      <Segmented
-        label="How do you want to continue?"
-        value={mode}
-        onChange={(next) => {
-          setMode(next);
-          setError(null);
-        }}
-        options={[
-          { id: "sign-in", label: "Sign in" },
-          { id: "activate", label: "I have an MRN" },
-        ]}
-      />
+      {!staffOnly && (
+        <Segmented
+          label="How do you want to continue?"
+          value={mode}
+          onChange={(next) => {
+            setMode(next);
+            setError(null);
+          }}
+          options={[
+            { id: "sign-in", label: "Sign in" },
+            { id: "activate", label: "I have an MRN" },
+          ]}
+        />
+      )}
       {activating && (
         <p className="rounded-control bg-accent-tint px-3 py-2 text-caption text-ink-700">
           Enter your medical record number (MRN) from your referral or your care team. That&apos;s

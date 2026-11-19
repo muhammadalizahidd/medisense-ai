@@ -422,7 +422,12 @@ function InCall({
         </p>
         <RecordingBadge status={c.recording.status} />
       </div>
-      <div className={cn("grid gap-3", c.screenShare ? "md:grid-cols-3" : "md:grid-cols-2")}>
+      <div
+        className={cn(
+          "grid grid-cols-1 gap-3",
+          c.screenShare ? "md:grid-cols-3" : "md:grid-cols-2",
+        )}
+      >
         {c.screenShare && (
           <div className="flex aspect-video items-center justify-center rounded-card bg-surface/10 text-small text-surface md:col-span-2">
             {c.therapist.split(" ")[0]} is sharing their screen

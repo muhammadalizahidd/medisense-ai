@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Search } from "lucide-react";
+import { CalendarPlus, ChevronRight, FileText, Landmark, Plus, Search } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { ButtonLink } from "@/components/ui/button";
@@ -18,6 +18,9 @@ import { Avatar } from "@/components/ui/premium";
 import { cn } from "@/lib/cn";
 import { EmptyNote, ErrorNote, LiveBadge, needTone, Skeleton, StageTag } from "./bits";
 import { statusTone } from "./participant-profile";
+import { AssessmentCell, PlanCell, usePatientWork } from "./patient-actions";
+import { BookVisitPanel } from "./quick-book";
+import { Sheet } from "@/components/ui/sheet";
 
 type Filter = "all" | ClientStage;
 
@@ -39,6 +42,8 @@ export function CareBoard() {
   const [service, setService] = useState("");
   const [clinician, setClinician] = useState("");
   const [incomplete, setIncomplete] = useState(false);
+  const [booking, setBooking] = useState<ClientSummaryDto | null>(null);
+  const work = usePatientWork();
   const now = useNow();
   const weekAgo = now === null ? Infinity : now - 7 * 86_400_000;
   const clients = data?.clients ?? [];
@@ -70,7 +75,7 @@ export function CareBoard() {
   return (
     <>
       <PageHeader
-        eyebrow="Patient onboarding"
+        eyebrow="Live care"
         title="Patients"
         description="Accepted referrals become patients with one service request per support. Choose a therapist for each by availability and follow the request until it's accepted."
         actions={
@@ -249,12 +254,12 @@ export function CareBoard() {
           <table className="table-stack w-full text-left text-small md:min-w-200">
             <thead className="border-b border-border text-caption text-ink-500">
               <tr>
-                <th className="px-4 py-3 font-medium">Patient</th>
-                <th className="px-4 py-3 font-medium">Therapies</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Profile</th>
-                <th className="px-4 py-3 font-medium">Added</th>
-                <th className="px-4 py-3 font-medium">Stage</th>
+                <th className="px-3 py-3 font-medium">Patient</th>
+                <th className="px-3 py-3 font-medium">Therapies</th>
+                <th className="px-3 py-3 font-medium">Status</th>
+                <th className="px-3 py-3 font-medium">Assessment</th>
+                <th className="px-3 py-3 font-medium">Treatment plan</th>
+                <th className="px-3 py-3 text-right font-medium">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -263,57 +268,138 @@ export function CareBoard() {
                   key={c.id}
                   className="transition-colors duration-(--duration-fast) hover:bg-canvas"
                 >
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-3">
                     <span className="flex items-center gap-3">
                       <Avatar name={c.name} size={40} kind="patient" src={c.photoUrl} />
                       <span className="min-w-0">
                         <Link href={`/care/${c.id}`} className="font-semibold text-ink-900">
                           {c.name}
                         </Link>
+                        {c.mrn && (
+                          <span className="block font-mono text-caption whitespace-nowrap text-ink-500">
+                            {c.mrn}
+                          </span>
+                        )}
                         <span className="block text-caption text-ink-500">
-                          {c.mrn && <span className="font-mono">{c.mrn} · </span>}
                           {c.suburb} · {c.funding}
                         </span>
+                        {c.completeness !== null && (
+                          <span
+                            className="mt-1 flex items-center gap-1.5"
+                            title={
+                              c.missing.length ? `Missing: ${c.missing.join(", ")}` : "Complete"
+                            }
+                          >
+                            <span className="h-1 w-14 overflow-hidden rounded-full bg-sunken">
+                              <span
+                                className={cn(
+                                  "block h-full rounded-full",
+                                  c.completeness === 100 ? "bg-healthy-dot" : "bg-accent-fill",
+                                )}
+                                style={{ width: `${c.completeness}%` }}
+                              />
+                            </span>
+                            <span className="text-label text-ink-500 num">
+                              Profile {c.completeness}%
+                            </span>
+                          </span>
+                        )}
                       </span>
                     </span>
                   </td>
-                  <td className="px-4 py-3">
-                    <span className="flex flex-wrap gap-1.5">
+                  <td className="px-3 py-3">
+                    <span className="flex max-w-56 flex-col gap-1.5">
                       {c.needs.map((n) => (
-                        <Tag key={n.id} tone={needTone[n.status]}>
-                          {n.support}
-                          {n.therapistName ? ` · ${n.therapistName}` : ""}
-                        </Tag>
+                        <span key={n.id} className="flex items-start gap-2">
+                          <i
+                            aria-hidden="true"
+                            className={cn(
+                              "mt-1.5 size-2 flex-none rounded-full",
+                              {
+                                healthy: "bg-healthy-dot",
+                                watch: "bg-watch-dot",
+                                over: "bg-over-dot",
+                                available: "bg-available-dot",
+                              }[needTone[n.status] as string] ?? "bg-ink-400",
+                            )}
+                          />
+                          <span className="min-w-0">
+                            <span className="block text-small leading-snug font-medium text-ink-900">
+                              {n.support}
+                            </span>
+                            <span className="block text-caption text-ink-500">
+                              {n.therapistName ?? "Needs a therapist"}
+                            </span>
+                          </span>
+                        </span>
                       ))}
                     </span>
                   </td>
-                  <td className="px-4 py-3">
-                    <Tag tone={statusTone[c.participantStatus]}>{c.participantStatus}</Tag>
+                  <td className="px-3 py-3">
+                    <span className="flex flex-col items-start gap-1">
+                      <Tag tone={statusTone[c.participantStatus]}>{c.participantStatus}</Tag>
+                      {c.stage !== c.participantStatus && <StageTag stage={c.stage} />}
+                    </span>
                   </td>
-                  <td className="px-4 py-3">
-                    {c.completeness === null ? (
-                      <span className="text-caption text-ink-500">Not built</span>
+                  <td className="px-3 py-3">
+                    {work.ready ? (
+                      <AssessmentCell rows={work.assessments.get(c.id)} />
                     ) : (
-                      <span
-                        className="flex items-center gap-2"
-                        title={c.missing.length ? `Missing: ${c.missing.join(", ")}` : "Complete"}
-                      >
-                        <span className="h-1.5 w-16 overflow-hidden rounded-full bg-sunken">
-                          <span
-                            className={cn(
-                              "block h-full rounded-full",
-                              c.completeness === 100 ? "bg-healthy-dot" : "bg-accent-fill",
-                            )}
-                            style={{ width: `${c.completeness}%` }}
-                          />
-                        </span>
-                        <span className="text-caption text-ink-700 num">{c.completeness}%</span>
-                      </span>
+                      <Skeleton className="h-6 w-28" />
                     )}
                   </td>
-                  <td className="px-4 py-3 text-ink-700">{relativeTime(c.createdAt)}</td>
-                  <td className="px-4 py-3">
-                    <StageTag stage={c.stage} />
+                  <td className="px-3 py-3">
+                    {work.ready ? (
+                      <PlanCell rows={work.plans.get(c.id)} />
+                    ) : (
+                      <Skeleton className="h-6 w-28" />
+                    )}
+                  </td>
+                  <td className="px-3 py-3">
+                    <span className="flex items-center justify-end gap-1">
+                      {c.needs.some((n) => n.therapistName) && (
+                        <RowAction
+                          label={`Book a visit for ${c.name}`}
+                          tip="Book a visit"
+                          tone="accent"
+                          onClick={() => setBooking(c)}
+                        >
+                          <CalendarPlus className="size-4" aria-hidden="true" />
+                        </RowAction>
+                      )}
+                      <RowAction
+                        label={`Clinical record for ${c.name}`}
+                        tip="Clinical record"
+                        tone="available"
+                        href={`/care/records/${c.id}`}
+                      >
+                        <FileText className="size-4" aria-hidden="true" />
+                      </RowAction>
+                      <RowAction
+                        label={`Funding for ${c.name}`}
+                        tip="Funding"
+                        tone="watch"
+                        href={`/care/funding/${c.id}`}
+                      >
+                        <Landmark className="size-4" aria-hidden="true" />
+                      </RowAction>
+                      <Link
+                        href={`/care/${c.id}`}
+                        aria-label={`Open ${c.name}'s record`}
+                        className="group/action relative ml-1 inline-flex size-8 items-center justify-center rounded-control bg-accent-fill text-on-accent transition-all duration-140 hover:-translate-y-px hover:bg-accent-fill-hover hover:text-on-accent hover:no-underline hover:shadow-lift active:scale-95"
+                      >
+                        <ChevronRight
+                          className="size-4 transition-transform duration-140 group-hover/action:translate-x-0.5"
+                          aria-hidden="true"
+                        />
+                        <span
+                          aria-hidden="true"
+                          className="pointer-events-none absolute right-0 bottom-full z-20 mb-1.5 translate-y-1 rounded-tag bg-ink-900 px-2 py-1 text-label font-semibold whitespace-nowrap text-page opacity-0 shadow-overlay transition-all duration-140 group-hover/action:translate-y-0 group-hover/action:opacity-100"
+                        >
+                          Open record
+                        </span>
+                      </Link>
+                    </span>
                   </td>
                 </tr>
               ))}
@@ -321,6 +407,73 @@ export function CareBoard() {
           </table>
         )}
       </TableFrame>
+      {booking && (
+        <Sheet
+          title={`Book a visit for ${booking.name}`}
+          description="With their own clinician, at a real free time."
+          onClose={() => setBooking(null)}
+        >
+          <BookVisitPanel
+            patient={{
+              id: booking.id,
+              name: booking.name,
+              mrn: booking.mrn,
+              suburb: booking.suburb,
+              phone: null,
+            }}
+            onDone={reload}
+          />
+        </Sheet>
+      )}
     </>
+  );
+}
+
+/** An icon button in a table row; a link when it goes somewhere. */
+const actionTone = {
+  accent: "bg-accent-tint text-accent hover:bg-accent-fill hover:text-on-accent",
+  available: "bg-available-bg text-available hover:ring-available-dot",
+  watch: "bg-watch-bg text-watch hover:ring-watch-dot",
+} as const;
+
+function RowAction({
+  label,
+  tip,
+  tone,
+  href,
+  onClick,
+  children,
+}: {
+  label: string;
+  /** The short name shown above the icon on hover. */
+  tip: string;
+  tone: keyof typeof actionTone;
+  href?: string;
+  onClick?: () => void;
+  children: React.ReactNode;
+}) {
+  const cls = cn(
+    "group/action relative inline-flex size-8 cursor-pointer items-center justify-center rounded-control ring-1 ring-transparent transition-all duration-140 hover:-translate-y-px hover:no-underline hover:shadow-lift active:translate-y-0 active:scale-95",
+    actionTone[tone],
+  );
+  const inner = (
+    <>
+      {children}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1.5 -translate-x-1/2 translate-y-1 rounded-tag bg-ink-900 px-2 py-1 text-label font-semibold whitespace-nowrap text-page opacity-0 shadow-overlay transition-all duration-140 group-hover/action:translate-y-0 group-hover/action:opacity-100 group-focus-visible/action:opacity-100"
+      >
+        {tip}
+      </span>
+    </>
+  );
+  return href ? (
+    <Link href={href} aria-label={label} className={cls}>
+      {inner}
+    </Link>
+  ) : (
+    <button type="button" aria-label={label} onClick={onClick} className={cls}>
+      {inner}
+    </button>
   );
 }

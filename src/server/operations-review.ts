@@ -595,17 +595,23 @@ export async function reviewsFor(viewer: UserDoc) {
     .sort({ createdAt: -1 })
     .limit(40)
     .toArray();
-  const out: ReviewDto[] = [];
-  for (const r of open) {
-    let review = await opsReviews.findOne({ referralId: r._id });
-    if (!review) review = (await loadReview(r._id)).review;
-    const docs = await documents
+  // Reviews and documents for every open referral in two queries, not two or three per referral.
+  const ids = open.map((r) => r._id);
+  const [reviews, docs] = await Promise.all([
+    opsReviews.find({ referralId: { $in: ids } }).toArray(),
+    documents
       .find(
-        { referralId: r._id, status: { $ne: "Superseded" } },
-        { projection: { name: 1, kind: 1 } },
+        { referralId: { $in: ids }, status: { $ne: "Superseded" } },
+        { projection: { name: 1, kind: 1, referralId: 1 } },
       )
-      .toArray();
-    out.push(reviewDto(review, r, docs, viewer));
-  }
-  return out;
+      .toArray(),
+  ]);
+  return Promise.all(
+    open.map(async (r) => {
+      const review =
+        reviews.find((x) => x.referralId.equals(r._id)) ?? (await loadReview(r._id)).review;
+      const mine = docs.filter((d) => d.referralId?.equals(r._id));
+      return reviewDto(review, r, mine, viewer);
+    }),
+  );
 }

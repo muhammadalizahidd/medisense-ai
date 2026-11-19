@@ -7,6 +7,9 @@ import { PresenterPanel } from "@/components/shell/presenter-panel";
 import { TabBar } from "@/components/shell/tab-bar";
 import { TopBar } from "@/components/shell/top-bar";
 import { Toaster } from "@/components/ui/toast";
+import { ShellLoading } from "@/components/ui/page";
+import { NamePhotos } from "@/components/ui/name-photos";
+import { NoteAssistEverywhere } from "@/components/ai/note-assist-everywhere";
 import { AppearanceSync } from "@/features/appearance/appearance-sync";
 import { DemoStoreHydrator } from "@/state/demo-store-hydrator";
 import { fontVariables } from "./fonts";
@@ -48,7 +51,9 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
         <DemoStoreHydrator />
         <Toaster />
         <AppearanceSync />
-        <Suspense fallback={<div className="min-h-screen bg-page" />}>
+        <NoteAssistEverywhere />
+        <NamePhotos />
+        <Suspense fallback={<ShellLoading />}>
           <Today>
             <div className="flex min-h-screen bg-page">
               <div data-chrome className="contents">

@@ -5,11 +5,13 @@ import { createPlan13, planList } from "@/server/tplan";
 import { ensurePlanSeed } from "@/server/tplan-seed";
 
 /** Module 13: treatment plans and episodes still to plan, filtered to this person. */
-export async function GET() {
+export async function GET(request: Request) {
   return handle(async () => {
     const user = await requireUser("admin", "therapist");
     await ensurePlanSeed();
-    return { rows: await planList(user) };
+    const clientId = new URL(request.url).searchParams.get("clientId");
+    const rows = await planList(user);
+    return { rows: clientId ? rows.filter((r) => r.clientId === clientId) : rows };
   });
 }
 

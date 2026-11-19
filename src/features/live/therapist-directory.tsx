@@ -29,6 +29,7 @@ import {
   useStaff,
 } from "./staff-profile";
 import { TherapistRecord } from "./therapist-record";
+import { TherapistPatients, TherapistSessions } from "./therapist-sessions";
 
 const day = (iso: string) => shortDate(`${iso}T00:00:00+10:00`);
 
@@ -69,7 +70,7 @@ export function TherapistDirectory() {
   return (
     <>
       <PageHeader
-        eyebrow="Patient onboarding"
+        eyebrow="Live care"
         title="Therapists"
         actions={
           <div className="flex items-center gap-3">
@@ -179,6 +180,7 @@ export function TherapistDirectory() {
               <tr>
                 <th className="px-4 py-3 font-medium">Therapist</th>
                 <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium">Sessions</th>
                 <th className="px-4 py-3 font-medium">Works</th>
                 <th className="px-4 py-3 font-medium">Approved services</th>
                 <th className="px-4 py-3 font-medium">Credentials</th>
@@ -225,6 +227,23 @@ export function TherapistDirectory() {
                         </span>
                       )}
                     </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <Link
+                      href={`/care/therapists/${t.id}?tab=sessions`}
+                      className="group block hover:no-underline"
+                      title="See every session"
+                    >
+                      <span className="type-display text-h2 leading-none text-ink-900 group-hover:text-accent">
+                        {t.sessions.completed}
+                      </span>
+                      <span className="mt-0.5 block text-caption whitespace-nowrap text-ink-500">
+                        {t.sessions.upcoming} upcoming
+                      </span>
+                      <span className="block text-caption whitespace-nowrap text-ink-500">
+                        {t.sessions.patients} {t.sessions.patients === 1 ? "patient" : "patients"}
+                      </span>
+                    </Link>
                   </td>
                   <td className="max-w-56 px-4 py-3 text-caption text-ink-700">
                     {t.availability.pattern}
@@ -298,6 +317,8 @@ export function TherapistProfilePage({ id }: { id: string }) {
   const s = staff.data?.staff;
   const tabs = [
     { id: "overview", label: "Overview" },
+    { id: "sessions", label: "Sessions", count: data?.therapist.sessions.completed },
+    { id: "patients", label: "Patients", count: data?.therapist.patients.length },
     {
       id: "credentials",
       label: "Credentials",
@@ -345,6 +366,12 @@ export function TherapistProfilePage({ id }: { id: string }) {
       <Tabs label="Staff record" tabs={tabs} value={tab} onChange={setTab} />
       <TabPanel id="overview" value={tab}>
         <TherapistRecord t={t} patientLinks />
+      </TabPanel>
+      <TabPanel id="sessions" value={tab}>
+        <TherapistSessions t={t} />
+      </TabPanel>
+      <TabPanel id="patients" value={tab}>
+        <TherapistPatients t={t} />
       </TabPanel>
       {s && (
         <>

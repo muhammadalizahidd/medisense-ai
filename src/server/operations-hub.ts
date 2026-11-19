@@ -287,11 +287,25 @@ async function matchingCases(): Promise<MatchCaseDto[]> {
   const waiting = await clients
     .find({ "needs.status": "needs-therapist", discharged: { $in: [null] } })
     .toArray();
+  // One query each for the referrals and the matching tasks, not two per waiting need.
+  const needs = waiting.flatMap((c) =>
+    c.needs.filter((x) => x.status === "needs-therapist").map((n) => ({ c, n })),
+  );
+  const refIds = needs.flatMap(({ n }) => (n.referralId ? [n.referralId] : []));
+  const keys = needs.map(({ c, n }) => `AUT-06:CaseReadyToAssign:${c._id.toHexString()}:${n.id}`);
+  const [refs, tasks] = await Promise.all([
+    refIds.length
+      ? referrals.find({ _id: { $in: refIds } }, { projection: { data: 1, triage: 1 } }).toArray()
+      : [],
+    keys.length
+      ? opsTasks.find({ idemKey: { $in: keys } }, { projection: { _id: 1, idemKey: 1 } }).toArray()
+      : [],
+  ]);
   const out: MatchCaseDto[] = [];
   for (const c of waiting) {
     for (const n of c.needs.filter((x) => x.status === "needs-therapist")) {
       const ref = n.referralId
-        ? await referrals.findOne({ _id: n.referralId }, { projection: { data: 1, triage: 1 } })
+        ? (refs.find((x) => x._id.equals(n.referralId ?? undefined)) ?? null)
         : null;
       const risk = Boolean(ref && needsRiskReview(ref.data));
       const blockers = [
@@ -299,10 +313,8 @@ async function matchingCases(): Promise<MatchCaseDto[]> {
         ...(c.precautions ? ["Clinical precaution on file"] : []),
         ...(risk && !ref?.triage ? ["Clinical review not complete"] : []),
       ];
-      const task = await opsTasks.findOne(
-        { idemKey: `AUT-06:CaseReadyToAssign:${c._id.toHexString()}:${n.id}` },
-        { projection: { _id: 1 } },
-      );
+      const key = `AUT-06:CaseReadyToAssign:${c._id.toHexString()}:${n.id}`;
+      const task = tasks.find((x) => x.idemKey === key);
       out.push({
         taskId: task?._id.toHexString() ?? null,
         clientId: c._id.toHexString(),
@@ -432,6 +444,10 @@ export async function opsHub(u: UserDoc): Promise<OpsHubDto> {
     orgSettings(),
     staffList(),
   ]);
+  const [reviews, matching] = await Promise.all([
+    u.role === "admin" ? reviewsFor(u) : Promise.resolve([]),
+    can.scheduler || can.manager ? matchingCases() : Promise.resolve([]),
+  ]);
   const visible = tasks.filter((t) => canSee(u, can, t));
   const stats = new Map<
     string,
@@ -463,8 +479,8 @@ export async function opsHub(u: UserDoc): Promise<OpsHubDto> {
       .filter((a) => !a.restricted || can.clinical || u.role === "admin")
       .map((a) => approvalDto(a, u, can)),
     messages: u.role === "admin" ? messages.map(messageDto) : [],
-    reviews: u.role === "admin" ? await reviewsFor(u) : [],
-    matching: can.scheduler || can.manager ? await matchingCases() : [],
+    reviews,
+    matching,
     settings,
     assignmentMode: mode.assignmentMode,
     staff,

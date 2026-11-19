@@ -204,7 +204,7 @@ export function WorkspaceMenu() {
             </div>
           )}
 
-          <div className="border-t border-border bg-canvas/60 p-1.5">
+          {/* <div className="border-t border-border bg-canvas/60 p-1.5">
             <div className="flex items-center justify-between gap-2 px-2.5 pt-2 pb-1.5">
               <h2 className="text-label font-semibold tracking-[0.1em] text-ink-500 uppercase">
                 Preview workspaces
@@ -267,7 +267,7 @@ export function WorkspaceMenu() {
                 Previews show sample screens. You stay signed in as {account.name.split(" ")[0]}.
               </p>
             )}
-          </div>
+          </div> */}
 
           {account && (
             <div className="border-t border-border p-1.5">

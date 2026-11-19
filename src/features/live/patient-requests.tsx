@@ -133,7 +133,7 @@ export function PatientRequests() {
         ]}
       />
       <div className="grid items-stretch gap-6 xl:grid-cols-12">
-        <div className="flex flex-col xl:col-span-8">
+        <div className="flex min-w-0 flex-col xl:col-span-8">
           <Tabs
             tabs={tabs.map((t) => ({ ...t, count: count(t.id) }))}
             value={tab}

@@ -151,7 +151,39 @@ async function ratingsByTherapist(): Promise<Ratings> {
   return new Map(rows.map((r) => [r._id.toHexString(), { sum: r.sum, count: r.count }]));
 }
 
-function card(t: TherapistDoc, ratings: Ratings): TherapistCardDto {
+type SessionCounts = Map<string, { completed: number; upcoming: number; patients: number }>;
+
+async function sessionCounts(): Promise<SessionCounts> {
+  const { appointments } = await collections();
+  const now = new Date();
+  const rows = await appointments
+    .aggregate<{ _id: ObjectId; completed: number; upcoming: number; patients: ObjectId[] }>([
+      { $match: { status: { $in: ["completed", "booked"] } } },
+      {
+        $group: {
+          _id: "$therapistId",
+          completed: { $sum: { $cond: [{ $eq: ["$status", "completed"] }, 1, 0] } },
+          upcoming: {
+            $sum: {
+              $cond: [{ $and: [{ $eq: ["$status", "booked"] }, { $gte: ["$start", now] }] }, 1, 0],
+            },
+          },
+          patients: {
+            $addToSet: { $cond: [{ $eq: ["$status", "completed"] }, "$clientId", "$$REMOVE"] },
+          },
+        },
+      },
+    ])
+    .toArray();
+  return new Map(
+    rows.map((r) => [
+      r._id.toHexString(),
+      { completed: r.completed, upcoming: r.upcoming, patients: r.patients.length },
+    ]),
+  );
+}
+
+function card(t: TherapistDoc, ratings: Ratings, counts?: SessionCounts): TherapistCardDto {
   const r = ratings.get(t._id.toHexString());
   return {
     id: t._id.toHexString(),
@@ -174,6 +206,7 @@ function card(t: TherapistDoc, ratings: Ratings): TherapistCardDto {
     capacity: t.capacity,
     availability: availabilitySummary(t),
     rating: r ? { average: Math.round((r.sum / r.count) * 10) / 10, count: r.count } : null,
+    sessions: counts?.get(t._id.toHexString()) ?? { completed: 0, upcoming: 0, patients: 0 },
   };
 }
 
@@ -188,14 +221,15 @@ function soonestExpiry(t: TherapistDoc) {
 
 export async function listTherapists(): Promise<TherapistCardDto[]> {
   const { therapists, db } = await collections();
-  const [found, ratings] = await Promise.all([
+  const [found, ratings, counts] = await Promise.all([
     therapists.find().sort({ name: 1 }).toArray(),
     ratingsByTherapist(),
+    sessionCounts(),
   ]);
   // Staff from before Module 04 get their record (and STF number) once, in name order.
   const rows = [];
   for (const t of found) rows.push(await ensureStaff(db, t));
-  return rows.map((t) => card(t, ratings));
+  return rows.map((t) => card(t, ratings, counts));
 }
 
 export async function therapistDetail(id: ObjectId): Promise<TherapistDetailDto> {
@@ -220,8 +254,40 @@ export async function therapistDetail(id: ObjectId): Promise<TherapistDetailDto>
     .toArray();
   const patientName = new Map(patients.map((p) => [p._id.toHexString(), p.name]));
   const now = new Date();
+  const calls = await db.telehealth
+    .find(
+      { appointmentId: { $in: visits.map((v) => v._id) } },
+      { projection: { appointmentId: 1, recording: 1 } },
+    )
+    .toArray();
+  const callOf = new Map(calls.map((c) => [c.appointmentId.toHexString(), c]));
+  const done = visits.filter((v) => v.status === "completed");
+  const perPatient = new Map<string, { count: number; last: Date }>();
+  for (const v of done) {
+    const k = v.clientId.toHexString();
+    const was = perPatient.get(k);
+    perPatient.set(k, {
+      count: (was?.count ?? 0) + 1,
+      last: was && was.last > v.start ? was.last : v.start,
+    });
+  }
+  // Everyone they've been assigned, plus anyone they've seen without a current assignment.
+  const assignedIds = new Set(assigned.map((a) => a.clientId.toHexString()));
+  const seenOnly = patients.filter(
+    (p) => !assignedIds.has(p._id.toHexString()) && perPatient.has(p._id.toHexString()),
+  );
+  const counts = new Map([
+    [
+      t._id.toHexString(),
+      {
+        completed: done.length,
+        upcoming: visits.filter((v) => v.status === "booked" && v.start >= now).length,
+        patients: perPatient.size,
+      },
+    ],
+  ]);
   return {
-    ...card(t, ratings),
+    ...card(t, ratings, counts),
     email: account?.email ?? "",
     phone: account?.phone ?? null,
     profile: t.profile ?? { bio: "", qualifications: "", languages: ["English"] },
@@ -234,13 +300,57 @@ export async function therapistDetail(id: ObjectId): Promise<TherapistDetailDto>
       noShows: visits.filter((v) => v.status === "no-show").length,
       lateCancellations: visits.filter((v) => v.status === "late-cancelled").length,
     },
-    patients: assigned.map((a) => ({
-      id: a.clientId.toHexString(),
-      name: patientName.get(a.clientId.toHexString()) ?? "Patient",
-      discipline: a.discipline,
-      since: (a.respondedAt ?? a.createdAt).toISOString(),
-      discharged: Boolean(patients.find((p) => p._id.equals(a.clientId))?.discharged),
-    })),
+    patients: [
+      ...assigned.map((a) => ({
+        id: a.clientId.toHexString(),
+        name: patientName.get(a.clientId.toHexString()) ?? "Patient",
+        discipline: a.discipline,
+        since: (a.respondedAt ?? a.createdAt).toISOString(),
+        discharged: Boolean(patients.find((p) => p._id.equals(a.clientId))?.discharged),
+        sessions: perPatient.get(a.clientId.toHexString())?.count ?? 0,
+        lastSession: perPatient.get(a.clientId.toHexString())?.last.toISOString() ?? null,
+      })),
+      ...seenOnly.map((p) => {
+        const first = [...done].reverse().find((v) => v.clientId.equals(p._id));
+        return {
+          id: p._id.toHexString(),
+          name: p.name,
+          discipline: t.discipline,
+          since: (first?.start ?? p._id.getTimestamp()).toISOString(),
+          discharged: Boolean(p.discharged),
+          sessions: perPatient.get(p._id.toHexString())?.count ?? 0,
+          lastSession: perPatient.get(p._id.toHexString())?.last.toISOString() ?? null,
+        };
+      }),
+    ].filter((p, i, all) => all.findIndex((x) => x.id === p.id) === i),
+    sessionLog: visits.map((v) => {
+      const call = callOf.get(v._id.toHexString());
+      const rec = call?.recording;
+      const noteState = v.note
+        ? v.note.status === "Final"
+          ? "Signed"
+          : (v.note.status ?? "Signed")
+        : v.status === "completed"
+          ? "Not written"
+          : null;
+      return {
+        id: v._id.toHexString(),
+        ref: v.ref ?? null,
+        start: v.start.toISOString(),
+        patientId: v.clientId.toHexString(),
+        patient: patientName.get(v.clientId.toHexString()) ?? "Patient",
+        discipline: v.discipline,
+        modality: v.modality ?? "In person",
+        status: v.status,
+        minutes: v.checkOut?.minutes ?? null,
+        note: noteState,
+        recording:
+          rec && rec.status !== "Ready" && rec.segments.length > 0
+            ? { status: rec.status, playable: rec.status === "Available" }
+            : null,
+        rating: v.feedback?.rating ?? null,
+      };
+    }),
     feedback: visits
       .filter((v) => v.feedback)
       .slice(0, 20)

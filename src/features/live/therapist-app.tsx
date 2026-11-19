@@ -1,6 +1,9 @@
 "use client";
 
+import { NoteAssist, wantsAssist } from "@/components/ai/note-assist";
+import { PatientAiTab, TherapistAiInbox, VisitCheckin } from "./enhance-therapist";
 import {
+  CalendarPlus,
   AlertTriangle,
   CalendarCheck,
   CalendarDays,
@@ -29,6 +32,8 @@ import {
   UserRound,
   Stethoscope,
 } from "lucide-react";
+import { AssessmentAppSheet } from "./app-assessment";
+import { BookingAgent } from "./booking-agent";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AiChip, AiIcon } from "@/components/ai/provenance";
 import { Button } from "@/components/ui/button";
@@ -135,7 +140,7 @@ export function TherapistApp() {
             </p>
           )}
           <AppCard>
-            <SignInForm onSignedIn={() => reload()} />
+            <SignInForm staffOnly onSignedIn={() => reload()} />
           </AppCard>
         </div>
       </PhoneFrame>
@@ -357,6 +362,8 @@ function TodayTab({
               </AppCard>
             )}
 
+            <TherapistAiInbox />
+
             <section
               aria-label="Your day"
               className="flex items-center gap-4 rounded-card border border-border bg-surface p-4"
@@ -396,6 +403,27 @@ function TodayTab({
                 />
               </ul>
             </section>
+
+            <button
+              type="button"
+              onClick={() =>
+                ctx.open(
+                  <AppSheet title="Booking agent" onClose={ctx.close}>
+                    <BookingAgent compact />
+                  </AppSheet>,
+                )
+              }
+              className="flex w-full cursor-pointer items-center gap-3 rounded-card border border-border bg-surface p-3.5 text-left hover:bg-sunken active:scale-98"
+            >
+              <IconBadge icon={CalendarPlus} tone="violet" size={42} />
+              <span className="min-w-0 flex-1">
+                <span className="block text-small font-semibold text-ink-900">Booking agent</span>
+                <span className="block text-caption text-ink-500">
+                  Book a follow-up or move a visit, in real free times
+                </span>
+              </span>
+              <ChevronRight className="size-5 text-ink-500" aria-hidden="true" />
+            </button>
 
             {d.requests.length > 0 && (
               <section aria-label="New patients for you">
@@ -764,6 +792,9 @@ function VisitSheet({ visit, ctx }: { visit: Visit; ctx: Ctx }) {
               </p>
               <p className="mt-1 text-ink-900">{b.precautions}</p>
             </div>
+          )}
+          {visit.status === "booked" && (
+            <VisitCheckin clientId={visit.clientId} appointmentId={visit.id} />
           )}
           {visit.modality === "Telehealth" && visit.status === "booked" && (
             <button
@@ -1694,7 +1725,7 @@ const kindIcon: Record<string, typeof House> = {
 };
 
 function PatientScreen({ c, ctx, onClose }: { c: Client; ctx: Ctx; onClose: () => void }) {
-  const [view, setView] = useState<"history" | "goals" | "assess">("history");
+  const [view, setView] = useState<"history" | "goals" | "assess" | "ai">("history");
   const [inner, setInner] = useState<ReactNode>(null);
   const record = useResource<{ record: { timeline: TimelineItem[] } }>(`/api/care/records/${c.id}`);
   const plans = useResource<{ rows: PlanRowLite[] }>("/api/care/plans");
@@ -1804,13 +1835,14 @@ function PatientScreen({ c, ctx, onClose }: { c: Client; ctx: Ctx; onClose: () =
           <div
             role="tablist"
             aria-label="Patient"
-            className="mb-4 grid grid-cols-3 gap-1 rounded-full bg-sunken p-1"
+            className="mb-4 grid grid-cols-4 gap-1 rounded-full bg-sunken p-1"
           >
             {(
               [
                 ["history", "History"],
                 ["goals", "Goals"],
-                ["assess", "Assessments"],
+                ["assess", "Assess"],
+                ["ai", "AI"],
               ] as const
             ).map(([id, label]) => (
               <button
@@ -1945,6 +1977,8 @@ function PatientScreen({ c, ctx, onClose }: { c: Client; ctx: Ctx; onClose: () =
               </div>
             ))}
 
+          {view === "ai" && <PatientAiTab clientId={c.id} />}
+
           {view === "assess" &&
             (!assess.data ? (
               <Skeleton className="h-60" />
@@ -1983,7 +2017,23 @@ function PatientScreen({ c, ctx, onClose }: { c: Client; ctx: Ctx; onClose: () =
                     <p className="mt-1 text-caption text-ink-500">
                       {a.progress}% complete · updated {shortDate(a.updatedAt)}
                     </p>
-                    <div className="mt-3 grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setInner(
+                          <AssessmentAppSheet
+                            id={a.id}
+                            onClose={() => setInner(null)}
+                            onDone={() => assess.reload()}
+                          />,
+                        )
+                      }
+                      className="mt-3 flex w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-accent-fill py-2.5 text-caption font-semibold text-on-accent"
+                    >
+                      <ClipboardList className="size-4" aria-hidden="true" />
+                      Visits, report and signing
+                    </button>
+                    <div className="mt-2 grid grid-cols-2 gap-2">
                       <button
                         type="button"
                         onClick={() =>
@@ -2701,6 +2751,7 @@ function Area({
         rows={3}
         className="rounded-control border border-border-strong bg-surface px-3 py-2 text-small"
       />
+      {wantsAssist(label) && <NoteAssist label={label} value={value} onChange={onChange} />}
     </label>
   );
 }

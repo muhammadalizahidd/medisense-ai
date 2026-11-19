@@ -34,6 +34,9 @@ const promises = [
  * One sign-in for everyone: admins and therapists with their work email, patients with the
  * MRN (medical record number) their care team gave them.
  */
+/** Staff-only destinations: the therapist app and the staff portals never offer the MRN option. */
+const STAFF_AREAS = ["/mobile/therapist", "/mobile/staff", "/therapist", "/care", "/admin"];
+
 export function SignInScreen({
   next,
   offline,
@@ -48,6 +51,10 @@ export function SignInScreen({
 }) {
   const router = useRouter();
   const [prefill, setPrefill] = useState<{ email: string; key: number } | null>(null);
+  const staffArea = Boolean(
+    next &&
+    STAFF_AREAS.some((p) => next === p || next.startsWith(`${p}/`) || next.startsWith(`${p}?`)),
+  );
 
   return (
     <main className="grid min-h-dvh bg-canvas lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
@@ -91,8 +98,9 @@ export function SignInScreen({
           </div>
           <h1 className="type-display text-h1">Sign in</h1>
           <p className="mt-1.5 mb-6 text-small text-ink-700">
-            Staff and therapists use their work email. Patients and families sign in with the MRN
-            (medical record number) from their care team.
+            {staffArea
+              ? "Staff and therapists sign in with their work email and password."
+              : "Staff and therapists use their work email. Patients and families sign in with the MRN (medical record number) from their care team."}
           </p>
           {offline && (
             <p
@@ -106,6 +114,7 @@ export function SignInScreen({
             <SignInForm
               key={prefill?.key ?? 0}
               initialEmail={prefill?.email}
+              staffOnly={staffArea}
               onSignedIn={(user) => {
                 router.replace(next ?? homeFor(user.role));
                 router.refresh();
@@ -115,8 +124,8 @@ export function SignInScreen({
           <div className="mt-6 flex flex-col gap-2 text-caption text-ink-500">
             <p className="flex items-start gap-2">
               <ShieldCheck className="mt-0.5 size-4 flex-none text-accent" aria-hidden="true" />
-              Forgotten your password? Staff can ask a Medisense admin for a temporary one. Patients
-              can ask their care team for their MRN.
+              Forgotten your password? Staff can ask a Medisense admin for a temporary one.
+              {!staffArea && " Patients can ask their care team for their MRN."}
             </p>
           </div>
           {testAccounts && (

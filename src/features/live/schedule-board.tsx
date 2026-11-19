@@ -17,6 +17,7 @@ import {
   Send,
   ShieldAlert,
   UserRound,
+  UserRoundPlus,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -44,6 +45,7 @@ import {
 import { relativeTime } from "@/lib/live/time";
 import { cn } from "@/lib/cn";
 import { BookingWizard } from "./booking-wizard";
+import { BookVisitPanel } from "./quick-book";
 import { ExceptionsPanel, RemindersPanel, ResourcesPanel } from "./schedule-panels";
 import { EmptyNote, ErrorNote, LiveBadge, Skeleton } from "./bits";
 import { TextArea, Tick } from "./form-bits";
@@ -107,6 +109,7 @@ export function ScheduleBoard() {
   const [open, setOpen] = useState<ScheduleEventDto | null>(null);
   const [booking, setBooking] = useState<ScheduleBoardDto["unscheduled"][number] | null>(null);
   const [moving, setMoving] = useState<{ e: ScheduleEventDto; start: string } | null>(null);
+  const [quick, setQuick] = useState(false);
   const tabs = [
     { id: "calendar", label: "Calendar" },
     { id: "resources", label: "Resources and leave" },
@@ -201,6 +204,10 @@ export function ScheduleBoard() {
         title="Scheduling"
         actions={
           <div className="flex flex-wrap items-center gap-3">
+            <Button size="sm" variant="primary" onClick={() => setQuick(true)}>
+              <UserRoundPlus className="size-4" aria-hidden="true" />
+              Book a visit
+            </Button>
             <LiveBadge />
             <span className="inline-flex items-center gap-1.5 text-caption text-ink-500">
               <Globe2 className="size-3.5" aria-hidden="true" /> {TIMEZONE_LABEL}
@@ -251,6 +258,19 @@ export function ScheduleBoard() {
             },
           ]}
         />
+      )}
+
+      {quick && (
+        <Sheet
+          title="Book a visit"
+          description="For an existing patient with their own clinician, or someone new from a name and phone."
+          onClose={() => {
+            setQuick(false);
+            reload();
+          }}
+        >
+          <BookVisitPanel onDone={() => reload()} />
+        </Sheet>
       )}
 
       <Tabs label="Scheduling" tabs={tabs} value={tab} onChange={setTab} className="mt-4" />

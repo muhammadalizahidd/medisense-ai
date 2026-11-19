@@ -1,5 +1,6 @@
 "use client";
 
+import { PatientAiHome } from "./enhance-patient";
 import {
   CalendarDays,
   ClipboardPlus,
@@ -374,7 +375,12 @@ function ClientTabs({
 
   return (
     <PatientHome
-      top={<PortalHomeCards onTab={onTab} />}
+      top={
+        <>
+          <PatientAiHome onTab={onTab} />
+          <PortalHomeCards onTab={onTab} />
+        </>
+      }
       first={first ?? ""}
       data={data ?? null}
       conversations={chats.data?.conversations ?? []}

@@ -5,7 +5,7 @@ import { CareBoard } from "@/features/live/care-board";
 import { OfflinePage } from "@/features/live/offline-page";
 import { requirePageUser } from "@/server/page-auth";
 
-export const metadata: Metadata = { title: "Patient onboarding · Medisense" };
+export const metadata: Metadata = { title: "Patients · Medisense" };
 
 async function CarePageContent() {
   if (!(await requirePageUser("/care", "admin"))) return <OfflinePage />;

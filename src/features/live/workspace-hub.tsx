@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { AiDraft, RuleMark } from "@/components/ai/provenance";
 import { BarList } from "@/components/charts/bar-list";
 import { colour } from "@/components/charts/chart-kit";
@@ -28,6 +28,7 @@ import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { TabPanel, Tabs, useTab } from "@/components/ui/tabs";
 import { Tag, type TagTone } from "@/components/ui/tag";
+import { cn } from "@/lib/cn";
 import { api, useNow, useResource } from "@/lib/live/client";
 import { shortDate, timeOfDay } from "@/lib/live/time";
 import type { AppointmentDto } from "@/lib/live/types";
@@ -40,6 +41,7 @@ import {
   type WorkspaceDto,
   type WorkspacePrefs,
   type WsAlert,
+  type WsBlock,
   type WsBriefPoint,
   type WsVisit,
 } from "@/lib/live/workspace";
@@ -909,6 +911,415 @@ const blockTone: Record<string, string> = {
   Leave: "border-l-ink-400 bg-sunken",
 };
 
+/** Working day drawn on the timeline (Brisbane hours); blocks outside it stretch the grid. */
+const DAY_START = 7;
+const DAY_END = 18;
+/** Minutes since midnight in Brisbane (no daylight saving). */
+const minuteOf = (iso: string) => ((Date.parse(iso) + 36e6) % 86_400_000) / 60_000;
+const span = (b: { start: string; end: string }) =>
+  Math.max(0, (Date.parse(b.end) - Date.parse(b.start)) / 60_000);
+const hours = (m: number) =>
+  m < 60
+    ? `${Math.round(m)}m`
+    : `${Math.floor(m / 60)}h${Math.round(m % 60) ? ` ${Math.round(m % 60)}m` : ""}`;
+const hourLabel = (h: number) => `${h % 12 || 12} ${h < 12 ? "am" : "pm"}`;
+const blockIcon = {
+  Visit: Home,
+  Telehealth: Video,
+  Travel: Car,
+  Documentation: FileText,
+  Leave: CalendarClock,
+} as const;
+const blockDot: Record<WsBlock["kind"], string> = {
+  Visit: "bg-accent-fill",
+  Telehealth: "bg-available-dot",
+  Travel: "bg-ink-400",
+  Documentation: "bg-watch-dot",
+  Leave: "bg-ink-400",
+};
+const blockColour: Record<WsBlock["kind"], string> = {
+  Visit: colour.accent,
+  Telehealth: colour.available,
+  Travel: colour.stone,
+  Documentation: colour.watch,
+  Leave: colour.sand,
+};
+const kindLabel = (k: WsBlock["kind"]) => (k === "Documentation" ? "Notes time" : k);
+
+function gridHours(blocks: WsBlock[]) {
+  const first = Math.min(DAY_START, ...blocks.map((b) => Math.floor(minuteOf(b.start) / 60)));
+  const last = Math.max(DAY_END, ...blocks.map((b) => Math.ceil(minuteOf(b.end) / 60)));
+  return { first, last: Math.min(24, last) };
+}
+
+/** One block placed on a time grid by its start and length. */
+function TimeBlock({
+  b,
+  first,
+  px,
+  compact = false,
+  visit,
+  openVisit,
+}: {
+  b: WsBlock;
+  first: number;
+  px: number;
+  compact?: boolean;
+  visit?: WsVisit;
+  openVisit: (id: string) => void;
+}) {
+  const Icon = blockIcon[b.kind];
+  const top = ((minuteOf(b.start) - first * 60) / 60) * px;
+  const height = Math.max(compact ? 22 : 30, (span(b) / 60) * px - 3);
+  const tall = height >= (compact ? 50 : 58);
+  const clickable = Boolean(b.visitId) && b.kind !== "Travel";
+  return (
+    <button
+      type="button"
+      disabled={!clickable}
+      onClick={() => b.visitId && openVisit(b.visitId)}
+      style={{ top, height }}
+      className={cn(
+        "absolute inset-x-1 overflow-hidden rounded-control border-l-[3px] text-left transition-shadow duration-140",
+        blockTone[b.kind],
+        compact ? "px-1.5 py-1" : "px-3 py-1.5",
+        clickable && "cursor-pointer hover:z-10 hover:shadow-lift",
+      )}
+    >
+      <span className="flex items-center gap-1.5">
+        <Icon className="size-3.5 flex-none text-ink-700" aria-hidden="true" />
+        <span
+          className={cn(
+            "truncate font-semibold text-ink-900",
+            compact ? "text-label" : "text-caption",
+          )}
+        >
+          {compact ? timeOfDay(b.start) : `${timeOfDay(b.start)} – ${timeOfDay(b.end)}`}
+          {!compact && <span className="font-normal text-ink-500"> · {kindLabel(b.kind)}</span>}
+        </span>
+        {!compact && visit && (
+          <span className="ml-auto flex-none">
+            <Tag tone={readinessTone[visit.readiness] ?? "neutral"}>{statusOf(visit)}</Tag>
+          </span>
+        )}
+      </span>
+      {(tall || !compact) && (
+        <span
+          className={cn(
+            "mt-0.5 block truncate text-ink-700",
+            compact ? "text-label" : "text-small",
+          )}
+        >
+          {b.label}
+        </span>
+      )}
+      {!compact && tall && visit && (
+        <span className="mt-0.5 flex items-center gap-1 truncate text-caption text-ink-500">
+          <ModeIcon mode={visit.mode} className="size-3" />
+          {visit.location || visit.mode} · <span className="font-mono">{visit.ref}</span>
+        </span>
+      )}
+    </button>
+  );
+}
+
+/** Hour lines behind a time grid, quiet shading outside working hours, and the time now. */
+function HourGrid({
+  first,
+  last,
+  px,
+  labels,
+  nowMinute,
+  children,
+}: {
+  first: number;
+  last: number;
+  px: number;
+  labels: boolean;
+  nowMinute: number | null;
+  children: ReactNode;
+}) {
+  const rows = Array.from({ length: last - first }, (_, i) => first + i);
+  return (
+    <div className="relative" style={{ height: (last - first) * px }}>
+      <div
+        className="absolute inset-x-0 top-0 bg-sunken"
+        style={{ height: Math.max(0, DAY_START - first) * px }}
+      />
+      <div
+        className="absolute inset-x-0 bottom-0 bg-sunken"
+        style={{ height: Math.max(0, last - DAY_END) * px }}
+      />
+      {rows.map((h, i) => (
+        <div key={h} className="absolute inset-x-0 border-t border-border" style={{ top: i * px }}>
+          {labels && (
+            <span className="absolute -top-2 -left-16 w-13 text-right text-label text-ink-500 tabular-nums">
+              {hourLabel(h)}
+            </span>
+          )}
+        </div>
+      ))}
+      {children}
+      {nowMinute !== null && nowMinute >= first * 60 && nowMinute <= last * 60 && (
+        <div
+          className="pointer-events-none absolute inset-x-0 z-20 flex items-center"
+          style={{ top: ((nowMinute - first * 60) / 60) * px }}
+          aria-hidden="true"
+        >
+          <span className="-ml-1 size-2.5 rounded-full bg-over-dot" />
+          <span className="h-0.5 flex-1 bg-over-dot" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DayView({
+  day,
+  today,
+  blocks,
+  visits,
+  openVisit,
+}: {
+  day: string;
+  today: string;
+  blocks: WsBlock[];
+  visits: WsVisit[];
+  openVisit: (id: string) => void;
+}) {
+  const now = useNow();
+  const PX = 72;
+  const { first, last } = gridHours(blocks);
+  const byId = new Map(visits.map((v) => [v.id, v]));
+  const nowMinute = day === today && now !== null ? minuteOf(new Date(now).toISOString()) : null;
+  const dayVisits = visits.filter((v) => dayKey(v.start) === day && statusOf(v) !== "Cancelled");
+  const next =
+    dayVisits.find((v) => day !== today || now === null || Date.parse(v.end) > now) ?? null;
+  const kinds = (["Visit", "Telehealth", "Travel", "Documentation", "Leave"] as const)
+    .map((k) => ({
+      id: k,
+      label: kindLabel(k),
+      value: Math.round(blocks.filter((b) => b.kind === k).reduce((s, b) => s + span(b), 0)),
+      colour: blockColour[k],
+    }))
+    .filter((s) => s.value > 0);
+  const total = kinds.reduce((s, k) => s + k.value, 0);
+  return (
+    <div className="grid items-start gap-6 xl:grid-cols-12">
+      <section
+        aria-label={`Timeline for ${dayHeading(day)}`}
+        className="overflow-hidden rounded-card border border-border bg-surface xl:col-span-8"
+      >
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
+          <div className="flex items-center gap-3">
+            <span className="type-display text-h2 text-ink-900">{dayHeading(day)}</span>
+            {day === today && <Tag tone="available">Today</Tag>}
+            <span className="text-small text-ink-500">
+              {dayVisits.length} visit{dayVisits.length === 1 ? "" : "s"}
+            </span>
+          </div>
+          <ul className="flex flex-wrap items-center gap-3 text-caption text-ink-500">
+            {(["Visit", "Telehealth", "Travel", "Documentation"] as const).map((k) => (
+              <li key={k} className="flex items-center gap-1.5">
+                <span className={cn("size-2 rounded-full", blockDot[k])} aria-hidden="true" />
+                {kindLabel(k)}
+              </li>
+            ))}
+          </ul>
+        </header>
+        <div className="py-5 pr-4 pl-20">
+          <HourGrid first={first} last={last} px={PX} labels nowMinute={nowMinute}>
+            {blocks.map((b, i) => (
+              <TimeBlock
+                key={`${b.kind}-${b.start}-${i}`}
+                b={b}
+                first={first}
+                px={PX}
+                visit={b.visitId ? byId.get(b.visitId) : undefined}
+                openVisit={openVisit}
+              />
+            ))}
+          </HourGrid>
+          {blocks.length === 0 && (
+            <p className="mt-4 text-center text-small text-ink-500">
+              Nothing booked. The whole day is free.
+            </p>
+          )}
+        </div>
+      </section>
+      <div className="flex flex-col gap-6 xl:col-span-4">
+        <Panel title={day === today ? "Next up" : "First visit"}>
+          {next ? (
+            <div className="flex flex-col gap-4">
+              <div className="flex items-start gap-3">
+                <span className="flex size-12 flex-none items-center justify-center rounded-card bg-accent-tint text-accent">
+                  <ModeIcon mode={next.mode} className="size-5" />
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate type-display text-h2 text-ink-900">{next.clientName}</p>
+                  <p className="text-small text-ink-700">
+                    {timeOfDay(next.start)} – {timeOfDay(next.end)} · {next.purpose}
+                  </p>
+                </div>
+              </div>
+              <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-control border border-border bg-border text-small">
+                {[
+                  ["Where", next.location || next.mode],
+                  ["Travel", next.travelMinutes ? `${next.travelMinutes} min` : "None"],
+                  ["Status", statusOf(next)],
+                  ["Reference", next.ref],
+                ].map(([k, v]) => (
+                  <div key={k} className="bg-surface px-3 py-2">
+                    <dt className="label-caps text-ink-500">{k}</dt>
+                    <dd
+                      className={cn(
+                        "mt-0.5 truncate text-ink-900",
+                        k === "Reference" && "font-mono",
+                      )}
+                    >
+                      {v}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+              <div className="flex flex-wrap items-center gap-2">
+                <Tag tone={readinessTone[next.readiness] ?? "neutral"}>{next.readiness}</Tag>
+                {next.safetyFlag && <Tag tone="over">Precaution on file</Tag>}
+                {next.blockers.length > 0 && (
+                  <Tag tone="watch">{next.blockers.length} to sort before starting</Tag>
+                )}
+              </div>
+              <Button variant="primary" onClick={() => openVisit(next.id)}>
+                Open visit
+              </Button>
+            </div>
+          ) : (
+            <p className="text-small text-ink-500">No more visits on this day.</p>
+          )}
+        </Panel>
+        <Panel title="How the day is spent">
+          {total ? (
+            <DonutChart
+              label="Time by kind"
+              slices={kinds}
+              centre={hours(total)}
+              centreCaption="scheduled"
+              format={(v) => hours(v)}
+              stacked
+            />
+          ) : (
+            <p className="text-small text-ink-500">Nothing scheduled.</p>
+          )}
+        </Panel>
+      </div>
+    </div>
+  );
+}
+
+function WeekView({
+  days,
+  today,
+  blocks,
+  openVisit,
+}: {
+  days: string[];
+  today: string;
+  blocks: WsBlock[];
+  openVisit: (id: string) => void;
+}) {
+  const now = useNow();
+  const PX = 46;
+  const { first, last } = gridHours(blocks);
+  const nowMinute = now !== null ? minuteOf(new Date(now).toISOString()) : null;
+  const cols = { gridTemplateColumns: `64px repeat(${days.length}, minmax(0, 1fr))` };
+  return (
+    <section
+      aria-label="Week timeline"
+      className="overflow-x-auto rounded-card border border-border bg-surface"
+    >
+      <div className="min-w-245">
+        <div className="grid border-b border-border" style={cols}>
+          <span />
+          {days.map((d) => {
+            const list = blocks.filter((b) => b.kind === "Visit" || b.kind === "Telehealth");
+            const mine = list.filter((b) => b.day === d);
+            const care = mine.reduce((s, b) => s + span(b), 0);
+            const load = Math.min(100, (care / ((DAY_END - DAY_START) * 60)) * 100);
+            return (
+              <div
+                key={d}
+                className={cn("border-l border-border px-3 py-3", d === today && "bg-accent-tint")}
+              >
+                <p className={cn("label-caps", d === today ? "text-accent" : "text-ink-500")}>
+                  {dayHeading(d).split(" ")[0]?.replace(",", "")}
+                </p>
+                <p
+                  className={cn(
+                    "type-display text-h2",
+                    d === today ? "text-accent" : "text-ink-900",
+                  )}
+                >
+                  {Number(d.slice(8))}
+                </p>
+                <p className="text-caption text-ink-500">
+                  {mine.length
+                    ? `${mine.length} visit${mine.length === 1 ? "" : "s"} · ${hours(care)}`
+                    : weekday(d) > 4
+                      ? "Weekend"
+                      : "Free"}
+                </p>
+                <div className="mt-2 h-1 overflow-hidden rounded-full bg-sunken" aria-hidden="true">
+                  <div
+                    className="h-full rounded-full bg-accent-fill"
+                    style={{ width: `${load}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="grid py-4" style={cols}>
+          <div className="relative">
+            {Array.from({ length: last - first }, (_, i) => first + i).map((h, i) => (
+              <span
+                key={h}
+                className="absolute right-2 -translate-y-2 text-label text-ink-500 tabular-nums"
+                style={{ top: i * PX }}
+              >
+                {hourLabel(h)}
+              </span>
+            ))}
+          </div>
+          {days.map((d) => (
+            <div key={d} className={cn("border-l border-border", d === today && "bg-accent-tint")}>
+              <HourGrid
+                first={first}
+                last={last}
+                px={PX}
+                labels={false}
+                nowMinute={d === today ? nowMinute : null}
+              >
+                {blocks
+                  .filter((b) => b.day === d)
+                  .map((b, i) => (
+                    <TimeBlock
+                      key={`${b.kind}-${b.start}-${i}`}
+                      b={b}
+                      first={first}
+                      px={PX}
+                      compact
+                      openVisit={openVisit}
+                    />
+                  ))}
+              </HourGrid>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function ScheduleTab({ ws, openVisit }: { ws: WorkspaceDto; openVisit: (id: string) => void }) {
   const [view, setView] = useState<WorkspacePrefs["defaultView"]>(ws.prefs.defaultView);
   const [range, setRange] = useState<(typeof ranges)[number]>(
@@ -956,8 +1367,40 @@ function ScheduleTab({ ws, openVisit }: { ws: WorkspaceDto; openVisit: (id: stri
     (b) => b.day >= start && b.day <= end && (b.visitId ? ids.has(b.visitId) : mode === "All"),
   );
   const conflicts = rows.filter((r) => r.conflictWith.length);
+  const mins = (kind: WsBlock["kind"]) =>
+    blocks.filter((b) => b.kind === kind).reduce((s, b) => s + span(b), 0);
+  const care = mins("Visit") + mins("Telehealth");
+  const workday = days.filter((d) => weekday(d) < 5).length * (DAY_END - DAY_START) * 60;
+  const busy = care + mins("Travel") + mins("Documentation") + mins("Leave");
+  const tele = rows.filter((r) => r.mode === "Telehealth").length;
   return (
     <div className="flex flex-col gap-4">
+      <KpiBand
+        label="Schedule summary"
+        items={[
+          {
+            label: "Appointments",
+            value: rows.length,
+            sub: `${rows.length - tele} in person · ${tele} telehealth`,
+          },
+          { label: "With patients", value: hours(care), sub: "face-to-face and video" },
+          { label: "Travel", value: hours(mins("Travel")), sub: "between visits" },
+          { label: "Notes time", value: hours(mins("Documentation")), sub: "planned, protected" },
+          {
+            label: "Free in hours",
+            value: hours(Math.max(0, workday - busy)),
+            sub: workday
+              ? `${Math.round((busy / workday) * 100)}% of working time booked`
+              : "weekend",
+          },
+          {
+            label: "Overlaps",
+            value: conflicts.length,
+            sub: conflicts.length ? "scheduling team resolves" : "none in this range",
+            tone: conflicts.length ? "over" : undefined,
+          },
+        ]}
+      />
       <FilterBar aside={`${rows.length} appointment${rows.length === 1 ? "" : "s"}`}>
         <Segmented
           label="View"
@@ -1068,48 +1511,16 @@ function ScheduleTab({ ws, openVisit }: { ws: WorkspaceDto; openVisit: (id: stri
             <VisitTable visits={rows} openVisit={openVisit} />
           </section>
         )
+      ) : view === "Day" ? (
+        <DayView
+          day={days[0] ?? ws.today}
+          today={ws.today}
+          blocks={blocks.filter((b) => b.day === (days[0] ?? ws.today))}
+          visits={rows}
+          openVisit={openVisit}
+        />
       ) : (
-        <div
-          className={view === "Week" ? "grid gap-3 md:grid-cols-4 xl:grid-cols-7" : "grid gap-3"}
-        >
-          {(view === "Day" ? days.slice(0, 1) : days).map((d) => {
-            const list = blocks.filter((b) => b.day === d);
-            return (
-              <section
-                key={d}
-                className="min-h-40 rounded-card border border-border bg-surface p-3"
-              >
-                <h3
-                  className={`mb-2 text-small font-semibold ${d === ws.today ? "text-accent" : "text-ink-900"}`}
-                >
-                  {dayHeading(d)}
-                  {d === ws.today && " · today"}
-                </h3>
-                {list.length === 0 ? (
-                  <p className="text-caption text-ink-500">Free</p>
-                ) : (
-                  <ul className="flex flex-col gap-1.5">
-                    {list.map((b, i) => (
-                      <li key={`${b.kind}-${b.start}-${i}`}>
-                        <button
-                          type="button"
-                          disabled={!b.visitId || b.kind === "Travel"}
-                          onClick={() => b.visitId && openVisit(b.visitId)}
-                          className={`w-full rounded-control border-l-[3px] px-2 py-1.5 text-left text-caption ${blockTone[b.kind]} enabled:cursor-pointer`}
-                        >
-                          <span className="block font-semibold text-ink-900">
-                            {timeOfDay(b.start)} · {b.kind}
-                          </span>
-                          <span className="block truncate text-ink-700">{b.label}</span>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </section>
-            );
-          })}
-        </div>
+        <WeekView days={days} today={ws.today} blocks={blocks} openVisit={openVisit} />
       )}
       <p className="text-caption text-ink-500">
         Times are Brisbane time. Travel, planned notes time and leave are shown so the week reads

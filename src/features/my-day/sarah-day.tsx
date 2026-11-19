@@ -1,6 +1,17 @@
 "use client";
 
-import { Car, UserCheck, Video } from "lucide-react";
+import {
+  Baby,
+  Car,
+  Clock3,
+  FileText,
+  Hammer,
+  Home,
+  PencilLine,
+  Sparkles,
+  UserCheck,
+  Video,
+} from "lucide-react";
 import Link from "next/link";
 import { Fragment, useState } from "react";
 import { AiMark, TaskTag } from "@/components/ai/marks";
@@ -8,6 +19,7 @@ import { PenNib } from "@/components/ai/provenance";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Caption, Card } from "@/components/ui/card";
 import { ScreenTitle } from "@/components/ui/page";
+import { Avatar } from "@/components/ui/premium";
 import { Tag } from "@/components/ui/tag";
 import { caseNotes } from "@/data/case-note";
 import { preparedDaySummary, sarahDay, sarahSupervisionSlot, type Visit } from "@/data/story";
@@ -22,81 +34,166 @@ const SESSION = "/sessions/oliver-grant";
 /** The therapist signed in to the Therapist view. */
 const ME = "sarah-thompson";
 
+/** The kind of therapy, from the visit's service, with its own icon. */
+function therapyType(service: string) {
+  if (/paediatric/i.test(service)) return { label: "Paediatric OT", icon: Baby };
+  if (/home mod/i.test(service)) return { label: "Home modifications", icon: Hammer };
+  if (/handwriting|fine motor/i.test(service)) return { label: "Fine motor", icon: PencilLine };
+  if (/program/i.test(service)) return { label: "Home program", icon: Sparkles };
+  return { label: "Occupational therapy", icon: Sparkles };
+}
+
 function VisitRow({
   visit,
   approved,
   nextDay,
+  last,
   onOpen,
 }: {
   visit: Visit;
   approved: boolean;
   nextDay: boolean;
+  last: boolean;
   onOpen: () => void;
 }) {
   const current = visit.state === "just-finished" && !nextDay;
   const done = visit.state === "done" && !nextDay;
   const highlight = current && !approved;
+  const type = therapyType(visit.service);
+  const tele = visit.kind === "Telehealth";
+  const status = done
+    ? { label: "Approved", tone: "healthy" as const }
+    : current
+      ? {
+          label: approved ? "Note approved" : "Just finished",
+          tone: approved ? ("healthy" as const) : ("live" as const),
+        }
+      : visit.state === "next" && !nextDay
+        ? { label: "Up next", tone: "available" as const }
+        : { label: "Scheduled", tone: "neutral" as const };
 
   return (
     <div
       onClick={onOpen}
       className={cn(
-        "relative grid cursor-pointer grid-cols-[76px_minmax(0,1fr)] gap-x-4 px-5 py-4 transition-colors hover:bg-canvas md:grid-cols-[96px_minmax(0,1fr)_auto] md:items-center",
-        highlight && "bg-accent-tint shadow-rule-accent md:py-6",
+        "group relative flex cursor-pointer gap-4 px-5 py-5 transition-colors duration-140 hover:bg-canvas",
+        highlight && "bg-accent-tint hover:bg-accent-tint",
       )}
     >
-      <div>
-        <div className={cn("type-display text-h2 leading-6 font-normal", done && "text-ink-500")}>
-          {visit.start}
-        </div>
-        <Caption>to {visit.end}</Caption>
-      </div>
-      <div className="min-w-0">
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onOpen();
-          }}
-          aria-label={`Open visit details for ${visit.client}`}
+      {/* Time and the day's timeline rail */}
+      <div className="flex w-20 flex-none flex-col items-end text-right">
+        <span
           className={cn(
-            "cursor-pointer text-left font-semibold text-ink-900 hover:text-accent",
-            highlight && "type-display text-h2 font-medium",
+            "type-display text-h2 leading-none text-ink-900 tabular-nums",
+            done && "text-ink-500",
           )}
         >
-          {visit.client}
-        </button>
-        <div className="flex flex-wrap items-center gap-x-1.5 text-small text-ink-700">
-          {visit.kind === "Telehealth" && (
-            <Video className="size-3.5" strokeWidth={1.5} aria-hidden="true" />
-          )}
-          {visit.service}, {visit.place}
-        </div>
-        {visit.note && !approved && !done && !nextDay && (
-          <p className={cn("mt-1 text-small", current ? "text-ink-900" : "text-ink-500")}>
-            {visit.note}
-          </p>
-        )}
-        {current && approved && (
-          <div className="mt-1.5">
-            <AiMark state="Approved">Note approved</AiMark>
-          </div>
-        )}
+          {visit.start}
+        </span>
+        <Caption className="mt-1 whitespace-nowrap">to {visit.end}</Caption>
       </div>
-      <div
-        className="col-start-2 mt-3 md:col-start-auto md:mt-0"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {highlight && (
-          <ButtonLink href={SESSION} variant="primary">
-            Write note with AI
-          </ButtonLink>
-        )}
-        {current && approved && (
-          <ButtonLink href={`${SESSION}/prepared`}>See what AI prepared</ButtonLink>
-        )}
-        {done && <Tag tone="healthy">Approved</Tag>}
-        {visit.state === "next" && !nextDay && <Tag tone="neutral">Scheduled</Tag>}
+      <div className="relative flex w-3 flex-none justify-center" aria-hidden="true">
+        <span className={cn("absolute top-0 w-px bg-border", last ? "h-4" : "-bottom-5")} />
+        <span
+          className={cn(
+            "relative mt-1.5 size-3 rounded-full ring-4 ring-surface",
+            done
+              ? "bg-healthy-dot"
+              : highlight
+                ? "bg-accent-fill"
+                : tele
+                  ? "bg-available-dot"
+                  : "bg-border-strong",
+          )}
+        />
+      </div>
+
+      {/* Patient card */}
+      <div className="flex min-w-0 flex-1 flex-wrap items-start gap-4">
+        <Avatar
+          name={visit.client}
+          size={highlight ? 56 : 48}
+          kind="patient"
+          className={cn("flex-none", done && "opacity-60")}
+        />
+        <div className="min-w-60 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpen();
+              }}
+              aria-label={`Open visit details for ${visit.client}`}
+              className={cn(
+                "cursor-pointer text-left text-section font-semibold text-ink-900 hover:text-accent",
+                highlight && "type-display text-h2 font-normal",
+              )}
+            >
+              {visit.client}
+            </button>
+            <Tag tone={status.tone}>{status.label}</Tag>
+          </div>
+          <p className="mt-0.5 text-small text-ink-700">
+            {visit.service} · {visit.place}
+          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            <span className="flex items-center gap-1 rounded-tag bg-accent-tint px-2 py-0.5 text-caption font-semibold text-accent">
+              <type.icon className="size-3.5" aria-hidden="true" />
+              {type.label}
+            </span>
+            <span
+              className={cn(
+                "flex items-center gap-1 rounded-tag px-2 py-0.5 text-caption font-semibold",
+                tele ? "bg-available-bg text-available" : "bg-sunken text-ink-700",
+              )}
+            >
+              {tele ? (
+                <Video className="size-3.5" aria-hidden="true" />
+              ) : (
+                <Home className="size-3.5" aria-hidden="true" />
+              )}
+              {tele ? "Telehealth meeting" : "Home visit"}
+            </span>
+          </div>
+          {visit.note && !approved && !done && !nextDay && (
+            <p
+              className={cn(
+                "mt-3 rounded-control border-l-2 px-3 py-2 text-small",
+                current
+                  ? "border-accent-fill bg-surface text-ink-900"
+                  : "border-border-strong bg-sunken text-ink-700",
+              )}
+            >
+              {visit.note}
+            </p>
+          )}
+          {current && approved && (
+            <div className="mt-2">
+              <AiMark state="Approved">Note approved</AiMark>
+            </div>
+          )}
+        </div>
+        <div
+          className="flex flex-none items-center gap-2 self-center"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {highlight && (
+            <ButtonLink href={SESSION} variant="primary">
+              <PenNib className="size-4" />
+              Write note with AI
+            </ButtonLink>
+          )}
+          {current && approved && (
+            <ButtonLink href={`${SESSION}/prepared`}>See what AI prepared</ButtonLink>
+          )}
+          {tele && visit.state === "later" && !nextDay && (
+            <ButtonLink href="/telehealth" size="sm" variant="primary">
+              <Video className="size-3.5" aria-hidden="true" />
+              Join video
+            </ButtonLink>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -163,20 +260,89 @@ export function SarahDay() {
         }
       />
 
+      <section
+        aria-label="Today at a glance"
+        data-no-photo
+        className="mb-6 grid gap-px overflow-hidden rounded-card border border-border bg-border sm:grid-cols-2 xl:grid-cols-5"
+      >
+        <div className="flex items-center gap-3 bg-surface px-5 py-4">
+          <Avatar name="Sarah Thompson" size={48} kind="staff" />
+          <div>
+            <p className="text-section text-ink-900">Sarah Thompson</p>
+            <Caption>Occupational Therapist · Brisbane North</Caption>
+          </div>
+        </div>
+        {[
+          {
+            icon: Home,
+            label: "Visits today",
+            value: String(sarahDay.length),
+            sub: `${sarahDay.filter((v) => v.kind === "Home visit").length} home · ${sarahDay.filter((v) => v.kind === "Telehealth").length} telehealth`,
+          },
+          {
+            icon: Car,
+            label: "Driving",
+            value: `${sarahDay.reduce((s, v) => s + v.driveBefore, 0)} min`,
+            sub: "between home visits",
+          },
+          {
+            icon: FileText,
+            label: "Notes to write",
+            value: String(backlog.length + (approved ? 0 : 1)),
+            sub: `${overdueNotes} overdue`,
+          },
+          {
+            icon: Clock3,
+            label: "Open tasks",
+            value: String(tasks.length),
+            sub: `${tasks.filter((t) => t.daysOverdue > 0).length} late`,
+          },
+        ].map((k) => (
+          <div key={k.label} className="flex items-center gap-3 bg-surface px-5 py-4">
+            <span className="flex size-10 flex-none items-center justify-center rounded-control bg-accent-tint text-accent">
+              <k.icon className="size-5" aria-hidden="true" />
+            </span>
+            <div>
+              <p className="label-caps text-ink-500">{k.label}</p>
+              <p className="type-display text-h2 leading-tight text-ink-900">{k.value}</p>
+              <Caption>{k.sub}</Caption>
+            </div>
+          </div>
+        ))}
+      </section>
+
       <div className="grid items-start gap-6 xl:grid-cols-12">
         <Card aria-labelledby="today" className="overflow-hidden xl:col-span-8">
-          <h2 id="today" className="sr-only">
-            Today&apos;s visits
-          </h2>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
+            <h2 id="today" className="text-section font-semibold text-ink-900">
+              Today&apos;s visits
+            </h2>
+            <div className="flex items-center gap-3 text-caption text-ink-500">
+              <span className="flex items-center gap-1.5">
+                <span className="size-2 rounded-full bg-healthy-dot" aria-hidden="true" /> Done
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="size-2 rounded-full bg-accent-fill" aria-hidden="true" /> Now
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="size-2 rounded-full bg-available-dot" aria-hidden="true" /> Video
+              </span>
+            </div>
+          </div>
           {sarahDay.map((v, i) => (
             <Fragment key={v.id}>
               {v.driveBefore > 0 ? (
-                <div className="grid grid-cols-[76px_minmax(0,1fr)] gap-x-4 border-y border-border bg-sunken px-5 py-1.5 md:grid-cols-[96px_minmax(0,1fr)]">
-                  <span />
-                  <span className="flex items-center gap-1.5 text-caption font-medium text-ink-500">
-                    <Car className="size-3.5" strokeWidth={1.5} aria-hidden="true" />
+                <div className="flex items-center gap-4 bg-sunken px-5 py-2">
+                  <span className="w-20 flex-none" />
+                  <span className="flex w-3 flex-none justify-center" aria-hidden="true">
+                    <span className="h-5 w-px border-l border-dashed border-border-strong" />
+                  </span>
+                  <span className="flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-caption font-medium text-ink-700">
+                    <Car className="size-3.5 text-ink-500" strokeWidth={1.5} aria-hidden="true" />
                     {v.driveBefore} min drive
-                    {v.leaveBy && !nextDay && `, leave by ${v.leaveBy}`}
+                    {v.leaveBy && !nextDay && (
+                      <span className="font-semibold text-watch">· leave by {v.leaveBy}</span>
+                    )}
                   </span>
                 </div>
               ) : (
@@ -186,6 +352,7 @@ export function SarahDay() {
                 visit={v}
                 approved={approved}
                 nextDay={nextDay}
+                last={i === sarahDay.length - 1}
                 onOpen={() => setDayVisit(v)}
               />
             </Fragment>

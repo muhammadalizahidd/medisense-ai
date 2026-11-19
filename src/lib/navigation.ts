@@ -40,7 +40,10 @@ import {
   UserRoundPen,
   Workflow,
   type LucideIcon,
+  BotMessageSquare,
 } from "lucide-react";
+
+import type { StaffRole } from "@/lib/live/catalogue";
 
 export type Role = "Leadership" | "Admin" | "Supervisor" | "Clinician";
 
@@ -80,7 +83,7 @@ export const navigation: { group: string; items: NavItem[] }[] = [
     group: "Live care",
     items: [
       { href: "/care/referrals", label: "Referrals and intake", icon: FileInput, roles: [L, A] },
-      { href: "/care", label: "Patient onboarding", icon: UserPlus, roles: [L, A] },
+      { href: "/care", label: "Patients", icon: UserPlus, roles: [L, A] },
       { href: "/care/therapists", label: "Therapists", icon: Stethoscope, roles: [L, A] },
       { href: "/care/schedule", label: "Scheduling", icon: CalendarRange, roles: [L, A] },
       { href: "/care/funding", label: "Funding and agreements", icon: Landmark, roles: [L, A] },
@@ -110,6 +113,7 @@ export const navigation: { group: string; items: NavItem[] }[] = [
         roles: [C],
       },
       { href: "/therapist/progress", label: "Progress and reports", icon: TrendingUp, roles: [C] },
+      { href: "/therapist/ai", label: "AI assistants", icon: BotMessageSquare, roles: [C] },
       {
         href: "/therapist/coordination",
         label: "Tasks and coordination",
@@ -117,6 +121,8 @@ export const navigation: { group: string; items: NavItem[] }[] = [
         roles: [C],
       },
       { href: "/care/reports", label: "Reports and analytics", icon: ChartColumn, roles: [L, A] },
+      { href: "/care/ai-agent", label: "Operations agent", icon: BotMessageSquare, roles: [L, A] },
+      { href: "/care/ai-oversight", label: "AI oversight", icon: BotMessageSquare, roles: [L, A] },
       { href: "/therapist/workspace", label: "My workspace", icon: Briefcase, roles: [C] },
       { href: "/therapist/tasks", label: "My tasks", icon: ListChecks, roles: [C] },
       { href: "/therapist/reports", label: "My reports", icon: ChartColumn, roles: [C] },
@@ -171,7 +177,7 @@ export const navigation: { group: string; items: NavItem[] }[] = [
   {
     group: "Mobile apps",
     items: [
-      { href: "/mobile/staff", label: "Staff app", icon: Tablet, roles: [L, C] },
+      { href: "/mobile/staff", label: "Admin app", icon: Tablet, roles: [L, A] },
       { href: "/mobile/family", label: "Family app", icon: Smartphone, roles: [L, C] },
       { href: "/mobile/patient", label: "Patient app", icon: Smartphone, roles: [L, A, C] },
       { href: "/mobile/therapist", label: "Therapist app", icon: Smartphone, roles: [L, A, C] },
@@ -187,66 +193,89 @@ export const navigation: { group: string; items: NavItem[] }[] = [
   },
 ];
 
-const roleLayouts: Partial<Record<Role, { group: string; hrefs: string[] }[]>> = {
+type Section = { group: string; hrefs: string[]; live?: boolean };
+
+const roleLayouts: Partial<Record<Role, Section[]>> = {
   Clinician: [
     {
-      group: "Live care",
+      group: "My day",
+      live: true,
       hrefs: [
         "/therapist/workspace",
         "/therapist/schedule",
         "/therapist/sessions",
-        "/therapist/documentation",
+        "/therapist/tasks",
         "/therapist/coordination",
+        "/messages",
+      ],
+    },
+    {
+      group: "My patients",
+      live: true,
+      hrefs: [
         "/therapist",
         "/therapist/records",
         "/therapist/assessments",
         "/therapist/plans",
         "/therapist/progress",
-        "/therapist/tasks",
-        "/therapist/reports",
-        "/messages",
-        "/telehealth/recordings",
-        "/profile",
+        "/therapist/documentation",
       ],
     },
+    {
+      group: "AI and reports",
+      live: true,
+      hrefs: ["/therapist/ai", "/therapist/reports", "/telehealth/recordings"],
+    },
+    { group: "Apps", live: true, hrefs: ["/mobile/therapist", "/mobile/patient"] },
+    { group: "Account", live: true, hrefs: ["/profile"] },
     { group: "My work", hrefs: ["/my-day", "/sessions/oliver-grant"] },
     { group: "AI workspace", hrefs: ["/case-notes/mia-robinson", "/reports"] },
     { group: "Clinical", hrefs: ["/patients", "/schedule", "/telehealth"] },
     { group: "Platform", hrefs: ["/portal"] },
-    {
-      group: "Mobile apps",
-      hrefs: ["/mobile/therapist", "/mobile/patient", "/mobile/staff", "/mobile/family"],
-    },
+    { group: "Mobile apps", hrefs: ["/mobile/family"] },
   ],
   Admin: [
     {
-      group: "Live care",
+      group: "Patients",
+      live: true,
       hrefs: [
         "/care/referrals",
         "/care",
-        "/care/therapists",
-        "/care/schedule",
-        "/care/funding",
-        "/care/billing",
-        "/care/operations",
-        "/care/coordination",
         "/care/patient-requests",
         "/care/records",
         "/care/assessments",
         "/care/plans",
-        "/care/sessions",
-        "/care/documentation",
         "/care/progress",
-        "/care/reports",
-        "/telehealth/recordings",
-        "/profile",
       ],
     },
+    {
+      group: "Therapists",
+      live: true,
+      hrefs: [
+        "/care/therapists",
+        "/care/sessions",
+        "/care/documentation",
+        "/care/coordination",
+        "/telehealth/recordings",
+      ],
+    },
+    { group: "Scheduling", live: true, hrefs: ["/care/schedule"] },
+    { group: "Finance", live: true, hrefs: ["/care/funding", "/care/billing"] },
+    {
+      group: "Operations and AI",
+      live: true,
+      hrefs: ["/care/operations", "/care/reports", "/care/ai-oversight"],
+    },
+    {
+      group: "Apps",
+      live: true,
+      hrefs: ["/mobile/staff", "/mobile/therapist", "/mobile/patient"],
+    },
+    { group: "Account", live: true, hrefs: ["/profile"] },
     { group: "Admin", hrefs: ["/intake", "/forms"] },
     { group: "Clinical", hrefs: ["/patients-requiring-attention", "/patients", "/schedule"] },
     { group: "AI workspace", hrefs: ["/reports"] },
     { group: "Business", hrefs: ["/billing"] },
-    { group: "Mobile apps", hrefs: ["/mobile/patient", "/mobile/therapist"] },
   ],
   Supervisor: [
     {
@@ -266,21 +295,89 @@ const roleLayouts: Partial<Record<Role, { group: string; hrefs: string[] }[]>> =
   ],
 };
 
-/** The sidebar for one role, with that person's main work first. */
-export function navigationFor(role: Role) {
+const INTAKE: StaffRole = "Intake Officer";
+const SCHED: StaffRole = "Scheduler";
+const FIN: StaffRole = "Finance";
+const FINM: StaffRole = "Finance Manager";
+const OPS: StaffRole = "Operations Manager";
+const LEAD: StaffRole = "Clinical Lead";
+/** The care office: everyone who works with patients day to day sees the clinical summaries. */
+const CARE: StaffRole[] = [INTAKE, SCHED, LEAD, OPS];
+
+/**
+ * Which admin responsibilities open each staff page. A Super Admin sees everything; a page not
+ * listed here is open to every admin. Pages stay reachable from links; this only tidies the menu.
+ */
+export const pageAccess: Record<string, StaffRole[]> = {
+  "/care/referrals": [INTAKE, LEAD],
+  "/care": [INTAKE, SCHED, LEAD],
+  "/care/patient-requests": [INTAKE, SCHED, LEAD],
+  "/care/records": CARE,
+  "/care/assessments": CARE,
+  "/care/plans": CARE,
+  "/care/progress": CARE,
+  "/care/therapists": [SCHED, LEAD, OPS],
+  "/care/sessions": CARE,
+  "/care/documentation": CARE,
+  "/care/coordination": [INTAKE, SCHED, LEAD, OPS],
+  "/telehealth/recordings": [SCHED, LEAD, OPS],
+  "/care/schedule": [SCHED, OPS],
+  "/care/funding": [INTAKE, FIN, FINM],
+  "/care/billing": [FIN, FINM],
+  "/care/operations": [INTAKE, SCHED, FINM, LEAD, OPS],
+  "/care/reports": [INTAKE, SCHED, FINM, LEAD, OPS],
+  "/care/ai-agent": [INTAKE, SCHED, OPS],
+  "/care/ai-oversight": CARE,
+  "/intake": [INTAKE],
+  "/forms": [INTAKE, SCHED],
+  "/patients-requiring-attention": [LEAD],
+  "/patients": [INTAKE, SCHED, LEAD],
+  "/schedule": [SCHED],
+  "/reports": [LEAD],
+  "/billing": [FIN, FINM],
+};
+
+/** Whether someone with these admin responsibilities works on a page. */
+export function canOpen(href: string, staffRoles: readonly StaffRole[] | null | undefined) {
+  if (!staffRoles?.length || staffRoles.includes("Super Admin")) return true;
+  const need = pageAccess[href];
+  return !need || need.some((r) => staffRoles.includes(r));
+}
+
+/**
+ * The sidebar for one role, with that person's main work first and split into sections. When a
+ * signed-in admin's responsibilities are known, pages outside them are left out of the menu.
+ */
+export function navigationFor(
+  role: Role,
+  staffRoles?: readonly StaffRole[] | null,
+  { liveOnly = false }: { liveOnly?: boolean } = {},
+) {
   const layout = roleLayouts[role];
-  if (layout) {
-    const items = navigation.flatMap((g) => g.items);
-    return layout.map(({ group, hrefs }) => ({
-      group,
-      items: hrefs
-        .map((href) => items.find((i) => i.href === href))
-        .filter((i): i is NavItem => i !== undefined),
-    }));
-  }
-  return navigation
-    .map(({ group, items }) => ({ group, items: items.filter((i) => i.roles.includes(role)) }))
-    .filter((g) => g.items.length > 0);
+  const items = navigation.flatMap((g) => g.items);
+  const sections: { group: string; items: NavItem[]; live: boolean }[] = layout
+    ? layout.map(({ group, hrefs, live }) => ({
+        group,
+        live: Boolean(live),
+        items: hrefs
+          .map((href) => items.find((i) => i.href === href))
+          .filter((i): i is NavItem => i !== undefined),
+      }))
+    : navigation
+        .map(({ group, items: list }) => ({
+          group,
+          live: group === "Live care",
+          items: list.filter((i) => i.roles.includes(role)),
+        }))
+        .sort((a, b) => Number(b.live) - Number(a.live));
+  const scoped = role === "Admin" ? staffRoles : null;
+  return (
+    sections
+      // Signed-in people see the live product only; the sample screens stay for presenting.
+      .filter((g) => !liveOnly || g.live)
+      .map((g) => ({ ...g, items: g.items.filter((i) => canOpen(i.href, scoped)) }))
+      .filter((g) => g.items.length > 0)
+  );
 }
 
 /** Who the demo is signed in as in each role view. */
@@ -327,6 +424,14 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
     meta: { section: "Live care", page: "Reports and analytics", role: "Admin" },
   },
   {
+    prefix: "/care/ai-agent",
+    meta: { section: "Live care", page: "Operations agent", role: "Admin" },
+  },
+  {
+    prefix: "/care/ai-oversight",
+    meta: { section: "Live care", page: "AI oversight", role: "Admin" },
+  },
+  {
     prefix: "/care/coordination/",
     meta: { section: "Care coordination", page: "Task", role: "Admin" },
   },
@@ -365,6 +470,10 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
   {
     prefix: "/therapist/progress",
     meta: { section: "Live care", page: "Progress and reports", role: "Clinician" },
+  },
+  {
+    prefix: "/therapist/ai",
+    meta: { section: "Live care", page: "AI assistants", role: "Clinician" },
   },
   {
     prefix: "/care/documentation/",
@@ -484,8 +593,9 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
   },
   {
     prefix: "/care/therapists",
-    meta: { section: "Patient onboarding", page: "Therapists", role: "Admin" },
+    meta: { section: "Therapists", page: "Therapists", role: "Admin" },
   },
+  { prefix: "/assistant", meta: { section: "AI", page: "Ask Medisense AI", role: "Admin" } },
   { prefix: "/profile", meta: { section: "Live care", page: "My profile", role: "Clinician" } },
   {
     prefix: "/care/new",
@@ -499,8 +609,8 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
     prefix: "/care/referrals",
     meta: { section: "Live care", page: "Referrals and intake", role: "Admin" },
   },
-  { prefix: "/care/", meta: { section: "Patient onboarding", page: "Patient", role: "Admin" } },
-  { prefix: "/care", meta: { section: "Live care", page: "Patient onboarding", role: "Admin" } },
+  { prefix: "/care/", meta: { section: "Patients", page: "Patient", role: "Admin" } },
+  { prefix: "/care", meta: { section: "Live care", page: "Patients", role: "Admin" } },
   {
     prefix: "/therapist",
     meta: { section: "Live care", page: "My new patients", role: "Clinician" },
@@ -601,6 +711,7 @@ export function isStandalone(pathname: string) {
     pathname === "/refer" ||
     pathname.startsWith("/refer/") ||
     pathname.startsWith("/join/") ||
+    pathname.startsWith("/checkin/") ||
     pathname.startsWith("/appointment/") ||
     pathname.startsWith("/agreement/") ||
     pathname.startsWith("/upload/") ||

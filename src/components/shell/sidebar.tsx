@@ -14,7 +14,6 @@ import { photoFor } from "@/lib/avatars";
 
 export const darkFocus = { "--shadow-focus": "var(--shadow-focus-dark)" } as CSSProperties;
 
-const LIVE = "Live care";
 const COLLAPSED_KEY = "ms-nav-collapsed";
 
 const collapsedListeners = new Set<() => void>();
@@ -79,9 +78,9 @@ export function Sidebar() {
 
   if (isStandalone(pathname)) return null;
 
-  const groups = [...navigationFor(role)].sort(
-    (a, b) => Number(b.group === LIVE) - Number(a.group === LIVE),
-  );
+  const groups = navigationFor(role, account?.role === "admin" ? account.staffRoles : null, {
+    liveOnly: Boolean(account),
+  });
 
   return (
     <nav
@@ -108,8 +107,7 @@ export function Sidebar() {
         </span>
       </Link>
 
-      {groups.map(({ group, items }) => {
-        const live = group === LIVE;
+      {groups.map(({ group, items, live }) => {
         const folded = !live && collapsed.includes(group);
         return (
           <div key={group} className="flex flex-col gap-0.5">

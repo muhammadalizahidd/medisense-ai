@@ -98,7 +98,7 @@ function LiveFigures() {
           <LiveBadge />
         </div>
         <Link href="/care" className="inline-flex items-center gap-1 text-caption font-medium">
-          Patient onboarding
+          Patients
           <ArrowRight className="size-3.5" aria-hidden="true" />
         </Link>
       </div>

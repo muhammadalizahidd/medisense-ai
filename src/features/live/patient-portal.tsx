@@ -1,5 +1,6 @@
 "use client";
 
+import { CheckinButton, PatientCareAi } from "./enhance-patient";
 import {
   BadgeCheck,
   CalendarCheck,
@@ -682,6 +683,7 @@ function VisitSheet({
               booked until Scheduling replies.
             </p>
           )}
+          {upcoming && <CheckinButton appointmentId={a.id} />}
           {upcoming && (
             <>
               <AppSection title="Before your visit" />
@@ -938,6 +940,7 @@ export function PortalCare({ progress }: { progress: ReactNode }) {
             </div>
           </section>
         )}
+        <PatientCareAi />
         <Segments
           value={view}
           onChange={setView}

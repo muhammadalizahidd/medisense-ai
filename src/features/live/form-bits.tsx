@@ -2,6 +2,7 @@
 
 import { Check } from "lucide-react";
 import { useState, type ReactNode } from "react";
+import { NoteAssist, wantsAssist } from "@/components/ai/note-assist";
 import { Field, inputClass } from "@/components/ui/sheet";
 import { cn } from "@/lib/cn";
 
@@ -121,6 +122,7 @@ export function TextArea({
   required = false,
   placeholder,
   maxLength = 3000,
+  assist,
 }: {
   label: string;
   value: string;
@@ -131,6 +133,8 @@ export function TextArea({
   required?: boolean;
   placeholder?: string;
   maxLength?: number;
+  /** Dictation and "Write with AI"; on by default for note fields. */
+  assist?: boolean;
 }) {
   return (
     <Field label={required ? label : `${label} (optional)`} hint={hint} error={error}>
@@ -143,6 +147,9 @@ export function TextArea({
         onChange={(e) => onChange(e.target.value)}
         className={cn(inputClass, "h-auto py-2", error && "border-over")}
       />
+      {(assist ?? wantsAssist(label)) && (
+        <NoteAssist label={label} value={value} onChange={onChange} className="mt-1.5" />
+      )}
     </Field>
   );
 }

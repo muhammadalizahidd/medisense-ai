@@ -4,6 +4,10 @@ import { CalendarPlus, FileInput, Plus, UserPlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Sheet } from "@/components/ui/sheet";
+import { BookVisitPanel } from "@/features/live/quick-book";
+import { AiReferralSheet } from "@/features/live/ai-referral";
+import { useSession } from "@/lib/live/client";
 import { NewReferralSheet } from "@/features/intake/new-referral";
 import { BookVisitSheet } from "@/features/schedule/book-visit";
 
@@ -29,6 +33,8 @@ export function QuickAdd() {
   const [open, setOpen] = useState(false);
   const [sheet, setSheet] = useState<(typeof actions)[number]["id"] | null>(null);
   const panel = useRef<HTMLDivElement>(null);
+  const { user } = useSession();
+  const live = user?.role === "admin";
 
   useEffect(() => {
     if (!open) return undefined;
@@ -76,12 +82,27 @@ export function QuickAdd() {
           ))}
         </div>
       )}
-      {sheet === "referral" && (
-        <NewReferralSheet onClose={() => setSheet(null)} onAdded={() => router.push("/intake")} />
-      )}
-      {sheet === "visit" && (
-        <BookVisitSheet onClose={() => setSheet(null)} onBooked={() => router.push("/schedule")} />
-      )}
+      {sheet === "referral" &&
+        (live ? (
+          <AiReferralSheet onClose={() => setSheet(null)} />
+        ) : (
+          <NewReferralSheet onClose={() => setSheet(null)} onAdded={() => router.push("/intake")} />
+        ))}
+      {sheet === "visit" &&
+        (live ? (
+          <Sheet
+            title="Book a visit"
+            description="For an existing patient with their own clinician, or someone new from a name and phone."
+            onClose={() => setSheet(null)}
+          >
+            <BookVisitPanel />
+          </Sheet>
+        ) : (
+          <BookVisitSheet
+            onClose={() => setSheet(null)}
+            onBooked={() => router.push("/schedule")}
+          />
+        ))}
     </div>
   );
 }

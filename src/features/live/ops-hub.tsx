@@ -21,6 +21,7 @@ import { TrendChart } from "@/components/charts/trend-chart";
 import { RuleMark } from "@/components/ai/provenance";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page";
+import { AdminAgent } from "./admin-agent";
 import { Ring } from "@/components/ui/premium";
 import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
@@ -49,6 +50,7 @@ import { RunLogTab, RulesTab } from "./ops-rules";
 
 const tabs = [
   { id: "overview", label: "Overview" },
+  { id: "agent", label: "AI agent" },
   { id: "queue", label: "Work queue" },
   { id: "review", label: "AI referral review" },
   { id: "matching", label: "Therapist matching" },
@@ -129,6 +131,9 @@ export function OperationsHub() {
       <Tabs label="Operations" tabs={tabList} value={tab} onChange={(t: OpsTab) => setTab(t)} />
       <TabPanel id="overview" value={tab}>
         <Overview hub={hub} goQueue={goQueue} go={setTab} />
+      </TabPanel>
+      <TabPanel id="agent" value={tab}>
+        <AdminAgent embedded />
       </TabPanel>
       <TabPanel id="queue" value={tab}>
         <QueueTabView hub={hub} tab={queueTab} setTab={setQueueTab} onDone={reload} />

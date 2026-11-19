@@ -14,6 +14,7 @@ const PUBLIC = [
   "/login",
   "/refer",
   "/join/",
+  "/checkin/",
   "/appointment/",
   "/contact/",
   "/agreement/",

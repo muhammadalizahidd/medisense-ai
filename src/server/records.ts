@@ -165,8 +165,7 @@ async function accessFor(
   const now = Date.now();
   if (u.role === "therapist" && u.therapistId) {
     const mine = client.needs.filter((n) => n.therapistId?.equals(u.therapistId ?? new ObjectId()));
-    const { therapists } = await collections();
-    const me = await therapists.findOne({ _id: u.therapistId }, { projection: { discipline: 1 } });
+    const me = await myDiscipline(u.therapistId);
     if (mine.length) {
       return {
         level: "treating",
@@ -974,22 +973,43 @@ async function logAccess(
 
 /* ------------------------------------------------------------------ CR-01 list */
 
+async function loadDiscipline(id: ObjectId) {
+  const { therapists } = await collections();
+  return therapists.findOne({ _id: id }, { projection: { discipline: 1 } });
+}
+/** A therapist's discipline, remembered for a minute: the record list checks it once per patient. */
+const disciplineCache = new Map<
+  string,
+  { at: number; doc: Awaited<ReturnType<typeof loadDiscipline>> }
+>();
+async function myDiscipline(id: ObjectId) {
+  const key = id.toHexString();
+  const hit = disciplineCache.get(key);
+  if (hit && Date.now() - hit.at < 60_000) return hit.doc;
+  const doc = await loadDiscipline(id);
+  disciplineCache.set(key, { at: Date.now(), doc });
+  return doc;
+}
+
 export async function recordList(u: UserDoc): Promise<RecordListItem[]> {
   const db = await collections();
   const col = await records();
   const all = await db.clients.find({}).sort({ name: 1 }).limit(400).toArray();
-  const recs = new Map(
-    (
-      await col
-        .find({ _id: { $in: all.map((c) => c._id) } }, { projection: { accessLog: 0, ai: 0 } })
-        .toArray()
-    ).map((r) => [r._id.toHexString(), r]),
-  );
-  const therapists = await db.therapists.find({}, { projection: { name: 1 } }).toArray();
-  const next = await db.appointments
-    .find({ status: "booked", start: { $gte: new Date() } })
-    .sort({ start: 1 })
-    .toArray();
+  // Independent reads run together; appointments bring only the two fields this list uses.
+  const [recList, therapists, next] = await Promise.all([
+    col
+      .find({ _id: { $in: all.map((c) => c._id) } }, { projection: { accessLog: 0, ai: 0 } })
+      .toArray(),
+    db.therapists.find({}, { projection: { name: 1 } }).toArray(),
+    db.appointments
+      .find(
+        { status: "booked", start: { $gte: new Date() } },
+        { projection: { clientId: 1, start: 1 } },
+      )
+      .sort({ start: 1 })
+      .toArray(),
+  ]);
+  const recs = new Map(recList.map((r) => [r._id.toHexString(), r]));
   const out: RecordListItem[] = [];
   for (const c of all) {
     const rec = recs.get(c._id.toHexString()) ?? null;

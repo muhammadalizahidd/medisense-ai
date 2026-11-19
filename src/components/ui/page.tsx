@@ -120,16 +120,112 @@ export function ScreenTitle({
 
 /** Shown while a signed-in page checks the session and loads: the header, a band and a panel. */
 export function PageLoading() {
-  const block = "animate-pulse rounded-card bg-sunken motion-reduce:animate-none";
+  const pulse = "animate-pulse bg-sunken motion-reduce:animate-none";
   return (
-    <main className="w-full px-4 pt-6 pb-18 md:px-6 md:pt-8 xl:px-10" aria-busy="true">
+    <main
+      className="w-full px-4 pt-6 pb-18 md:px-6 md:pt-8 xl:px-10"
+      aria-busy="true"
+      role="status"
+    >
       <span className="sr-only">Loading…</span>
-      <div className="mb-6 border-b border-border pb-5">
-        <div className="h-3 w-32 animate-pulse rounded-tag bg-sunken motion-reduce:animate-none" />
-        <div className="mt-3 h-8 w-80 max-w-full animate-pulse rounded-control bg-sunken motion-reduce:animate-none" />
+      <div className="mb-6 flex items-end justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <div className={cn(pulse, "h-3 w-28 rounded-tag")} />
+          <div className={cn(pulse, "mt-3 h-8 w-72 max-w-full rounded-control")} />
+        </div>
+        <div className={cn(pulse, "hidden h-10 w-36 rounded-control sm:block")} />
       </div>
-      <div className={cn(block, "mb-6 h-24")} />
-      <div className={cn(block, "h-72")} />
+      <div className="mb-6 grid grid-cols-2 gap-px overflow-hidden rounded-card border border-border bg-border md:grid-cols-4 xl:grid-cols-5">
+        {[0, 1, 2, 3, 4].map((i) => (
+          <div key={i} className={cn("bg-surface p-4", i === 4 && "hidden xl:block")}>
+            <div className={cn(pulse, "h-3 w-24 rounded-tag")} />
+            <div className={cn(pulse, "mt-3 h-7 w-14 rounded-control")} />
+          </div>
+        ))}
+      </div>
+      <div className="mb-4 flex flex-wrap gap-2">
+        {[28, 36, 32, 24].map((w) => (
+          <div
+            key={w}
+            className={cn(pulse, "h-9 rounded-control")}
+            style={{ width: `${w * 4}px` }}
+          />
+        ))}
+      </div>
+      <div className="overflow-hidden rounded-card border border-border bg-surface">
+        {[0, 1, 2, 3, 4, 5].map((i) => (
+          <div
+            key={i}
+            className="flex items-center gap-4 border-b border-border px-4 py-3.5 last:border-b-0"
+          >
+            <div className={cn(pulse, "size-9 flex-none rounded-full")} />
+            <div className="min-w-0 flex-1">
+              <div className={cn(pulse, "h-3.5 w-48 max-w-full rounded-tag")} />
+              <div className={cn(pulse, "mt-2 h-3 w-32 max-w-full rounded-tag")} />
+            </div>
+            <div className={cn(pulse, "hidden h-6 w-20 rounded-tag md:block")} />
+            <div className={cn(pulse, "hidden h-6 w-24 rounded-tag lg:block")} />
+          </div>
+        ))}
+      </div>
     </main>
+  );
+}
+
+/** The whole app before its frame has loaded: a top bar and a page skeleton, never a blank screen. */
+export function ShellLoading() {
+  return (
+    <div className="min-h-screen bg-page" aria-busy="true">
+      <div className="flex h-15 items-center gap-4 border-b border-border px-4 md:px-6 xl:px-10">
+        <div className="size-8 animate-pulse rounded-control bg-sunken motion-reduce:animate-none" />
+        <div className="h-9 w-full max-w-md animate-pulse rounded-control bg-sunken motion-reduce:animate-none" />
+        <div className="ml-auto size-9 animate-pulse rounded-full bg-sunken motion-reduce:animate-none" />
+      </div>
+      <PageLoading />
+    </div>
+  );
+}
+
+/** A phone app loading: the device with a header, a hero card and list rows. */
+export function PhoneLoading() {
+  const pulse = "animate-pulse bg-sunken motion-reduce:animate-none";
+  return (
+    <div
+      className="flex min-h-dvh items-center justify-center bg-canvas md:py-8"
+      aria-busy="true"
+      role="status"
+    >
+      <span className="sr-only">Loading…</span>
+      <div className="flex h-dvh w-full flex-col overflow-hidden bg-page md:h-197 md:max-h-[calc(100dvh-4rem)] md:w-95 md:rounded-[48px] md:border-[11px] md:border-ink-900 md:shadow-overlay">
+        <div className="px-5 pt-14 pb-5">
+          <div className={cn(pulse, "h-3 w-28 rounded-tag")} />
+          <div className={cn(pulse, "mt-3 h-8 w-52 rounded-control")} />
+        </div>
+        <div className="flex flex-1 flex-col gap-3 px-4">
+          <div className={cn(pulse, "h-36 rounded-card")} />
+          <div className="grid grid-cols-2 gap-2.5">
+            <div className={cn(pulse, "h-16 rounded-card")} />
+            <div className={cn(pulse, "h-16 rounded-card")} />
+          </div>
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="flex items-center gap-3 rounded-card border border-border bg-surface p-3"
+            >
+              <div className={cn(pulse, "size-10 flex-none rounded-full")} />
+              <div className="flex-1">
+                <div className={cn(pulse, "h-3.5 w-32 rounded-tag")} />
+                <div className={cn(pulse, "mt-2 h-3 w-20 rounded-tag")} />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="flex h-17 items-center justify-around border-t border-border bg-surface px-4">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <div key={i} className={cn(pulse, "size-6 rounded-control")} />
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }

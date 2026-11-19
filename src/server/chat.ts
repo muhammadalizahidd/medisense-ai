@@ -36,6 +36,7 @@ function toDto(m: MessageDoc, names: Map<string, string>, others: ObjectId[]): M
     body: m.body,
     createdAt: m.createdAt.toISOString(),
     seen: others.some((o) => m.readBy.some((r) => r.equals(o))),
+    attachment: m.attachment ?? null,
   };
 }
 

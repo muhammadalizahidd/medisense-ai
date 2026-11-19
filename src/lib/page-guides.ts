@@ -353,7 +353,7 @@ export const guides: Record<string, PageGuide> = {
 
   /* ------------------------------------------------------------------ live care: intake and patients */
   "/care": g(
-    "Patient onboarding",
+    "Patients",
     "Every new patient moving from accepted referral to ready for service, as a board.",
     [
       "See patients by onboarding stage",
@@ -847,6 +847,21 @@ export const guides: Record<string, PageGuide> = {
     "A signed, traceable note; supervised notes go to the supervisor.",
   ),
 
+  "/therapist/ai": g(
+    "AI assistants",
+    "AI help for your caseload: home coach, pre-visit check-ins, concerns, insights, care-team coordination and a clinical copilot.",
+    [
+      "Review concerns, check-ins and home-coach reports from patients and caregivers",
+      "Draft coach guidance from a published home activity, then approve and publish it",
+      "See documented goal trends, record your interpretation and share a summary",
+    ],
+    [
+      "Open the inbox and work the safety concerns first.",
+      "Pick a patient and use Coach, Insights, Care team or Copilot.",
+      "Approve, edit or reject every AI draft before anything reaches the patient.",
+    ],
+    "Patient-reported updates reviewed, with every AI output checked by you.",
+  ),
   "/therapist/progress": g(
     "My progress and reports",
     "Your episodes, goal progress, reassessments and clinical reports in one place.",
@@ -1064,6 +1079,45 @@ export const guides: Record<string, PageGuide> = {
     ["Open your tracking link.", "Check the status.", "Provide anything asked for."],
     "You know what happens next with the referral.",
   ),
+  "/checkin/[token]": g(
+    "Pre-visit check-in by link",
+    "A secure, visit-specific link for answering the pre-visit check-in without an app account.",
+    [
+      "Confirm the participant's date of birth before anything shows",
+      "Answer the core and template questions for the visit",
+    ],
+    ["Enter the date of birth.", "Answer the questions and send them to the care team."],
+    "The therapist gets the answers before the visit.",
+  ),
+  "/care/ai-agent": g(
+    "Operations agent",
+    "The admin AI operations agent: a daily briefing, 32 features across intake, allocation, scheduling, funding, billing and operations, with every change shown as a proposal a person confirms.",
+    [
+      "Read today's briefing in the order the operations SOP sets",
+      "Ask a question or pick one of the 32 features",
+      "Confirm or cancel each proposed task, message or assignment",
+      "Check the run history for what was proposed, done, declined, failed or already done",
+    ],
+    [
+      "Start with safety escalations and overdue tasks.",
+      "Check the sources and facts before confirming a proposal.",
+    ],
+    "Admin work found and queued in minutes, with people approving every change.",
+  ),
+  "/care/ai-oversight": g(
+    "AI oversight",
+    "Counts-only oversight of the AI assistants for admins: usage, flags, consent and escalations without clinical text.",
+    [
+      "See check-in, coach, concern and insight counts by status",
+      "Track flagged AI answers and patients who turned AI off",
+      "Watch safety escalations and who reviewed them",
+    ],
+    [
+      "Check flagged answers and open escalations first.",
+      "Follow up with the clinical lead where reviews are late.",
+    ],
+    "Assurance that AI is used safely, without exposing private content.",
+  ),
   "/join/[token]": g(
     "Join a video visit",
     "Join a telehealth visit from a secure link without an account.",
@@ -1152,12 +1206,31 @@ export const guides: Record<string, PageGuide> = {
     ],
     "Patient records stay accurate, and every change has a named decision.",
   ),
+  "/assistant": g(
+    "Ask Medisense AI",
+    "The whole assistant on its own page: questions about your records and the booking agent.",
+    [
+      "Ask about patients, the team or the schedule",
+      "Book with the booking agent",
+      "Book someone new",
+    ],
+    [
+      "Ask a question in your own words, or pick a guide.",
+      "Open Booking agent; choose Existing patient or New to Medisense.",
+      "Check the proposal or the time, then confirm.",
+    ],
+    "Answers from your own records, and bookings made only after a person confirms.",
+  ),
   "/mobile/staff": g(
-    "Staff app",
-    "The clinician's phone app for the day: visits, notes and tasks on the go.",
-    ["See today's visits", "Write notes offline", "Clear tasks"],
-    ["Open the next visit.", "Record notes as you go.", "Sync when you're back online."],
-    "Visits documented from the road.",
+    "Admin app",
+    "The practice in your pocket: today's briefing, the team's schedule, quick bookings and the AI agents.",
+    ["Read today's briefing", "Book someone new", "Ask AI or the booking agent"],
+    [
+      "Check the briefing and your tasks.",
+      "Book a caller with a name and phone.",
+      "Ask a question or let the booking agent propose a booking you confirm.",
+    ],
+    "The practice runs from anywhere, with the same records and access as the portal.",
   ),
   "/mobile/family": g(
     "Family app",

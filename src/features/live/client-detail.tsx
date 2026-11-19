@@ -34,6 +34,10 @@ import {
 } from "./participant-profile";
 import { PatientHistory } from "./patient-history";
 import { VisitList } from "./visit-list";
+import { statusTone, type AssessRow } from "@/lib/live/assess";
+import { Sheet } from "@/components/ui/sheet";
+import { PatientQuickActions, PlansTab, usePatientWork } from "./patient-actions";
+import { BookVisitPanel } from "./quick-book";
 
 export function ClientDetail({ clientId }: { clientId: string }) {
   const [discharging, setDischarging] = useState(false);
@@ -47,7 +51,15 @@ export function ClientDetail({ clientId }: { clientId: string }) {
   const participant = useParticipant(clientId, reload);
   const profile = participant.data?.profile;
   const c = data?.client;
+  const work = usePatientWork(clientId);
+  const [booking, setBooking] = useState(false);
   const tabs = [
+    {
+      id: "profile",
+      label: "Profile",
+      count: profile?.completeness.missing.length,
+      alert: true,
+    },
     {
       id: "services",
       label: "Services and matching",
@@ -56,15 +68,11 @@ export function ClientDetail({ clientId }: { clientId: string }) {
     },
     {
       id: "visits",
-      label: "Visits",
+      label: "Follow-ups",
       count: c?.appointments.filter((v) => v.status === "booked").length,
     },
-    {
-      id: "profile",
-      label: "Profile",
-      count: profile?.completeness.missing.length,
-      alert: true,
-    },
+    { id: "assessments", label: "Assessments", count: work.assessments.get(clientId)?.length },
+    { id: "plans", label: "Treatment plans", count: work.plans.get(clientId)?.length },
     {
       id: "contacts",
       label: "Contacts",
@@ -97,7 +105,7 @@ export function ClientDetail({ clientId }: { clientId: string }) {
         eyebrow={
           <ButtonLink href="/care" variant="ghost" size="sm">
             <ArrowLeft className="size-3.5" aria-hidden="true" />
-            Patient onboarding
+            Patients
           </ButtonLink>
         }
         title={client.name}
@@ -164,6 +172,25 @@ export function ClientDetail({ clientId }: { clientId: string }) {
           </span>
         </section>
       )}
+      <PatientQuickActions clientId={client.id} work={work} onBook={() => setBooking(true)} />
+      {booking && (
+        <Sheet
+          title={`Book a visit for ${client.name}`}
+          description="With their own clinician, at a real free time."
+          onClose={() => setBooking(false)}
+        >
+          <BookVisitPanel
+            patient={{
+              id: client.id,
+              name: client.name,
+              mrn: client.mrn ?? null,
+              suburb: client.suburb,
+              phone: client.phone ?? null,
+            }}
+            onDone={reload}
+          />
+        </Sheet>
+      )}
       <Tabs label="Patient record" tabs={tabs} value={tab} onChange={setTab} />
       <TabPanel id="services" value={tab}>
         {client.needs.map((need) => (
@@ -207,7 +234,7 @@ export function ClientDetail({ clientId }: { clientId: string }) {
       ))}
       <TabPanel id="visits" value={tab}>
         <Panel
-          title="Visits"
+          title="Follow-ups"
           action={
             client.appointments.some((a) => a.cancellation?.chargeable) && (
               <Tag tone="over">
@@ -221,9 +248,15 @@ export function ClientDetail({ clientId }: { clientId: string }) {
             visits={client.appointments}
             show="therapist"
             onChanged={reload}
-            emptyText="Visits appear here once a therapist accepts."
+            emptyText="Follow-up visits appear here once a therapist accepts."
           />
         </Panel>
+      </TabPanel>
+      <TabPanel id="assessments" value={tab}>
+        <AssessmentsTab rows={work.ready ? (work.assessments.get(clientId) ?? []) : null} />
+      </TabPanel>
+      <TabPanel id="plans" value={tab}>
+        <PlansTab rows={work.ready ? (work.plans.get(clientId) ?? []) : null} />
       </TabPanel>
       <TabPanel id="clinical" value={tab}>
         <ClinicalPanel clientId={client.id} needs={client.needs} mode="admin" />
@@ -485,5 +518,65 @@ export function DocumentList({ documents }: { documents: DocumentDto[] }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+/** This patient's assessments, each opening its own record. */
+export function AssessmentsTab({
+  rows,
+  base = "/care/assessments",
+}: {
+  rows: AssessRow[] | null;
+  base?: "/care/assessments" | "/therapist/assessments";
+}) {
+  if (!rows) return <Skeleton className="h-48" />;
+  if (rows.length === 0) {
+    return (
+      <EmptyNote title="No assessments yet">
+        One starts when the therapist begins an initial assessment for an accepted service.
+      </EmptyNote>
+    );
+  }
+  return (
+    <Panel title="Assessments">
+      <ul className="flex flex-col divide-y divide-border">
+        {rows.map((r) => (
+          <li key={r.id}>
+            <Link
+              href={`${base}/${r.id}`}
+              className="group flex flex-wrap items-center gap-x-4 gap-y-2 py-3 hover:no-underline"
+            >
+              <span className="flex size-10 flex-none items-center justify-center rounded-control bg-accent-tint text-accent">
+                <FileText className="size-4.5" aria-hidden="true" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-small font-semibold text-ink-900 group-hover:text-accent">
+                  {r.support}
+                </span>
+                <span className="block truncate text-caption text-ink-500">
+                  <span className="font-mono">{r.ref}</span> · {r.clinician} · {r.purpose}
+                </span>
+              </span>
+              <span
+                className="flex w-36 flex-none items-center gap-2"
+                aria-label={`${r.progress}% complete`}
+              >
+                <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-sunken">
+                  <span
+                    className="block h-full rounded-full bg-accent-fill"
+                    style={{ width: `${r.progress}%` }}
+                  />
+                </span>
+                <span className="w-9 text-right text-caption text-ink-700">{r.progress}%</span>
+              </span>
+              <span className="w-28 flex-none text-caption text-ink-500">
+                {r.due ? `Due ${shortDate(r.due)}` : `Updated ${shortDate(r.updatedAt)}`}
+              </span>
+              <Tag tone={statusTone[r.status]}>{r.status}</Tag>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </Panel>
   );
 }

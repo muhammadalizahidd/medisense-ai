@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { VisitorAssistant } from "@/features/live/enhance-public";
 import { PublicShell } from "@/features/live/public-shell";
 import { ReferralForm } from "@/features/live/referral-form";
 
@@ -11,6 +12,7 @@ export default function ReferPage() {
       title="Make a referral"
       description="For participants, families, support coordinators and other referrers. No account needed: you'll get a reference number and a private link to follow the referral."
     >
+      <VisitorAssistant />
       <ReferralForm mode="public" />
     </PublicShell>
   );

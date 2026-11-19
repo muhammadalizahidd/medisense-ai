@@ -1095,7 +1095,7 @@ async function requestTask(
 }
 
 /** Patient questions and check-ins land in the treating therapist's Module 17 task list. */
-async function careTask(
+export async function careTask(
   c: ClientDoc,
   planId: string,
   category: "Clinical Follow-up" | "Safety Review",

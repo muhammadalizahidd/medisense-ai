@@ -5,11 +5,12 @@ import { ensureAssessSeed } from "@/server/assess-seed";
 import { handle, parseId, readJson } from "@/server/http";
 
 /** Module 12: the assessment queue, filtered to what this person may see. */
-export async function GET() {
+export async function GET(request: Request) {
   return handle(async () => {
     const user = await requireUser("admin", "therapist");
     await ensureAssessSeed();
-    return { rows: await assessQueue(user) };
+    const clientId = new URL(request.url).searchParams.get("clientId");
+    return { rows: await assessQueue(user, clientId ? parseId(clientId) : null) };
   });
 }
 

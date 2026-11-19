@@ -66,7 +66,7 @@ export function ReferralQueue() {
   return (
     <>
       <PageHeader
-        eyebrow="Patient onboarding"
+        eyebrow="Live care"
         title="Referrals and intake"
         description="Every referral moves through the completeness check, intake review, clinical triage and funding before matching. Nothing is re-entered: accepting one creates the patient and their service requests."
         actions={

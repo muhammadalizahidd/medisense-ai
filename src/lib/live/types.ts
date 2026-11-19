@@ -304,6 +304,15 @@ export type ConversationDto = {
   unread: number;
 };
 
+/** A file sent in a conversation: a document, photo, video clip or voice note. */
+export type MessageAttachment = {
+  kind: "document" | "image" | "video" | "audio";
+  name: string;
+  url: string;
+  mime: string;
+  size: number;
+};
+
 export type MessageDto = {
   id: string;
   conversationId: string;
@@ -313,6 +322,7 @@ export type MessageDto = {
   createdAt: string;
   /** True once the other person has opened the conversation after it was sent. */
   seen: boolean;
+  attachment: MessageAttachment | null;
 };
 
 export type LiveEvent =
@@ -365,6 +375,24 @@ export type TherapistCardDto = {
   capacity: number;
   availability: AvailabilitySummary;
   rating: { average: number; count: number } | null;
+  /** Sessions delivered so far, booked ahead, and how many patients they've seen. */
+  sessions: { completed: number; upcoming: number; patients: number };
+};
+
+/** One session on a therapist's record, with everything that hangs off it. */
+export type TherapistSessionDto = {
+  id: string;
+  ref: string | null;
+  start: string;
+  patientId: string;
+  patient: string;
+  discipline: string;
+  modality: "In person" | "Telehealth";
+  status: string;
+  minutes: number | null;
+  note: "Signed" | "Draft" | "Pending Signature" | "Amended" | "Not written" | null;
+  recording: { status: string; playable: boolean } | null;
+  rating: number | null;
 };
 
 export type TherapistDetailDto = TherapistCardDto & {
@@ -381,7 +409,11 @@ export type TherapistDetailDto = TherapistCardDto & {
     discipline: Discipline;
     since: string;
     discharged: boolean;
+    /** Sessions delivered to this patient, and the latest one. */
+    sessions: number;
+    lastSession: string | null;
   }[];
+  sessionLog: TherapistSessionDto[];
   feedback: { rating: number; comment: string; at: string; patient: string; visit: string }[];
   history: { id: string; action: string; at: string }[];
 };

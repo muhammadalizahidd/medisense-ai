@@ -178,13 +178,18 @@ export function TelehealthRoom({ visitId }: { visitId: string }) {
           </div>
         }
       />
-      <div className="grid gap-6 xl:grid-cols-12">
-        <div className="flex flex-col gap-4 xl:col-span-8">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
+        <div className="flex min-w-0 flex-col gap-4 xl:col-span-8">
           <section aria-label="Call" className="rounded-card bg-ink-900 p-3">
             <p className="mb-2 text-center text-label font-semibold tracking-wide text-surface/70 uppercase">
               DEMO ONLY · simulated video
             </p>
-            <div className={cn("grid gap-3", c.screenShare ? "md:grid-cols-3" : "md:grid-cols-2")}>
+            <div
+              className={cn(
+                "grid grid-cols-1 gap-3",
+                c.screenShare ? "md:grid-cols-3" : "md:grid-cols-2",
+              )}
+            >
               {c.screenShare && (
                 <div className="flex aspect-video items-center justify-center rounded-card bg-surface/10 text-small text-surface md:col-span-2">
                   <MonitorUp className="mr-2 size-5" aria-hidden="true" /> Your screen is shared
@@ -371,7 +376,7 @@ export function TelehealthRoom({ visitId }: { visitId: string }) {
           )}
         </div>
 
-        <div className="flex flex-col gap-4 xl:col-span-4">
+        <div className="flex min-w-0 flex-col gap-4 xl:col-span-4">
           <Panel title="1. Clinical suitability">
             {c.suitability ? (
               <p className="flex items-center gap-2 text-small">

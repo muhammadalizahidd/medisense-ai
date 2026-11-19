@@ -1532,16 +1532,28 @@ input:-webkit-autofill:focus {
   background: var(--color-canvas);
   box-shadow: inset 3px 0 0 var(--color-accent-fill);
 }
-.table-frame > table tbody tr:nth-child(2) { animation-delay: 30ms; }
-.table-frame > table tbody tr:nth-child(3) { animation-delay: 60ms; }
-.table-frame > table tbody tr:nth-child(4) { animation-delay: 90ms; }
-.table-frame > table tbody tr:nth-child(5) { animation-delay: 120ms; }
-.table-frame > table tbody tr:nth-child(6) { animation-delay: 150ms; }
-.table-frame > table tbody tr:nth-child(n + 7) { animation-delay: 180ms; }
+.table-frame > table tbody tr:nth-child(2) {
+  animation-delay: 30ms;
+}
+.table-frame > table tbody tr:nth-child(3) {
+  animation-delay: 60ms;
+}
+.table-frame > table tbody tr:nth-child(4) {
+  animation-delay: 90ms;
+}
+.table-frame > table tbody tr:nth-child(5) {
+  animation-delay: 120ms;
+}
+.table-frame > table tbody tr:nth-child(6) {
+  animation-delay: 150ms;
+}
+.table-frame > table tbody tr:nth-child(n + 7) {
+  animation-delay: 180ms;
+}
 .table-frame > table tbody tr a {
   transition: color var(--duration-fast) var(--ease-out);
 }
-.table-frame > table tbody tr:hover a {
+.table-frame > table tbody tr:hover td:first-child a {
   color: var(--color-accent);
 }
 @keyframes row-in {
@@ -1598,4 +1610,73 @@ html[data-embedded] body {
 }
 html[data-embedded] body::-webkit-scrollbar {
   display: none;
+}
+/* Inside the phone nothing shows a desktop scrollbar; panels still scroll by touch. */
+html[data-embedded] *,
+html[data-embedded] {
+  scrollbar-width: none;
+}
+html[data-embedded] *::-webkit-scrollbar {
+  display: none;
+}
+@media (width < 48rem) {
+  /* Grid and flex columns may shrink to the phone, so tab strips scroll instead of widening. */
+  html[data-embedded] .grid > *,
+  html[data-embedded] .flex-col > * {
+    min-width: 0;
+  }
+  html[data-embedded] [class*="h-["][class*="overflow-auto"] {
+    height: auto !important;
+    overflow: visible !important;
+  }
+  /* Lists grow with the page instead of scrolling inside a fixed-height box. */
+  html[data-embedded] .table-frame {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  /* Every table becomes one card per row, as in the apps, so nothing scrolls sideways. */
+  html[data-embedded] table {
+    min-width: 0 !important;
+  }
+  html[data-embedded] table thead {
+    display: none;
+  }
+  html[data-embedded] table,
+  html[data-embedded] table tbody,
+  html[data-embedded] table tr,
+  html[data-embedded] table td {
+    display: block;
+    width: 100% !important;
+    max-width: none !important;
+  }
+  html[data-embedded] table tbody tr {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+  html[data-embedded] table td {
+    padding: 0.125rem 0 !important;
+    border: 0 !important;
+    white-space: normal !important;
+  }
+  html[data-embedded] table td:first-child {
+    font-weight: 600;
+  }
+}
+
+/* NamePhotos: a person's photo before their name in tables and lists. */
+[data-photo]::before {
+  content: "";
+  display: inline-block;
+  flex: none;
+  width: 1.9em;
+  height: 1.9em;
+  margin-right: 0.55em;
+  vertical-align: middle;
+  border-radius: 9999px;
+  background: var(--name-photo) center / cover no-repeat;
+  box-shadow:
+    0 0 0 1.5px var(--color-surface),
+    0 0 0 2.5px var(--color-border);
 }

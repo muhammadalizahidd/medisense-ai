@@ -360,9 +360,15 @@ export async function assessDetail(u: UserDoc, id: ObjectId): Promise<AssessDto>
   };
 }
 
-export async function assessQueue(u: UserDoc): Promise<AssessRow[]> {
+export async function assessQueue(
+  u: UserDoc,
+  clientId: ObjectId | null = null,
+): Promise<AssessRow[]> {
   const db = await collections();
-  const filter = u.role === "therapist" ? { therapistId: u.therapistId ?? new ObjectId() } : {};
+  const filter = {
+    ...(u.role === "therapist" ? { therapistId: u.therapistId ?? new ObjectId() } : {}),
+    ...(clientId ? { clientId } : {}),
+  };
   const list = await db.assessments.find(filter).sort({ updatedAt: -1 }).limit(400).toArray();
   const extMap = new Map(
     (await (await exts()).find({ _id: { $in: list.map((a) => a._id) } }).toArray()).map((e) => [

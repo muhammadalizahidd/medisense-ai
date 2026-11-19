@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Sheet } from "@/components/ui/sheet";
 import { cn } from "@/lib/cn";
 import { isActive, isStandalone, navigationFor } from "@/lib/navigation";
+import { useSession } from "@/lib/live/client";
 import { useDemoStore } from "@/state/demo-store";
 import { darkFocus } from "./sidebar";
 
@@ -15,10 +16,11 @@ export function TabBar() {
   const pathname = usePathname();
   const role = useDemoStore((s) => s.role);
   const [more, setMore] = useState(false);
-  // Live care first, as in the sidebar, so the real workflow is one tap away.
-  const groups = [...navigationFor(role)].sort(
-    (a, b) => Number(b.group === "Live care") - Number(a.group === "Live care"),
-  );
+  const { user: account } = useSession();
+  // The live sections come first, as in the sidebar, so the real workflow is one tap away.
+  const groups = navigationFor(role, account?.role === "admin" ? account.staffRoles : null, {
+    liveOnly: Boolean(account),
+  });
   const items = groups.flatMap((g) => g.items).slice(0, 4);
 
   if (isStandalone(pathname)) return null;

@@ -109,6 +109,16 @@ export function useLiveStatus() {
 
 /* ------------------------------------------------------------- data hooks */
 
+/** Identical reads already on their way are shared, so several components cost one request. */
+const inFlight = new Map<string, Promise<unknown>>();
+function shared<T>(url: string): Promise<T> {
+  const pending = inFlight.get(url);
+  if (pending) return pending as Promise<T>;
+  const p = api<T>(url).finally(() => inFlight.delete(url));
+  inFlight.set(url, p);
+  return p;
+}
+
 export type Resource<T> = {
   data: T | null;
   error: string | null;
@@ -135,7 +145,7 @@ export function useResource<T>(
   useEffect(() => {
     if (!url) return undefined;
     let cancelled = false;
-    api<T>(url)
+    shared<T>(url)
       .then((data) => !cancelled && setState({ data, error: null, loading: false }))
       .catch(
         (error: unknown) =>
@@ -151,9 +161,15 @@ export function useResource<T>(
     };
   }, [url, version]);
 
+  // The first "connected" arrives right after the page's own first load; reloading then fetched
+  // everything twice. Only a reconnect (a later "connected") can have missed changes.
+  const connectedOnce = useRef(false);
   useLiveEvents(
     (event) => {
-      if (event.type === "connected" || reloadOn?.(event)) reload();
+      if (event.type === "connected") {
+        if (connectedOnce.current) reload();
+        connectedOnce.current = true;
+      } else if (reloadOn?.(event)) reload();
     },
     url !== null && reloadOn !== undefined,
   );

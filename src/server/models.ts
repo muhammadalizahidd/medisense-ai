@@ -326,6 +326,8 @@ export interface ClientDoc {
     handover?: string;
     signedBy?: string | null;
   } | null;
+  /** Booked from the schedule with only a name and phone; intake completes the rest. */
+  provisional?: { byName: string; at: Date; note: string } | null;
   userId: ObjectId;
   createdBy: ObjectId;
   createdAt: Date;
@@ -481,6 +483,13 @@ export interface MessageDoc {
   body: string;
   createdAt: Date;
   readBy: ObjectId[];
+  attachment?: {
+    kind: "document" | "image" | "video" | "audio";
+    name: string;
+    url: string;
+    mime: string;
+    size: number;
+  } | null;
 }
 
 export type LiveEventType = "notification" | "message" | "care" | "read" | "typing";
@@ -771,6 +780,8 @@ export interface TelehealthDoc {
     retentionUntil: Date | null;
     deleted: { reason: string; byName: string; at: Date } | null;
     restricted: boolean;
+    /** Stored media for playback (video with sound, and the audio track on its own). */
+    media?: { video: string | null; audio: string | null } | null;
   };
   transcript: { at: Date; speaker: string; text: string }[];
   accessLog: { byName: string; purpose: string; action: string; at: Date }[];

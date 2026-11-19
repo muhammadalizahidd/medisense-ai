@@ -5,6 +5,7 @@ import {
   BookOpen,
   CornerDownLeft,
   Lock,
+  Maximize2,
   PlayCircle,
   Receipt,
   Route,
@@ -18,6 +19,9 @@ import { useEffect, useRef, useState } from "react";
 import { PenNib } from "@/components/ai/provenance";
 import { Caption } from "@/components/ui/card";
 import type { KeyStatus } from "@/lib/ai/engine";
+import { BookingAgent } from "@/features/live/booking-agent";
+import { BookForTabs, QuickBookForm, type BookFor } from "@/features/live/quick-book";
+import { useSession } from "@/lib/live/client";
 import { answerQuestion, roleQuestions } from "@/lib/assistant";
 import { answerLocally, smallTalk } from "@/lib/knowledge/local";
 import type { Answer, LiveState } from "@/lib/knowledge/state";
@@ -166,11 +170,19 @@ const pending = (question: string): Exchange => ({
 export function AssistantPanel({
   initialQuestion,
   onClose,
+  variant = "drawer",
 }: {
   initialQuestion: string;
   onClose: () => void;
+  /** A drawer over any screen, or the whole assistant on its own page. */
+  variant?: "drawer" | "page";
 }) {
+  const page = variant === "page";
   const [question, setQuestion] = useState("");
+  const [mode, setMode] = useState<"ask" | "agent">("ask");
+  const [bookFor, setBookFor] = useState<BookFor>("existing");
+  const { user: account } = useSession();
+  const admin = account?.role === "admin";
   // A question typed in the top bar starts resolving as soon as the panel opens.
   const [initial] = useState(() => {
     const text = initialQuestion.trim();
@@ -178,6 +190,11 @@ export function AssistantPanel({
   });
   const [history, setHistory] = useState<Exchange[]>(() => (initial ? [initial.exchange] : []));
   const inputRef = useRef<HTMLInputElement>(null);
+  const endRef = useRef<HTMLDivElement>(null);
+  // The newest exchange sits at the bottom, next to the box, as in chat apps.
+  useEffect(() => {
+    if (history.length) endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [history]);
   const role = useDemoStore((s) => s.role);
   const questions = roleQuestions[role];
   const asked = new Set(history.map((h) => h.question));
@@ -193,7 +210,7 @@ export function AssistantPanel({
     const text = q.trim();
     if (!text || busy) return;
     const exchange = pending(text);
-    setHistory((h) => [exchange, ...h]);
+    setHistory((h) => [...h, exchange]);
     setQuestion("");
     void fill(exchange);
   }
@@ -213,29 +230,38 @@ export function AssistantPanel({
 
   useEffect(() => {
     inputRef.current?.focus();
+    if (page) return undefined;
     const onKey = (event: KeyboardEvent) => event.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [onClose, page]);
 
   const [featured, ...popular] = questions;
 
   return (
     <>
-      <button
-        type="button"
-        aria-label="Close assistant"
-        tabIndex={-1}
-        onClick={onClose}
-        className="fixed inset-0 z-40 cursor-default bg-ink-900/24"
-      />
+      {!page && (
+        <button
+          type="button"
+          aria-label="Close assistant"
+          tabIndex={-1}
+          onClick={onClose}
+          className="fixed inset-0 z-40 cursor-default bg-ink-900/24"
+        />
+      )}
       <aside
-        role="dialog"
-        aria-modal="true"
+        role={page ? undefined : "dialog"}
+        aria-modal={page ? undefined : true}
         aria-label="Ask Medisense AI"
-        className="fixed inset-y-0 right-0 z-41 flex w-130 max-w-full flex-col overflow-hidden rounded-l-sheet bg-page shadow-overlay"
+        className={
+          page
+            ? "flex min-h-[calc(100dvh-9rem)] flex-col overflow-hidden rounded-card border border-border bg-page"
+            : "fixed inset-y-0 right-0 z-41 flex w-180 max-w-full flex-col overflow-hidden rounded-l-sheet bg-page shadow-overlay"
+        }
       >
-        <header className="border-b border-border bg-surface px-6 pt-6 pb-5">
+        <header
+          className={`border-b border-border bg-surface px-6 pt-6 pb-5 ${page ? "[&>*]:mx-auto [&>*]:max-w-4xl" : ""}`}
+        >
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3">
               <span className="flex size-10 flex-none items-center justify-center rounded-full border border-accent-fill/40 bg-accent-fill/10">
@@ -246,46 +272,76 @@ export function AssistantPanel({
                 <h2 className="mt-0.5 type-display text-h2 text-ink-900">Ask Medisense AI</h2>
               </div>
             </div>
-            <button
-              type="button"
-              aria-label="Close assistant"
-              onClick={onClose}
-              className="flex size-8 cursor-pointer items-center justify-center rounded-control text-ink-500 hover:bg-sunken hover:text-ink-900"
-            >
-              <X className="size-4" strokeWidth={1.5} aria-hidden="true" />
-            </button>
+            {!page && (
+              <div className="flex items-center gap-1">
+                <Link
+                  href="/assistant"
+                  onClick={onClose}
+                  title="Open the assistant on its own page"
+                  className="flex h-8 items-center gap-1.5 rounded-control px-2.5 text-caption font-semibold text-ink-500 hover:bg-sunken hover:text-ink-900 hover:no-underline"
+                >
+                  <Maximize2 className="size-3.5" strokeWidth={1.75} aria-hidden="true" />
+                  Full page
+                </Link>
+                <button
+                  type="button"
+                  aria-label="Close assistant"
+                  onClick={onClose}
+                  className="flex size-8 cursor-pointer items-center justify-center rounded-control text-ink-500 hover:bg-sunken hover:text-ink-900"
+                >
+                  <X className="size-4" strokeWidth={1.5} aria-hidden="true" />
+                </button>
+              </div>
+            )}
           </div>
-          <p className="mt-3 text-small text-ink-500">
+          <div
+            role="tablist"
+            aria-label="Assistant mode"
+            className="mt-4 grid grid-cols-2 gap-1 rounded-card border border-border bg-sunken p-1"
+          >
+            {(
+              [
+                ["ask", "Ask questions"],
+                ["agent", "Booking agent"],
+              ] as const
+            ).map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                aria-selected={mode === id}
+                onClick={() => setMode(id)}
+                className={`cursor-pointer rounded-control px-3 py-1.5 text-small font-semibold transition-colors duration-140 ${mode === id ? "bg-surface text-ink-900 ring-1 ring-border" : "text-ink-500 hover:text-ink-900"}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <p className={`mt-3 text-small text-ink-500 ${mode === "agent" ? "hidden" : ""}`}>
             Your practice, in plain English. Ask about patients, the team, the schedule, reports or
             compliance.
           </p>
-          <form
-            className="mt-4 flex items-center gap-1.5 rounded-card border border-border bg-surface p-1.5 transition-colors focus-within:border-accent-fill/60"
-            onSubmit={(e) => {
-              e.preventDefault();
-              ask(question);
-            }}
-          >
-            <input
-              ref={inputRef}
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              placeholder="e.g. Which NDIS patients have a plan review this month?"
-              aria-label="Question"
-              className="h-9 min-w-0 flex-1 bg-transparent px-2.5 text-small text-ink-900 outline-none placeholder:text-ink-500 focus-visible:shadow-none focus-visible:outline-none"
-            />
-            <button
-              type="submit"
-              disabled={!question.trim() || busy}
-              className="flex h-9 cursor-pointer items-center gap-1.5 rounded-control bg-accent-fill px-3.5 text-small font-semibold text-on-accent transition-colors hover:bg-accent-fill-hover disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Ask
-              <CornerDownLeft className="size-3.5" strokeWidth={1.75} aria-hidden="true" />
-            </button>
-          </form>
         </header>
 
-        <div className="flex-1 overflow-y-auto px-6 py-5">
+        {mode === "agent" && (
+          <div className="flex-1 overflow-y-auto px-6 py-5">
+            <div className={page ? "mx-auto w-full max-w-3xl" : ""}>
+              {admin && (
+                <div className="mb-4">
+                  <BookForTabs value={bookFor} onChange={setBookFor} />
+                </div>
+              )}
+              {admin && bookFor === "new" ? <QuickBookForm mode="new" /> : <BookingAgent />}
+            </div>
+          </div>
+        )}
+        <div
+          className={
+            mode === "agent"
+              ? "hidden"
+              : `flex-1 overflow-y-auto px-6 py-5 ${page ? "[&>*]:mx-auto [&>*]:max-w-4xl" : ""}`
+          }
+        >
           {history.length === 0 && (
             <div>
               {featured && (
@@ -496,7 +552,7 @@ export function AssistantPanel({
                 )}
               </article>
 
-              {index === 0 && answer && next.length > 0 && (
+              {index === history.length - 1 && answer && next.length > 0 && (
                 <div className="mt-4">
                   <div className="mb-2 label-caps">Ask next</div>
                   <div className="flex flex-wrap gap-1.5">
@@ -516,11 +572,44 @@ export function AssistantPanel({
               )}
             </section>
           ))}
+          <div ref={endRef} aria-hidden="true" />
         </div>
 
+        {mode !== "agent" && (
+          <div className="border-t border-border bg-page px-6 pt-3 pb-1">
+            <div className={page ? "mx-auto w-full max-w-4xl" : ""}>
+              <form
+                className="flex items-center gap-1.5 rounded-card border border-border-strong bg-surface p-1.5 shadow-lift transition-colors focus-within:border-accent-fill"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  ask(question);
+                }}
+              >
+                <input
+                  ref={inputRef}
+                  value={question}
+                  onChange={(e) => setQuestion(e.target.value)}
+                  placeholder="e.g. Which NDIS patients have a plan review this month?"
+                  aria-label="Question"
+                  className="h-9 min-w-0 flex-1 bg-transparent px-2.5 text-small text-ink-900 outline-none placeholder:text-ink-500 focus-visible:shadow-none focus-visible:outline-none"
+                />
+                <button
+                  type="submit"
+                  disabled={!question.trim() || busy}
+                  className="flex h-9 cursor-pointer items-center gap-1.5 rounded-control bg-accent-fill px-3.5 text-small font-semibold text-on-accent transition-colors hover:bg-accent-fill-hover disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Ask
+                  <CornerDownLeft className="size-3.5" strokeWidth={1.75} aria-hidden="true" />
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
         <footer className="flex items-center gap-2 border-t border-border bg-surface px-6 py-3 text-caption text-ink-500">
           <Lock className="size-3.5 text-accent" strokeWidth={1.5} aria-hidden="true" />
-          Private to Medisense · read-only · every answer is logged
+          {mode === "agent"
+            ? "Private to Medisense · changes only after you confirm · every run is logged"
+            : "Private to Medisense · read-only · every answer is logged"}
         </footer>
       </aside>
     </>

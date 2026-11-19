@@ -33,6 +33,7 @@ export function Avatar({
       // eslint-disable-next-line @next/next/no-img-element -- small local portrait, no optimisation needed
       <img
         src={photo}
+        data-avatar=""
         alt=""
         aria-hidden="true"
         width={size}
@@ -44,6 +45,7 @@ export function Avatar({
   return (
     <span
       aria-hidden="true"
+      data-avatar=""
       style={{ width: size, height: size, fontSize: Math.round(size * 0.36) }}
       className={cn(
         "flex flex-none items-center justify-center rounded-full bg-sunken font-semibold text-ink-700",

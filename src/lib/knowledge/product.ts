@@ -1092,7 +1092,7 @@ export const productTopics: ProductTopic[] = [
         detail: "New and in-progress referrals, triage and funding review.",
         href: "/care/referrals",
       },
-      { label: "Patient onboarding", detail: "All participants and their records.", href: "/care" },
+      { label: "Patients", detail: "All participants and their records.", href: "/care" },
       {
         label: "Therapists",
         detail: "Staff records, credentials and capacity.",
