@@ -3,10 +3,9 @@
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 
-const PresenterPanel = dynamic(
-  () => import("./presenter-panel").then((m) => m.PresenterPanel),
-  { ssr: false },
-);
+const PresenterPanel = dynamic(() => import("./presenter-panel").then((m) => m.PresenterPanel), {
+  ssr: false,
+});
 
 /**
  * Listens for the presenter shortcut and loads the panel on the first press, so nobody else

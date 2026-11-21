@@ -1,11 +1,12 @@
 "use client";
 
-import { Bell, ChevronRight, History } from "lucide-react";
+import { PageGuideButton } from "./page-guide";
+import { ArrowUpRight, Bell, ChevronRight, History } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { PenNib } from "@/components/ai/provenance";
+import { AiIcon } from "@/components/ai/provenance";
 import { cn } from "@/lib/cn";
 import { api, useResource, useSession } from "@/lib/live/client";
 import { relativeTime } from "@/lib/live/time";
@@ -15,6 +16,8 @@ import { useUnreadMessages } from "@/features/live/conversations";
 import { useDemoStore } from "@/state/demo-store";
 import { QuickAdd } from "./quick-add";
 import { ShellDate } from "./shell-date";
+import { ThemeMenu } from "./theme-menu";
+import { WorkspaceMenu } from "./workspace-menu";
 
 /** Both open only on a click, so their code (the assistant alone is 500+ lines) loads then. */
 const AssistantPanel = dynamic(() => import("./assistant-panel").then((m) => m.AssistantPanel), {
@@ -23,8 +26,6 @@ const AssistantPanel = dynamic(() => import("./assistant-panel").then((m) => m.A
 const AuditDrawer = dynamic(() => import("./audit-drawer").then((m) => m.AuditDrawer), {
   ssr: false,
 });
-import { ThemeMenu } from "./theme-menu";
-import { WorkspaceMenu } from "./workspace-menu";
 
 function Notifications() {
   const role = useDemoStore((s) => s.role);
@@ -79,22 +80,23 @@ function Notifications() {
           }
           setOpen(!open);
         }}
-        className="relative flex size-9 cursor-pointer items-center justify-center rounded-control border border-border bg-surface hover:bg-canvas"
+        className="relative flex size-9 cursor-pointer items-center justify-center rounded-control text-ink-700 transition-colors duration-(--duration-fast) hover:bg-sunken hover:text-ink-900"
       >
-        <Bell className="size-4 text-ink-700" strokeWidth={1.5} aria-hidden="true" />
+        <Bell className="size-4.5" strokeWidth={1.75} aria-hidden="true" />
         {unread > 0 && (
-          <span aria-hidden="true" className="absolute -top-1.5 -right-1.5 flex size-4.5">
-            <span className="absolute inset-0 rounded-full bg-over-dot opacity-60 motion-safe:animate-ping" />
-            <span className="relative flex size-4.5 items-center justify-center rounded-full bg-over-dot text-eyebrow font-semibold text-surface-raised">
-              {unread > 9 ? "9+" : unread}
-            </span>
-          </span>
+          <>
+            <span
+              aria-hidden="true"
+              className="absolute top-1.5 right-1.5 size-2 rounded-full bg-over-dot ring-2 ring-topbar"
+            />
+            <span className="sr-only">, {unread} unread</span>
+          </>
         )}
       </button>
       {open && (
         <div
           ref={panel}
-          className="absolute top-11 right-0 z-30 w-80 overflow-hidden rounded-card border border-border bg-surface-raised shadow-overlay"
+          className="absolute top-11 right-0 z-30 w-80 overflow-hidden rounded-card border border-border bg-raised shadow-overlay"
         >
           <h2 className="px-4 pt-3 pb-2 text-small font-semibold">Notifications</h2>
           {unreadMessages > 0 && (
@@ -158,7 +160,19 @@ function Notifications() {
 export function TopBar() {
   const pathname = usePathname();
   const { section, page } = routeMeta(pathname);
-  const isOverview = pathname === "/";
+  const askField = useRef<HTMLInputElement>(null);
+
+  // Cmd/Ctrl+K jumps to Ask Medisense from anywhere.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        askField.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
   const auditOpen = useDemoStore((s) => s.auditOpen);
   const setAuditOpen = useDemoStore((s) => s.setAuditOpen);
   const [assistant, setAssistant] = useState<{ open: boolean; question: string; key: number }>({
@@ -178,50 +192,59 @@ export function TopBar() {
 
   return (
     <>
-      <header className="flex min-h-16 flex-wrap items-center justify-between gap-x-5 gap-y-3 border-b border-border bg-topbar px-4 py-3 md:px-6 xl:px-10 blue:sticky blue:top-0 blue:z-20">
-        <nav
-          aria-label="Breadcrumb"
-          className={cn("flex min-w-0 items-center gap-2 text-small", isOverview && "blue:hidden")}
-        >
-          <span className="truncate text-ink-500">{section}</span>
-          <ChevronRight
-            className="size-3.5 flex-none text-ink-500"
-            strokeWidth={1.5}
-            aria-hidden="true"
-          />
-          <span className="truncate font-semibold text-ink-900" aria-current="page">
-            {page}
-          </span>
-        </nav>
+      <header className="sticky top-0 z-20 flex min-h-(--topbar-h) items-center justify-between gap-4 border-b border-border bg-topbar px-4 py-2 md:px-6 xl:pr-6 xl:pl-10 print:hidden">
+        <div className="flex min-w-0 flex-1 items-center gap-4">
+          <nav
+            aria-label="Breadcrumb"
+            className="flex max-w-[45%] min-w-0 shrink items-center gap-1.5 text-small lg:max-w-[40%]"
+          >
+            <span className="hidden truncate text-ink-500 sm:inline">{section}</span>
+            <ChevronRight
+              className="hidden size-3.5 flex-none text-ink-500 sm:block"
+              strokeWidth={1.5}
+              aria-hidden="true"
+            />
+            <span className="truncate font-medium text-ink-900" aria-current="page">
+              {page}
+            </span>
+          </nav>
 
-        <div className={cn("flex flex-wrap items-center gap-3", isOverview && "blue:flex-1")}>
           <form
             onSubmit={(e) => {
               e.preventDefault();
               openAssistant(draftQuestion);
             }}
-            className={cn(
-              "hidden h-9 w-72 items-center gap-2 rounded-control border border-border bg-surface pr-1 pl-2.5 focus-within:shadow-focus lg:flex",
-              isOverview && "blue:mr-auto blue:w-[420px]",
-            )}
+            className="hidden h-9 max-w-115 min-w-56 flex-1 items-center gap-2 rounded-control border border-border bg-surface pr-1.5 pl-3 text-ink-500 focus-within:border-accent focus-within:shadow-focus lg:flex"
           >
-            <PenNib className="text-brass" />
+            <AiIcon className="size-4" />
             <input
+              ref={askField}
               type="text"
               value={draftQuestion}
               onChange={(e) => setDraftQuestion(e.target.value)}
-              aria-label="Ask Medisense AI"
-              placeholder="Ask Medisense AI…"
+              aria-label="Ask Medisense"
+              aria-keyshortcuts="Control+K Meta+K"
+              placeholder="Ask Medisense about patients, referrals, visits…"
               className="min-w-0 flex-1 border-0 bg-transparent text-small text-ink-900 outline-none placeholder:text-ink-500 focus-visible:shadow-none"
             />
+            <kbd className="hidden rounded-tag border border-border px-1.5 font-mono text-label text-ink-500 xl:block">
+              ⌘K
+            </kbd>
             <button
               type="submit"
-              className="h-7 cursor-pointer rounded-tag bg-accent-fill px-2 text-caption font-semibold text-on-accent hover:bg-accent-fill-hover"
+              className="group inline-flex h-7 flex-none cursor-pointer items-center gap-1 rounded-tag bg-accent-fill px-2.5 text-caption font-semibold text-on-accent shadow-lift transition-all duration-(--duration-fast) hover:-translate-y-px hover:bg-accent-fill-hover active:scale-95"
             >
               Ask
+              <ArrowUpRight
+                className="size-3.5 transition-transform duration-(--duration-fast) group-hover:translate-x-px group-hover:-translate-y-px"
+                aria-hidden="true"
+              />
             </button>
           </form>
+        </div>
 
+        <div className="flex flex-none items-center justify-end gap-1">
+          <PageGuideButton />
           <QuickAdd />
 
           <Notifications />
@@ -230,15 +253,16 @@ export function TopBar() {
             type="button"
             aria-label="Open audit trail"
             onClick={() => setAuditOpen(true)}
-            className="flex size-9 cursor-pointer items-center justify-center rounded-control border border-border bg-surface hover:bg-canvas"
+            className="flex size-9 cursor-pointer items-center justify-center rounded-control text-ink-700 transition-colors duration-(--duration-fast) hover:bg-sunken hover:text-ink-900"
           >
-            <History className="size-4 text-ink-700" strokeWidth={1.5} aria-hidden="true" />
+            <History className="size-4.5" strokeWidth={1.75} aria-hidden="true" />
           </button>
 
           <ThemeMenu />
 
-          <ShellDate className="hidden text-small whitespace-nowrap text-ink-700 lg:inline blue:hidden!" />
+          <ShellDate className="hidden text-small whitespace-nowrap text-ink-700" />
 
+          <span aria-hidden="true" className="mx-1 hidden h-6 w-px bg-border sm:block" />
           <WorkspaceMenu />
         </div>
       </header>
