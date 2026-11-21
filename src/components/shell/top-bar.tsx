@@ -1,21 +1,28 @@
 "use client";
 
 import { Bell, ChevronRight, History } from "lucide-react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PenNib } from "@/components/ai/provenance";
 import { cn } from "@/lib/cn";
-import { longDate } from "@/lib/clock";
 import { api, useResource, useSession } from "@/lib/live/client";
 import { relativeTime } from "@/lib/live/time";
 import type { NotificationDto } from "@/lib/live/types";
 import { isStandalone, routeMeta } from "@/lib/navigation";
 import { useUnreadMessages } from "@/features/live/conversations";
 import { useDemoStore } from "@/state/demo-store";
-import { AssistantPanel } from "./assistant-panel";
-import { AuditDrawer } from "./audit-drawer";
 import { QuickAdd } from "./quick-add";
+import { ShellDate } from "./shell-date";
+
+/** Both open only on a click, so their code (the assistant alone is 500+ lines) loads then. */
+const AssistantPanel = dynamic(() => import("./assistant-panel").then((m) => m.AssistantPanel), {
+  ssr: false,
+});
+const AuditDrawer = dynamic(() => import("./audit-drawer").then((m) => m.AuditDrawer), {
+  ssr: false,
+});
 import { ThemeMenu } from "./theme-menu";
 import { WorkspaceMenu } from "./workspace-menu";
 
@@ -152,7 +159,6 @@ export function TopBar() {
   const pathname = usePathname();
   const { section, page } = routeMeta(pathname);
   const isOverview = pathname === "/";
-  const dayOffset = useDemoStore((s) => s.story.dayOffset);
   const auditOpen = useDemoStore((s) => s.auditOpen);
   const setAuditOpen = useDemoStore((s) => s.setAuditOpen);
   const [assistant, setAssistant] = useState<{ open: boolean; question: string; key: number }>({
@@ -231,15 +237,13 @@ export function TopBar() {
 
           <ThemeMenu />
 
-          <span className="hidden text-small whitespace-nowrap text-ink-700 lg:inline blue:hidden!">
-            {longDate(dayOffset)}
-          </span>
+          <ShellDate className="hidden text-small whitespace-nowrap text-ink-700 lg:inline blue:hidden!" />
 
           <WorkspaceMenu />
         </div>
       </header>
 
-      <AuditDrawer open={auditOpen} onClose={() => setAuditOpen(false)} />
+      {auditOpen && <AuditDrawer open onClose={() => setAuditOpen(false)} />}
       {assistant.open && (
         <AssistantPanel
           key={assistant.key}

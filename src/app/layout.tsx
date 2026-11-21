@@ -3,9 +3,10 @@ import { connection } from "next/server";
 import { Suspense, type ReactNode } from "react";
 import { Instrument_Sans, Instrument_Serif, JetBrains_Mono } from "next/font/google";
 import { Sidebar } from "@/components/shell/sidebar";
-import { PresenterPanel } from "@/components/shell/presenter-panel";
+import { PresenterLauncher } from "@/components/shell/presenter-launcher";
 import { TabBar } from "@/components/shell/tab-bar";
 import { TopBar } from "@/components/shell/top-bar";
+import { DashboardLoading } from "@/components/ui/page";
 import { themeInitScript } from "@/lib/theme";
 import { DemoStoreHydrator } from "@/state/demo-store-hydrator";
 import "./globals.css";
@@ -14,7 +15,6 @@ import "./globals.css";
 const instrumentSerif = Instrument_Serif({
   subsets: ["latin"],
   weight: "400",
-  style: ["normal", "italic"],
   variable: "--font-instrument-serif",
 });
 
@@ -29,6 +29,7 @@ const instrumentSans = Instrument_Sans({
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   weight: ["400", "500"],
+  preload: false,
   variable: "--font-jetbrains-mono",
 });
 
@@ -39,8 +40,9 @@ export const metadata: Metadata = {
 };
 
 /**
- * Dates follow today (see `lib/clock`), so pages render per request instead of being frozen
- * at build time; the browser computes the same day, so hydration matches.
+ * Dates follow today (see `lib/clock`), so page content renders per request instead of being
+ * frozen at build time; the browser computes the same day, so hydration matches. Only the page
+ * waits here: the sidebar and top bar are prerendered and show immediately.
  */
 async function Today({ children }: { children: ReactNode }) {
   await connection();
@@ -60,19 +62,35 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
       </head>
       <body>
         <DemoStoreHydrator />
-        <Suspense fallback={<div className="min-h-screen bg-page" />}>
-          <Today>
-            <div className="flex min-h-screen bg-page">
-              <Sidebar />
-              <div className="flex min-w-0 flex-1 flex-col">
-                <TopBar />
-                <div className="min-w-0 flex-1">{children}</div>
-                <TabBar />
-              </div>
+        <div className="flex min-h-screen bg-page">
+          <Suspense
+            fallback={
+              <div className="hidden h-screen w-16 flex-none border-r border-sidebar-border bg-sidebar md:block xl:w-sidebar" />
+            }
+          >
+            <Sidebar />
+          </Suspense>
+          <div className="flex min-w-0 flex-1 flex-col">
+            <Suspense
+              fallback={<div className="min-h-16 border-b border-border bg-topbar" />}
+            >
+              <TopBar />
+            </Suspense>
+            <div className="min-w-0 flex-1">
+              <Suspense fallback={<DashboardLoading />}>
+                <Today>{children}</Today>
+              </Suspense>
             </div>
-            <PresenterPanel />
-          </Today>
-        </Suspense>
+            <Suspense
+              fallback={
+                <div className="sticky bottom-0 h-16 flex-none border-t border-sidebar-border bg-sidebar md:hidden" />
+              }
+            >
+              <TabBar />
+            </Suspense>
+          </div>
+        </div>
+        <PresenterLauncher />
       </body>
     </html>
   );

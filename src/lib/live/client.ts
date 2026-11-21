@@ -13,7 +13,7 @@ export class ApiError extends Error {
 }
 
 /** Fetches JSON from the platform's API and turns error responses into readable messages. */
-export async function api<T>(url: string, init?: { method?: string; body?: unknown }): Promise<T> {
+async function request<T>(url: string, init?: { method?: string; body?: unknown }): Promise<T> {
   let response: Response;
   try {
     response = await fetch(url, {
@@ -31,6 +31,22 @@ export async function api<T>(url: string, init?: { method?: string; body?: unkno
     throw new ApiError(data.error ?? "Something went wrong. Try again.", response.status);
   }
   return data as T;
+}
+
+const inFlight = new Map<string, Promise<unknown>>();
+
+/**
+ * Reads share one request while it is in flight: the sidebar, top bar and account menu all ask
+ * for the signed-in user on every page, and they now cost one round trip instead of three.
+ */
+export function api<T>(url: string, init?: { method?: string; body?: unknown }): Promise<T> {
+  const method = init?.method ?? (init?.body === undefined ? "GET" : "POST");
+  if (method !== "GET") return request<T>(url, init);
+  const pending = inFlight.get(url);
+  if (pending) return pending as Promise<T>;
+  const started = request<T>(url, init).finally(() => inFlight.delete(url));
+  inFlight.set(url, started);
+  return started;
 }
 
 /* ------------------------------------------------------------ live events */

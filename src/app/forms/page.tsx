@@ -13,7 +13,7 @@ export default function FormsPage() {
         title="Smart forms"
         description="Funding requests, agreements and consents filled from verified patient data, approved notes and referrals. Staff complete the gaps; nothing is submitted until every required field is checked."
       />
-      <Suspense fallback={<p className="text-small text-ink-500">Loading forms…</p>}>
+      <Suspense fallback={<div className="h-96 animate-pulse rounded-card bg-border motion-reduce:animate-none" aria-busy="true" />}>
         <FormsWorkspace />
       </Suspense>
     </PageContainer>

@@ -19,24 +19,8 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 import { Changed } from "@/components/ai/marks";
-import {
-  TooltipCard,
-  axisProps,
-  colour,
-  cursorBand,
-  gridProps,
-} from "@/components/charts/chart-kit";
+import { colour } from "@/components/charts/chart-kit";
 import { DonutChart } from "@/components/charts/donut-chart";
 import { Sparkline } from "@/components/charts/sparkline";
 import { allScope, clinicianById } from "@/data/clinicians";
@@ -56,6 +40,7 @@ import { cn } from "@/lib/cn";
 import { useDemoStore } from "@/state/demo-store";
 import { adjustClinician } from "@/state/story-selectors";
 import { Panel } from "./blue-overview";
+import { VisitsChart } from "./visits-chart";
 
 /** Stock photograph from Unsplash (free licence), faded into the hero wash. */
 const HERO_PHOTO =
@@ -516,46 +501,7 @@ export function CaseloadOverview({ className }: { className?: string }) {
     >
       <p className="-mt-2 mb-2 text-caption text-ink-500">Visits booked per day across the team</p>
       <figure aria-label="Visits booked per day" className="m-0 min-h-52 flex-1">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 6, right: 4, bottom: 0, left: -18 }}>
-            <CartesianGrid {...gridProps} />
-            <XAxis dataKey="day" {...axisProps} />
-            <YAxis allowDecimals={false} {...axisProps} />
-            <Tooltip
-              cursor={cursorBand}
-              wrapperStyle={{ zIndex: 20 }}
-              content={({ active, payload }) => {
-                const row = payload?.[0]?.payload as (typeof data)[number] | undefined;
-                if (!active || !row) return null;
-                return (
-                  <TooltipCard
-                    title={row.today ? `${row.label} · today` : row.label}
-                    rows={[
-                      {
-                        key: "v",
-                        label: "Visits",
-                        value: row.visits,
-                        colour: "var(--color-accent-fill)",
-                      },
-                    ]}
-                  />
-                );
-              }}
-            />
-            <Bar dataKey="visits" radius={[6, 6, 0, 0]} maxBarSize={34} isAnimationActive={false}>
-              {data.map((d, i) => (
-                <Cell
-                  key={d.day}
-                  fill={
-                    d.today
-                      ? "var(--color-accent-fill)"
-                      : `color-mix(in srgb, var(--color-accent-fill) ${72 - i * 8}%, white)`
-                  }
-                />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+        <VisitsChart data={data} />
       </figure>
     </Panel>
   );
