@@ -208,7 +208,7 @@ export function templateFor(support: Support, discipline: Discipline): Assessmen
       ...fromBank("SIL/ILO / SDA housing"),
     ]);
   }
-  if (support === "Home Modification Assessment") {
+  if (support === "Home Mod Assessment") {
     return withConsent("Home modification assessment", [
       ...otBank.slice(0, 2),
       ...fromBank("Home Modification"),
@@ -300,27 +300,28 @@ export type NoteStatus = (typeof noteStatuses)[number];
 
 export const invoiceStatuses = [
   "Draft",
-  "Ready for Review",
+  "Pending Approval",
   "Approved",
   "Issued",
-  "Partially Paid",
+  "Part-Paid",
   "Paid",
   "Disputed",
-  "Adjusted",
   "Voided",
+  "Credited",
 ] as const;
 export type InvoiceStatus = (typeof invoiceStatuses)[number];
 
+/** Module 07 (section 4). Overdue is derived from the due date and balance, not stored. */
 export const invoiceMoves: Record<InvoiceStatus, readonly InvoiceStatus[]> = {
-  Draft: ["Ready for Review", "Voided"],
-  "Ready for Review": ["Approved", "Draft", "Voided"],
+  Draft: ["Pending Approval", "Voided"],
+  "Pending Approval": ["Approved", "Draft", "Voided"],
   Approved: ["Issued", "Draft", "Voided"],
-  Issued: ["Partially Paid", "Paid", "Disputed", "Voided"],
-  "Partially Paid": ["Paid", "Disputed"],
-  Paid: [],
-  Disputed: ["Adjusted", "Issued", "Voided"],
-  Adjusted: ["Issued", "Partially Paid", "Paid"],
+  Issued: ["Part-Paid", "Paid", "Disputed", "Credited", "Voided"],
+  "Part-Paid": ["Paid", "Disputed", "Credited"],
+  Paid: ["Credited"],
+  Disputed: ["Issued", "Part-Paid", "Paid", "Credited", "Voided"],
   Voided: [],
+  Credited: [],
 };
 
 /**

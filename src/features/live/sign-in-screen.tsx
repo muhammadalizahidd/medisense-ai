@@ -10,7 +10,9 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { sessionChanged } from "@/lib/live/client";
 import { homeFor } from "@/lib/live/routes";
+import type { SessionUser } from "@/lib/live/types";
 import { cn } from "@/lib/cn";
 import { SignInForm } from "./sign-in-form";
 
@@ -32,19 +34,34 @@ const promises = [
 
 /**
  * One sign-in for everyone: admins and therapists with their work email, patients with the
- * invite code their care team gave them.
+ * MRN (medical record number) their care team gave them.
  */
+/** Staff-only destinations: the therapist app and the staff portals never offer the MRN option. */
+const STAFF_AREAS = ["/mobile/therapist", "/mobile/staff", "/therapist", "/care", "/admin"];
+
 export function SignInScreen({
   next,
   offline,
   testAccounts,
+  oneClick = false,
+  pendingUser = null,
 }: {
   next: string | null;
   offline: boolean;
+  /** Already signed in with a temporary password: only the "choose your password" step shows. */
+  pendingUser?: SessionUser | null;
   testAccounts: TestAccount[] | null;
+  /** Local development: a demo account signs in with one click (no password in the browser). */
+  oneClick?: boolean;
 }) {
   const router = useRouter();
   const [prefill, setPrefill] = useState<{ email: string; key: number } | null>(null);
+  // Set once a temporary password is accepted, so the heading matches the "choose" step.
+  const [choosing, setChoosing] = useState<SessionUser | null>(pendingUser);
+  const staffArea = Boolean(
+    next &&
+    STAFF_AREAS.some((p) => next === p || next.startsWith(`${p}/`) || next.startsWith(`${p}?`)),
+  );
 
   return (
     <main className="grid min-h-dvh bg-canvas lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
@@ -57,7 +74,7 @@ export function SignInScreen({
         <div className="relative flex h-full flex-col justify-between p-12 text-surface">
           <Brand light />
           <div className="max-w-120">
-            <h2 className="headline text-[40px] leading-12 font-semibold text-surface">
+            <h2 className="type-display text-[40px] leading-12 font-semibold text-surface">
               Allied health that comes to you.
             </h2>
             <ul className="mt-8 flex flex-col gap-5">
@@ -86,25 +103,31 @@ export function SignInScreen({
           <div className="mb-8 lg:hidden">
             <Brand />
           </div>
-          <h1 className="headline text-h1">Sign in</h1>
+          <h1 className="type-display text-h1">{choosing ? "Choose your password" : "Sign in"}</h1>
           <p className="mt-1.5 mb-6 text-small text-ink-700">
-            Staff and therapists use their work email. Patients and families start with the invite
-            code from their care team.
+            {choosing
+              ? `Welcome, ${choosing.name.split(" ")[0]}. You signed in with a temporary password: choose your own to continue.`
+              : staffArea
+                ? "Staff and therapists sign in with their work email and password."
+                : "Staff and therapists use their work email. Patients and families sign in with the MRN (medical record number) from their care team."}
           </p>
           {offline && (
             <p
               role="status"
-              className="mb-4 rounded-control bg-monitor-bg px-3 py-2 text-small text-monitor"
+              className="mb-4 rounded-control bg-watch-bg px-3 py-2 text-small text-watch"
             >
               Sign-in is unavailable because the database can&apos;t be reached. Try again shortly.
             </p>
           )}
-          <div className="rounded-card border border-border bg-surface p-6 surface-lift sm:p-7">
+          <div className="rounded-card border border-border bg-surface p-6 sm:p-7">
             <SignInForm
               key={prefill?.key ?? 0}
               initialEmail={prefill?.email}
+              staffOnly={staffArea}
+              pendingUser={pendingUser}
+              onChoosePassword={setChoosing}
               onSignedIn={(user) => {
-                router.replace(next ?? homeFor(user.role));
+                router.replace(next ?? homeFor(user.role, user.staffRoles));
                 router.refresh();
               }}
             />
@@ -112,25 +135,40 @@ export function SignInScreen({
           <div className="mt-6 flex flex-col gap-2 text-caption text-ink-500">
             <p className="flex items-start gap-2">
               <ShieldCheck className="mt-0.5 size-4 flex-none text-accent" aria-hidden="true" />
-              Forgotten your password? Staff can ask a Medisense admin for a temporary one. Patients
-              can ask their care team for a new invite code.
+              Forgotten your password? Staff can ask a Medisense admin for a temporary one.
+              {!staffArea && " Patients can ask their care team for their MRN."}
             </p>
           </div>
-          {testAccounts && (
+          {testAccounts && !choosing && (
             <details className="mt-6 rounded-control border border-dashed border-border-strong bg-surface px-4 py-3">
-              <summary className="cursor-pointer text-small font-semibold">
-                Test accounts (local only)
-              </summary>
+              <summary className="cursor-pointer text-small font-semibold">Demo accounts</summary>
               <p className="mt-2 mb-3 text-caption text-ink-500">
-                Every staff account uses <code>SEED_PASSWORD</code> from <code>.env.local</code>.
-                Choose one to fill in the email.
+                {oneClick
+                  ? "Choose an account to sign in straight away."
+                  : "Choose an account to fill in its email, then enter the demo password your Medisense contact gave you."}
               </p>
               <ul className="grid gap-1.5 sm:grid-cols-2">
                 {testAccounts.map((a) => (
                   <li key={a.email}>
                     <button
                       type="button"
-                      onClick={() => setPrefill({ email: a.email, key: Date.now() })}
+                      onClick={async () => {
+                        if (!oneClick) return setPrefill({ email: a.email, key: Date.now() });
+                        setPrefill({ email: a.email, key: Date.now() });
+                        const res = await fetch("/api/auth/demo", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ email: a.email }),
+                        });
+                        const body = (await res.json().catch(() => ({}))) as {
+                          user?: { role: Parameters<typeof homeFor>[0]; staffRoles?: string[] };
+                        };
+                        if (res.ok && body.user) {
+                          sessionChanged();
+                          router.replace(next ?? homeFor(body.user.role, body.user.staffRoles));
+                          router.refresh();
+                        }
+                      }}
                       className={cn(
                         "w-full cursor-pointer rounded-control border border-border px-3 py-2 text-left hover:border-accent hover:bg-accent-tint",
                         prefill?.email === a.email && "border-accent bg-accent-tint",
@@ -155,12 +193,12 @@ export function Brand({ light = false }: { light?: boolean }) {
     <div className="flex items-center gap-3">
       <span
         aria-hidden="true"
-        className="flex size-11 items-center justify-center rounded-control bg-accent-fill text-on-accent"
+        className="flex size-11 items-center justify-center rounded-control bg-ink-900 text-page"
       >
         <HeartPulse className="size-6" strokeWidth={2} />
       </span>
       <span>
-        <span className={cn("block headline text-h2 leading-6", light && "text-surface")}>
+        <span className={cn("block type-display text-h2 leading-6", light && "text-surface")}>
           Medisense
         </span>
         <span className={cn("block text-caption", light ? "text-surface/75" : "text-ink-500")}>

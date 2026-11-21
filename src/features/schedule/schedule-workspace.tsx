@@ -42,7 +42,8 @@ function blockStyle(item: ScheduleItem): CSSProperties {
   if (item.status === "cancelled") {
     return {
       background:
-        "repeating-linear-gradient(135deg, var(--color-surface-sunken) 0 6px, var(--color-surface) 6px 12px)",
+        // design-ok: hatching marks a cancelled visit without relying on colour
+        "repeating-linear-gradient(135deg, var(--color-sunken) 0 6px, var(--color-surface) 6px 12px)", // design-ok
       borderLeft: "3px solid var(--color-border-strong)",
     };
   }
@@ -68,12 +69,12 @@ function Legend() {
       <span className="flex items-center gap-1.5">
         <span
           aria-hidden="true"
-          className="size-2.5 rounded-xs border border-border-strong bg-surface-sunken"
+          className="size-2.5 rounded-xs border border-border-strong bg-sunken"
         />
         Open slot (cancelled)
       </span>
       <span className="flex items-center gap-1.5">
-        <PenNib className="size-3 text-brass" />
+        <PenNib className="size-3 text-ink-700" />
         Booked from AI suggestion
       </span>
     </div>
@@ -109,7 +110,7 @@ function Block({
           cancelled && "text-ink-500 line-through",
         )}
       >
-        {item.fromSuggestion && <PenNib className="size-3 text-brass" />}
+        {item.fromSuggestion && <PenNib className="size-3 text-ink-700" />}
         <span className="truncate">{item.title}</span>
       </div>
       {!compact && (
@@ -154,7 +155,7 @@ function WeekCalendar({
           {HOURS.map((h) => (
             <span
               key={h}
-              className="absolute right-2 -translate-y-1/2 text-eyebrow text-ink-500"
+              className="absolute right-2 -translate-y-1/2 text-label text-ink-500"
               style={{ top: (h - DAY_START) * PX_PER_MIN }}
             >
               {formatTime(h).replace(":00", "")}
@@ -180,7 +181,7 @@ function WeekCalendar({
                 <span
                   key={h}
                   aria-hidden="true"
-                  className="absolute inset-x-0 border-t border-grid"
+                  className="absolute inset-x-0 border-t border-chart-grid"
                   style={{ top: (h - DAY_START) * PX_PER_MIN }}
                 />
               ))}
@@ -196,7 +197,7 @@ function WeekCalendar({
                   {item.travel > 0 && item.status !== "cancelled" && (
                     <div
                       aria-hidden="true"
-                      className="absolute right-1.5 left-1.5 flex items-center justify-center gap-1 text-eyebrow text-ink-400"
+                      className="absolute right-1.5 left-1.5 flex items-center justify-center gap-1 text-label text-ink-400"
                       style={{
                         top: Math.max(item.start - item.travel - DAY_START, 0) * PX_PER_MIN,
                         height: item.travel * PX_PER_MIN,
@@ -218,7 +219,7 @@ function WeekCalendar({
                 </div>
               ))}
               {dayItems.length > 0 && (
-                <span className="absolute right-1.5 bottom-1 left-1.5 text-center text-eyebrow text-ink-500">
+                <span className="absolute right-1.5 bottom-1 left-1.5 text-center text-label text-ink-500">
                   {(travel / 60).toFixed(1)} h driving
                 </span>
               )}
@@ -250,7 +251,7 @@ function TeamDay({
           {HOURS.map((h) => (
             <span
               key={h}
-              className="absolute -translate-x-1/2 text-eyebrow text-ink-500"
+              className="absolute -translate-x-1/2 text-label text-ink-500"
               style={{ left: pct(h) }}
             >
               {formatTime(h).replace(":00", "")}
@@ -272,7 +273,7 @@ function TeamDay({
                   <span
                     key={h}
                     aria-hidden="true"
-                    className="absolute inset-y-0 border-l border-grid"
+                    className="absolute inset-y-0 border-l border-chart-grid"
                     style={{ left: pct(h) }}
                   />
                 ))}
@@ -405,12 +406,12 @@ export function ScheduleWorkspace() {
 
       <section
         aria-label="Schedule summary"
-        className="stat-band grid grid-cols-2 gap-px overflow-hidden rounded-card border border-border bg-border lg:grid-cols-5"
+        className="grid grid-cols-2 gap-px overflow-hidden rounded-card border border-border bg-border lg:grid-cols-5"
       >
         {metrics.map((m) => (
           <div key={m.label} className="flex flex-col gap-1.5 bg-surface px-5 py-4">
-            <span className="eyebrow">{m.label}</span>
-            <span className={cn("headline text-stat font-normal", m.over && "text-over")}>
+            <span className="label-caps">{m.label}</span>
+            <span className={cn("type-display text-h1-compact font-normal", m.over && "text-over")}>
               {m.value}
             </span>
             <Caption>{m.caption}</Caption>
@@ -430,7 +431,7 @@ export function ScheduleWorkspace() {
                 <li
                   key={s.id}
                   className={cn(
-                    "rounded-control border border-border bg-surface-raised px-3.5 py-3",
+                    "rounded-control border border-border bg-raised px-3.5 py-3",
                     state === "dismissed" && "opacity-55",
                   )}
                 >
@@ -523,7 +524,7 @@ export function ScheduleWorkspace() {
         </div>
         <div className="overflow-x-auto">
           <div className="min-w-180">
-            <div className="grid grid-cols-[180px_repeat(5,minmax(0,1fr))_96px] border-y border-border bg-surface-sunken px-5 py-2 eyebrow">
+            <div className="grid grid-cols-[180px_repeat(5,minmax(0,1fr))_96px] border-y border-border bg-sunken px-5 py-2 label-caps">
               <span>Clinician</span>
               {scheduleDays.map((d) => (
                 <span key={d.id} className="text-center">
@@ -555,7 +556,7 @@ export function ScheduleWorkspace() {
                       style={{
                         background: h
                           ? `color-mix(in srgb, ${h > 7.5 ? colour.over : colour.series1} ${Math.round(12 + (h / 9) * 40)}%, var(--color-surface))`
-                          : "var(--color-surface-sunken)",
+                          : "var(--color-sunken)",
                         color: h ? "var(--color-ink-900)" : "var(--color-ink-400)",
                       }}
                     >

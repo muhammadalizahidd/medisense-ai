@@ -23,7 +23,7 @@ import { Button, ButtonLink } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page";
 import { Avatar } from "@/components/ui/premium";
 import { Tag } from "@/components/ui/tag";
-import { api, useResource } from "@/lib/live/client";
+import { api, useNow, useResource } from "@/lib/live/client";
 import type { TelehealthDto } from "@/lib/live/telehealth";
 import { relativeTime, slotLabel, timeOfDay } from "@/lib/live/time";
 import type { AppointmentDto } from "@/lib/live/types";
@@ -75,7 +75,7 @@ export function RecordingBadge({ status }: { status: string }) {
       role="status"
       className={cn(
         "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-caption font-bold text-white",
-        status === "Recording" ? "bg-over-dot" : "bg-monitor-dot",
+        status === "Recording" ? "bg-over-dot" : "bg-watch-dot",
       )}
     >
       <Circle
@@ -116,6 +116,7 @@ export function TelehealthRoom({ visitId }: { visitId: string }) {
   const [safety, setSafety] = useState("");
   const [noting, setNoting] = useState<AppointmentDto | null>(null);
 
+  const now = useNow();
   // A guest in the waiting room has no live connection of their own: check every few seconds too.
   useEffect(() => {
     const t = setInterval(reload, 4000);
@@ -151,6 +152,8 @@ export function TelehealthRoom({ visitId }: { visitId: string }) {
   if (error && !data) return <ErrorNote message={error} onRetry={reload} />;
   if (!data) return <Skeleton className="h-150" />;
   const c = data.call;
+  const closed =
+    now !== null && c.state !== "In call" && now > new Date(c.end).getTime() + 60 * 60_000;
   const inCall = c.state === "In call";
   const rec = c.recording.status;
 
@@ -175,13 +178,18 @@ export function TelehealthRoom({ visitId }: { visitId: string }) {
           </div>
         }
       />
-      <div className="grid gap-6 xl:grid-cols-12">
-        <div className="flex flex-col gap-4 xl:col-span-8">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
+        <div className="flex min-w-0 flex-col gap-4 xl:col-span-8">
           <section aria-label="Call" className="rounded-card bg-ink-900 p-3">
-            <p className="mb-2 text-center text-eyebrow font-semibold tracking-wide text-surface/70 uppercase">
+            <p className="mb-2 text-center text-label font-semibold tracking-wide text-surface/70 uppercase">
               DEMO ONLY · simulated video
             </p>
-            <div className={cn("grid gap-3", c.screenShare ? "md:grid-cols-3" : "md:grid-cols-2")}>
+            <div
+              className={cn(
+                "grid grid-cols-1 gap-3",
+                c.screenShare ? "md:grid-cols-3" : "md:grid-cols-2",
+              )}
+            >
               {c.screenShare && (
                 <div className="flex aspect-video items-center justify-center rounded-card bg-surface/10 text-small text-surface md:col-span-2">
                   <MonitorUp className="mr-2 size-5" aria-hidden="true" /> Your screen is shared
@@ -368,7 +376,7 @@ export function TelehealthRoom({ visitId }: { visitId: string }) {
           )}
         </div>
 
-        <div className="flex flex-col gap-4 xl:col-span-4">
+        <div className="flex min-w-0 flex-col gap-4 xl:col-span-4">
           <Panel title="1. Clinical suitability">
             {c.suitability ? (
               <p className="flex items-center gap-2 text-small">
@@ -417,13 +425,20 @@ export function TelehealthRoom({ visitId }: { visitId: string }) {
                 </Button>
               </div>
             )}
-            <Button
-              size="sm"
-              disabled={busy || !c.suitability?.ok}
-              onClick={() => act({ action: "send-link" })}
-            >
-              {c.linkSent ? "Create a new link" : "Create and send link"}
-            </Button>
+            {closed ? (
+              <p className="rounded-control bg-watch-bg px-3 py-2 text-small text-watch">
+                This visit was {slotLabel(c.start)}. Its video window closed an hour after it ended,
+                so links no longer work. Move the visit to a new time to run the call.
+              </p>
+            ) : (
+              <Button
+                size="sm"
+                disabled={busy || !c.suitability?.ok}
+                onClick={() => act({ action: "send-link" })}
+              >
+                {c.linkSent ? "Create a new link" : "Create and send link"}
+              </Button>
+            )}
           </Panel>
           <Panel title="3. Waiting room">
             {c.guest ? (

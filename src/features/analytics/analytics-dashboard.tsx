@@ -160,12 +160,12 @@ export function AnalyticsDashboard() {
 
       <section
         aria-label="Key measures"
-        className="stat-band grid grid-cols-2 gap-px overflow-hidden rounded-card border border-border bg-border lg:grid-cols-5"
+        className="grid grid-cols-2 gap-px overflow-hidden rounded-card border border-border bg-border lg:grid-cols-5"
       >
         {metrics.map((m) => (
           <div key={m.label} className="flex flex-col gap-1.5 bg-surface px-5 py-4">
-            <span className="eyebrow">{m.label}</span>
-            <span className={cn("headline text-stat font-normal", m.over && "text-over")}>
+            <span className="label-caps">{m.label}</span>
+            <span className={cn("type-display text-h1-compact font-normal", m.over && "text-over")}>
               {m.value}
             </span>
             <Caption>{m.caption}</Caption>
@@ -355,7 +355,7 @@ export function AnalyticsDashboard() {
           </FilterField>
         </div>
         <div className="overflow-x-auto" role="table" aria-label="Clinician comparison">
-          <div className="min-w-260">
+          <div className="md:min-w-260">
             <TableHeader columns={COLUMNS}>
               <div>Clinician</div>
               <div>Discipline</div>
@@ -391,7 +391,7 @@ export function AnalyticsDashboard() {
                   <span className="text-ink-500"> / {c.capacity}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="relative h-1.5 w-14 rounded-full bg-surface-sunken">
+                  <div className="relative h-1.5 w-14 rounded-full bg-sunken">
                     <span
                       className={cn(
                         "absolute inset-y-0 left-0 rounded-full",

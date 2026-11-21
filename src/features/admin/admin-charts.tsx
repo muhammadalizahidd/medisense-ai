@@ -60,7 +60,7 @@ export function TimeBreakdown() {
       </div>
       <div className="border-t border-border pt-3.5">
         <div className="mb-1 flex items-baseline justify-between">
-          <span className="eyebrow">Hours outside sessions, 12 weeks</span>
+          <span className="label-caps">Hours outside sessions, 12 weeks</span>
           <Caption>
             Week of {dt("3 Aug")} → {dt("19 Oct")}
           </Caption>
@@ -171,7 +171,7 @@ export function AdminByClinician() {
         id="admin-by-clinician"
         title="Documentation hours against target"
         description="Last week, as a share of each clinician’s pro-rata target"
-        aside={<span className="headline text-stat-sm text-over">{over} over</span>}
+        aside={<span className="type-display text-h2 text-over">{over} over</span>}
       />
       <div className="mt-3">
         <BarList

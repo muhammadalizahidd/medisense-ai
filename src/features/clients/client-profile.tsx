@@ -113,7 +113,7 @@ export function ClientProfileView({ profile }: { profile: ClientProfile }) {
               className={cn(
                 "flex items-center gap-2.5 rounded-card border px-4 py-2.5 text-small",
                 a.tone === "over" && "border-over/30 bg-over-bg text-over",
-                a.tone === "monitor" && "border-monitor/30 bg-monitor-bg text-monitor",
+                a.tone === "monitor" && "border-watch/30 bg-watch-bg text-watch",
                 a.tone === "neutral" && "border-border bg-surface text-ink-700",
               )}
             >
@@ -126,15 +126,15 @@ export function ClientProfileView({ profile }: { profile: ClientProfile }) {
 
       <section
         aria-label="Patient summary"
-        className="stat-band grid grid-cols-2 gap-px overflow-hidden rounded-card border border-border bg-border lg:grid-cols-5"
+        className="grid grid-cols-2 gap-px overflow-hidden rounded-card border border-border bg-border lg:grid-cols-5"
       >
         {metrics.map((m) => (
           <div key={m.label} className="flex flex-col gap-1.5 bg-surface px-5 py-4">
-            <span className="eyebrow">{m.label}</span>
+            <span className="label-caps">{m.label}</span>
             <span
               className={cn(
-                "headline font-normal",
-                m.small ? "text-h2" : "text-stat",
+                "type-display font-normal",
+                m.small ? "text-h2" : "text-h1-compact",
                 m.over && "text-over",
               )}
             >
@@ -164,7 +164,7 @@ export function ClientProfileView({ profile }: { profile: ClientProfile }) {
             )}
           </div>
           <div className="border-t border-border pt-3">
-            <div className="mb-1.5 eyebrow">Contacts</div>
+            <div className="mb-1.5 label-caps">Contacts</div>
             <ul className="flex flex-col">
               {profile.contacts.map((c) => (
                 <li
@@ -230,20 +230,20 @@ export function ClientProfileView({ profile }: { profile: ClientProfile }) {
             </div>
             <div className="grid grid-cols-3 gap-2 text-small">
               <span>
-                <span className="block eyebrow">Baseline</span>
+                <span className="block label-caps">Baseline</span>
                 {g.baseline}
               </span>
               <span>
-                <span className="block eyebrow">Now</span>
+                <span className="block label-caps">Now</span>
                 <b className="font-semibold">{g.current}</b>
               </span>
               <span>
-                <span className="block eyebrow">Target</span>
+                <span className="block label-caps">Target</span>
                 {g.target}
               </span>
             </div>
             <div className="flex items-center gap-2.5">
-              <div className="relative h-1.5 flex-1 rounded-full bg-surface-sunken">
+              <div className="relative h-1.5 flex-1 rounded-full bg-sunken">
                 <span
                   className="absolute inset-y-0 left-0 rounded-full"
                   style={{

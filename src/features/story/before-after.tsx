@@ -62,11 +62,11 @@ function LedgerRow({ row, now, onAudit }: { row: Row; now: StoryFigures; onAudit
     <div className="grid gap-x-6 gap-y-1 border-t border-border py-4 md:grid-cols-12 md:items-baseline">
       <div className="font-semibold md:col-span-3">{row.measure}</div>
       <div className="flex items-baseline gap-3 md:col-span-2">
-        <span className="headline text-stat font-normal text-ink-500">
+        <span className="type-display text-h1-compact font-normal text-ink-500">
           {String(startFigures[row.key])}
         </span>
         <span className="text-small text-ink-500">to</span>
-        <span className="headline text-stat font-normal">{String(now[row.key])}</span>
+        <span className="type-display text-h1-compact font-normal">{String(now[row.key])}</span>
       </div>
       <p className="text-small text-ink-700 md:col-span-5">{row.why}</p>
       <div className="md:col-span-2 md:text-right">
@@ -116,7 +116,7 @@ export function BeforeAfter() {
   if (changes.length === 0) {
     return (
       <section className="max-w-200">
-        <h1 className="headline text-display">Before and after</h1>
+        <h1 className="type-display text-display">Before and after</h1>
         <p className="mt-2 text-body text-ink-700">
           Nothing has changed yet. Approve a note or move a follow-up, and what changes will appear
           here with the reason and its audit entry.
@@ -131,7 +131,7 @@ export function BeforeAfter() {
   return (
     <>
       <header className="mb-8 max-w-200">
-        <h1 className="headline text-display">Before and after</h1>
+        <h1 className="type-display text-display">Before and after</h1>
         <div className="mt-3">
           <AiMark source="Figures come from rules and the audit trail">AI summary</AiMark>
         </div>
@@ -142,7 +142,7 @@ export function BeforeAfter() {
 
       {noteRows.length > 0 && (
         <Card aria-labelledby="from-note" className="px-6 pt-5 pb-2">
-          <h2 id="from-note" className="headline text-h2">
+          <h2 id="from-note" className="text-section font-semibold text-ink-900">
             Because of what Sarah approved and confirmed
           </h2>
           <p className="mt-0.5 mb-4 text-small text-ink-700">
@@ -166,7 +166,7 @@ export function BeforeAfter() {
       <div className="mt-6 grid items-start gap-6 xl:grid-cols-12">
         {dayRows.length > 0 && (
           <Card aria-labelledby="from-day" className="px-6 pt-5 pb-2 xl:col-span-8">
-            <h2 id="from-day" className="headline text-h2">
+            <h2 id="from-day" className="text-section font-semibold text-ink-900">
               Because a day passed
             </h2>
             <p className="mt-0.5 mb-4 text-small text-ink-700">
@@ -178,7 +178,7 @@ export function BeforeAfter() {
           </Card>
         )}
         <Card aria-labelledby="same" className="px-6 pt-5 pb-5 xl:col-span-4">
-          <h2 id="same" className="headline text-h2">
+          <h2 id="same" className="text-section font-semibold text-ink-900">
             What hasn&apos;t changed
           </h2>
           <p className="mt-2 text-small leading-5.5 text-ink-700">

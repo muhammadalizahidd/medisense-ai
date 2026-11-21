@@ -20,9 +20,9 @@ function Side({
   tone: "over" | "available";
 }) {
   return (
-    <div className="flex flex-1 flex-col gap-0.5 rounded-card border border-border bg-surface px-3.5 py-3 surface-lift">
-      <span className="eyebrow">{name}</span>
-      <span className="headline text-stat-sm font-normal">{load}</span>
+    <div className="flex flex-1 flex-col gap-0.5 rounded-card border border-border bg-surface px-3.5 py-3">
+      <span className="label-caps">{name}</span>
+      <span className="type-display text-h2 font-normal">{load}</span>
       <span
         className={`text-caption font-medium ${tone === "over" ? "text-over" : "text-available"}`}
       >
@@ -51,15 +51,15 @@ export function Recommendation({
       className="flex h-full flex-col gap-3.5 px-5 pt-5 pb-4.5"
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="flex items-center gap-1.5 eyebrow text-brass">
-          <PenNib className="size-3.5 text-brass" />
+        <span className="flex items-center gap-1.5 label-caps text-ink-700">
+          <PenNib className="size-3.5 text-ink-700" />
           Suggestion
         </span>
         <Caption>
           {capacityRecommendation.generatedAt} · {state === "pending" ? "Not applied" : "Reviewed"}
         </Caption>
       </div>
-      <h2 id="recommendation" className="headline text-figure">
+      <h2 id="recommendation" className="text-section font-semibold">
         Rebalancing for review
       </h2>
       <p>{capacityRecommendation.text}</p>
@@ -80,8 +80,8 @@ export function Recommendation({
         <Side {...to} tone="available" />
       </div>
 
-      <div className="rounded-control border border-border bg-surface-sunken px-3.5 py-3">
-        <div className="mb-1.5 eyebrow">Continuity of care</div>
+      <div className="rounded-control border border-border bg-sunken px-3.5 py-3">
+        <div className="mb-1.5 label-caps">Continuity of care</div>
         <ul className="flex list-disc flex-col gap-1 pl-4 text-small text-ink-700">
           {continuity.map((c) => (
             <li key={c}>{c}</li>
@@ -131,7 +131,7 @@ export function Recommendation({
       {state === "dismissed" && (
         <div
           role="status"
-          className="rounded-control bg-surface-sunken px-3.5 py-3 text-small text-ink-700"
+          className="rounded-control bg-sunken px-3.5 py-3 text-small text-ink-700"
         >
           Suggestion dismissed. No changes were made.{" "}
           <Link href="/" className="font-semibold">

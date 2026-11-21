@@ -10,7 +10,7 @@ import { Select } from "@/components/ui/select";
 
 const fieldLabel = "text-caption font-semibold text-ink-700";
 const input =
-  "w-full rounded-control border border-border-strong bg-surface-raised px-2.5 text-small text-ink-900 outline-none focus:border-accent focus:shadow-focus";
+  "w-full rounded-control border border-border-strong bg-raised px-2.5 text-small text-ink-900 outline-none focus:border-accent focus:shadow-focus";
 
 export function AssignFollowUpPopover({
   client,
@@ -40,11 +40,11 @@ export function AssignFollowUpPopover({
     <div
       role="dialog"
       aria-label={`Assign follow-up for ${client.name}`}
-      className="absolute top-full right-4 z-5 -mt-1.5 w-96 rounded-card border border-border bg-surface-raised text-left shadow-overlay"
+      className="absolute top-full right-4 z-5 -mt-1.5 w-96 rounded-card border border-border bg-raised text-left shadow-overlay"
     >
       <div className="px-4.5 pt-4 pb-1">
-        <div className="eyebrow">Assign follow-up</div>
-        <div className="mt-1 headline text-figure">{client.name}</div>
+        <div className="label-caps">Assign follow-up</div>
+        <div className="mt-1 text-section font-semibold">{client.name}</div>
         <Caption className="mt-0.5">{client.reason}</Caption>
       </div>
       <div className="grid grid-cols-2 gap-3 px-4.5 pt-3 pb-4">

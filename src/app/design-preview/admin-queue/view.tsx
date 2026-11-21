@@ -51,7 +51,7 @@ function Exception({ retrying, onRetry }: { retrying: boolean; onRetry: () => vo
             aria-hidden="true"
           />
           <div>
-            <h2 id="exceptions" className="headline text-h2">
+            <h2 id="exceptions" className="type-display text-h2">
               1 exception: a form didn&apos;t sync
             </h2>
             <p className="mt-0.5 max-w-180 text-small text-ink-700">
@@ -83,10 +83,10 @@ function Reassign({ row, onClose }: { row: QueueRow; onClose: () => void }) {
     <div
       role="group"
       aria-label={`Reassign ${row.title}`}
-      className="flex flex-wrap items-center gap-3 border-b border-border bg-surface-sunken px-4 py-3"
+      className="flex flex-wrap items-center gap-3 border-b border-border bg-sunken px-4 py-3"
     >
       <span className="text-small font-semibold">Reassign this task</span>
-      <span className="text-caption font-medium text-brass">
+      <span className="text-caption font-medium text-ink-700">
         AI suggests Sam Doyle, who has the fewest open tasks
       </span>
       <SelectField label="To" value={to} onChange={setTo}>
@@ -177,7 +177,7 @@ export function AdminQueueView() {
                           {r.title}
                         </div>
                         <div className="mt-0.5 flex items-center gap-1 text-caption font-medium text-ink-500">
-                          {r.fromAi && <PenNib className="size-3 text-brass" />}
+                          {r.fromAi && <PenNib className="size-3 text-ink-700" />}
                           {r.isNew ? (
                             <Link
                               href="/design-preview/prepared?state=confirmed"
@@ -236,7 +236,7 @@ export function AdminQueueView() {
                 );
               })}
               {rows.length === 0 && (
-                <p className="px-5 py-10 headline text-h2 font-normal">{emptyCopy[filter]}</p>
+                <p className="px-5 py-10 type-display text-h2 font-normal">{emptyCopy[filter]}</p>
               )}
             </div>
           </div>

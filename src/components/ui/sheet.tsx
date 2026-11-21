@@ -6,7 +6,10 @@ import { createPortal } from "react-dom";
 
 const FOCUSABLE = "button, input, select, textarea, a[href]";
 
-/** A panel over the right of the screen for one focused task. Escape or the backdrop closes it. */
+/**
+ * A panel over the right of the screen for one focused task; on phones it rises from the bottom.
+ * Escape or the backdrop closes it, focus stays inside and returns to the opener.
+ */
 export function Sheet({
   title,
   description,
@@ -55,38 +58,38 @@ export function Sheet({
   }, []);
 
   return createPortal(
-    <div className="fixed inset-0 z-40 flex justify-end">
+    <div className="fixed inset-0 z-40 flex items-end justify-end sm:items-stretch">
       <button
         type="button"
         aria-label="Close"
         tabIndex={-1}
         onClick={onClose}
-        className="absolute inset-0 cursor-default bg-ink-900/25"
+        className="absolute inset-0 cursor-default bg-scrim"
       />
       <div
         ref={panel}
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="relative flex h-full w-120 max-w-full flex-col bg-surface-raised shadow-overlay"
+        className="relative flex max-h-[92dvh] w-full flex-col rounded-t-sheet bg-raised shadow-overlay sm:h-full sm:max-h-none sm:w-120 sm:max-w-full sm:rounded-t-none sm:rounded-l-sheet"
       >
-        <header className="flex items-start justify-between gap-3 border-b border-border px-5 py-4">
+        <header className="flex items-start justify-between gap-3 border-b border-border px-6 py-5">
           <div className="min-w-0">
-            <h2 className="headline text-h2">{title}</h2>
+            <h2 className="type-display text-h2">{title}</h2>
             {description && <div className="mt-1 text-small text-ink-700">{description}</div>}
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label={`Close ${title}`}
-            className="flex size-8 flex-none cursor-pointer items-center justify-center rounded-control text-ink-700 hover:bg-canvas"
+            className="flex size-9 flex-none cursor-pointer items-center justify-center rounded-control text-ink-700 hover:bg-sunken"
           >
             <X className="size-4" strokeWidth={1.5} aria-hidden="true" />
           </button>
         </header>
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">{children}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">{children}</div>
         {footer && (
-          <footer className="flex flex-wrap items-center gap-2 border-t border-border px-5 py-3">
+          <footer className="flex flex-wrap items-center gap-2 border-t border-border bg-raised px-6 py-4">
             {footer}
           </footer>
         )}
@@ -97,7 +100,7 @@ export function Sheet({
 }
 
 export const inputClass =
-  "h-9 w-full rounded-control border border-border-strong bg-surface-raised px-3 text-small text-ink-900 outline-none focus:border-accent focus:shadow-focus";
+  "h-10 w-full rounded-(--radius-field) border border-border-strong bg-surface px-3 text-small text-ink-900 outline-none transition-colors duration-(--duration-fast) placeholder:text-ink-400 hover:border-ink-400 focus:border-accent focus:shadow-focus aria-invalid:border-over disabled:bg-sunken disabled:text-ink-500";
 
 export function Field({
   label,

@@ -3,10 +3,7 @@ import { cn } from "@/lib/cn";
 
 export function Card({ className, ...props }: ComponentProps<"section">) {
   return (
-    <section
-      className={cn("rounded-card border border-border bg-surface surface-lift", className)}
-      {...props}
-    />
+    <section className={cn("rounded-card border border-border bg-surface", className)} {...props} />
   );
 }
 
@@ -26,7 +23,7 @@ export function CardTitle({
   return (
     <div className={cn("flex flex-wrap items-start justify-between gap-3", className)}>
       <div>
-        <h2 id={id} className="headline text-h2">
+        <h2 id={id} className="text-section font-semibold text-ink-900">
           {title}
         </h2>
         {description && <p className="mt-1 text-caption font-medium text-ink-500">{description}</p>}

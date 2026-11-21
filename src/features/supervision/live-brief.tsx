@@ -101,7 +101,7 @@ export function LiveBrief() {
         />
       )}
 
-      <h2 id="agenda-title" className="mt-3.5 mb-1 headline text-h2">
+      <h2 id="agenda-title" className="mt-3.5 mb-1 text-section font-semibold text-ink-900">
         AI supervision brief
       </h2>
 
@@ -121,9 +121,9 @@ export function LiveBrief() {
             {brief.data.items.map((item) => (
               <article key={item.heading} className="border-t border-border py-4 first:border-t-0">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <h3 className="font-serif text-section font-medium">{item.heading}</h3>
+                  <h3 className="font-display text-section font-medium">{item.heading}</h3>
                   {changedHeadings.has(item.heading) && (
-                    <span className="text-caption font-semibold text-brass">AI updated</span>
+                    <span className="text-caption font-semibold text-ink-700">AI updated</span>
                   )}
                 </div>
                 <p
@@ -142,7 +142,7 @@ export function LiveBrief() {
           {brief.data.points.length > 0 && (
             <div className="border-t border-border-strong py-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <h3 className="font-serif text-section font-medium">
+                <h3 className="font-display text-section font-medium">
                   AI-suggested discussion points
                 </h3>
                 <Tag tone="neutral">Suggestions only</Tag>

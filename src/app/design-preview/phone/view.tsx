@@ -54,7 +54,7 @@ function Device({ title, children }: { title: string; children: ReactNode }) {
 function PhoneHeader({ title, detail }: { title: string; detail?: string }) {
   return (
     <header className="flex-none border-b border-border bg-surface px-4 pt-4 pb-3">
-      <h2 className="headline text-h2">{title}</h2>
+      <h2 className="type-display text-h2">{title}</h2>
       {detail && <p className="text-small text-ink-700">{detail}</p>}
     </header>
   );
@@ -71,7 +71,7 @@ function MyDayPhone() {
         {sarahDay.map((v) => (
           <Fragment key={v.id}>
             {v.driveBefore > 0 && (
-              <p className="flex items-center gap-1.5 border-y border-border bg-surface-sunken px-4 py-1.5 text-caption font-medium text-ink-500">
+              <p className="flex items-center gap-1.5 border-y border-border bg-sunken px-4 py-1.5 text-caption font-medium text-ink-500">
                 <Car className="size-3.5" strokeWidth={1.5} aria-hidden="true" />
                 {v.driveBefore} min drive
               </p>
@@ -84,7 +84,7 @@ function MyDayPhone() {
             >
               <div className="flex items-baseline justify-between gap-3">
                 <span className="font-semibold">{v.client}</span>
-                <span className="font-serif text-figure">{v.start}</span>
+                <span className="font-display text-section">{v.start}</span>
               </div>
               <p className="text-small text-ink-700">
                 {v.place}
@@ -151,7 +151,7 @@ function ReviewPhone() {
         {noteSections.map((section) => (
           <div key={section.id} className="border-b border-border py-3 last:border-b-0">
             <div className="flex items-center justify-between">
-              <h3 className="font-serif text-section font-medium">{section.title}</h3>
+              <h3 className="font-display text-section font-medium">{section.title}</h3>
               <button
                 type="button"
                 className="flex h-11 min-w-11 cursor-pointer items-center justify-end text-small font-semibold text-accent"
@@ -163,7 +163,7 @@ function ReviewPhone() {
               {section.sentences.map((s) => (
                 <p key={s.id} className="text-body">
                   {s.edited ?? s.text}
-                  <span className="ml-1 font-mono text-eyebrow font-medium text-accent">
+                  <span className="ml-1 font-mono text-label font-medium text-accent">
                     L{s.line}
                   </span>
                 </p>
@@ -262,7 +262,7 @@ export function PhoneView() {
           aria-labelledby="collapse"
           className="mt-8 max-w-240 border-t border-border-strong pt-5"
         >
-          <h2 id="collapse" className="headline text-h2">
+          <h2 id="collapse" className="type-display text-h2">
             How the desktop shell collapses
           </h2>
           <p className="mt-1 text-small text-ink-700">

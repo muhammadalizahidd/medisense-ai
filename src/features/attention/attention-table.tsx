@@ -105,11 +105,13 @@ export function AttentionWorkspace() {
     <>
       <section
         aria-label="Summary"
-        className="stat-band grid grid-cols-2 gap-px overflow-hidden rounded-card border border-border bg-border lg:grid-cols-[repeat(5,minmax(0,1fr))_minmax(0,1.6fr)]"
+        className="grid grid-cols-2 gap-px overflow-hidden rounded-card border border-border bg-border lg:grid-cols-[repeat(5,minmax(0,1fr))_minmax(0,1.6fr)]"
       >
         <div className="flex flex-col gap-1 bg-surface px-5 py-4">
-          <span className="eyebrow">Patients</span>
-          <span className="headline text-stat font-normal">{attentionClients.length}</span>
+          <span className="label-caps">Patients</span>
+          <span className="type-display text-h1-compact font-normal">
+            {attentionClients.length}
+          </span>
         </div>
         {priorities.map((p) => (
           <button
@@ -122,25 +124,25 @@ export function AttentionWorkspace() {
               priority === p && "bg-accent-tint shadow-rule-accent",
             )}
           >
-            <span className="flex items-center gap-1.5 eyebrow">
+            <span className="flex items-center gap-1.5 label-caps">
               <LevelDot level={p} />
               {p}
             </span>
-            <span className="headline text-stat font-normal">
+            <span className="type-display text-h1-compact font-normal">
               {countByPriority(attentionClients, p)}
             </span>
           </button>
         ))}
         <div className="flex flex-col gap-1 bg-surface px-5 py-4">
-          <span className="eyebrow">Follow-ups assigned</span>
-          <span className="headline text-stat font-normal">
+          <span className="label-caps">Follow-ups assigned</span>
+          <span className="type-display text-h1-compact font-normal">
             {assigned.length}
-            <span className="text-figure text-ink-500"> / {attentionClients.length}</span>
+            <span className="text-section text-ink-500"> / {attentionClients.length}</span>
           </span>
         </div>
         <div className="flex flex-col gap-1 bg-surface px-5 py-4">
-          <span className="eyebrow">Most common reason</span>
-          <span className="headline text-stat-sm leading-8 font-normal">
+          <span className="label-caps">Most common reason</span>
+          <span className="type-display text-h2 leading-8 font-normal">
             {topReason.label} <span className="text-ink-500">({topReason.count})</span>
           </span>
         </div>
@@ -308,7 +310,7 @@ export function AttentionWorkspace() {
         </div>
 
         <div className="max-xl:overflow-x-auto" role="table" aria-label="Patients requiring review">
-          <div className="max-xl:min-w-260">
+          <div className="md:max-xl:min-w-260">
             <TableHeader columns={COLUMNS} className="gap-x-3.5">
               <div>Patient</div>
               <div>Clinician</div>
@@ -342,7 +344,7 @@ export function AttentionWorkspace() {
                   <div className="line-clamp-2 py-2 text-ink-700">{c.reason}</div>
                   <div className="flex items-center justify-end gap-2">
                     <span
-                      className="h-1 w-10 overflow-hidden rounded-full bg-surface-sunken"
+                      className="h-1 w-10 overflow-hidden rounded-full bg-sunken"
                       aria-hidden="true"
                     >
                       <span
@@ -353,7 +355,7 @@ export function AttentionWorkspace() {
                         }}
                       />
                     </span>
-                    <span className="font-serif text-figure">{c.daysSinceContact}</span>
+                    <span className="font-display text-section">{c.daysSinceContact}</span>
                   </div>
                   <div className="text-right">
                     {done ? (

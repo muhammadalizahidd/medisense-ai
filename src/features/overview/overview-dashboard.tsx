@@ -197,7 +197,7 @@ export function OverviewDashboard() {
             title="Active patients against capacity"
             description={`Weekly active patients · ${labels[0]} – ${labels[labels.length - 1]}`}
             aside={
-              <span className="headline text-stat-sm text-over">
+              <span className="type-display text-h2 text-over">
                 {Math.round((s.active / Math.max(s.capacity, 1)) * 100)}%
               </span>
             }
@@ -236,7 +236,7 @@ export function OverviewDashboard() {
           </div>
           <div className="mt-5 border-t border-border pt-4">
             <div className="mb-2 flex items-baseline justify-between">
-              <span className="eyebrow">Complexity mix</span>
+              <span className="label-caps">Complexity mix</span>
               <Caption>Weighted Low 1.0 · Medium 1.5 · High 2.5</Caption>
             </div>
             <ComplexityBar high={s.mix.high} medium={s.mix.medium} low={s.mix.low} />

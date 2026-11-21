@@ -1,18 +1,6 @@
-import type { Metadata } from "next";
-import { PageContainer, PageHeader } from "@/components/ui/page";
-import { AutomationsWorkspace } from "@/features/automations/automations-workspace";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = { title: "Automations · Medisense" };
-
-export default function AutomationsPage() {
-  return (
-    <PageContainer>
-      <PageHeader
-        eyebrow="Intake & admin"
-        title="Automations"
-        description="Rules that prepare the next step when something happens: reminders, drafts, tasks and escalations. People approve; every run is logged."
-      />
-      <AutomationsWorkspace />
-    </PageContainer>
-  );
+/** Replaced by the live Operations hub (Module 08). */
+export default function Page() {
+  redirect("/care/operations?tab=rules");
 }

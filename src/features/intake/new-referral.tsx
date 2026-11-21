@@ -157,7 +157,7 @@ export function NewReferralSheet({
               setText(e.target.value);
               setError(null);
             }}
-            className="w-full resize-y rounded-control border border-border-strong bg-surface-raised px-3 py-2 text-small leading-5.5 text-ink-900 outline-none focus:border-accent focus:shadow-focus"
+            className="w-full resize-y rounded-control border border-border-strong bg-raised px-3 py-2 text-small leading-5.5 text-ink-900 outline-none focus:border-accent focus:shadow-focus"
           />
         </Field>
         <div>

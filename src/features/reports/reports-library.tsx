@@ -1,8 +1,8 @@
 "use client";
 
-import { ArrowRight, Check, CircleDashed, Sparkles } from "lucide-react";
+import { ArrowRight, Check, CircleDashed } from "lucide-react";
 import { useState } from "react";
-import { DraftLabel, PenNib, draftSurface } from "@/components/ai/provenance";
+import { AiIcon, DraftLabel, PenNib, draftSurface } from "@/components/ai/provenance";
 import { colour } from "@/components/charts/chart-kit";
 import { DonutChart } from "@/components/charts/donut-chart";
 import { StackedColumns } from "@/components/charts/stacked-columns";
@@ -123,13 +123,16 @@ export function ReportsLibrary() {
     <>
       <section
         aria-label="Report summary"
-        className="stat-band grid grid-cols-2 gap-px overflow-hidden rounded-card border border-border bg-border lg:grid-cols-5"
+        className="grid grid-cols-2 gap-px overflow-hidden rounded-card border border-border bg-border lg:grid-cols-5"
       >
         {metrics.map((m) => (
           <div key={m.label} className="flex flex-col gap-1.5 bg-surface px-5 py-4">
-            <span className="eyebrow">{m.label}</span>
+            <span className="label-caps">{m.label}</span>
             <span
-              className={cn("headline text-stat font-normal", m.over && m.value > 0 && "text-over")}
+              className={cn(
+                "type-display text-h1-compact font-normal",
+                m.over && m.value > 0 && "text-over",
+              )}
             >
               {m.value}
             </span>
@@ -238,7 +241,7 @@ export function ReportsLibrary() {
       <div className="grid items-start gap-6 lg:grid-cols-12">
         <Card aria-label="Reports" className="overflow-hidden lg:col-span-8">
           <div className="overflow-x-auto" role="table" aria-label="Reports">
-            <div className="min-w-180">
+            <div className="md:min-w-180">
               <TableHeader columns={COLUMNS}>
                 <div>Patient</div>
                 <div>Report</div>
@@ -291,7 +294,7 @@ export function ReportsLibrary() {
             )}
           >
             {selected.current === "Not started" ? (
-              <span className="eyebrow">Not started</span>
+              <span className="label-caps">Not started</span>
             ) : selected.current === "Approved" || selected.current === "Sent" ? (
               <span className="flex items-center gap-1.5 text-small font-semibold text-healthy">
                 <Check className="size-4" strokeWidth={2} aria-hidden="true" />
@@ -301,13 +304,13 @@ export function ReportsLibrary() {
               <DraftLabel>AI draft — clinician review required</DraftLabel>
             )}
             <div>
-              <h2 className="headline text-h2">{selected.client}</h2>
+              <h2 className="type-display text-h2">{selected.client}</h2>
               <Caption className="mt-1">
                 {selected.type} · {selected.funding} · {selected.clinician} · due {selected.due}
               </Caption>
             </div>
             <div className="border-t border-border pt-3">
-              <div className="mb-1.5 eyebrow">Sections</div>
+              <div className="mb-1.5 label-caps">Sections</div>
               <ul className="flex flex-col gap-1">
                 {selected.sections.map((s) => (
                   <li key={s} className="flex items-center gap-2 text-small">
@@ -326,7 +329,7 @@ export function ReportsLibrary() {
               </ul>
             </div>
             <div className="border-t border-border pt-3">
-              <div className="mb-1.5 eyebrow">Built from</div>
+              <div className="mb-1.5 label-caps">Built from</div>
               <ul className="flex flex-col gap-1">
                 {selected.sources.map((s) => (
                   <li key={s.label} className="flex justify-between text-small">
@@ -339,7 +342,7 @@ export function ReportsLibrary() {
             <div className="mt-1 flex flex-wrap gap-2 border-t border-border pt-3">
               {selected.current === "Not started" && (
                 <Button variant="primary" onClick={() => draftReport(selected.id)}>
-                  <Sparkles className="size-4" strokeWidth={1.5} aria-hidden="true" />
+                  <AiIcon className="size-4" />
                   Generate AI draft
                 </Button>
               )}
@@ -354,7 +357,7 @@ export function ReportsLibrary() {
               )}
               {!selected.href && selected.current === "AI draft" && (
                 <Caption className="flex items-center gap-1.5">
-                  <PenNib className="size-3.5 text-brass" />
+                  <PenNib className="size-3.5 text-ink-700" />
                   Draft ready for {selected.clinician.split(" ")[0]} to review. Emily Carter&apos;s
                   report shows the full review flow.
                 </Caption>

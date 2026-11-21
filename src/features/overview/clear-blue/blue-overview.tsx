@@ -49,12 +49,12 @@ export function Panel({
     <section
       aria-label={title}
       className={cn(
-        "flex min-w-0 flex-col rounded-card border border-border bg-surface p-5 surface-lift",
+        "flex min-w-0 flex-col rounded-card border border-border bg-surface p-5",
         className,
       )}
     >
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="headline text-section">{title}</h2>
+        <h2 className="text-section font-semibold">{title}</h2>
         {action && (
           <Link href={action.href} className="text-caption font-medium whitespace-nowrap">
             {action.label}
@@ -72,11 +72,11 @@ function BriefingCard() {
   return (
     <section
       aria-label="AI briefing"
-      className="ai-surface flex min-w-0 flex-col gap-4 rounded-card p-5 lg:flex-row lg:items-center"
+      className="flex min-w-0 flex-col gap-4 rounded-card p-5 lg:flex-row lg:items-center"
     >
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <h2 className="headline text-section">Today&apos;s briefing</h2>
+          <h2 className="text-section font-semibold">Today&apos;s briefing</h2>
           <AiMark>AI briefing, recommendation only</AiMark>
         </div>
         {briefing.loading ? (
@@ -136,11 +136,11 @@ function TeamStatus({ className }: { className?: string }) {
       <dl className="mt-auto grid grid-cols-2 gap-3 border-t border-border pt-4">
         <div>
           <dt className="text-caption text-ink-500">Team utilisation</dt>
-          <dd className="headline text-figure">{utilisation}%</dd>
+          <dd className="text-section font-semibold">{utilisation}%</dd>
         </div>
         <div>
           <dt className="text-caption text-ink-500">Peak caseload</dt>
-          <dd className="headline text-figure">{highest}%</dd>
+          <dd className="text-section font-semibold">{highest}%</dd>
         </div>
       </dl>
     </Panel>
@@ -221,11 +221,11 @@ function ReviewAlerts({ className }: { className?: string }) {
               key={a.id}
               className={cn(
                 "flex gap-2 rounded-control px-2.5 py-2",
-                high ? "bg-over-bg" : "bg-monitor-bg",
+                high ? "bg-over-bg" : "bg-watch-bg",
               )}
             >
               <AlertTriangle
-                className={cn("mt-0.5 size-4 flex-none", high ? "text-over" : "text-monitor")}
+                className={cn("mt-0.5 size-4 flex-none", high ? "text-over" : "text-watch")}
                 strokeWidth={1.75}
                 aria-hidden="true"
               />
@@ -233,7 +233,7 @@ function ReviewAlerts({ className }: { className?: string }) {
                 <span
                   className={cn(
                     "block text-caption font-semibold",
-                    high ? "text-over" : "text-monitor",
+                    high ? "text-over" : "text-watch",
                   )}
                 >
                   {a.priority} priority
@@ -334,7 +334,7 @@ export function BlueOverview({ children }: { children: ReactNode }) {
       </div>
 
       <section aria-labelledby="team-detail" className="mt-12">
-        <h2 id="team-detail" className="mb-5 headline text-h1">
+        <h2 id="team-detail" className="mb-5 type-display text-h1">
           Team detail
         </h2>
         {children}

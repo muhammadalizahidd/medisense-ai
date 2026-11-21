@@ -88,12 +88,9 @@ function ApprovedNote({
   approvedAt: string;
 }) {
   return (
-    <section
-      aria-labelledby="the-note"
-      className="rounded-card border border-border bg-surface surface-lift"
-    >
+    <section aria-labelledby="the-note" className="rounded-card border border-border bg-surface">
       <div className="border-b border-border px-5 pt-4.5 pb-3.5">
-        <h2 id="the-note" className="headline text-h2">
+        <h2 id="the-note" className="text-section font-semibold text-ink-900">
           Oliver&apos;s approved note
         </h2>
         <div className="mt-1">
@@ -103,7 +100,7 @@ function ApprovedNote({
       <div className="flex flex-col gap-4 px-5 pt-4 pb-5">
         {noteSectionTitles.map((section) => (
           <div key={section.id}>
-            <h3 className="mb-1 font-serif text-section font-medium">{section.title}</h3>
+            <h3 className="mb-1 font-display text-section font-medium">{section.title}</h3>
             <div className="flex flex-col gap-1">
               {note.sections[section.id].map((s) => (
                 <p
@@ -167,7 +164,7 @@ function ItemHead({
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-        <h3 className="headline text-h2">{title}</h3>
+        <h3 className="text-section font-semibold text-ink-900">{title}</h3>
         <div className="flex items-center gap-2">
           {children}
           {tag}
@@ -253,25 +250,25 @@ function ReportItem({
         <div className="mt-3 flex flex-col gap-3 border-t border-border pt-3">
           {sections.map((s) => (
             <label key={s.name} className="flex flex-col gap-1">
-              <span className="font-serif text-section font-medium">{s.name}</span>
+              <span className="font-display text-section font-medium">{s.name}</span>
               <textarea
                 rows={3}
                 disabled={approved}
                 value={edits[s.name] ?? s.text}
                 onChange={(e) => editSection(s.name, e.target.value)}
-                className="w-full resize-y rounded-control border border-border-strong bg-surface-raised px-3 py-2 text-small leading-5.5 text-ink-900 outline-none focus:border-accent disabled:bg-surface-sunken"
+                className="w-full resize-y rounded-control border border-border-strong bg-raised px-3 py-2 text-small leading-5.5 text-ink-900 outline-none focus:border-accent disabled:bg-sunken"
               />
             </label>
           ))}
           <label className="flex flex-col gap-1">
-            <span className="font-serif text-section font-medium">Recommended next steps</span>
+            <span className="font-display text-section font-medium">Recommended next steps</span>
             <textarea
               rows={2}
               disabled={approved}
               value={nextSteps}
               placeholder="AI leaves this to you."
               onChange={(e) => editSection("Recommended next steps", e.target.value)}
-              className="w-full resize-y rounded-control border border-border-strong bg-surface-raised px-3 py-2 text-small leading-5.5 text-ink-900 outline-none placeholder:text-ink-500 focus:border-accent disabled:bg-surface-sunken"
+              className="w-full resize-y rounded-control border border-border-strong bg-raised px-3 py-2 text-small leading-5.5 text-ink-900 outline-none placeholder:text-ink-500 focus:border-accent disabled:bg-sunken"
             />
           </label>
         </div>
@@ -377,10 +374,10 @@ function FormItem({
                 disabled={approved}
                 value={reason}
                 onChange={(e) => setValue("reason", e.target.value)}
-                className="h-8 w-full rounded-control border border-border-strong bg-surface-raised px-2.5 text-small text-ink-900 outline-none focus:border-accent disabled:bg-surface-sunken"
+                className="h-8 w-full rounded-control border border-border-strong bg-raised px-2.5 text-small text-ink-900 outline-none focus:border-accent disabled:bg-sunken"
               />
             </dd>
-            <dd className="text-caption font-medium text-brass md:text-right">
+            <dd className="text-caption font-medium text-ink-700 md:text-right">
               AI, from this note
             </dd>
           </div>
@@ -389,7 +386,7 @@ function FormItem({
               key={f.id}
               className={cn(
                 "grid items-center gap-x-3 border-b border-border py-1.5 text-small last:border-b-0 md:grid-cols-[150px_minmax(0,1fr)_130px]",
-                !values[f.id]?.trim() && "bg-monitor-bg",
+                !values[f.id]?.trim() && "bg-watch-bg",
               )}
             >
               <dt className="text-ink-700">{f.label}</dt>
@@ -400,7 +397,7 @@ function FormItem({
                   value={values[f.id] ?? ""}
                   placeholder="Type to complete"
                   onChange={(e) => setValue(f.id, e.target.value)}
-                  className="h-8 w-full rounded-control border border-border-strong bg-surface-raised px-2.5 text-small text-ink-900 outline-none placeholder:text-ink-500 focus:border-accent disabled:bg-surface-sunken"
+                  className="h-8 w-full rounded-control border border-border-strong bg-raised px-2.5 text-small text-ink-900 outline-none placeholder:text-ink-500 focus:border-accent disabled:bg-sunken"
                 />
               </dd>
               <dd className="text-caption font-medium text-ink-500 md:text-right">
@@ -602,7 +599,9 @@ export function PreparedView() {
     return (
       <section aria-busy="true" aria-label="Preparing" className="max-w-200">
         <Card className="px-6 py-5">
-          <h2 className="headline text-h2">Note approved. AI is preparing what follows from it.</h2>
+          <h2 className="text-section font-semibold text-ink-900">
+            Note approved. AI is preparing what follows from it.
+          </h2>
           <ul className="mt-4 flex flex-col gap-3">
             {[
               "AI is adding today's session to the NDIS progress report",
@@ -680,7 +679,7 @@ export function PreparedView() {
             className="rounded-card border border-l-2 border-border border-l-draft-rule bg-draft"
           >
             <div className="px-5 pt-4.5 pb-3.5">
-              <h3 id="follow-ups" className="headline text-h2">
+              <h3 id="follow-ups" className="text-section font-semibold text-ink-900">
                 {prepared.tasks.length} {prepared.tasks.length === 1 ? "follow-up" : "follow-ups"}{" "}
                 AI found
               </h3>
@@ -708,7 +707,7 @@ export function PreparedView() {
         className="mt-8 grid gap-x-16 gap-y-3 border-t border-border-strong pt-5 lg:grid-cols-12"
       >
         <div className="lg:col-span-5">
-          <h2 id="not-repeated" className="headline text-h2">
+          <h2 id="not-repeated" className="text-section font-semibold text-ink-900">
             Steps you didn&apos;t have to repeat
           </h2>
           <ButtonLink href="/my-day" className="mt-3">

@@ -2,7 +2,6 @@
 
 import {
   Accessibility,
-  Apple,
   Brain,
   Check,
   ClipboardList,
@@ -36,7 +35,7 @@ const icons: Record<Support, LucideIcon> = {
   "Functional Capacity Assessment": ClipboardList,
   "SIL/ILO Housing Assessment": Home,
   "SDA Housing Assessment": Building2,
-  "Home Modification Assessment": Wrench,
+  "Home Mod Assessment": Wrench,
   "Assistive Technology Assessment": Accessibility,
   "Occupational Therapy": Hand,
   "Speech Therapy": Speech,
@@ -49,7 +48,6 @@ const icons: Record<Support, LucideIcon> = {
   "Trauma Therapy": HeartHandshake,
   Nursing: Stethoscope,
   Podiatry: Footprints,
-  Dietetics: Apple,
   Other: Plus,
 };
 

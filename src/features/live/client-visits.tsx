@@ -2,7 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import { Tag } from "@/components/ui/tag";
-import { AppCard, AppHeader } from "@/features/mobile/phone-frame";
+import { CalendarClock, History } from "lucide-react";
+import { AppCard, AppEmpty, AppHeader, AppSection } from "@/features/mobile/phone-frame";
 import { CANCELLATION_NOTICE_HOURS } from "@/lib/live/catalogue";
 import { useState } from "react";
 import { api, useNow, useResource } from "@/lib/live/client";
@@ -100,13 +101,11 @@ export function ClientVisits({
           <Skeleton className="h-24" />
         ) : (
           <>
-            <h3 className="mb-2 text-small font-semibold">Coming up</h3>
+            <AppSection title="Coming up" />
             {upcoming.length === 0 ? (
-              <AppCard>
-                <p className="text-small text-ink-700">
-                  No visits booked yet. They appear here once your therapist accepts.
-                </p>
-              </AppCard>
+              <AppEmpty icon={CalendarClock} title="No upcoming visits">
+                Your visits appear here once your therapist accepts and books them.
+              </AppEmpty>
             ) : (
               upcoming.map((v) => (
                 <AppCard key={v.id}>
@@ -128,13 +127,20 @@ export function ClientVisits({
                 </AppCard>
               ))
             )}
-            <p className="mb-4 text-caption text-ink-500">
+            <p className="mb-2 px-1 text-caption text-ink-500">
               Please give {CANCELLATION_NOTICE_HOURS} hours&apos; notice to cancel or change a
               visit.
             </p>
-            {history.length > 0 && (
+            {history.length === 0 ? (
               <>
-                <h3 className="mb-2 text-small font-semibold">Earlier and changed</h3>
+                <AppSection title="Earlier and changed" />
+                <AppEmpty icon={History} title="No past visits yet" compact>
+                  Visits you&apos;ve had, and any that changed, will be listed here.
+                </AppEmpty>
+              </>
+            ) : (
+              <>
+                <AppSection title="Earlier and changed" />
                 {history.map((v) => (
                   <AppCard key={v.id}>
                     <div className="flex items-start justify-between gap-3">

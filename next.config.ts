@@ -33,9 +33,16 @@ const renamed = [
 ] as const;
 
 const nextConfig: NextConfig = {
+  // A production build can go to its own folder (NEXT_DIST_DIR) so it never touches the dev cache.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   cacheComponents: true,
   devIndicators: false,
   partialPrefetching: true,
+  experimental: {
+    // The persistent dev cache went stale twice and put the browser in a reload loop
+    // (every HMR connection reported the client entry as changed). Dev builds start clean.
+    turbopackFileSystemCacheForDev: false,
+  },
   turbopack: {
     rules: {
       "*.css": {

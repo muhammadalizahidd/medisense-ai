@@ -20,7 +20,7 @@ export function LiveScoreTag() {
   return (
     <div className="flex items-center gap-3 border-r border-border pr-5">
       <StatusTag status={f.sarahStatus} />
-      <span className="headline text-stat font-normal">{f.sarahScore}</span>
+      <span className="type-display text-h1-compact font-normal">{f.sarahScore}</span>
     </div>
   );
 }

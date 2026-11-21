@@ -56,27 +56,27 @@ function Documentation({ value, href }: { value: DocumentationStatus; href?: str
       return <span className="text-ink-500">Complete</span>;
     case "overdue":
       return href ? (
-        <Link href={href} className="font-medium text-monitor underline-offset-2 hover:underline">
+        <Link href={href} className="font-medium text-watch underline-offset-2 hover:underline">
           Note overdue · {value.days} days
         </Link>
       ) : (
-        <span className="font-medium text-monitor">Note overdue · {value.days} days</span>
+        <span className="font-medium text-watch">Note overdue · {value.days} days</span>
       );
     case "report-incomplete":
-      return <span className="font-medium text-monitor">Progress report incomplete</span>;
+      return <span className="font-medium text-watch">Progress report incomplete</span>;
     case "ai-draft": {
       const label = (
         <>
-          <PenNib className="text-brass" />
+          <PenNib className="text-ink-700" />
           AI draft awaiting review
         </>
       );
       return href ? (
-        <Link href={href} className="inline-flex items-center gap-1.5 font-semibold text-brass">
+        <Link href={href} className="inline-flex items-center gap-1.5 font-semibold text-ink-700">
           {label}
         </Link>
       ) : (
-        <span className="inline-flex items-center gap-1.5 font-semibold text-brass">{label}</span>
+        <span className="inline-flex items-center gap-1.5 font-semibold text-ink-700">{label}</span>
       );
     }
   }
@@ -168,7 +168,7 @@ export function ClientTable({ clients }: { clients: CaseloadClient[] }) {
         role="table"
         aria-label="Sarah Thompson’s patients"
       >
-        <div className="min-w-268">
+        <div className="md:min-w-268">
           <TableHeader columns={COLUMNS} className="sticky top-0 z-1">
             <div>Patient</div>
             <div>Service</div>
@@ -213,7 +213,7 @@ export function ClientTable({ clients }: { clients: CaseloadClient[] }) {
                   size="sm"
                   className="absolute top-1/2 right-4 -translate-y-1/2 text-accent opacity-0 shadow-overlay transition-opacity duration-160 ease-out group-focus-within:opacity-100 group-hover:opacity-100"
                 >
-                  <PenNib className="text-brass" />
+                  <PenNib className="text-ink-700" />
                   Summarise notes
                 </ButtonLink>
               )}

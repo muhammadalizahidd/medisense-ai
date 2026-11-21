@@ -1,9 +1,73 @@
 "use client";
 
 import { Check } from "lucide-react";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
+import { NoteAssist, wantsAssist } from "@/components/ai/note-assist";
 import { Field, inputClass } from "@/components/ui/sheet";
 import { cn } from "@/lib/cn";
+
+/**
+ * A date typed as day, month and year, always in Australian order whatever the device's regional
+ * settings. The value is YYYY-MM-DD once all three parts are complete, otherwise empty.
+ */
+export function DateField({
+  label,
+  value,
+  onChange,
+  error,
+  hint,
+  required = false,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  error?: string;
+  hint?: string;
+  required?: boolean;
+}) {
+  const split = (v: string) => {
+    const [y = "", m = "", d = ""] = v ? v.split("-") : [];
+    return { d, m, y };
+  };
+  const [parts, setParts] = useState(() => split(value));
+  const [seen, setSeen] = useState(value);
+  // A value set from outside (a saved draft, sample data) replaces what's typed.
+  if (seen !== value) {
+    setSeen(value);
+    if (value) setParts(split(value));
+  }
+  const update = (next: { d: string; m: string; y: string }) => {
+    setParts(next);
+    const day = Number(next.d);
+    const month = Number(next.m);
+    const complete = next.y.length === 4 && day >= 1 && day <= 31 && month >= 1 && month <= 12;
+    const iso = complete ? `${next.y}-${next.m.padStart(2, "0")}-${next.d.padStart(2, "0")}` : "";
+    setSeen(iso);
+    onChange(iso);
+  };
+  const box = (part: "d" | "m" | "y", name: string, placeholder: string, max: number) => (
+    <input
+      aria-label={`${label}: ${name}`}
+      inputMode="numeric"
+      autoComplete="off"
+      placeholder={placeholder}
+      maxLength={max}
+      value={parts[part]}
+      aria-invalid={Boolean(error)}
+      onChange={(e) => update({ ...parts, [part]: e.target.value.replace(/\D/g, "") })}
+      className={cn(inputClass, "text-center tabular-nums", error && "border-over")}
+    />
+  );
+  return (
+    <Field label={required ? label : `${label} (optional)`} hint={hint} error={error}>
+      <span className="grid grid-cols-[1fr_1fr_1.5fr] gap-2">
+        {box("d", "day", "DD", 2)}
+        {box("m", "month", "MM", 2)}
+        {box("y", "year", "YYYY", 4)}
+      </span>
+    </Field>
+  );
+}
 
 /** A text input bound to a value, with its label, hint and error. */
 export function TextField({
@@ -58,6 +122,7 @@ export function TextArea({
   required = false,
   placeholder,
   maxLength = 3000,
+  assist,
 }: {
   label: string;
   value: string;
@@ -68,6 +133,8 @@ export function TextArea({
   required?: boolean;
   placeholder?: string;
   maxLength?: number;
+  /** Dictation and "Write with AI"; on by default for note fields. */
+  assist?: boolean;
 }) {
   return (
     <Field label={required ? label : `${label} (optional)`} hint={hint} error={error}>
@@ -80,6 +147,9 @@ export function TextArea({
         onChange={(e) => onChange(e.target.value)}
         className={cn(inputClass, "h-auto py-2", error && "border-over")}
       />
+      {(assist ?? wantsAssist(label)) && (
+        <NoteAssist label={label} value={value} onChange={onChange} className="mt-1.5" />
+      )}
     </Field>
   );
 }

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { StaffApp } from "@/features/mobile/staff-app";
+import { AdminApp } from "@/features/live/admin-app";
 
-export const metadata: Metadata = { title: "Staff app · Medisense" };
+export const metadata: Metadata = { title: "Admin app · Medisense" };
 
-export default function StaffAppPage() {
-  return <StaffApp />;
+export default function AdminAppPage() {
+  return <AdminApp />;
 }

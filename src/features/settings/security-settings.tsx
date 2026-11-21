@@ -28,12 +28,12 @@ export function SecuritySettings() {
     <>
       <section
         aria-label="Security setup"
-        className="stat-band grid grid-cols-2 gap-px overflow-hidden rounded-card border border-border bg-border lg:grid-cols-5"
+        className="grid grid-cols-2 gap-px overflow-hidden rounded-card border border-border bg-border lg:grid-cols-5"
       >
         {securityFacts.map((f) => (
           <div key={f.label} className="flex flex-col gap-1.5 bg-surface px-5 py-4">
-            <span className="eyebrow">{f.label}</span>
-            <span className="headline text-h2 font-normal">{f.value}</span>
+            <span className="label-caps">{f.label}</span>
+            <span className="type-display text-h2 font-normal">{f.value}</span>
             <Caption>{f.detail}</Caption>
           </div>
         ))}
@@ -50,7 +50,7 @@ export function SecuritySettings() {
           </div>
           <div className="overflow-x-auto">
             <div className="min-w-160">
-              <div className="grid grid-cols-[minmax(0,1fr)_repeat(4,96px)] border-y border-border bg-surface-sunken px-5 py-2 eyebrow">
+              <div className="grid grid-cols-[minmax(0,1fr)_repeat(4,96px)] border-y border-border bg-sunken px-5 py-2 label-caps">
                 <span>Permission</span>
                 {permissionRoles.map((r) => (
                   <span key={r} className="text-center">
@@ -197,7 +197,7 @@ export function SecuritySettings() {
             description="Who can sign in, and how"
           />
         </div>
-        <div className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)_120px] border-y border-border bg-surface-sunken px-5 py-2 eyebrow">
+        <div className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)_120px] border-y border-border bg-sunken px-5 py-2 label-caps">
           <span>Person</span>
           <span>Role</span>
           <span>Last active</span>

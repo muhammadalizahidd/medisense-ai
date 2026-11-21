@@ -23,7 +23,21 @@ import {
 import { DischargeSheet } from "./care-sheets";
 import { ClinicalPanel } from "./clinical-panel";
 import { MatchPicker } from "./match-picker";
+import {
+  CloseService,
+  ConsentTab,
+  ContactsTab,
+  ProfileTab,
+  StatusControl,
+  useParticipant,
+  type Act,
+} from "./participant-profile";
+import { PatientHistory } from "./patient-history";
 import { VisitList } from "./visit-list";
+import { statusTone, type AssessRow } from "@/lib/live/assess";
+import { Sheet } from "@/components/ui/sheet";
+import { PatientQuickActions, PlansTab, usePatientWork } from "./patient-actions";
+import { BookVisitPanel } from "./quick-book";
 
 export function ClientDetail({ clientId }: { clientId: string }) {
   const [discharging, setDischarging] = useState(false);
@@ -34,8 +48,18 @@ export function ClientDetail({ clientId }: { clientId: string }) {
       event.type === "care" && (!event.payload.clientId || event.payload.clientId === clientId),
   );
 
+  const participant = useParticipant(clientId, reload);
+  const profile = participant.data?.profile;
   const c = data?.client;
+  const work = usePatientWork(clientId);
+  const [booking, setBooking] = useState(false);
   const tabs = [
+    {
+      id: "profile",
+      label: "Profile",
+      count: profile?.completeness.missing.length,
+      alert: true,
+    },
     {
       id: "services",
       label: "Services and matching",
@@ -44,12 +68,22 @@ export function ClientDetail({ clientId }: { clientId: string }) {
     },
     {
       id: "visits",
-      label: "Visits",
+      label: "Follow-ups",
       count: c?.appointments.filter((v) => v.status === "booked").length,
     },
+    { id: "assessments", label: "Assessments", count: work.assessments.get(clientId)?.length },
+    { id: "plans", label: "Treatment plans", count: work.plans.get(clientId)?.length },
+    {
+      id: "contacts",
+      label: "Contacts",
+      count: profile?.contacts.filter((x) => x.state === "Unverified" || x.state === "Expired")
+        .length,
+      alert: true,
+    },
+    { id: "consent", label: "Consent" },
     { id: "clinical", label: "Clinical progress" },
-    { id: "details", label: "Details and documents", count: c?.documents.length },
-    { id: "activity", label: "Activity" },
+    { id: "details", label: "Documents and app", count: c?.documents.length },
+    { id: "history", label: "History" },
   ] as const;
   const [tab, setTab] = useTab(tabs);
 
@@ -71,17 +105,23 @@ export function ClientDetail({ clientId }: { clientId: string }) {
         eyebrow={
           <ButtonLink href="/care" variant="ghost" size="sm">
             <ArrowLeft className="size-3.5" aria-hidden="true" />
-            Patient onboarding
+            Patients
           </ButtonLink>
         }
         title={client.name}
-        description={`${age ? `${age} · ` : ""}${client.suburb}, ${client.region} · ${client.funding}`}
+        description={`${client.mrn ? `${client.mrn} · ` : ""}${age ? `${age} · ` : ""}${client.suburb}, ${client.region} · ${client.funding}`}
         actions={
           <div className="flex items-center gap-3">
             <LiveBadge />
-            <StageTag stage={client.stage} />
+            <ButtonLink href={`/care/funding/${client.id}`} size="sm" variant="soft">
+              Funding and agreements
+            </ButtonLink>
+            {profile && (
+              <StatusControl profile={profile} busy={participant.busy} act={participant.act} />
+            )}
+            {(!profile || client.stage !== profile.status) && <StageTag stage={client.stage} />}
             {!client.discharged && (
-              <Button size="sm" onClick={() => setDischarging(true)}>
+              <Button size="sm" variant="soft-danger" onClick={() => setDischarging(true)}>
                 Discharge
               </Button>
             )}
@@ -91,7 +131,7 @@ export function ClientDetail({ clientId }: { clientId: string }) {
       {client.discharged && (
         <p
           role="status"
-          className="mb-6 rounded-control border border-border bg-canvas px-4 py-3 text-small"
+          className="mb-4 rounded-control border border-border bg-canvas px-4 py-3 text-small"
         >
           <strong>Discharged</strong> {shortDate(client.discharged.at)} by{" "}
           {client.discharged.byName}: {client.discharged.reason}. Their visit history, notes and
@@ -120,14 +160,36 @@ export function ClientDetail({ clientId }: { clientId: string }) {
       {client.precautions && (
         <section
           aria-label="Precautions"
-          className="mb-6 flex gap-3 rounded-card border border-over-bg bg-over-bg px-5 py-4"
+          className="mb-4 flex items-center gap-2.5 rounded-control border border-over/30 bg-over-bg px-4 py-2 text-small"
         >
-          <ShieldAlert className="mt-0.5 size-5 flex-none text-over" aria-hidden="true" />
-          <div>
-            <h2 className="text-small font-semibold text-over">Precautions from clinical triage</h2>
-            <p className="mt-1 text-small whitespace-pre-line text-ink-900">{client.precautions}</p>
-          </div>
+          <ShieldAlert className="size-4 flex-none text-over" aria-hidden="true" />
+          <h2 className="flex-none font-bold text-over">Precaution</h2>
+          <p className="min-w-0 truncate text-ink-900" title={client.precautions}>
+            {client.precautions}
+          </p>
+          <span className="ml-auto hidden flex-none text-caption text-ink-500 md:inline">
+            From clinical triage
+          </span>
         </section>
+      )}
+      <PatientQuickActions clientId={client.id} work={work} onBook={() => setBooking(true)} />
+      {booking && (
+        <Sheet
+          title={`Book a visit for ${client.name}`}
+          description="With their own clinician, at a real free time."
+          onClose={() => setBooking(false)}
+        >
+          <BookVisitPanel
+            patient={{
+              id: client.id,
+              name: client.name,
+              mrn: client.mrn ?? null,
+              suburb: client.suburb,
+              phone: client.phone ?? null,
+            }}
+            onDone={reload}
+          />
+        </Sheet>
       )}
       <Tabs label="Patient record" tabs={tabs} value={tab} onChange={setTab} />
       <TabPanel id="services" value={tab}>
@@ -138,12 +200,41 @@ export function ClientDetail({ clientId }: { clientId: string }) {
             need={need}
             assignments={client.assignments}
             onChange={reload}
+            busy={participant.busy}
+            act={participant.act}
           />
         ))}
       </TabPanel>
+      {(["profile", "contacts", "consent"] as const).map((id) => (
+        <TabPanel key={id} id={id} value={tab}>
+          {!profile ? (
+            participant.error ? (
+              <ErrorNote message={participant.error} onRetry={participant.reload} />
+            ) : (
+              <Skeleton className="h-96" />
+            )
+          ) : id === "profile" ? (
+            <ProfileTab
+              profile={profile}
+              client={client}
+              busy={participant.busy}
+              act={participant.act}
+            />
+          ) : id === "contacts" ? (
+            <ContactsTab
+              profile={profile}
+              clientId={client.id}
+              busy={participant.busy}
+              act={participant.act}
+            />
+          ) : (
+            <ConsentTab profile={profile} busy={participant.busy} act={participant.act} />
+          )}
+        </TabPanel>
+      ))}
       <TabPanel id="visits" value={tab}>
         <Panel
-          title="Visits"
+          title="Follow-ups"
           action={
             client.appointments.some((a) => a.cancellation?.chargeable) && (
               <Tag tone="over">
@@ -157,9 +248,15 @@ export function ClientDetail({ clientId }: { clientId: string }) {
             visits={client.appointments}
             show="therapist"
             onChanged={reload}
-            emptyText="Visits appear here once a therapist accepts."
+            emptyText="Follow-up visits appear here once a therapist accepts."
           />
         </Panel>
+      </TabPanel>
+      <TabPanel id="assessments" value={tab}>
+        <AssessmentsTab rows={work.ready ? (work.assessments.get(clientId) ?? []) : null} />
+      </TabPanel>
+      <TabPanel id="plans" value={tab}>
+        <PlansTab rows={work.ready ? (work.plans.get(clientId) ?? []) : null} />
       </TabPanel>
       <TabPanel id="clinical" value={tab}>
         <ClinicalPanel clientId={client.id} needs={client.needs} mode="admin" />
@@ -192,7 +289,12 @@ export function ClientDetail({ clientId }: { clientId: string }) {
             )}
           </Panel>
           <div className="flex flex-col gap-6">
-            <AppAccess clientId={client.id} account={client.account} name={client.name} />
+            <AppAccess
+              clientId={client.id}
+              account={client.account}
+              name={client.name}
+              mrn={client.mrn}
+            />
             <Panel title="Documents">
               {client.documents.length === 0 ? (
                 <p className="text-small text-ink-500">No documents on file.</p>
@@ -216,23 +318,8 @@ export function ClientDetail({ clientId }: { clientId: string }) {
           </div>
         </div>
       </TabPanel>
-      <TabPanel id="activity" value={tab}>
-        <Panel title="Activity">
-          {client.activity.length === 0 ? (
-            <p className="text-small text-ink-500">Nothing yet.</p>
-          ) : (
-            <ol className="flex flex-col gap-3">
-              {client.activity.map((a) => (
-                <li key={a.id} className="text-small">
-                  <span className="block">{a.action}</span>
-                  <span className="text-caption text-ink-500">
-                    {a.actor} · {relativeTime(a.at)}
-                  </span>
-                </li>
-              ))}
-            </ol>
-          )}
-        </Panel>
+      <TabPanel id="history" value={tab}>
+        <PatientHistory client={client} profile={profile} />
       </TabPanel>
     </>
   );
@@ -243,11 +330,15 @@ function NeedPanel({
   need,
   assignments,
   onChange,
+  busy: closing,
+  act,
 }: {
   clientId: string;
   need: NeedDto;
   assignments: AssignmentDto[];
   onChange: () => void;
+  busy: boolean;
+  act: Act;
 }) {
   const mine = assignments.filter((a) => a.needId === need.id);
   const current = mine.find((a) => a.status === "pending" || a.status === "accepted");
@@ -271,7 +362,12 @@ function NeedPanel({
   return (
     <Panel
       title={`${need.support} · ${need.frequency}`}
-      action={<Tag tone={needTone[need.status]}>{needLabel[need.status]}</Tag>}
+      action={
+        <div className="flex items-center gap-2">
+          {need.status === "assigned" && <CloseService need={need} busy={closing} act={act} />}
+          <Tag tone={needTone[need.status]}>{needLabel[need.status]}</Tag>
+        </div>
+      }
     >
       <p className="-mt-2 mb-4 text-caption text-ink-500">
         {need.discipline} · {need.location}
@@ -302,7 +398,7 @@ function NeedPanel({
         />
       )}
       {current?.status === "pending" && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-control border border-monitor-bg bg-monitor-bg px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-control border border-watch-bg bg-watch-bg px-4 py-3">
           <p className="text-small">
             Waiting for <strong>{current.therapistName}</strong> to accept. First visit held for{" "}
             <strong>{slotLabel(current.firstVisit)}</strong>. Sent {relativeTime(current.createdAt)}
@@ -334,12 +430,14 @@ function AppAccess({
   clientId,
   account,
   name,
+  mrn,
 }: {
   clientId: string;
   account: ClientDetailDto["account"];
   name: string;
+  mrn: string | null;
 }) {
-  const [code, setCode] = useState<{ inviteCode: string; inviteExpires: string } | null>(null);
+  const [code, setCode] = useState<{ mrn: string; inviteExpires: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   return (
@@ -353,19 +451,19 @@ function AppAccess({
     >
       {code ? (
         <div>
-          <p className="text-small text-ink-700">New invite code, shown only once:</p>
-          <p className="my-2 font-mono text-h2 tracking-widest">{code.inviteCode}</p>
+          <p className="text-small text-ink-700">App access is on. The patient signs in with:</p>
+          <p className="my-2 font-mono text-section font-semibold tracking-wide">{code.mrn}</p>
           <p className="text-caption text-ink-500">
-            Valid until {shortDate(code.inviteExpires)}. Earlier codes and any old password no
-            longer work.
+            Valid until {shortDate(code.inviteExpires)}. Any password they set before no longer
+            works.
           </p>
         </div>
       ) : (
         <>
           <p className="mb-3 text-small text-ink-700">
             {account === "Active"
-              ? `${name.split(" ")[0]} has signed in to the app. If they've forgotten their password or lost their phone, reset their access: they'll be signed out and get a new invite code.`
-              : `${account === "Invited" ? "Invite sent, not activated yet." : "The invite code has expired."} Create a new code if the patient lost theirs.`}
+              ? `${name.split(" ")[0]} has signed in to the app. If they've lost their phone, reset their access: they'll be signed out everywhere and sign in again with their MRN.`
+              : `${account === "Invited" ? `${name.split(" ")[0]} signs in to the app with their MRN${mrn ? ` (${mrn})` : ""}.` : "App access by MRN has expired."} Renew it if they can't sign in.`}
           </p>
           <Button
             size="sm"
@@ -376,13 +474,13 @@ function AppAccess({
               try {
                 setCode(await api(`/api/care/clients/${clientId}/invite`, { method: "POST" }));
               } catch (e) {
-                setError(e instanceof Error ? e.message : "Couldn't create a code.");
+                setError(e instanceof Error ? e.message : "Couldn't renew app access.");
               } finally {
                 setBusy(false);
               }
             }}
           >
-            {account === "Active" ? "Reset app access" : "Create new invite code"}
+            {account === "Active" ? "Reset app access" : "Renew app access"}
           </Button>
           {error && (
             <p role="alert" className="mt-2 text-small text-over">
@@ -412,11 +510,73 @@ export function DocumentList({ documents }: { documents: DocumentDto[] }) {
               <span className="block truncate text-small font-semibold">{d.name}</span>
               <span className="block text-caption text-ink-500">
                 {d.kind} · {Math.max(1, Math.round(d.size / 1024))} KB · {d.uploadedBy}
+                {d.status && d.status !== "Accepted" && ` · ${d.status.toLowerCase()}`}
+                {(d.version ?? 1) > 1 && ` · version ${d.version}`}
               </span>
             </span>
           </a>
         </li>
       ))}
     </ul>
+  );
+}
+
+/** This patient's assessments, each opening its own record. */
+export function AssessmentsTab({
+  rows,
+  base = "/care/assessments",
+}: {
+  rows: AssessRow[] | null;
+  base?: "/care/assessments" | "/therapist/assessments";
+}) {
+  if (!rows) return <Skeleton className="h-48" />;
+  if (rows.length === 0) {
+    return (
+      <EmptyNote title="No assessments yet">
+        One starts when the therapist begins an initial assessment for an accepted service.
+      </EmptyNote>
+    );
+  }
+  return (
+    <Panel title="Assessments">
+      <ul className="flex flex-col divide-y divide-border">
+        {rows.map((r) => (
+          <li key={r.id}>
+            <Link
+              href={`${base}/${r.id}`}
+              className="group flex flex-wrap items-center gap-x-4 gap-y-2 py-3 hover:no-underline"
+            >
+              <span className="flex size-10 flex-none items-center justify-center rounded-control bg-accent-tint text-accent">
+                <FileText className="size-4.5" aria-hidden="true" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-small font-semibold text-ink-900 group-hover:text-accent">
+                  {r.support}
+                </span>
+                <span className="block truncate text-caption text-ink-500">
+                  <span className="font-mono">{r.ref}</span> · {r.clinician} · {r.purpose}
+                </span>
+              </span>
+              <span
+                className="flex w-36 flex-none items-center gap-2"
+                aria-label={`${r.progress}% complete`}
+              >
+                <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-sunken">
+                  <span
+                    className="block h-full rounded-full bg-accent-fill"
+                    style={{ width: `${r.progress}%` }}
+                  />
+                </span>
+                <span className="w-9 text-right text-caption text-ink-700">{r.progress}%</span>
+              </span>
+              <span className="w-28 flex-none text-caption text-ink-500">
+                {r.due ? `Due ${shortDate(r.due)}` : `Updated ${shortDate(r.updatedAt)}`}
+              </span>
+              <Tag tone={statusTone[r.status]}>{r.status}</Tag>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </Panel>
   );
 }

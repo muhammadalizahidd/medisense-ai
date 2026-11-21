@@ -13,6 +13,7 @@ import {
   supportInfo,
   supports,
   yesNoUnknown,
+  yesNoUnsure,
 } from "./catalogue";
 
 /**
@@ -147,7 +148,12 @@ export const referralSchema = z
       ndisNumber: text(20),
       planEndDate: day,
       planType: z.union([z.literal(""), z.enum(planTypes)]),
-      fundingPeriods: z.union([z.literal(""), z.enum(yesNoUnknown)]),
+      fundingPeriods: z.union([z.literal(""), z.enum(yesNoUnsure)]),
+      /** F05: only when the plan has funding periods. Dates only; no balance is inferred. */
+      periods: z
+        .array(z.object({ start: day, end: day }))
+        .max(12)
+        .default([]),
       planManagerCompany: text(120),
       planManagerEmail: optionalEmail,
       otherDetails: text(300),
@@ -203,6 +209,18 @@ export const referralSchema = z
       if (!r.funding.ndisNumber) issue(["funding", "ndisNumber"], "Enter the NDIS number");
       if (!r.funding.planEndDate) issue(["funding", "planEndDate"], "Enter the plan end date");
       if (!r.funding.planType) issue(["funding", "planType"], "Choose the plan type");
+      if (r.funding.fundingPeriods === "Yes") {
+        if (!r.funding.periods.length) {
+          issue(["funding", "periods"], "Add at least one funding period");
+        }
+        r.funding.periods.forEach((p, i) => {
+          if (!p.start) issue(["funding", "periods", i, "start"], "Enter the start date");
+          if (!p.end) issue(["funding", "periods", i, "end"], "Enter the end date");
+          if (p.start && p.end && p.start > p.end) {
+            issue(["funding", "periods", i, "end"], "The end date must be after the start date");
+          }
+        });
+      }
     }
     if (r.location.type !== "Telehealth" && !r.location.sameAsHome && !r.location.address.street) {
       issue(["location", "address", "street"], "Enter the address of the service location");
@@ -259,7 +277,7 @@ export function completenessGaps(r: ReferralInput, documents: { kind: string }[]
     if (r.funding.planType === "Plan Managed" && !r.funding.planManagerEmail) {
       add("funding.planManagerEmail", "Plan manager email for invoices");
     }
-    if (!r.funding.fundingPeriods || r.funding.fundingPeriods === "Unknown") {
+    if (!r.funding.fundingPeriods || r.funding.fundingPeriods === "Unsure") {
       add("funding.fundingPeriods", "Whether the plan has funding periods");
     }
   } else if (!r.funding.otherDetails) {
@@ -300,6 +318,26 @@ export const frequencyFor = (s: ReferralSupportInput) =>
   supportInfo(s.support).kind === "assessment" ? "Assessment" : s.frequency;
 
 /** A blank referral for the form to start from. */
+/** A signed-in patient's verified details, used to fill a new referral (Module 18, scenario G). */
+export type KnownPatient = {
+  mrn: string;
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
+  email: string;
+  phone: string;
+  address: {
+    street: string;
+    suburb: string;
+    state: (typeof australianStates)[number];
+    postcode: string;
+  };
+  funding: (typeof fundingStreams)[number];
+  ndisNumber: string;
+  planEndDate: string;
+  planType: "" | (typeof planTypes)[number];
+};
+
 export function emptyReferral(): ReferralInput {
   const contactBlank = { role: "Participant" as const, name: "", email: "", phone: "" };
   const blankAddress = { street: "", suburb: "", state: "QLD" as const, postcode: "" };
@@ -326,6 +364,7 @@ export function emptyReferral(): ReferralInput {
       planEndDate: "",
       planType: "",
       fundingPeriods: "",
+      periods: [],
       planManagerCompany: "",
       planManagerEmail: "",
       otherDetails: "",
@@ -355,5 +394,101 @@ export function emptyReferral(): ReferralInput {
     goals: "",
     comments: "",
     consent: { privacy: false as unknown as true, shareWithClinicians: false as unknown as true },
+  };
+}
+
+/**
+ * A complete, fictional referral for testing and demos: an NDIS plan-managed child needing an FCA
+ * and weekly OT, with an unknown risk so clinical triage has something to review. A different
+ * name each time, so repeated tests don't look like duplicates.
+ */
+export function sampleReferral(): ReferralInput {
+  const firsts = ["Ava", "Leo", "Isla", "Noah", "Mila", "Theo", "Ruby", "Finn", "Zara", "Eli"];
+  const pick = <T>(list: readonly T[]) => list[Math.floor(Math.random() * list.length)]!;
+  const first = pick(firsts);
+  const tag = Math.random().toString(36).slice(2, 6);
+  const last = `Sample${tag[0]!.toUpperCase()}${tag.slice(1)}`;
+  const year = 2012 + Math.floor(Math.random() * 8);
+  const parent = `Jordan ${last}`;
+  const email = `${first.toLowerCase()}.${last.toLowerCase()}@example.test`;
+  const nextYear = new Date().getFullYear() + 1;
+  const base = emptyReferral();
+  return {
+    ...base,
+    submitter: {
+      role: "Support coordinator",
+      name: "Casey Coordinator",
+      organisation: "Example Support Services",
+      email: "casey.coordinator@example.test",
+      phone: "0400 111 222",
+      authorityConfirmed: true,
+    },
+    participant: {
+      firstName: first,
+      lastName: last,
+      dateOfBirth: `${year}-05-20`,
+      email,
+      phone: "0400 333 444",
+      address: { street: "12 Sample Road", suburb: "Carindale", state: "QLD", postcode: "4152" },
+    },
+    funding: {
+      source: "NDIS",
+      ndisNumber: String(430_000_000 + Math.floor(Math.random() * 9_999_999)),
+      planEndDate: `${nextYear}-06-30`,
+      planType: "Plan Managed",
+      fundingPeriods: "No",
+      periods: [],
+      planManagerCompany: "Example Plan Partners",
+      planManagerEmail: "invoices@example.test",
+      otherDetails: "",
+    },
+    supportCoordinator: {
+      name: "Casey Coordinator",
+      email: "casey.coordinator@example.test",
+      phone: "0400 111 222",
+    },
+    signatory: {
+      role: "Parent or guardian",
+      name: parent,
+      email: "jordan@example.test",
+      phone: "0400 333 444",
+    },
+    booking: {
+      role: "Parent or guardian",
+      name: parent,
+      email: "jordan@example.test",
+      phone: "0400 333 444",
+      method: "Phone",
+      preferredTime: "Weekday mornings",
+    },
+    location: { ...base.location, type: "Home", sameAsHome: true },
+    clinical: {
+      diagnosis: "Developmental coordination disorder (reported)",
+      behaviours: "No",
+      behavioursDetails: "",
+      knownRisk: "Unknown",
+      riskDetails: "",
+      personPresent: true,
+      personPresentDetails: `${parent} (parent), 0400 333 444`,
+    },
+    supports: [
+      {
+        support: "Functional Capacity Assessment",
+        frequency: "Assessment",
+        frequencyOther: "",
+        nursingType: "",
+        details: "",
+      },
+      {
+        support: "Occupational Therapy",
+        frequency: "Weekly",
+        frequencyOther: "",
+        nursingType: "",
+        details: "",
+      },
+    ],
+    goals: "Dress for school independently and join in sport at school.",
+    comments: "Mornings work best. A parent will be present at every visit.",
+    consent: { privacy: true, shareWithClinicians: true },
   };
 }

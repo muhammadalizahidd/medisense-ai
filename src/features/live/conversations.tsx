@@ -88,7 +88,7 @@ export function ConversationList({
                   {c.lastMessage ?? c.subtitle}
                 </span>
                 {c.unread > 0 && (
-                  <span className="flex h-5 min-w-5 flex-none items-center justify-center rounded-full bg-accent-fill px-1.5 text-eyebrow font-semibold text-on-accent">
+                  <span className="flex h-5 min-w-5 flex-none items-center justify-center rounded-full bg-accent-fill px-1.5 text-label font-semibold text-on-accent">
                     <span className="sr-only">Unread: </span>
                     {c.unread}
                   </span>

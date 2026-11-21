@@ -4,6 +4,10 @@ import { CalendarPlus, FileInput, Plus, UserPlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Sheet } from "@/components/ui/sheet";
+import { BookVisitPanel } from "@/features/live/quick-book";
+import { AiReferralSheet } from "@/features/live/ai-referral";
+import { useSession } from "@/lib/live/client";
 import { NewReferralSheet } from "@/features/intake/new-referral";
 import { BookVisitSheet } from "@/features/schedule/book-visit";
 
@@ -29,6 +33,8 @@ export function QuickAdd() {
   const [open, setOpen] = useState(false);
   const [sheet, setSheet] = useState<(typeof actions)[number]["id"] | null>(null);
   const panel = useRef<HTMLDivElement>(null);
+  const { user } = useSession();
+  const live = user?.role === "admin";
 
   useEffect(() => {
     if (!open) return undefined;
@@ -48,12 +54,12 @@ export function QuickAdd() {
 
   return (
     <div ref={panel} className="relative">
-      <Button variant="primary" aria-expanded={open} onClick={() => setOpen(!open)}>
+      <Button size="sm" className="mr-1 h-9" aria-expanded={open} onClick={() => setOpen(!open)}>
         <Plus className="size-4" strokeWidth={2} aria-hidden="true" />
-        New
+        <span className="sr-only sm:not-sr-only">New</span>
       </Button>
       {open && (
-        <div className="absolute top-11 right-0 z-30 w-72 max-w-[calc(100vw-2rem)] rounded-card border border-border bg-surface-raised p-1.5 shadow-overlay">
+        <div className="absolute top-11 right-0 z-30 w-72 max-w-[calc(100vw-2rem)] rounded-card border border-border bg-raised p-1.5 shadow-overlay">
           {actions.map(({ id, label, detail, icon: Icon }) => (
             <button
               key={id}
@@ -76,12 +82,27 @@ export function QuickAdd() {
           ))}
         </div>
       )}
-      {sheet === "referral" && (
-        <NewReferralSheet onClose={() => setSheet(null)} onAdded={() => router.push("/intake")} />
-      )}
-      {sheet === "visit" && (
-        <BookVisitSheet onClose={() => setSheet(null)} onBooked={() => router.push("/schedule")} />
-      )}
+      {sheet === "referral" &&
+        (live ? (
+          <AiReferralSheet onClose={() => setSheet(null)} />
+        ) : (
+          <NewReferralSheet onClose={() => setSheet(null)} onAdded={() => router.push("/intake")} />
+        ))}
+      {sheet === "visit" &&
+        (live ? (
+          <Sheet
+            title="Book a visit"
+            description="For an existing patient with their own clinician, or someone new from a name and phone."
+            onClose={() => setSheet(null)}
+          >
+            <BookVisitPanel />
+          </Sheet>
+        ) : (
+          <BookVisitSheet
+            onClose={() => setSheet(null)}
+            onBooked={() => router.push("/schedule")}
+          />
+        ))}
     </div>
   );
 }

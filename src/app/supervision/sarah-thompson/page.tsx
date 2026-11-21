@@ -41,7 +41,7 @@ export default function SarahSupervisionPage() {
           label: f.label,
           value: f.suffix ? (
             <>
-              {f.value} <span className="text-figure text-ink-500">{f.suffix}</span>
+              {f.value} <span className="text-section text-ink-500">{f.suffix}</span>
             </>
           ) : (
             f.value
@@ -67,7 +67,7 @@ export default function SarahSupervisionPage() {
           />
           <Card aria-labelledby="flagged-cases" className="flex-1">
             <div className="px-5 pt-4.5 pb-2.5">
-              <h2 id="flagged-cases" className="headline text-h2">
+              <h2 id="flagged-cases" className="text-section font-semibold text-ink-900">
                 Cases flagged for discussion
               </h2>
             </div>
@@ -96,7 +96,7 @@ export default function SarahSupervisionPage() {
         <div className="flex flex-col gap-6 lg:col-span-7">
           <Card id="actions" aria-labelledby="previous-actions" className="overflow-hidden">
             <div className="flex items-end justify-between gap-3 px-5 pt-4.5 pb-3.5">
-              <h2 id="previous-actions" className="headline text-h2">
+              <h2 id="previous-actions" className="text-section font-semibold text-ink-900">
                 Previous supervision actions
               </h2>
               <Caption>From {dt("Thu 24 Sep")}</Caption>
@@ -125,7 +125,7 @@ export default function SarahSupervisionPage() {
           </Card>
           <Card aria-labelledby="development-goals" className="flex-1 px-5 pt-4.5 pb-4.5">
             <div className="flex items-end justify-between gap-3">
-              <h2 id="development-goals" className="headline text-h2">
+              <h2 id="development-goals" className="text-section font-semibold text-ink-900">
                 Progress against development goals
               </h2>
               <Caption>{developmentGoals.length} goals</Caption>
@@ -141,7 +141,7 @@ export default function SarahSupervisionPage() {
                     {g.status}
                   </span>
                 </div>
-                <div className="relative h-1.5 rounded-full bg-surface-sunken">
+                <div className="relative h-1.5 rounded-full bg-sunken">
                   <span
                     className="absolute inset-y-0 left-0 rounded-full bg-accent"
                     style={{ width: `${g.progress}%` }}
@@ -155,7 +155,7 @@ export default function SarahSupervisionPage() {
 
         <Card aria-labelledby="upcoming" className="overflow-hidden lg:col-span-12">
           <div className="flex items-end justify-between gap-3 px-5 pt-4.5 pb-3.5">
-            <h2 id="upcoming" className="headline text-h2">
+            <h2 id="upcoming" className="text-section font-semibold text-ink-900">
               Team supervision, next 14 days
             </h2>
             <Caption>All with {sarahSupervision.supervisor}</Caption>

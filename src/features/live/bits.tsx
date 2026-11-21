@@ -16,13 +16,20 @@ export function LiveBadge() {
   return (
     <span
       role="status"
-      className="on-light inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 py-1 text-caption font-medium text-ink-700"
+      className={cn(
+        "inline-flex h-6.5 items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 text-caption font-semibold",
+        status === "live" ? "text-live" : status === "connecting" ? "text-watch" : "text-ink-500",
+      )}
     >
       <i
         aria-hidden="true"
         className={cn(
-          "size-2 rounded-full",
-          status === "live" ? "bg-healthy-dot motion-safe:animate-pulse" : "bg-monitor-dot",
+          "size-1.75 rounded-full",
+          status === "live"
+            ? "bg-live-dot motion-safe:animate-pulse"
+            : status === "connecting"
+              ? "bg-watch-dot"
+              : "bg-ink-400",
         )}
       />
       {label}
@@ -32,7 +39,7 @@ export function LiveBadge() {
 
 export const stageTone: Record<ClientStage, TagTone> = {
   "Needs a therapist": "over",
-  "Waiting for therapist": "monitor",
+  "Waiting for therapist": "watch",
   Active: "healthy",
   Discharged: "neutral",
 };
@@ -51,14 +58,14 @@ export const needLabel: Record<NeedStatus, string> = {
 
 export const needTone: Record<NeedStatus, TagTone> = {
   "needs-therapist": "over",
-  waiting: "monitor",
+  waiting: "watch",
   assigned: "healthy",
   completed: "neutral",
 };
 
 const caseloadTone: Record<CaseloadStatus, TagTone> = {
   Healthy: "healthy",
-  Watch: "monitor",
+  Watch: "watch",
   "At Risk": "over",
 };
 
@@ -82,11 +89,21 @@ export function ErrorNote({ message, onRetry }: { message: string; onRetry?: () 
   );
 }
 
-export function EmptyNote({ title, children }: { title: string; children?: ReactNode }) {
+/** Empty state: a dashed card, one sentence and at most one action. */
+export function EmptyNote({
+  title,
+  children,
+  action,
+}: {
+  title: string;
+  children?: ReactNode;
+  action?: ReactNode;
+}) {
   return (
     <div className="rounded-card border border-dashed border-border-strong px-6 py-10 text-center">
       <p className="text-small font-semibold text-ink-900">{title}</p>
       {children && <div className="mt-1 text-small text-ink-700">{children}</div>}
+      {action && <div className="mt-4 flex justify-center">{action}</div>}
     </div>
   );
 }
@@ -96,7 +113,7 @@ export function Skeleton({ className }: { className?: string }) {
     <span
       aria-hidden="true"
       className={cn(
-        "block animate-pulse rounded-control bg-border motion-reduce:animate-none",
+        "block animate-pulse rounded-control bg-sunken motion-reduce:animate-none",
         className,
       )}
     />
@@ -117,13 +134,13 @@ export function Panel({
   return (
     <section
       aria-label={title}
-      className={cn("rounded-card border border-border bg-surface p-5 surface-lift", className)}
+      className={cn("overflow-hidden rounded-card border border-border bg-surface", className)}
     >
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="headline text-section">{title}</h2>
+      <div className="flex min-h-13 items-center justify-between gap-3 border-b border-border px-5 py-3">
+        <h2 className="text-section font-semibold text-ink-900">{title}</h2>
         {action}
       </div>
-      {children}
+      <div className="p-5">{children}</div>
     </section>
   );
 }
@@ -148,7 +165,7 @@ export function Stars({
             aria-hidden="true"
             className={cn(
               icon,
-              n <= Math.round(value) ? "fill-monitor-dot text-monitor-dot" : "text-border-strong",
+              n <= Math.round(value) ? "fill-watch-dot text-watch-dot" : "text-border-strong",
             )}
           />
         ))}
@@ -171,7 +188,7 @@ export function Stars({
             aria-hidden="true"
             className={cn(
               icon,
-              n <= value ? "fill-monitor-dot text-monitor-dot" : "text-border-strong",
+              n <= value ? "fill-watch-dot text-watch-dot" : "text-border-strong",
             )}
           />
         </button>

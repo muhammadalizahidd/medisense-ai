@@ -2,27 +2,36 @@ import type { ReactNode } from "react";
 import type { CaseloadStatus, Priority } from "@/data/types";
 import { cn } from "@/lib/cn";
 
-export type TagTone = "healthy" | "monitor" | "over" | "available" | "neutral" | "outline" | "live";
+/**
+ * Status tones are tinted with a dot: one primary status per row or record. "outline" (and its
+ * alias "meta") is for secondary information such as Telehealth or Invoiced, never tinted.
+ * "monitor" is the old name of "watch".
+ */
+export type TagTone =
+  "healthy" | "watch" | "monitor" | "over" | "available" | "neutral" | "outline" | "meta" | "live";
 
-const tones: Record<TagTone, { tag: string; dot: string }> = {
+const tones: Record<TagTone, { tag: string; dot?: string }> = {
   healthy: { tag: "bg-healthy-bg text-healthy", dot: "bg-healthy-dot" },
-  monitor: { tag: "bg-monitor-bg text-monitor", dot: "bg-monitor-dot" },
+  watch: { tag: "bg-watch-bg text-watch", dot: "bg-watch-dot" },
+  monitor: { tag: "bg-watch-bg text-watch", dot: "bg-watch-dot" },
   over: { tag: "bg-over-bg text-over", dot: "bg-over-dot" },
   available: { tag: "bg-available-bg text-available", dot: "bg-available-dot" },
-  neutral: { tag: "bg-surface-sunken text-ink-700", dot: "bg-ink-400" },
-  outline: { tag: "text-ink-700 ring-1 ring-border-strong ring-inset", dot: "bg-available-dot" },
-  live: { tag: "bg-accent-tint text-accent", dot: "bg-accent" },
+  neutral: { tag: "bg-sunken text-ink-700", dot: "bg-ink-400" },
+  outline: { tag: "border border-border-strong font-medium text-ink-700" },
+  meta: { tag: "border border-border-strong font-medium text-ink-700" },
+  live: { tag: "border border-border text-live", dot: "bg-live-dot" },
 };
 
 export function Tag({ tone, children }: { tone: TagTone; children: ReactNode }) {
+  const { tag, dot } = tones[tone];
   return (
     <span
       className={cn(
         "inline-flex h-5.5 items-center gap-1.5 rounded-tag px-2 text-caption leading-none font-semibold whitespace-nowrap",
-        tones[tone].tag,
+        tag,
       )}
     >
-      <i className={cn("size-2 flex-none rounded-full", tones[tone].dot)} aria-hidden="true" />
+      {dot && <i className={cn("size-1.5 flex-none rounded-full", dot)} aria-hidden="true" />}
       {children}
     </span>
   );
@@ -36,7 +45,7 @@ export const statusLabels: Record<CaseloadStatus, string> = {
 
 const statusTones: Record<CaseloadStatus, TagTone> = {
   healthy: "healthy",
-  monitor: "monitor",
+  monitor: "watch",
   "at-risk": "over",
 };
 
@@ -46,7 +55,7 @@ export function StatusTag({ status }: { status: CaseloadStatus }) {
 
 export const priorityTone: Record<Priority, TagTone> = {
   High: "over",
-  Medium: "monitor",
+  Medium: "watch",
   Review: "neutral",
 };
 

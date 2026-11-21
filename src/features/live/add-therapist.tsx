@@ -3,6 +3,7 @@
 import { Check, Copy, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { PhotoPicker } from "@/components/ui/photo-picker";
 import { Field, Sheet } from "@/components/ui/sheet";
 import { Select } from "@/components/ui/select";
 import { api } from "@/lib/live/client";
@@ -28,11 +29,18 @@ const weekdays = [
 type Created = { id: string; email: string; temporaryPassword: string };
 
 /** Admin module A04: add a therapist with credentials and working days; they get a login. */
-export function AddTherapist({ onAdded }: { onAdded: () => void }) {
+export function AddTherapist({
+  onAdded,
+  secondary = false,
+}: {
+  onAdded: () => void;
+  /** Beside another primary action (User control), the button steps back. */
+  secondary?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <Button variant="primary" className="on-light" onClick={() => setOpen(true)}>
+      <Button variant={secondary ? "secondary" : "primary"} onClick={() => setOpen(true)}>
         <UserPlus className="size-4" aria-hidden="true" />
         Add therapist
       </Button>
@@ -57,6 +65,7 @@ function AddTherapistSheet({ onClose, onAdded }: { onClose: () => void; onAdded:
   });
   const [days, setDays] = useState<number[]>([1, 2, 3, 4, 5]);
   const [scopes, setScopes] = useState<Support[]>([]);
+  const [photo, setPhoto] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<Created | null>(null);
@@ -77,6 +86,7 @@ function AddTherapistSheet({ onClose, onAdded }: { onClose: () => void; onAdded:
           sessionMinutes: Number(form.sessionMinutes),
           weekdays: days,
           assessmentScopes: scopes.filter((s) => assessments.some((a) => a.name === s)),
+          photo,
         },
       });
       setCreated(result);
@@ -102,8 +112,8 @@ function AddTherapistSheet({ onClose, onAdded }: { onClose: () => void; onAdded:
         <div className="flex flex-col gap-4 text-small">
           <p>
             Give {form.name.split(" ")[0]} these sign-in details in person or by phone. The
-            temporary password is shown only once; they change it under <strong>My profile</strong>,
-            then set their working hours and time off.
+            temporary password is shown only once; they choose their own password the first time
+            they sign in, then set their working hours and time off.
           </p>
           <dl className="grid grid-cols-[120px_1fr] gap-y-2 rounded-card bg-canvas p-4">
             <dt className="text-ink-500">Email</dt>
@@ -151,6 +161,7 @@ function AddTherapistSheet({ onClose, onAdded }: { onClose: () => void; onAdded:
       }
     >
       <div className="flex flex-col gap-4">
+        <PhotoPicker name={form.name} value={photo} onChange={setPhoto} kind="staff" />
         <TextField label="Full name" required value={form.name} onChange={set("name")} />
         <div className="grid gap-4 sm:grid-cols-2">
           <TextField
@@ -312,7 +323,7 @@ export function TherapistActiveToggle({
   };
   if (active && confirm) {
     return (
-      <span className="on-light flex items-center gap-2 text-caption text-ink-700">
+      <span className="flex items-center gap-2 text-caption text-ink-700">
         {name.split(" ")[0]} won&apos;t be able to sign in or get new patients.
         <Button size="sm" disabled={busy} onClick={run}>
           Deactivate
@@ -324,12 +335,7 @@ export function TherapistActiveToggle({
     );
   }
   return (
-    <Button
-      size="sm"
-      className="on-light"
-      disabled={busy}
-      onClick={() => (active ? setConfirm(true) : run())}
-    >
+    <Button size="sm" disabled={busy} onClick={() => (active ? setConfirm(true) : run())}>
       {active ? "Deactivate" : "Reactivate"}
     </Button>
   );

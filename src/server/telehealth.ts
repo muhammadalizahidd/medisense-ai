@@ -240,6 +240,7 @@ export async function host(user: UserDoc, visitId: ObjectId, input: z.infer<type
     case "send-link": {
       if (!doc.suitability?.ok)
         throw new UserFacingError("Confirm telehealth is clinically suitable first.", 409);
+      assertWindowOpen(visit);
       const token = randomBytes(24).toString("base64url");
       await set(
         { tokenHash: sha256(token), linkSentAt: new Date() },
@@ -477,9 +478,23 @@ export async function host(user: UserDoc, visitId: ObjectId, input: z.infer<type
   return result;
 }
 
+/** A link can't be made once the visit's video window has closed: move the visit first. */
+function assertWindowOpen(visit: { start: Date; end: Date }) {
+  if (Date.now() > visit.end.getTime() + LINK_CLOSES_MIN * 60_000) {
+    throw new UserFacingError(
+      `This visit was ${slotLabel(visit.start)} and its video window has closed. Move the visit to a new time, then create a link.`,
+      409,
+    );
+  }
+}
+
 /* --------------------------------------------------------------- guest */
 
-async function byToken(token: string) {
+/**
+ * `viewEnded` lets the guest page read a call that ended within the last hour, so the patient sees
+ * "The visit has ended" instead of a frozen call. Actions through the link stay blocked.
+ */
+async function byToken(token: string, viewEnded = false) {
   const { telehealth, appointments } = await collections();
   const doc = await telehealth.findOne({ tokenHash: sha256(token) });
   const visit = doc ? await appointments.findOne({ _id: doc.appointmentId }) : null;
@@ -489,8 +504,12 @@ async function byToken(token: string) {
       404,
     );
   const now = Date.now();
-  if (doc.state === "Ended" || visit.status !== "booked")
+  if (doc.state === "Ended" || visit.status !== "booked") {
+    const endedAt = doc.state === "Ended" ? doc.endedAt : null;
+    if (viewEnded && endedAt && now - endedAt.getTime() < LINK_CLOSES_MIN * 60_000)
+      return { doc: await settle(doc), visit };
     throw new UserFacingError("This video visit has finished. The link no longer works.", 404);
+  }
   if (now < visit.start.getTime() - LINK_OPENS_MIN * 60_000) {
     throw new UserFacingError(
       `This link opens an hour before your visit, ${slotLabel(visit.start)}.`,
@@ -504,7 +523,7 @@ async function byToken(token: string) {
 }
 
 export async function guestView(token: string) {
-  const { doc, visit } = await byToken(token);
+  const { doc, visit } = await byToken(token, true);
   const { client, therapist } = await partiesOf(visit);
   return toDto(
     doc,
@@ -657,6 +676,7 @@ export async function patientJoinLink(user: UserDoc, visitId: ObjectId) {
   const doc = await load(visit);
   if (!doc.suitability?.ok)
     throw new UserFacingError("Your clinician hasn't opened the video visit yet.", 409);
+  assertWindowOpen(visit);
   const token = randomBytes(24).toString("base64url");
   const { telehealth } = await collections();
   await telehealth.updateOne(
@@ -712,6 +732,11 @@ export async function listRecordings(user: UserDoc) {
         : null,
       accessLog: d.accessLog.map((a) => ({ ...a, at: a.at.toISOString() })),
       canManage: isLead(user),
+      discipline: v?.discipline ?? "",
+      modality: v?.modality ?? "Telehealth",
+      transcript: d.transcript.map((t) => ({ speaker: t.speaker, text: t.text })),
+      hasVideo: Boolean(d.recording.media?.video),
+      hasAudio: Boolean(d.recording.media?.audio),
     };
   });
 }
@@ -758,9 +783,11 @@ export async function recordingAction(
     await audit(user, `Reviewed a telehealth recording: ${input.purpose}`, doc.clientId);
     return {
       playback: {
-        label: "DEMO ONLY: sample playback",
+        label: "Recorded visit",
         durationSec: doc.recording.durationSec,
         download: false,
+        video: doc.recording.media?.video ?? null,
+        audio: doc.recording.media?.audio ?? null,
       },
     };
   }

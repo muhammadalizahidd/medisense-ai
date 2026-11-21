@@ -95,7 +95,7 @@ function DictationStage({
   return (
     <div className="grid gap-x-10 gap-y-6 lg:grid-cols-12">
       <section aria-labelledby="dictate" className="lg:col-span-8">
-        <h2 id="dictate" className="headline text-h1">
+        <h2 id="dictate" className="type-display text-h1">
           {ready
             ? "What happened on this visit?"
             : listening
@@ -177,7 +177,7 @@ function DictationStage({
 
       <aside aria-label="Oliver's goals" className="lg:col-span-4">
         <Card className="px-5 pt-4.5 pb-4.5">
-          <h3 className="text-h3 font-semibold">Oliver&apos;s goals</h3>
+          <h3 className="text-section font-semibold">Oliver&apos;s goals</h3>
           <ul className="mt-2 flex list-disc flex-col gap-1.5 pl-4.5 text-small text-ink-700">
             <li>Hold a pencil with a mature grip for a full school task</li>
             <li>Copy basic shapes well enough to start letter formation</li>
@@ -206,7 +206,7 @@ function Generating() {
         <div key={s.id} className="flex flex-col gap-1.5">
           <span
             className={cn(
-              "font-serif text-section font-medium",
+              "font-display text-section font-medium",
               i > 1 ? "text-ink-500" : "text-ink-900",
             )}
           >
@@ -233,9 +233,9 @@ function Prompts() {
   return (
     <section
       aria-labelledby="check"
-      className="rounded-control border border-border bg-monitor-bg px-4 py-3"
+      className="bg-monitor-bg rounded-control border border-border px-4 py-3"
     >
-      <h3 id="check" className="text-small font-semibold text-monitor">
+      <h3 id="check" className="text-monitor text-small font-semibold">
         AI found 2 things to check before you approve
       </h3>
       <ul className="mt-1.5 flex flex-col">
@@ -266,7 +266,7 @@ function ReviewedNote({ state, setState }: { state: State; setState: (s: State) 
     <div className="grid items-start gap-6 lg:grid-cols-12">
       <aside aria-labelledby="dictated" className="lg:sticky lg:top-24 lg:col-span-4">
         <Card className="px-3 pt-4.5 pb-3">
-          <h2 id="dictated" className="px-2.5 pb-2 text-h3 font-semibold">
+          <h2 id="dictated" className="px-2.5 pb-2 text-section font-semibold">
             What you dictated
           </h2>
           <Transcript count={dictation.length} highlight={line} />
@@ -291,7 +291,7 @@ function ReviewedNote({ state, setState }: { state: State; setState: (s: State) 
         {noteSections.map((section) => (
           <div key={section.id}>
             <div className="mb-1 flex items-baseline justify-between gap-2">
-              <h3 className="font-serif text-section font-medium">{section.title}</h3>
+              <h3 className="font-display text-section font-medium">{section.title}</h3>
               {!approved && (
                 <Button
                   size="sm"
@@ -315,7 +315,7 @@ function ReviewedNote({ state, setState }: { state: State; setState: (s: State) 
                       rows={2}
                       defaultValue={s.edited}
                       autoFocus
-                      className="w-full resize-y rounded-control border border-border-strong bg-surface-raised px-3 py-2 text-body text-ink-900 outline-none focus:border-accent"
+                      className="w-full resize-y rounded-control border border-border-strong bg-raised px-3 py-2 text-body text-ink-900 outline-none focus:border-accent"
                     />
                     <div className="flex items-center gap-2">
                       <Button size="sm" variant="primary" onClick={() => setState("edited")}>
@@ -335,7 +335,7 @@ function ReviewedNote({ state, setState }: { state: State; setState: (s: State) 
                       onSelect={() => setLine(s.line)}
                     />
                     {s.edited && showEdit && (
-                      <span className="ml-1.5 text-caption font-semibold text-brass">
+                      <span className="ml-1.5 text-caption font-semibold text-ink-700">
                         Edited by you
                       </span>
                     )}
@@ -352,7 +352,7 @@ function ReviewedNote({ state, setState }: { state: State; setState: (s: State) 
           <div
             role="group"
             aria-labelledby="reopen-title"
-            className="rounded-control border border-border-strong bg-surface-sunken px-4 py-3"
+            className="rounded-control border border-border-strong bg-sunken px-4 py-3"
           >
             <h3 id="reopen-title" className="text-small font-semibold">
               Reopen this note for editing?
@@ -419,7 +419,7 @@ export function NoteView() {
       <Shell persona="sarah" active="AI notes" section="AI notes" page="Oliver Grant">
         <header className="mb-6 flex flex-wrap items-start justify-between gap-3 border-b border-border pb-4">
           <div>
-            <h1 className="headline text-h1">AI session note</h1>
+            <h1 className="type-display text-h1">AI session note</h1>
             <dl className="mt-2 flex flex-wrap gap-x-8 gap-y-1.5">
               {visitDetails.map((d) => (
                 <div key={d.label}>
@@ -438,7 +438,7 @@ export function NoteView() {
 
         {state === "complete" && (
           <section aria-labelledby="transcript" className="max-w-200">
-            <h2 id="transcript" className="headline text-h2">
+            <h2 id="transcript" className="type-display text-h2">
               Here&apos;s what you said
             </h2>
             <p className="mt-1 text-small text-ink-700">
@@ -448,7 +448,7 @@ export function NoteView() {
               aria-label="Your dictation"
               rows={10}
               defaultValue={dictation.join("\n")}
-              className="mt-3 w-full resize-y rounded-control border border-border-strong bg-surface-raised px-3 py-2.5 text-body leading-6 text-ink-900 outline-none focus:border-accent"
+              className="mt-3 w-full resize-y rounded-control border border-border-strong bg-raised px-3 py-2.5 text-body leading-6 text-ink-900 outline-none focus:border-accent"
             />
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <Button variant="primary" onClick={() => setState("generating")}>
@@ -466,7 +466,7 @@ export function NoteView() {
         {state === "generating" && (
           <div className="grid items-start gap-6 lg:grid-cols-12">
             <Card className="px-3 pt-4.5 pb-3 lg:col-span-4">
-              <h2 className="px-2.5 pb-2 text-h3 font-semibold">What you dictated</h2>
+              <h2 className="px-2.5 pb-2 text-section font-semibold">What you dictated</h2>
               <Transcript count={dictation.length} />
             </Card>
             <div className="lg:col-span-8">
@@ -504,7 +504,7 @@ export function NoteView() {
           <section aria-labelledby="type-note" className="max-w-200">
             <p
               role="alert"
-              className="flex items-start gap-2 rounded-control bg-monitor-bg px-4 py-3 text-small text-monitor"
+              className="bg-monitor-bg text-monitor flex items-start gap-2 rounded-control px-4 py-3 text-small"
             >
               <MicOff className="mt-0.5 size-4 flex-none" strokeWidth={1.5} aria-hidden="true" />
               <span>
@@ -512,14 +512,14 @@ export function NoteView() {
                 settings, or type your note below.
               </span>
             </p>
-            <h2 id="type-note" className="mt-5 headline text-h2">
+            <h2 id="type-note" className="mt-5 type-display text-h2">
               What happened on this visit?
             </h2>
             <textarea
               aria-labelledby="type-note"
               rows={8}
               placeholder="One thought per line works best."
-              className="mt-2 w-full resize-y rounded-control border border-border-strong bg-surface-raised px-3 py-2.5 text-body leading-6 text-ink-900 outline-none placeholder:text-ink-500 focus:border-accent"
+              className="mt-2 w-full resize-y rounded-control border border-border-strong bg-raised px-3 py-2.5 text-body leading-6 text-ink-900 outline-none placeholder:text-ink-500 focus:border-accent"
             />
             <div className="mt-3 flex items-center gap-2">
               <Button variant="primary" onClick={() => setState("generating")}>

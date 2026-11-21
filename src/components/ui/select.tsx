@@ -50,7 +50,7 @@ function optionsOf(children: ReactNode): Option[] {
 }
 
 const field =
-  "h-9 w-full rounded-control border border-border-strong bg-surface-raised px-3 text-small text-ink-900";
+  "h-9 w-full rounded-control border border-border-strong bg-raised px-3 text-small text-ink-900";
 
 /**
  * A designed dropdown that takes the same `<option>` children as a native select. The list opens
@@ -205,7 +205,8 @@ export function Select({
         onClick={() => (open ? setOpen(false) : show())}
         onKeyDown={onKeyDown}
         className={cn(
-          field,
+          // A width given by the page replaces the full-width default.
+          /(^|\s)(w-|min-w-)/.test(className ?? "") ? field.replace("w-full ", "") : field,
           className,
           "flex cursor-pointer items-center justify-between gap-2 text-left transition-colors hover:border-accent disabled:cursor-not-allowed disabled:opacity-50",
           open && "border-accent shadow-focus",
@@ -229,7 +230,7 @@ export function Select({
             role="listbox"
             aria-label={ariaLabel}
             style={{ left: place.left, width: place.width, top: place.top, bottom: place.bottom }}
-            className="fixed z-[60] max-h-72 overflow-y-auto rounded-card border border-border bg-surface-raised p-1.5 text-small text-ink-900 shadow-overlay"
+            className="fixed z-[60] max-h-72 overflow-y-auto rounded-card border border-border bg-raised p-1.5 text-small text-ink-900 shadow-overlay"
           >
             {options.map((option, index) => {
               const isSelected = option.value === current;

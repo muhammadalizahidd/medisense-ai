@@ -27,7 +27,7 @@ function Escalation() {
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 id="escalated" className="headline text-h2">
+          <h2 id="escalated" className="type-display text-h2">
             Isla Murphy&apos;s call-back was escalated to Grace Liu
           </h2>
           <p className="mt-0.5 text-small text-ink-700">
@@ -73,7 +73,7 @@ function AuditList({ limit }: { limit?: number }) {
             aria-hidden="true"
             className={cn(
               "absolute top-1.5 -left-1 size-1.75 rounded-full",
-              e.actor === "Medisense AI" ? "bg-brass" : "bg-accent",
+              e.actor === "Medisense AI" ? "bg-ink-700" : "bg-accent",
             )}
           />
           <div className="flex flex-wrap items-baseline gap-x-2">
@@ -147,7 +147,7 @@ export function TimeSkipView() {
                       aria-hidden="true"
                     />
                     <div>
-                      <h2 id="reminder" className="text-h3 font-semibold">
+                      <h2 id="reminder" className="text-section font-semibold">
                         A reminder went to the admin team
                       </h2>
                       <p className="text-small text-ink-700">
@@ -168,7 +168,7 @@ export function TimeSkipView() {
                       aria-hidden="true"
                     />
                     <div>
-                      <h2 id="newly-overdue" className="text-h3 font-semibold">
+                      <h2 id="newly-overdue" className="text-section font-semibold">
                         One task became overdue
                       </h2>
                       <p className="text-small text-ink-700">
@@ -182,7 +182,7 @@ export function TimeSkipView() {
               </Card>
             </div>
             <Card aria-labelledby="audit-side" className="px-5 pt-4.5 pb-5 xl:col-span-5">
-              <h2 id="audit-side" className="mb-3 headline text-h2">
+              <h2 id="audit-side" className="mb-3 type-display text-h2">
                 Audit trail
               </h2>
               <AuditList limit={4} />
@@ -206,8 +206,8 @@ export function TimeSkipView() {
             description="One reminder this morning. Oliver's report upload moved to the top because it's due today."
           />
           <Card aria-label="Reminder" className="mb-6 overflow-hidden">
-            <div className="flex flex-wrap items-center justify-between gap-3 bg-monitor-bg px-5 py-3">
-              <span className="flex items-center gap-2 text-small font-semibold text-monitor">
+            <div className="bg-monitor-bg flex flex-wrap items-center justify-between gap-3 px-5 py-3">
+              <span className="text-monitor flex items-center gap-2 text-small font-semibold">
                 <Bell className="size-4" strokeWidth={1.5} aria-hidden="true" />
                 Reminder, 8:00 am: Oliver Grant&apos;s report upload is due today
               </span>

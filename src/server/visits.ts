@@ -56,6 +56,42 @@ function nextFreeNear(t: TherapistDoc, wanted: Date, held: AppointmentDoc[]) {
 }
 
 /**
+ * The visits a series would book, without booking them (Module 05, AT-12): each occurrence is the
+ * usual time, moved to a nearby free time, or a collision for someone to place by hand.
+ */
+export function previewSeries(
+  therapist: TherapistDoc,
+  first: Date,
+  frequency: Frequency,
+  held: AppointmentDoc[],
+  custom: { visits: number; everyDays: number } | null = null,
+) {
+  const plan = custom ?? seriesPlan[frequency];
+  const out: { wanted: string; start: string | null; state: "usual" | "moved" | "conflict" }[] = [
+    { wanted: first.toISOString(), start: first.toISOString(), state: "usual" },
+  ];
+  const taken = [...held];
+  for (let k = 1; k < plan.visits; k += 1) {
+    const wanted = addDays(first, k * plan.everyDays);
+    const start = nextFreeNear(therapist, wanted, taken);
+    out.push({
+      wanted: wanted.toISOString(),
+      start: start?.toISOString() ?? null,
+      state: !start ? "conflict" : start.getTime() === wanted.getTime() ? "usual" : "moved",
+    });
+    if (start) {
+      taken.push({
+        start,
+        end: new Date(start.getTime() + therapist.sessionMinutes * 60_000),
+        holdsSlot: true,
+        therapistId: therapist._id,
+      } as AppointmentDoc);
+    }
+  }
+  return out;
+}
+
+/**
  * Books the rest of a client's visits from the frequency agreed at intake: the same weekday and
  * time where the therapist is free, the nearest free time that day if not, or a day or two later.
  * Visits that still can't fit are reported as skipped for the care team to place.
@@ -66,7 +102,7 @@ export async function bookSeries(
   frequency: Frequency,
 ) {
   const { appointments } = await collections();
-  const plan = seriesPlan[frequency];
+  const plan = first.seriesPlan ?? seriesPlan[frequency];
   await appointments.updateOne({ _id: first._id }, { $set: { seriesId: first._id } });
   const booked: Date[] = [first.start];
   const skipped: Date[] = [];

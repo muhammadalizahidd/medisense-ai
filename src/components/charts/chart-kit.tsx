@@ -12,19 +12,20 @@ export const colour = {
   series4: "var(--color-series-4)",
   accent: "var(--color-accent)",
   over: "var(--color-over-dot)",
-  monitor: "var(--color-monitor-dot)",
+  watch: "var(--color-watch-dot)",
+  monitor: "var(--color-watch-dot)",
   healthy: "var(--color-healthy-dot)",
   available: "var(--color-available-dot)",
-  sand: "var(--color-chart-sand)",
-  sage: "var(--color-chart-sage)",
-  slate: "var(--color-chart-slate)",
-  stone: "var(--color-chart-stone)",
-  grid: "var(--color-grid)",
-  ink: "var(--color-ink-500)",
+  sand: "var(--color-border-strong)",
+  sage: "var(--color-series-3)",
+  slate: "var(--color-series-4)",
+  stone: "var(--color-ink-400)",
+  grid: "var(--color-chart-grid)",
+  ink: "var(--color-chart-axis)",
   surface: "var(--color-surface)",
 } as const;
 
-export const axisTick = { className: "fill-ink-500 text-eyebrow" } as const;
+export const axisTick = { className: "fill-ink-500 text-label" } as const;
 
 export const axisProps = {
   tickLine: false,
@@ -36,7 +37,7 @@ export const gridProps = { vertical: false, stroke: colour.grid } as const;
 
 export const cursorLine = { stroke: colour.ink, strokeWidth: 1, strokeDasharray: "3 3" } as const;
 
-export const cursorBand = { fill: "var(--color-canvas)" } as const;
+export const cursorBand = { fill: "var(--color-sunken)" } as const;
 
 export type TooltipRow = { key: string; label: ReactNode; value: ReactNode; colour?: string };
 
@@ -50,8 +51,8 @@ export function TooltipCard({
   footer?: ReactNode;
 }) {
   return (
-    <div className="min-w-40 rounded-control border border-border bg-surface-raised px-3 py-2.5 shadow-overlay">
-      {title !== undefined && <div className="mb-1.5 eyebrow">{title}</div>}
+    <div className="min-w-40 rounded-control border border-border bg-raised px-3 py-2.5 shadow-overlay">
+      {title !== undefined && <div className="mb-1.5 label-caps">{title}</div>}
       <div className="flex flex-col gap-1">
         {rows.map((row) => (
           <div key={row.key} className="flex items-center gap-2 text-small">

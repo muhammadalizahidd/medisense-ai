@@ -1,5 +1,6 @@
 import "server-only";
 import { ObjectId } from "mongodb";
+import { clearCache } from "./cache";
 import { collections } from "./db";
 import type { LiveEventType, UserDoc } from "./models";
 
@@ -8,6 +9,8 @@ export async function publish(
   type: LiveEventType,
   payload: Record<string, unknown> = {},
 ) {
+  // Something changed: lists read from the cache are loaded fresh next time.
+  clearCache();
   if (!userIds.length) return;
   const { events } = await collections();
   await events.insertOne({ _id: new ObjectId(), userIds, type, payload, createdAt: new Date() });

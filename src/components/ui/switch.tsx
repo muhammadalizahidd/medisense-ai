@@ -29,7 +29,7 @@ export function Switch({
       <span
         aria-hidden="true"
         className={cn(
-          "absolute top-0.75 size-4 rounded-full bg-surface-raised shadow-hairline transition-all duration-160",
+          "absolute top-0.75 size-4 rounded-full bg-raised shadow-hairline transition-all duration-160",
           on ? "left-5.25" : "left-0.75",
         )}
       />

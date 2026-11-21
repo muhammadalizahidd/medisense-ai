@@ -9,7 +9,7 @@ import { cn } from "@/lib/cn";
 
 const outcome = {
   held: { icon: CalendarCheck, label: "Held", className: "text-healthy" },
-  rescheduled: { icon: CalendarClock, label: "Rescheduled", className: "text-monitor" },
+  rescheduled: { icon: CalendarClock, label: "Rescheduled", className: "text-watch" },
   cancelled: { icon: CalendarX, label: "Cancelled", className: "text-over" },
 } as const;
 
@@ -23,7 +23,7 @@ export function ProtectedTime() {
         id="protected-time"
         title="Protected supervision time"
         description="60 minutes every 4 weeks, blocked in both calendars"
-        aside={<span className="headline text-stat-sm text-monitor">1 / 3</span>}
+        aside={<span className="type-display text-h2 text-watch">1 / 3</span>}
       />
       <ol className="mt-3 flex flex-col gap-0.5">
         {sarahSessions.map((s) => {
@@ -45,7 +45,7 @@ export function ProtectedTime() {
       </ol>
       <div className="mt-4 flex min-h-0 flex-1 flex-col border-t border-border pt-3.5">
         <div className="mb-1 flex items-baseline justify-between">
-          <span className="eyebrow">Team · sessions by cycle</span>
+          <span className="label-caps">Team · sessions by cycle</span>
           <Caption>
             {held} of {total} held on schedule ({Math.round((held / total) * 100)}%)
           </Caption>

@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<title>Medisense · Typography options</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&amp;family=Instrument+Serif&amp;family=JetBrains+Mono:wght@400;500&amp;family=Newsreader:opsz,wght@6..72,400;6..72,500&amp;family=Source+Sans+3:wght@400;500;600;700&amp;family=Source+Code+Pro:wght@400;500&amp;family=Fraunces:opsz,wght@9..144,400;9..144,500&amp;family=Inter:wght@400;500;600;700&amp;family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=Inter+Tight:wght@500;600&amp;family=Literata:opsz,wght@7..72,400;7..72,500&amp;family=Atkinson+Hyperlegible:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1D56D0}a:hover{color:#1E40AF}
+</style>
+</helmet>
+<div style="width: 1440px; min-height: 2040px; box-sizing: border-box; background: #F6F4EF; color: #1C1A17; font-family: 'Instrument Sans', system-ui, sans-serif; font-size: 14px; line-height: 1.5; font-feature-settings: 'ss01', 'tnum'; padding: 64px 80px; display: flex; flex-direction: column; gap: 32px">
+
+  <header style="display: flex; justify-content: space-between; align-items: flex-end; gap: 40px">
+    <div style="display: flex; flex-direction: column; gap: 8px; max-width: 860px">
+      <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #655F56">06 · Typography options</span>
+      <h1 style="margin: 0; font-family: 'Instrument Serif', serif; font-weight: 400; font-size: 48px; line-height: 1.04">Six pairings, the same Medisense content</h1>
+      <p style="margin: 0; color: #3D3933">Each set is a display face (titles and figures, 24px and up), an interface face (everything else, 14px base) and a mono (MSR-, INV-, item numbers). All are free on Google Fonts. Every screen and the Appearance page can switch between them with <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px">data-type</span>.</p>
+    </div>
+  </header>
+
+  <section style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px">
+    <sc-for list="{{sets}}" as="f" hint-placeholder-count="6">
+      <article style="background: #FFFFFF; border: 1px solid #E4E0D7; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 16px 20px; border-bottom: 1px solid #E4E0D7">
+          <div style="display: flex; flex-direction: column; gap: 2px">
+            <span style="display: flex; align-items: center; gap: 10px"><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #655F56">{{f.num}}</span><h2 style="margin: 0; font-size: 16px; font-weight: 600">{{f.name}}</h2></span>
+            <span style="font-size: 12px; color: #655F56">{{f.families}}</span>
+          </div>
+          <span style="font-size: 12px; font-weight: 600; border-radius: 6px; padding: 2px 8px; white-space: nowrap; background: {{f.tagBg}}; color: {{f.tagInk}}">{{f.tag}}</span>
+        </div>
+
+        <div style="padding: 20px; display: flex; flex-direction: column; gap: 16px; font-family: {{f.sans}}; font-feature-settings: 'tnum'">
+          <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 16px">
+            <div style="display: flex; flex-direction: column; gap: 4px">
+              <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #655F56">Patient record · Occupational Therapy</span>
+              <span style="font-family: {{f.display}}; font-weight: {{f.weight}}; letter-spacing: {{f.track}}; font-size: 36px; line-height: 1.05">Emily Carter</span>
+              <span style="font-size: 13px; color: #655F56">8 years · Chermside · NDIS plan managed · <span style="font-family: {{f.mono}}; color: #3D3933">MSR-48K2Q7</span></span>
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: flex-end">
+              <span style="font-family: {{f.display}}; font-weight: {{f.weight}}; letter-spacing: {{f.track}}; font-size: 54px; line-height: 1">293</span>
+              <span style="font-size: 12px; color: #655F56">Active patients</span>
+            </div>
+          </div>
+
+          <div style="border: 1px solid #E4E0D7; border-radius: 12px; overflow: hidden">
+            <div style="display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) 90px minmax(0, 1fr); gap: 12px; padding: 7px 12px; background: #EFECE5; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #655F56"><span>Invoice</span><span>Payer</span><span style="text-align: right">Owing</span><span>Status</span></div>
+            <div style="display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) 90px minmax(0, 1fr); gap: 12px; padding: 9px 12px; font-size: 14px; align-items: center"><span style="font-family: {{f.mono}}; font-size: 13px">INV-00412</span><span>Plan manager</span><span style="text-align: right; font-weight: 600">$1,193.60</span><span><span style="font-size: 12px; font-weight: 600; border-radius: 6px; padding: 2px 8px; background: #FBF0D9; color: #875500">● Partially Paid</span></span></div>
+            <div style="display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) 90px minmax(0, 1fr); gap: 12px; padding: 9px 12px; font-size: 14px; align-items: center; border-top: 1px solid #E4E0D7"><span style="font-family: {{f.mono}}; font-size: 13px">INV-00418</span><span>NDIA</span><span style="text-align: right; font-weight: 600">$0.00</span><span><span style="font-size: 12px; font-weight: 600; border-radius: 6px; padding: 2px 8px; background: #E5F3EA; color: #1B6E40">● Paid</span></span></div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 4px">
+            <span style="font-size: 13px; font-weight: 600">O · Objective</span>
+            <p style="margin: 0; font-size: 14px; line-height: 1.55; color: #3D3933">Fisted pencil grip observed. Trialled triangular grip for 10 minutes; copied 4 of 6 letters legibly. Signs of fatigue after 30 minutes of table-top work. Il1 0O rn/m 6/9.</p>
+          </div>
+
+          <div style="display: flex; gap: 14px; align-items: center; padding: 12px 14px; border-radius: 16px; background: #EFECE5">
+            <div style="width: 52px; height: 52px; flex-shrink: 0; border-radius: 12px; background: #FFFFFF; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1"><span style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: #B0261E">Fri</span><span style="font-family: {{f.display}}; font-weight: {{f.weight}}; font-size: 24px">13</span></div>
+            <div style="flex: 1; display: flex; flex-direction: column; line-height: 1.35"><span style="font-weight: 600; font-size: 15px">Tomorrow · 9:00 am</span><span style="font-size: 13px; color: #655F56">Occupational Therapy at home · visit 4 of 6 · Daniel Okafor</span></div>
+            <span style="font-size: 13px; font-weight: 600; color: #1D56D0">Confirm</span>
+          </div>
+        </div>
+
+        <div style="margin-top: auto; padding: 14px 20px 18px; border-top: 1px solid #E4E0D7; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; font-size: 13px">
+          <div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #1B6E40">Strengths</span><span style="color: #3D3933">{{f.pro}}</span></div>
+          <div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #875500">Watch for</span><span style="color: #3D3933">{{f.con}}</span></div>
+        </div>
+      </article>
+    </sc-for>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2040}}'>
+const SETS=[
+  ['01','Instrument','Instrument Serif · Instrument Sans · JetBrains Mono',"'Instrument Serif', serif","'Instrument Sans', system-ui, sans-serif","'JetBrains Mono', monospace",'400','-0.005em','Current','Distinctive editorial voice; keeps today’s brand. Sans is compact and crisp in dense tables.','Serif has a single weight and looks thin under 24px. Sans has fewer weights and widths than Inter or Plex.'],
+  ['02','Newsreader','Newsreader · Source Sans 3 · Source Code Pro',"'Newsreader', serif","'Source Sans 3', system-ui, sans-serif","'Source Code Pro', monospace",'400','0em','Warmest for reading','Built for long reading; optical sizes keep big titles elegant. Source Sans is open and calm for hours of notes.','Slightly softer and less “product” than the others; numbers in the serif are old-style unless tabular is forced.'],
+  ['03','Fraunces','Fraunces · Inter · JetBrains Mono',"'Fraunces', serif","'Inter', system-ui, sans-serif","'JetBrains Mono', monospace",'400','-0.01em','Friendliest','Soft, humane serif suits families and the patient app. Inter is the most complete UI face, excellent in tables.','Fraunces is expressive; keep it to titles. Inter is everywhere, so it gives less identity.'],
+  ['04','Plex','Source Serif 4 · IBM Plex Sans · IBM Plex Mono',"'Source Serif 4', serif","'IBM Plex Sans', system-ui, sans-serif","'IBM Plex Mono', monospace",'400','-0.005em','Most robust','One coherent system with a matching mono. Full weight ranges; clear l / I / 1 shapes. Feels like serious records software.','More corporate, less warm. Plex Sans is a little wide in narrow table columns.'],
+  ['05','Inter','Inter Tight · Inter · IBM Plex Mono',"'Inter Tight', system-ui, sans-serif","'Inter', system-ui, sans-serif","'IBM Plex Mono', monospace",'600','-0.025em','Most neutral','No serif at all: clinical, fast, very legible at every size. Easiest to keep consistent.','Least distinctive; it can feel like any admin panel. Loses the editorial confidence in the brief.'],
+  ['06','Atkinson','Literata · Atkinson Hyperlegible · JetBrains Mono',"'Literata', serif","'Atkinson Hyperlegible', system-ui, sans-serif","'JetBrains Mono', monospace",'400','0em','Most accessible','Atkinson was designed by the Braille Institute so similar letters stay distinct for low-vision readers. Literata is a sturdy reading serif.','Only two weights (semibold renders as bold). Looks plainer; best offered as a reading option rather than the default.']
+];
+class Component extends DCLogic {
+  renderVals() {
+    const tone = { 'Current': ['#E9EEFB', '#2F55AE'], 'Most accessible': ['#E5F3EA', '#1B6E40'] };
+    return {
+      sets: SETS.map((x) => ({ num: x[0], name: x[1], families: x[2], display: x[3], sans: x[4], mono: x[5], weight: x[6], track: x[7], tag: x[8], pro: x[9], con: x[10], tagBg: (tone[x[8]] || ['#EFECE5'])[0], tagInk: (tone[x[8]] || [0, '#3D3933'])[1] }))
+    };
+  }
+}
+</script>
+</body>
+</html>

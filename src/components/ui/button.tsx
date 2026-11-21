@@ -1,49 +1,74 @@
+import { LoaderCircle } from "lucide-react";
 import Link from "next/link";
 import type { ComponentProps } from "react";
 import { cn } from "@/lib/cn";
 
-type Variant = "primary" | "secondary" | "ghost";
-type Size = "md" | "sm";
+type Variant = "primary" | "secondary" | "ghost" | "danger" | "soft" | "soft-danger";
+type Size = "md" | "sm" | "icon" | "icon-sm";
 
+/**
+ * One primary action per area. Secondary is the outline default, ghost for the rest, danger for
+ * destructive actions (always behind a confirmation). md is 40px, sm 32px.
+ */
 const base =
-  "inline-flex items-center justify-center gap-2 rounded-control border font-semibold leading-none whitespace-nowrap transition-colors duration-160 ease-out hover:no-underline disabled:cursor-not-allowed disabled:opacity-45";
+  "inline-flex cursor-pointer items-center justify-center gap-2 rounded-control border font-semibold leading-none whitespace-nowrap transition-[background-color,border-color,color,transform] duration-(--duration-fast) ease-(--ease-out) hover:no-underline active:scale-[0.98] disabled:cursor-not-allowed disabled:active:scale-100";
 
 const variants: Record<Variant, string> = {
   primary:
-    "primary-glow border-accent-fill bg-accent-fill text-on-accent hover:border-accent-fill-hover hover:bg-accent-fill-hover active:bg-accent-fill-pressed",
-  secondary: "border-border-strong bg-surface text-ink-900 hover:bg-canvas",
+    "border-accent-fill bg-accent-fill text-on-accent hover:border-accent-fill-hover hover:bg-accent-fill-hover active:bg-accent-fill-pressed disabled:border-border disabled:bg-sunken disabled:text-ink-500",
+  secondary:
+    "border-border-strong bg-surface text-ink-900 hover:bg-sunken disabled:text-ink-500 disabled:hover:bg-surface",
   ghost:
-    "border-transparent bg-transparent text-accent hover:bg-accent-tint hover:text-accent-hover",
+    "border-transparent bg-transparent text-accent hover:bg-accent-tint hover:text-accent-hover disabled:text-ink-500 disabled:hover:bg-transparent",
+  danger:
+    "border-transparent bg-transparent text-over hover:bg-over-bg disabled:text-ink-500 disabled:hover:bg-transparent",
+  /** A coloured action that isn't the page's main one. */
+  soft: "border-accent-tint bg-accent-tint text-accent hover:border-accent-fill hover:bg-accent-fill hover:text-on-accent disabled:border-border disabled:bg-sunken disabled:text-ink-500",
+  /** A coloured destructive action, still behind a confirmation. */
+  "soft-danger":
+    "border-over-bg bg-over-bg text-over hover:border-over hover:bg-over hover:text-surface disabled:border-border disabled:bg-sunken disabled:text-ink-500",
 };
 
-const sizes: Record<Size, Record<Variant, string>> = {
-  md: {
-    primary: "h-9 px-4 text-small",
-    secondary: "h-9 px-3.5 text-small",
-    ghost: "h-9 px-2.5 text-small",
-  },
-  sm: {
-    primary: "h-7.5 px-2.5 text-caption",
-    secondary: "h-7.5 px-2.5 text-caption",
-    ghost: "h-7.5 px-2.5 text-caption",
-  },
+const sizes: Record<Size, string> = {
+  md: "h-10 px-4 text-small",
+  sm: "h-8 px-3 text-caption",
+  icon: "size-10 px-0",
+  "icon-sm": "size-8 px-0",
 };
 
 type StyleProps = { variant?: Variant; size?: Size };
 
 export function buttonClasses({ variant = "secondary", size = "md" }: StyleProps = {}) {
-  return cn(base, variants[variant], sizes[size][variant]);
+  return cn(base, variants[variant], sizes[size]);
 }
 
 export function Button({
   variant,
   size,
+  loading = false,
   className,
   type = "button",
+  disabled,
+  children,
   ...props
-}: ComponentProps<"button"> & StyleProps) {
+}: ComponentProps<"button"> & StyleProps & { loading?: boolean }) {
   return (
-    <button type={type} className={cn(buttonClasses({ variant, size }), className)} {...props} />
+    <button
+      type={type}
+      disabled={disabled || loading}
+      aria-busy={loading || undefined}
+      className={cn(buttonClasses({ variant, size }), className)}
+      {...props}
+    >
+      {loading && (
+        <LoaderCircle
+          className="size-4 flex-none motion-safe:animate-spin"
+          strokeWidth={2}
+          aria-hidden="true"
+        />
+      )}
+      {children}
+    </button>
   );
 }
 

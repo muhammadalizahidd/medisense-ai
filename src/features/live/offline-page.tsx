@@ -6,9 +6,9 @@ export function OfflinePage() {
     <PageContainer>
       <div
         role="alert"
-        className="mx-auto max-w-140 rounded-card border border-border bg-surface p-6 surface-lift"
+        className="mx-auto max-w-140 rounded-card border border-border bg-surface p-6"
       >
-        <h1 className="headline text-h2">We can&apos;t reach the database</h1>
+        <h1 className="type-display text-h2">We can&apos;t reach the database</h1>
         <p className="mt-2 text-small text-ink-700">
           Live patients, requests and messages need the database. Check the connection and reload
           this page.

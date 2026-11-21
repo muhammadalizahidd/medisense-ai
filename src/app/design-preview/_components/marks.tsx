@@ -24,13 +24,13 @@ export function AiMark({
       <span
         className={cn(
           "flex items-center gap-1.5 text-caption font-semibold",
-          state === "Approved" ? "text-healthy" : "text-brass",
+          state === "Approved" ? "text-healthy" : "text-ink-700",
         )}
       >
         {state === "Approved" ? (
           <Check className="size-3.5" strokeWidth={2} aria-hidden="true" />
         ) : (
-          <PenNib className="size-3.5 text-brass" />
+          <PenNib className="size-3.5 text-ink-700" />
         )}
         {children ?? (state === "Draft" ? "AI draft, needs your approval" : `${state} by you`)}
       </span>
@@ -56,7 +56,7 @@ export function SourceLink({
       aria-pressed={active}
       aria-label={`Show dictated line ${line}`}
       className={cn(
-        "ml-1 inline-flex h-4.5 cursor-pointer items-center rounded-tag px-1 align-baseline font-mono text-eyebrow font-medium",
+        "ml-1 inline-flex h-4.5 cursor-pointer items-center rounded-tag px-1 align-baseline font-mono text-label font-medium",
         active
           ? "bg-accent-fill text-on-accent"
           : "bg-accent-tint text-accent hover:bg-accent-fill hover:text-on-accent",

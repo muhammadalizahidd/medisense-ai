@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<title>Medisense · My profile · Appearance</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&amp;family=Instrument+Serif&amp;family=JetBrains+Mono:wght@400;500&amp;family=Newsreader:opsz,wght@6..72,400;6..72,500&amp;family=Source+Sans+3:wght@400;500;600;700&amp;family=Source+Code+Pro:wght@400;500&amp;family=Fraunces:opsz,wght@9..144,400;9..144,500&amp;family=Inter:wght@400;500;600;700&amp;family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=Inter+Tight:wght@500;600&amp;family=Literata:opsz,wght@7..72,400;7..72,500&amp;family=Atkinson+Hyperlegible:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1D56D0}a:hover{color:#1E40AF}
+</style>
+</helmet>
+<div style="{{vars}} width: 100%; min-height: 1400px; box-sizing: border-box; background: var(--color-page); color: var(--color-ink-900); font-family: var(--font-sans); font-size: 14px; line-height: 1.5; font-feature-settings: var(--font-features); display: flex; flex-wrap: wrap; transition: background 260ms, color 260ms">
+
+  <nav aria-label="Main" style="flex: 0 0 256px; box-sizing: border-box; background: var(--color-sidebar); border-right: 1px solid var(--color-sidebar-border); padding: 16px 12px; display: flex; flex-direction: column; gap: 2px; color: var(--color-sidebar-ink)">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 4px 8px 16px">
+      <div style="width: 30px; height: 30px; border-radius: 9px; background: var(--color-ink-900); color: var(--color-page); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 22px; line-height: 1">m</div>
+      <div style="display: flex; flex-direction: column; line-height: 1.2"><span style="font-weight: 700; font-size: 15px">Medisense</span><span style="font-size: 11px; color: var(--color-sidebar-muted)">Clinical Operations &amp; Supervision</span></div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 6px; padding: 8px 10px 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-sidebar-muted)"><span style="width: 6px; height: 6px; border-radius: 99px; background: var(--color-live)"></span>Live care</div>
+    <a href="TherapistHome.dc.html" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 10px; border-radius: var(--radius-control); color: var(--color-sidebar-ink); text-decoration: none"><span>My new patients</span><span style="font-size: 11px; font-weight: 600; padding: 0 7px; border-radius: 99px; background: var(--color-accent-tint); color: var(--color-accent)">2</span></a>
+    <a href="#" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 10px; border-radius: var(--radius-control); color: var(--color-sidebar-ink); text-decoration: none"><span>Messages</span><span style="font-size: 11px; font-weight: 600; padding: 0 7px; border-radius: 99px; background: var(--color-accent-tint); color: var(--color-accent)">3</span></a>
+    <a href="#" style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: var(--radius-control); color: var(--color-sidebar-ink); text-decoration: none">Recordings</a>
+    <a href="#" aria-current="page" style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: var(--radius-control); background: var(--color-sidebar-active); color: var(--color-sidebar-active-ink); font-weight: 600; text-decoration: none; box-shadow: inset 3px 0 0 var(--color-accent-fill)">My profile</a>
+    <div style="padding: 14px 10px 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-sidebar-muted)">My work</div>
+    <a href="#" style="padding: 7px 10px; border-radius: var(--radius-control); color: var(--color-sidebar-ink); text-decoration: none">My day</a>
+    <a href="#" style="padding: 7px 10px; border-radius: var(--radius-control); color: var(--color-sidebar-ink); text-decoration: none">AI session note</a>
+    <a href="#" style="padding: 7px 10px; border-radius: var(--radius-control); color: var(--color-sidebar-ink); text-decoration: none">Tasks</a>
+    <div style="display: flex; justify-content: space-between; padding: 14px 10px 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-sidebar-muted)"><span>Clinical</span><span style="font-weight: 500; letter-spacing: 0; text-transform: none">Sample data</span></div>
+    <a href="#" style="padding: 7px 10px; border-radius: var(--radius-control); color: var(--color-sidebar-ink); text-decoration: none">Patients</a>
+    <a href="#" style="padding: 7px 10px; border-radius: var(--radius-control); color: var(--color-sidebar-ink); text-decoration: none">Schedule</a>
+    <a href="#" style="padding: 7px 10px; border-radius: var(--radius-control); color: var(--color-sidebar-ink); text-decoration: none">Telehealth</a>
+  </nav>
+
+  <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; position: relative">
+    <header style="height: 60px; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 24px 0 40px; border-bottom: 1px solid var(--color-border); background: var(--color-page); flex-wrap: wrap">
+      <span style="font-size: 13px; color: var(--color-ink-500)">My profile › <span style="color: var(--color-ink-900)">Appearance</span></span>
+      <label style="flex: 0 1 420px; display: flex; align-items: center; gap: 8px; height: 36px; box-sizing: border-box; padding: 0 6px 0 12px; border: 1px solid var(--color-border); border-radius: var(--radius-control); background: var(--color-surface); color: var(--color-ink-500); font-size: 13px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input aria-label="Ask Medisense or search" placeholder="Ask Medisense or search patients, referrals…" style="flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font: inherit; color: var(--color-ink-900)">
+        <span style="font-family: var(--font-mono); font-size: 11px; border: 1px solid var(--color-border); border-radius: var(--radius-tag); padding: 1px 6px">⌘K</span>
+      </label>
+      <div style="display: flex; align-items: center; gap: 4px">
+        <button style="height: 36px; padding: 0 12px; border-radius: var(--radius-control); border: 1px solid var(--color-border-strong); background: var(--color-surface); color: var(--color-ink-900); font: inherit; font-weight: 600; font-size: 13px; cursor: pointer">+ New</button>
+        <button aria-label="Notifications, 4 unread" style="position: relative; width: 36px; height: 36px; border-radius: var(--radius-control); border: 0; background: transparent; color: var(--color-ink-700); cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span style="position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; border-radius: 99px; background: var(--color-over); box-shadow: 0 0 0 2px var(--color-page)"></span></button>
+        <button aria-label="Audit trail" style="width: 36px; height: 36px; border-radius: var(--radius-control); border: 0; background: transparent; color: var(--color-ink-700); cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5M12 7v5l3 2"/></svg></button>
+        <button aria-label="Appearance quick menu" aria-expanded="{{quickOpen}}" onClick="{{toggleQuick}}" style="width: 36px; height: 36px; border-radius: var(--radius-control); border: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; background: {{quickBg}}; color: var(--color-ink-700)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><circle cx="13.5" cy="6.5" r="1"/><circle cx="17.5" cy="10.5" r="1"/><circle cx="8.5" cy="7.5" r="1"/><circle cx="6.5" cy="12.5" r="1"/><path d="M12 2a10 10 0 0 0 0 20c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3-.3-.4-.5-.8-.5-1.3 0-1.1.9-2 2-2h2.4A5.6 5.6 0 0 0 22 10c0-4.4-4.5-8-10-8Z"/></svg></button>
+        <div style="display: flex; align-items: center; gap: 8px; padding-left: 8px; margin-left: 4px; border-left: 1px solid var(--color-border)">
+          <span style="width: 32px; height: 32px; border-radius: 99px; background: var(--color-accent-tint); color: var(--color-accent); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px">DO</span>
+          <span style="display: flex; flex-direction: column; line-height: 1.2"><span style="font-size: 13px; font-weight: 600">Daniel Okafor</span><span style="font-size: 12px; color: var(--color-ink-500)">Occupational Therapist</span></span>
+        </div>
+      </div>
+    </header>
+
+    <sc-if value="{{quickOpen}}" hint-placeholder-val="{{ false }}">
+      <div role="dialog" aria-label="Appearance" style="position: absolute; top: 56px; right: 140px; z-index: 5; width: 300px; box-sizing: border-box; background: var(--color-raised); border: 1px solid var(--color-border); border-radius: var(--radius-card); box-shadow: var(--shadow-overlay); padding: 14px; display: flex; flex-direction: column; gap: 12px">
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-ink-500)">Theme</span>
+        <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px">
+          <sc-for list="{{quickThemes}}" as="q" hint-placeholder-count="8">
+            <button aria-label="{{q.name}}" aria-pressed="{{q.selected}}" onClick="{{q.pick}}" style="height: 40px; border-radius: var(--radius-control); cursor: pointer; padding: 0; background: {{q.page}}; border: {{q.ring}}; display: flex; align-items: flex-end; justify-content: flex-start; overflow: hidden"><span style="width: 14px; height: 100%; background: {{q.sb}}"></span></button>
+          </sc-for>
+        </div>
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-ink-500)">Accent</span>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px">
+          <sc-for list="{{accents}}" as="a" hint-placeholder-count="12">
+            <button aria-label="{{a.name}}" aria-pressed="{{a.selected}}" onClick="{{a.pick}}" style="width: 24px; height: 24px; border-radius: 99px; cursor: pointer; padding: 0; background: {{a.fill}}; border: 2px solid var(--color-raised); box-shadow: {{a.ring}}"></button>
+          </sc-for>
+        </div>
+        <a href="#appearance" onClick="{{toggleQuick}}" style="font-size: 13px; font-weight: 600; color: var(--color-accent); text-decoration: none">All appearance settings →</a>
+      </div>
+    </sc-if>
+
+    <main id="appearance" style="padding: 28px 40px 48px; display: flex; flex-direction: column; gap: 24px">
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap">
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <a href="#" style="font-size: 13px; color: var(--color-ink-500); text-decoration: none">← My profile</a>
+          <h1 style="margin: 0; font-family: var(--font-display); font-weight: var(--font-display-weight); letter-spacing: var(--font-display-tracking); font-size: 36px; line-height: 1.05">Appearance</h1>
+          <span style="font-size: 13px; color: var(--color-ink-500)">Saved to your account and applied on every device you sign in on.</span>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center">
+          <span role="status" style="font-size: 13px; color: var(--color-healthy); display: flex; align-items: center; gap: 6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>{{savedText}}</span>
+          <button onClick="{{reset}}" style="height: 36px; padding: 0 14px; border-radius: var(--radius-control); border: 1px solid var(--color-border-strong); background: var(--color-surface); color: var(--color-ink-900); font: inherit; font-weight: 600; font-size: 13px; cursor: pointer">Reset to defaults</button>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start">
+        <div style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+
+          <section style="background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-card); padding: 20px 24px; display: flex; flex-direction: column; gap: 16px">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px">
+              <div><h2 style="margin: 0; font-size: 16px; font-weight: 600">Theme</h2><span style="font-size: 13px; color: var(--color-ink-500)">{{themeHint}}</span></div>
+              <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; cursor: pointer">Match system
+                <button role="switch" aria-checked="{{matchSystem}}" aria-label="Match system" onClick="{{toggleMatch}}" style="width: 40px; height: 24px; border-radius: 99px; border: 0; padding: 2px; cursor: pointer; display: flex; background: {{switchBg}}; justify-content: {{switchJustify}}"><span style="width: 20px; height: 20px; border-radius: 99px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(0,0,0,0.2)"></span></button>
+              </label>
+            </div>
+            <sc-if value="{{matchSystem}}" hint-placeholder-val="{{ false }}">
+              <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: var(--color-sunken); border-radius: var(--radius-field); padding: 10px 12px; font-size: 13px">
+                <span style="color: var(--color-ink-700)">Pick one light and one dark theme. Preview the system as</span>
+                <div role="radiogroup" aria-label="Simulated system setting" style="display: flex; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-control); padding: 2px">
+                  <button role="radio" aria-checked="{{sysLight}}" onClick="{{setSysLight}}" style="height: 28px; padding: 0 12px; border: 0; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; background: {{sysLightBg}}; color: {{sysLightInk}}">Light</button>
+                  <button role="radio" aria-checked="{{sysDark}}" onClick="{{setSysDark}}" style="height: 28px; padding: 0 12px; border: 0; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; background: {{sysDarkBg}}; color: {{sysDarkInk}}">Dark</button>
+                </div>
+              </div>
+            </sc-if>
+            <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-ink-500)">Light</span>
+            <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px">
+              <sc-for list="{{lightThemes}}" as="t" hint-placeholder-count="5">
+                <button aria-pressed="{{t.selected}}" onClick="{{t.pick}}" style="padding: 0; cursor: pointer; text-align: left; font: inherit; color: var(--color-ink-900); background: transparent; border: 0; display: flex; flex-direction: column; gap: 6px">
+                  <span style="display: flex; height: 76px; width: 100%; box-sizing: border-box; border-radius: var(--radius-field); overflow: hidden; background: {{t.page}}; border: {{t.ring}}; position: relative">
+                    <span style="width: 26%; background: {{t.sb}}; display: flex; flex-direction: column; gap: 3px; padding: 8px 5px; box-sizing: border-box"><span style="height: 4px; border-radius: 2px; background: {{t.sbInk}}; opacity: 0.5"></span><span style="height: 6px; border-radius: 2px; background: {{t.sbActive}}"></span><span style="height: 4px; border-radius: 2px; background: {{t.sbInk}}; opacity: 0.3"></span></span>
+                    <span style="flex: 1; padding: 8px; display: flex; flex-direction: column; gap: 5px"><span style="height: 6px; width: 60%; border-radius: 2px; background: {{t.ink}}"></span><span style="flex: 1; border-radius: var(--radius-tag); background: {{t.surface}}; border: 1px solid {{t.border}}"></span><span style="height: 10px; width: 42%; border-radius: 3px; background: {{t.btn}}"></span></span>
+                    <sc-if value="{{t.selected}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; top: 6px; right: 6px; width: 18px; height: 18px; border-radius: 99px; background: var(--color-accent-fill); color: var(--color-on-accent); display: flex; align-items: center; justify-content: center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></sc-if>
+                  </span>
+                  <span style="display: flex; flex-direction: column; line-height: 1.3"><span style="font-size: 13px; font-weight: 600">{{t.name}}</span><span style="font-size: 11px; color: var(--color-ink-500)">{{t.caption}}</span></span>
+                </button>
+              </sc-for>
+            </div>
+            <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-ink-500)">Dark</span>
+            <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px">
+              <sc-for list="{{darkThemes}}" as="t" hint-placeholder-count="3">
+                <button aria-pressed="{{t.selected}}" onClick="{{t.pick}}" style="padding: 0; cursor: pointer; text-align: left; font: inherit; color: var(--color-ink-900); background: transparent; border: 0; display: flex; flex-direction: column; gap: 6px">
+                  <span style="display: flex; height: 76px; width: 100%; box-sizing: border-box; border-radius: var(--radius-field); overflow: hidden; background: {{t.page}}; border: {{t.ring}}; position: relative">
+                    <span style="width: 26%; background: {{t.sb}}; display: flex; flex-direction: column; gap: 3px; padding: 8px 5px; box-sizing: border-box"><span style="height: 4px; border-radius: 2px; background: {{t.sbInk}}; opacity: 0.5"></span><span style="height: 6px; border-radius: 2px; background: {{t.sbActive}}"></span><span style="height: 4px; border-radius: 2px; background: {{t.sbInk}}; opacity: 0.3"></span></span>
+                    <span style="flex: 1; padding: 8px; display: flex; flex-direction: column; gap: 5px"><span style="height: 6px; width: 60%; border-radius: 2px; background: {{t.ink}}"></span><span style="flex: 1; border-radius: var(--radius-tag); background: {{t.surface}}; border: 1px solid {{t.border}}"></span><span style="height: 10px; width: 42%; border-radius: 3px; background: {{t.btn}}"></span></span>
+                    <sc-if value="{{t.selected}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; top: 6px; right: 6px; width: 18px; height: 18px; border-radius: 99px; background: var(--color-accent-fill); color: var(--color-on-accent); display: flex; align-items: center; justify-content: center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></sc-if>
+                  </span>
+                  <span style="display: flex; flex-direction: column; line-height: 1.3"><span style="font-size: 13px; font-weight: 600">{{t.name}}</span><span style="font-size: 11px; color: var(--color-ink-500)">{{t.caption}}</span></span>
+                </button>
+              </sc-for>
+            </div>
+          </section>
+
+          <section style="background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-card); padding: 20px 24px; display: flex; flex-direction: column; gap: 14px">
+            <div><h2 style="margin: 0; font-size: 16px; font-weight: 600">Accent</h2><span style="font-size: 13px; color: var(--color-ink-500)">Primary buttons, links, selection and focus. Status colours never change.</span></div>
+            <div role="radiogroup" aria-label="Accent colour" style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 10px">
+              <sc-for list="{{accents}}" as="a" hint-placeholder-count="12">
+                <button role="radio" aria-checked="{{a.selected}}" onClick="{{a.pick}}" style="padding: 8px 4px; border-radius: var(--radius-field); border: 1px solid var(--color-border); background: var(--color-surface); cursor: pointer; font: inherit; font-size: 12px; color: var(--color-ink-700); display: flex; flex-direction: column; align-items: center; gap: 6px; box-shadow: {{a.cardRing}}">
+                  <span style="width: 28px; height: 28px; border-radius: 99px; background: {{a.fill}}; box-shadow: {{a.ring}}; border: 2px solid var(--color-surface)"></span>{{a.name}}
+                </button>
+              </sc-for>
+              <button role="radio" aria-checked="{{customSel}}" onClick="{{pickCustom}}" style="padding: 8px 4px; border-radius: var(--radius-field); border: 1px dashed var(--color-border-strong); background: var(--color-surface); cursor: pointer; font: inherit; font-size: 12px; color: var(--color-ink-700); display: flex; flex-direction: column; align-items: center; gap: 6px; box-shadow: {{customCardRing}}">
+                <span style="width: 28px; height: 28px; border-radius: 99px; border: 2px solid var(--color-surface); box-shadow: 0 0 0 1px var(--color-border-strong); background: {{customHex}}; display: flex; align-items: center; justify-content: center; color: #FFFFFF; font-weight: 700">+</span>Custom
+              </button>
+            </div>
+            <sc-if value="{{customSel}}" hint-placeholder-val="{{ false }}">
+              <div style="display: flex; gap: 20px; flex-wrap: wrap; background: var(--color-sunken); border-radius: var(--radius-field); padding: 16px">
+                <div style="flex: 1 1 260px; display: flex; flex-direction: column; gap: 12px">
+                  <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600">Hue <span style="font-weight: 400; color: var(--color-ink-500)">{{hue}}°</span>
+                    <input type="range" min="0" max="359" value="{{hue}}" onChange="{{onHue}}" aria-label="Hue" style="width: 100%; accent-color: {{customHex}}">
+                  </label>
+                  <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600">Saturation <span style="font-weight: 400; color: var(--color-ink-500)">{{sat}}%</span>
+                    <input type="range" min="20" max="100" value="{{sat}}" onChange="{{onSat}}" aria-label="Saturation" style="width: 100%; accent-color: {{customHex}}">
+                  </label>
+                  <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600">Hex
+                    <input value="{{hexDraft}}" onChange="{{onHex}}" aria-label="Hex colour" style="height: 36px; box-sizing: border-box; padding: 0 10px; border: 1px solid var(--color-border-strong); border-radius: var(--radius-control); background: var(--color-surface); color: var(--color-ink-900); font-family: var(--font-mono); font-size: 13px">
+                  </label>
+                </div>
+                <div style="flex: 1 1 220px; display: flex; flex-direction: column; gap: 8px">
+                  <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-ink-500)">Generated set</span>
+                  <div style="display: flex; gap: 6px"><span title="text" style="width: 28px; height: 28px; border-radius: 8px; background: var(--color-accent)"></span><span title="fill" style="width: 28px; height: 28px; border-radius: 8px; background: var(--color-accent-fill)"></span><span title="hover" style="width: 28px; height: 28px; border-radius: 8px; background: var(--color-accent-fill-hover)"></span><span title="pressed" style="width: 28px; height: 28px; border-radius: 8px; background: var(--color-accent-fill-pressed)"></span><span title="tint" style="width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--color-border); background: var(--color-accent-tint)"></span></div>
+                  <span style="font-size: 12px; color: var(--color-ink-700)">Fill on-accent <span style="font-family: var(--font-mono)">{{customFillCr}}</span>:1 · text <span style="font-family: var(--font-mono)">{{customTextCr}}</span>:1 on this theme</span>
+                  <sc-if value="{{nearWarn}}" hint-placeholder-val="{{ false }}">
+                    <div style="font-size: 12px; border-radius: var(--radius-control); padding: 8px 10px; background: var(--color-watch-bg); color: var(--color-watch)"><b style="font-weight: 600">Close to {{nearName}}.</b> Buttons may read as a status. Tags keep their labels.</div>
+                  </sc-if>
+                  <sc-if value="{{adjusted}}" hint-placeholder-val="{{ false }}">
+                    <div style="font-size: 12px; border-radius: var(--radius-control); padding: 8px 10px; background: var(--color-available-bg); color: var(--color-available)">Accent text was adjusted to reach 4.5:1 on this theme.</div>
+                  </sc-if>
+                </div>
+              </div>
+            </sc-if>
+          </section>
+
+          <section style="background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-card); padding: 20px 24px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px">
+            <div style="display: flex; flex-direction: column; gap: 10px">
+              <div><h2 style="margin: 0; font-size: 16px; font-weight: 600">Density</h2><span style="font-size: 13px; color: var(--color-ink-500)">Compact fits more rows in queues and tables.</span></div>
+              <div role="radiogroup" aria-label="Density" style="display: flex; background: var(--color-sunken); border-radius: var(--radius-control); padding: 3px; align-self: flex-start">
+                <sc-for list="{{densities}}" as="d" hint-placeholder-count="2"><button role="radio" aria-checked="{{d.selected}}" onClick="{{d.pick}}" style="height: 32px; padding: 0 14px; border: 0; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; background: {{d.bg}}; color: {{d.ink}}; box-shadow: {{d.shadow}}">{{d.label}}</button></sc-for>
+              </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 10px">
+              <div><h2 style="margin: 0; font-size: 16px; font-weight: 600">Text size</h2><span style="font-size: 13px; color: var(--color-ink-500)">Recommended for long documentation sessions.</span></div>
+              <div role="radiogroup" aria-label="Text size" style="display: flex; background: var(--color-sunken); border-radius: var(--radius-control); padding: 3px; align-self: flex-start">
+                <sc-for list="{{sizes}}" as="d" hint-placeholder-count="3"><button role="radio" aria-checked="{{d.selected}}" onClick="{{d.pick}}" style="height: 32px; padding: 0 14px; border: 0; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; background: {{d.bg}}; color: {{d.ink}}; box-shadow: {{d.shadow}}">{{d.label}}</button></sc-for>
+              </div>
+            </div>
+          </section>
+          <section style="background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-card); padding: 20px 24px; display: flex; flex-direction: column; gap: 14px">
+            <div><h2 style="margin: 0; font-size: 16px; font-weight: 600">Typeface</h2><span style="font-size: 13px; color: var(--color-ink-500)">Display for titles and figures, interface for everything else, mono for codes.</span></div>
+            <div role="radiogroup" aria-label="Typeface" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px">
+              <sc-for list="{{types}}" as="f" hint-placeholder-count="6">
+                <button role="radio" aria-checked="{{f.selected}}" onClick="{{f.pick}}" style="padding: 12px 14px; border-radius: var(--radius-field); border: 1px solid var(--color-border); background: var(--color-surface); cursor: pointer; text-align: left; color: var(--color-ink-900); display: flex; flex-direction: column; gap: 4px; box-shadow: {{f.ring}}">
+                  <span style="font-family: {{f.display}}; font-weight: {{f.weight}}; letter-spacing: {{f.track}}; font-size: 30px; line-height: 1.05">Aa 293</span>
+                  <span style="font-family: {{f.sans}}; font-size: 13px; font-weight: 600">{{f.name}}</span>
+                  <span style="font-family: {{f.sans}}; font-size: 12px; color: var(--color-ink-500)">{{f.note}}</span>
+                </button>
+              </sc-for>
+            </div>
+          </section>
+        </div>
+
+        <aside aria-label="Live preview" style="flex: 1 1 400px; min-width: 0; max-width: 520px; display: flex; flex-direction: column; gap: 10px">
+          <div style="display: flex; justify-content: space-between; align-items: center"><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-ink-500)">Live preview</span><span style="font-family: var(--font-mono); font-size: 11px; color: var(--color-ink-500)">{{attrText}}</span></div>
+          <div style="border: 1px solid var(--color-border); border-radius: var(--radius-card); overflow: hidden; background: var(--color-page); display: flex; font-size: {{pFont}}">
+            <div style="width: 132px; flex-shrink: 0; background: var(--color-sidebar); border-right: 1px solid var(--color-sidebar-border); padding: 12px 8px; display: flex; flex-direction: column; gap: 3px; color: var(--color-sidebar-ink); font-size: 12px">
+              <span style="font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-sidebar-muted); padding: 2px 8px">Live care</span>
+              <span style="padding: 6px 8px; border-radius: 8px; background: var(--color-sidebar-active); color: var(--color-sidebar-active-ink); font-weight: 600; box-shadow: inset 3px 0 0 var(--color-accent-fill)">Referrals</span>
+              <span style="padding: 6px 8px">Onboarding</span>
+              <span style="padding: 6px 8px">Therapists</span>
+              <span style="padding: 6px 8px">Billing</span>
+            </div>
+            <div style="flex: 1; min-width: 0; padding: 14px; display: flex; flex-direction: column; gap: 12px">
+              <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+                <div style="background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-field); padding: 10px 12px"><div style="font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-ink-500)">Clinical triage</div><div style="font-family: var(--font-display); font-size: 32px; line-height: 1.05">4</div><div style="font-size: 11px; color: var(--color-ink-500)">2 waiting over 2 days</div></div>
+                <div style="background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-field); padding: 10px 12px"><div style="font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-ink-500)">Team capacity</div><div style="font-family: var(--font-display); font-size: 32px; line-height: 1.05">83%</div><div style="height: 4px; border-radius: 99px; background: var(--color-sunken); overflow: hidden"><div style="width: 83%; height: 100%; background: var(--color-watch)"></div></div></div>
+              </div>
+              <div style="background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-field); overflow: hidden">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: {{pRow}}; border-bottom: 1px solid var(--color-border)"><span style="display: flex; flex-direction: column; line-height: 1.3"><span style="font-weight: 600">Mia Robinson</span><span style="font-family: var(--font-mono); font-size: 11px; color: var(--color-ink-500)">MSR-48K2Q7</span></span><span style="font-size: 12px; font-weight: 600; border-radius: var(--radius-tag); padding: 2px 8px; background: var(--color-watch-bg); color: var(--color-watch)">● Needs information</span></div>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: {{pRow}}; background: var(--color-accent-tint)"><span style="display: flex; flex-direction: column; line-height: 1.3"><span style="font-weight: 600">Oliver Grant</span><span style="font-family: var(--font-mono); font-size: 11px; color: var(--color-ink-500)">MSR-31T9WD</span></span><span style="font-size: 12px; font-weight: 600; border-radius: var(--radius-tag); padding: 2px 8px; background: var(--color-healthy-bg); color: var(--color-healthy)">● Accepted</span></div>
+              </div>
+              <div style="display: flex; gap: 10px; align-items: center">
+                <span style="flex: 1; height: 36px; box-sizing: border-box; display: flex; align-items: center; padding: 0 10px; border: 1px solid var(--color-accent-fill); border-radius: var(--radius-control); background: var(--color-surface); box-shadow: 0 0 0 3px var(--color-accent-tint); color: var(--color-ink-900)">Plan manager email|</span>
+                <span style="height: 36px; display: flex; align-items: center; padding: 0 14px; border-radius: var(--radius-control); background: var(--color-accent-fill); color: var(--color-on-accent); font-weight: 600">Send request</span>
+              </div>
+              <div style="background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-field); padding: 10px 12px; display: flex; flex-direction: column; gap: 8px">
+                <div style="display: flex; justify-content: space-between; font-size: 12px"><span style="font-weight: 600">Sessions per week</span><span style="display: flex; gap: 10px; color: var(--color-ink-500)"><span style="display: flex; align-items: center; gap: 4px"><span style="width: 8px; height: 8px; border-radius: 2px; background: var(--color-series-1)"></span>Delivered</span><span style="display: flex; align-items: center; gap: 4px"><span style="width: 8px; height: 8px; border-radius: 2px; background: var(--color-series-2)"></span>Cancelled</span></span></div>
+                <div role="img" aria-label="Bar chart, sessions per week for six weeks" style="height: 72px; display: flex; align-items: flex-end; gap: 10px; border-bottom: 1px solid var(--color-border)">
+                  <sc-for list="{{bars}}" as="b" hint-placeholder-count="6"><span style="flex: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: 2px; height: 100%"><span style="border-radius: 3px 3px 0 0; background: var(--color-series-2); height: {{b.c}}"></span><span style="background: var(--color-series-1); height: {{b.d}}"></span></span></sc-for>
+                </div>
+              </div>
+              <div style="background: var(--color-draft); border: 1px dashed var(--color-draft-rule); border-radius: var(--radius-field); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px">
+                <span style="display: flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-ink-700)"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M8 1.8 14.2 8 8 14.2 1.8 8Z"/><circle cx="8" cy="8" r="1.2" fill="currentColor" stroke="none"/></svg>AI draft · suggestions only</span>
+                <span>Two items look missing: NDIS plan document and plan manager.</span>
+              </div>
+            </div>
+          </div>
+          <span style="font-size: 12px; color: var(--color-ink-500)">The video room keeps its dark stage in every theme.</span>
+        </aside>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1400}}'>
+const TK=["dark","page","surface","raised","sunken","border","borderStrong","ink900","ink700","ink500","ink400","sbBg","sbInk","sbMuted","sbHover","sbActive","sbActiveInk","sbBorder","draftBg","draftBorder","healthyT","healthyB","watchT","watchB","overT","overB","availT","availB","liveT","s1","s2","s3","s4","rTag","rControl","rField","rCard","rSheet","group","pair"];
+const TH={"premium-light":["Premium Light",[0,"#F6F4EF","#FFFFFF","#FFFFFF","#EFECE5","#E4E0D7","#CFC8BB","#1C1A17","#3D3933","#655F56","#8A8478","#EFECE5","#2A2723","#655F56","#E6E2D9","#FFFFFF","#1C1A17","#E0DBD1","#F4F1EA","#B5AD9E","#1B6E40","#E5F3EA","#875500","#FBF0D9","#B0261E","#FBE8E6","#2F55AE","#E9EEFB","#0B6F8F","#2F6BB3","#D9792B","#2E8C7E","#7E57B8",6,10,12,16,24,"new","Blue"]],"clinical-blue":["Clinical Blue",[0,"#F4F8FE","#FFFFFF","#FFFFFF","#F6F9FE","#E9ECEF","#D4D8E0","#0B1533","#475467","#566379","#5F6B80","#F4F8FE","#101C35","#566379","#E4EEFD","#1570EF","#FFFFFF","#DFE5EE","#F5F9FF","#84ADFF","#067A55","#E3F6ED","#A8480A","#FEF1DF","#C0271C","#FEECEB","#175CD3","#E8F1FD","#0B6B8C","#1570EF","#0E9F8E","#7A5AF8","#C4679B",6,12,12,20,28,"current","Blue"]],"green":["Green",[0,"#F2FAF5","#FFFFFF","#FFFFFF","#F5FBF7","#E6ECE9","#CED8D3","#0A2015","#3F5249","#4F6359","#58695F","#F2FAF5","#0A2015","#4F6359","#E1F5E9","#08844A","#FFFFFF","#DBE7E0","#F5FBF7","#6CE0A0","#05693B","#E0F6EC","#A8480A","#FEF1DF","#C0271C","#FEECEB","#0B6B80","#E7F1F4","#0B6B8C","#0A9150","#7A5AF8","#0E9FC4","#C4679B",6,12,12,20,28,"current","Green"]],"navy-rail":["Navy rail",[0,"#EEF5F2","#FFFFFF","#FFFFFF","#F3F8F6","#E8EAEB","#D1D5D7","#1F2937","#4B5563","#525D6B","#5A6573","#172B36","#F3F7F5","#9FB3BC","#293B45","#0D7A43","#FFFFFF","#243741","#F3FAF6","#6CC592","#0A6B3C","#E1F3EA","#A8480A","#FEF1DF","#C0271C","#FEECEB","#0B6B80","#E7F1F4","#0B6B8C","#0D7A43","#7A5AF8","#0E9FC4","#C4679B",6,12,12,20,28,"current","Evergreen"]],"mint":["Mint",[0,"#EEF7F2","#FFFFFF","#FFFFFF","#F4FAF7","#E9EBED","#D2D6DA","#203448","#47586A","#506173","#58687A","#FFFFFF","#203448","#506173","#E8F7F0","#0D7A43","#FFFFFF","#E9EBED","#F3FAF6","#6CC592","#0A6B3C","#E1F3EA","#A8480A","#FEF1DF","#C0271C","#FEECEB","#0B6B80","#E7F1F4","#0B6B8C","#0D7A43","#7A5AF8","#0E9FC4","#C4679B",6,12,12,20,28,"current","Evergreen"]],"sand":["Sand",[0,"#F1EADC","#F8F3E8","#FBF7EE","#E9E0CE","#DCD1BB","#C7BAA0","#2B2620","#463E33","#62584A","#8A7E6B","#E9E0CE","#2B2620","#62584A","#E1D6C0","#F8F3E8","#2B2620","#DCD1BB","#EFE7D7","#A89A80","#1E663D","#E1EDD9","#7A4E00","#F6E6C4","#A3241D","#F5DDD6","#2C4F9E","#E3E6F0","#0A6480","#2F6BB3","#D9792B","#2E8C7E","#7E57B8",6,10,12,16,24,"new","Blue"]],"slate":["Slate",[0,"#E6E9EE","#FFFFFF","#FFFFFF","#EEF0F3","#D5DAE1","#BEC5CF","#141A22","#323B48","#535E6D","#77828F","#1E2733","#E5E9EF","#9AA5B4","#29343F","#334050","#FFFFFF","#2C3644","#F1F3F6","#9AA3B0","#17703F","#E3F4EA","#835300","#FBF0D9","#B0261E","#FCE8E6","#2F55AE","#E8EEFC","#0B6B8C","#2F6BB3","#D9792B","#2E8C7E","#7E57B8",6,10,12,16,24,"new","Blue"]],"warm-editorial":["Warm Editorial",[0,"#F5F3EE","#FFFFFF","#FFFFFF","#FAF8F3","#ECECEC","#DADAD9","#17150F","#5E5B54","#64615A","#716E66","#0A0B0D","#F5F3EE","#A3A099","#18191A","#18191A","#C9A96A","#18191A","#FBF7EE","#C9B98F","#3D6E4F","#E5EFE6","#8A5A12","#F5E9D2","#9C3B26","#F4E0D8","#3E5670","#E3E9EF","#0A6480","#4A8A84","#B8934A","#5A7094","#8C8478",4,6,6,10,14,"current","Bronze"]],"olive-green":["Olive Green",[0,"#F5F1EA","#FCFAF6","#FCFAF6","#EEE9E0","#E2DBCF","#CFC6B7","#1E1C19","#4A453E","#6B655B","#857E72","#EFEAE1","#1E1C19","#665F55","#E3ECE6","#E3ECE6","#2E5A4C","#E2DBCF","#F8F3E6","#C9B98F","#3D6E4F","#E5EFE6","#8A5A12","#F5E9D2","#9C3B26","#F4E0D8","#3E5670","#E3E9EF","#0A6480","#2E5A4C","#8FAE9C","#CDBF9F","#6E8296",4,6,6,10,14,"retired","Olive"]],"high-contrast":["High Contrast",[0,"#FFFFFF","#FFFFFF","#FFFFFF","#F2F2F2","#6B6B6B","#1A1A1A","#000000","#1A1A1A","#3D3D3D","#5C5C5C","#FFFFFF","#000000","#3D3D3D","#EDEDED","#000000","#FFFFFF","#1A1A1A","#FFFFFF","#000000","#0B5A2E","#DDF0E4","#6B4200","#F8E7C2","#8F1A13","#F8DCD8","#1F3F8A","#E0E7FA","#06506A","#2F6BB3","#D9792B","#2E8C7E","#7E57B8",6,10,12,16,24,"new","Blue"]],"premium-dark":["Premium Dark",[1,"#161616","#1E1E1E","#262626","#121212","#2E2E2E","#404040","#ECECEA","#C9C8C4","#9E9C97","#77756F","#121212","#DEDDD9","#9E9C97","#1E1E1E","#262626","#FFFFFF","#262626","#232220","#6A665E","#6FD39A","#1D3326","#F0C062","#3A2E14","#FF8F86","#3E1F1C","#A3B8FF","#232B45","#62CDF0","#7AA7E6","#F0A35E","#5FC4B5","#B794E6",6,10,12,16,24,"new","Blue"]],"midnight":["Midnight",[1,"#0E1626","#152036","#1B2842","#0B1220","#24324D","#33456A","#E6ECF5","#BCC7D9","#8E9CB4","#68768E","#0B1220","#D6DEEB","#8E9CB4","#152036","#1F2E4C","#FFFFFF","#1B2842","#18233A","#5D6E8E","#6FD39A","#163227","#F0C062","#352C17","#FF8F86","#3A1F26","#A3B8FF","#1F2B4E","#62CDF0","#7AA7E6","#F0A35E","#5FC4B5","#B794E6",6,10,12,16,24,"new","Blue"]],"oled":["OLED Dark",[1,"#000000","#0B0B0B","#151515","#000000","#1F1F1F","#333333","#F2F2F2","#CFCFCF","#A3A3A3","#7A7A7A","#000000","#E6E6E6","#A3A3A3","#111111","#1C1C1C","#FFFFFF","#151515","#121212","#5E5E5E","#6FD39A","#0F2619","#F0C062","#2A200A","#FF8F86","#2E1210","#A3B8FF","#151D38","#62CDF0","#7AA7E6","#F0A35E","#5FC4B5","#B794E6",6,10,12,16,24,"new","Blue"]]};
+const AC={Blue:[["#175CD3","#1570EF","#175CD3","#1849A9","#E8F1FD"],["#8DB0FF","#2F6BEB","#4A80F0","#2557C9","#1E2D52"],"#FFFFFF","#FFFFFF"],Indigo:[["#4338CA","#4F46E5","#4338CA","#3730A3","#EEEDFC"],["#A9A5FF","#5850E8","#6E66F2","#4840D0","#28264F"],"#FFFFFF","#FFFFFF"],Violet:[["#6D28D9","#7C3AED","#6D28D9","#5B21B6","#F2ECFD"],["#C4A6FF","#7C3AED","#8E55F0","#6A2BD6","#2E2350"],"#FFFFFF","#FFFFFF"],Purple:[["#9D1CA8","#A21CAF","#86198F","#701A75","#FAEAFB"],["#F0A6F7","#A925B6","#BA3EC6","#8F1C9B","#3A1E3E"],"#FFFFFF","#FFFFFF"],Emerald:[["#036B4D","#047857","#065F46","#064E3B","#E3F5EE"],["#5EDBB0","#10B981","#34C795","#0E9F6F","#123328"],"#FFFFFF","#1A1406"],Green:[["#056B3A","#08844A","#067A42","#05602F","#E6F3ED"],["#9BDB7E","#6CC24A","#80CE61","#57A839","#1D3316"],"#FFFFFF","#1A1406"],Teal:[["#0D6B64","#0F766E","#115E59","#134E4A","#E0F3F1"],["#5ED6CB","#14B8A6","#2CC6B5","#0F9C8D","#10312F"],"#FFFFFF","#1A1406"],Cyan:[["#0B6680","#0E7490","#155E75","#164E63","#E0F2F7"],["#67D4EE","#22B8DA","#3EC4E2","#1A9CBB","#0F2F3A"],"#FFFFFF","#1A1406"],Rose:[["#BE185D","#C81E5E","#AD1950","#8F1542","#FCE8F0"],["#FF9CC2","#E8457F","#EE6090","#CC3069","#3D1A28"],"#FFFFFF","#1A1406"],Red:[["#B91C1C","#C62828","#AD2222","#8F1C1C","#FCEAEA"],["#FF9B93","#E5484D","#EB6164","#C93338","#3E1A1A"],"#FFFFFF","#1A1406"],Orange:[["#A8420A","#C2410C","#A8380A","#8C2F08","#FDEDE3"],["#FFB27A","#F07A2E","#F38C47","#D4651C","#3D2414"],"#FFFFFF","#1A1406"],Amber:[["#875500","#F2B01E","#E0A010","#C98D08","#FCF3DC"],["#F6CB5C","#F2B01E","#F5BD3D","#D69A0E","#3A2E12"],"#1A1406","#1A1406"],Evergreen:[["#0B6A3A","#0D7A43","#0B6A3A","#095A31","#DFF4E8"],["#6CC592","#18A05E","#2FB06F","#12884F","#12301F"],"#FFFFFF","#1A1406"],Olive:[["#2E5A4C","#2E5A4C","#244A3E","#1C3B31","#E3ECE6"],["#9FC2B0","#6F9E8A","#80AC99","#5B8875","#1D2B26"],"#FFFFFF","#1A1406"],Bronze:[["#775A23","#C9A96A","#D6B97E","#B39454","#F6F1E7"],["#D9BD84","#C9A96A","#D6B97E","#B39454","#33291A"],"#1A1406","#1A1406"]};
+const FT={instrument:["Instrument Serif + Instrument Sans","'Instrument Serif', serif","'Instrument Sans', system-ui, sans-serif","'JetBrains Mono', monospace","400","'ss01', 'tnum'","-0.005em","Current. Editorial, elegant; serif has one weight."],newsreader:["Newsreader + Source Sans 3","'Newsreader', serif","'Source Sans 3', system-ui, sans-serif","'Source Code Pro', monospace","400","'tnum'","0em","Warm and very readable for long notes."],fraunces:["Fraunces + Inter","'Fraunces', serif","'Inter', system-ui, sans-serif","'JetBrains Mono', monospace","400","'tnum'","-0.01em","Soft, humane serif; Inter for dense tables."],plex:["Source Serif 4 + IBM Plex Sans","'Source Serif 4', serif","'IBM Plex Sans', system-ui, sans-serif","'IBM Plex Mono', monospace","400","'tnum'","-0.005em","Sturdy records feel, full weight range."],inter:["Inter Tight + Inter","'Inter Tight', system-ui, sans-serif","'Inter', system-ui, sans-serif","'IBM Plex Mono', monospace","600","'tnum'","-0.025em","No serif. Most neutral and clinical."],atkinson:["Literata + Atkinson Hyperlegible","'Literata', serif","'Atkinson Hyperlegible', system-ui, sans-serif","'JetBrains Mono', monospace","400","'tnum'","0em","Accessibility first, made for low-vision readers."]};
+function extraVars(v, ty) { const f = FT[ty] || FT.instrument; return '--radius-tag: ' + v.rTag + 'px; --radius-control: ' + v.rControl + 'px; --radius-field: ' + v.rField + 'px; --radius-card: ' + v.rCard + 'px; --radius-sheet: ' + v.rSheet + 'px; --font-display: ' + f[1] + '; --font-sans: ' + f[2] + '; --font-mono: ' + f[3] + '; --font-display-weight: ' + f[4] + '; --font-features: ' + f[5] + '; --font-display-tracking: ' + f[6] + ';'; }
+const LIGHT=['premium-light','clinical-blue','green','navy-rail','mint','warm-editorial','sand','slate','olive-green','high-contrast'];
+const DARK=['premium-dark','midnight','oled'];
+const INK='#1A1406';
+function rgb(h){h=h.replace('#','');return [0,2,4].map(i=>parseInt(h.substr(i,2),16));}
+function hex(a){return '#'+a.map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0')).join('').toUpperCase();}
+function lum(h){return rgb(h).map(v=>{v/=255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4);}).reduce((s,v,i)=>s+v*[0.2126,0.7152,0.0722][i],0);}
+function cr(a,b){const x=lum(a),y=lum(b);return (Math.max(x,y)+0.05)/(Math.min(x,y)+0.05);}
+function mix(a,b,t){const p=rgb(a),q=rgb(b);return hex(p.map((v,i)=>v+(q[i]-v)*t));}
+function hsl(h,s,l){s/=100;l/=100;const k=n=>(n+h/30)%12,a=s*Math.min(l,1-l),f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));return hex([f(0)*255,f(8)*255,f(4)*255]);}
+function tokens(id){const v={};TK.forEach((k,i)=>{v[k]=TH[id][1][i];});return v;}
+function genAccent(base,v){
+  const dark=v.dark===1, bgs=[v.page,v.surface,v.sunken];
+  let fill=base,on='#FFFFFF';
+  if(cr(fill,on)<4.5){let ok=false,f=fill;for(let i=1;i<=6&&!dark;i++){f=mix(base,'#000000',i*0.05);if(cr(f,'#FFFFFF')>=4.5){ok=true;break;}}if(ok)fill=f;else{on=INK;let g=base;for(let i=1;i<=8&&cr(g,INK)<4.5;i++)g=mix(base,'#FFFFFF',i*0.06);fill=g;}}
+  let text=base,adjusted=false;const tgt=dark?'#FFFFFF':'#000000';
+  for(let i=1;i<=20&&bgs.some(b=>cr(text,b)<4.5);i++){text=mix(base,tgt,i*0.05);adjusted=true;}
+  return {set:[text,fill,mix(fill,dark?'#FFFFFF':'#000000',0.08),mix(fill,'#000000',0.16),dark?mix(base,v.surface,0.78):mix(base,'#FFFFFF',0.9)],on,adjusted,fillCr:cr(fill,on),textCr:Math.min(...bgs.map(b=>cr(text,b)))};
+}
+function hueOf(h){const [r,g,b]=rgb(h).map(x=>x/255),mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn;if(!d)return {h:0,s:0};let hh=mx===r?((g-b)/d)%6:mx===g?(b-r)/d+2:(r-g)/d+4;hh*=60;if(hh<0)hh+=360;return {h:hh,s:d/(1-Math.abs(mx+mn-1))};}
+const DEFAULTS={theme:'premium-light',lightPair:'premium-light',darkPair:'premium-dark',matchSystem:false,sys:'light',accent:'Blue',hue:212,sat:72,hexDraft:'#2B7BC9',density:'comfortable',size:'default',type:'instrument',quickOpen:false,saved:'Saved'};
+class Component extends DCLogic {
+  constructor(p){super(p);this.state=Object.assign({},DEFAULTS);}
+  set(p){this.setState(Object.assign({saved:'Saved just now'},p));}
+  renderVals(){
+    const s=this.state;
+    const tid=s.matchSystem?(s.sys==='dark'?s.darkPair:s.lightPair):s.theme;
+    const v=tokens(tid), dark=v.dark===1;
+    const customHex=hsl(s.hue,s.sat,45);
+    let set,on,cust=null;
+    if(s.accent==='Custom'){cust=genAccent(customHex,v);set=cust.set;on=cust.on;}
+    else{const A=AC[s.accent];set=dark?A[1]:A[0];on=dark?A[3]:A[2];}
+    const series=[v.s1,v.s2,v.s3,v.s4];
+    const m={page:v.page,surface:v.surface,raised:v.raised,sunken:v.sunken,border:v.border,'border-strong':v.borderStrong,'ink-900':v.ink900,'ink-700':v.ink700,'ink-500':v.ink500,'ink-400':v.ink400,sidebar:v.sbBg,'sidebar-ink':v.sbInk,'sidebar-muted':v.sbMuted,'sidebar-hover':v.sbHover,'sidebar-active':v.sbActive,'sidebar-active-ink':v.sbActiveInk,'sidebar-border':v.sbBorder,draft:v.draftBg,'draft-rule':v.draftBorder,healthy:v.healthyT,'healthy-bg':v.healthyB,watch:v.watchT,'watch-bg':v.watchB,over:v.overT,'over-bg':v.overB,available:v.availT,'available-bg':v.availB,live:v.liveT,accent:set[0],'accent-fill':set[1],'accent-fill-hover':set[2],'accent-fill-pressed':set[3],'accent-tint':set[4],'on-accent':on,'series-1':series[0],'series-2':series[1],'series-3':series[2],'series-4':series[3]};
+    let vars=Object.keys(m).map(k=>'--color-'+k+': '+m[k]).join('; ')+'; '+extraVars(v,s.type)+' --shadow-overlay: '+(dark?'0 16px 40px rgba(0,0,0,0.5)':'0 2px 6px rgba(28,26,23,0.06), 0 16px 40px rgba(28,26,23,0.14)')+';';
+    const selectedId=(id)=>s.matchSystem?(LIGHT.includes(id)?s.lightPair===id:s.darkPair===id):s.theme===id;
+    const pickTheme=(id)=>()=>{if(s.matchSystem){if(LIGHT.includes(id))this.set({lightPair:id,sys:'light'});else this.set({darkPair:id,sys:'dark'});}else this.set({theme:id,accent:s.accent==='Custom'?'Custom':tokens(id).pair});};
+    const card=(id)=>{const t=tokens(id),d=t.dark===1,A=AC[s.accent]||AC[t.pair]||AC.Blue;return {id,name:TH[id][0],page:t.page,surface:t.surface,border:t.border,sb:t.sbBg,sbInk:t.sbInk,sbActive:t.sbActive,ink:t.ink900,btn:s.accent==='Custom'?customHex:(d?A[1][1]:A[0][1]),caption:({current:'Current · ',retired:'Retired · ',new:''}[t.group]||'')+'pairs with '+t.pair,selected:selectedId(id),ring:selectedId(id)?'2px solid '+set[1]:'1px solid '+v.border,pick:pickTheme(id)};};
+    const accents=Object.keys(AC).map(n=>{const sel=s.accent===n,f=dark?AC[n][1][1]:AC[n][0][1];return {name:n,fill:f,selected:sel,ring:sel?'0 0 0 2px '+f:'0 0 0 1px rgba(0,0,0,0.08)',cardRing:sel?'0 0 0 2px '+set[1]:'none',pick:()=>this.set({accent:n})};});
+    const seg=(cur,opts,key)=>opts.map(([val,label])=>{const sel=cur===val;return {label,selected:sel,bg:sel?v.surface:'transparent',ink:sel?v.ink900:v.ink500,shadow:sel?'0 1px 2px rgba(0,0,0,0.12)':'none',pick:()=>this.set({[key]:val})};});
+    let nearWarn=false,nearName='';
+    if(cust){const hh=hueOf(customHex);const near=[[4,'“At Risk” red'],[40,'“Watch” amber'],[140,'“Healthy” green']].find(([x])=>Math.min(Math.abs(hh.h-x),360-Math.abs(hh.h-x))<18);if(near&&hh.s>0.3){nearWarn=true;nearName=near[1];}}
+    return {
+      vars,
+      quickOpen:s.quickOpen, quickBg:s.quickOpen?v.sunken:'transparent',
+      toggleQuick:()=>this.setState({quickOpen:!s.quickOpen}),
+      quickThemes:LIGHT.concat(DARK).map(id=>{const t=tokens(id);const sel=selectedId(id);return {name:TH[id][0],page:t.page,sb:t.sbBg,selected:sel,ring:sel?'2px solid '+set[1]:'1px solid '+v.border,pick:pickTheme(id)};}),
+      savedText:s.saved, reset:()=>this.setState(Object.assign({},DEFAULTS,{saved:'Defaults restored'})),
+      matchSystem:s.matchSystem, toggleMatch:()=>this.set({matchSystem:!s.matchSystem}),
+      switchBg:s.matchSystem?set[1]:v.borderStrong, switchJustify:s.matchSystem?'flex-end':'flex-start',
+      themeHint:s.matchSystem?('Following the system: '+TH[s.lightPair][0]+' by day, '+TH[s.darkPair][0]+' at night.'):'Applies to the staff app, patient app and public pages.',
+      sysLight:s.sys==='light', sysDark:s.sys==='dark',
+      sysLightBg:s.sys==='light'?set[1]:'transparent', sysLightInk:s.sys==='light'?on:v.ink700,
+      sysDarkBg:s.sys==='dark'?set[1]:'transparent', sysDarkInk:s.sys==='dark'?on:v.ink700,
+      setSysLight:()=>this.setState({sys:'light'}), setSysDark:()=>this.setState({sys:'dark'}),
+      lightThemes:LIGHT.map(card), darkThemes:DARK.map(card),
+      accents, customSel:s.accent==='Custom', customHex, customCardRing:s.accent==='Custom'?'0 0 0 2px '+set[1]:'none',
+      pickCustom:()=>this.set({accent:'Custom'}),
+      hue:s.hue, sat:s.sat, hexDraft:s.hexDraft,
+      onHue:(e)=>{const h=+e.target.value;this.set({hue:h,hexDraft:hsl(h,s.sat,45)});},
+      onSat:(e)=>{const x=+e.target.value;this.set({sat:x,hexDraft:hsl(s.hue,x,45)});},
+      onHex:(e)=>{const val=e.target.value;const ok=/^#?[0-9a-fA-F]{6}$/.test(val);if(ok){const hh=hueOf(val.startsWith('#')?val:'#'+val);this.set({hexDraft:val,hue:Math.round(hh.h),sat:Math.max(20,Math.min(100,Math.round(hh.s*100)))});}else this.setState({hexDraft:val});},
+      customFillCr:cust?cust.fillCr.toFixed(1):'', customTextCr:cust?cust.textCr.toFixed(1):'',
+      nearWarn, nearName, adjusted:cust?cust.adjusted:false,
+      densities:seg(s.density,[['comfortable','Comfortable'],['compact','Compact']],'density'),
+      sizes:seg(s.size,[['default','Default'],['large','Large'],['larger','Larger']],'size'),
+      pRow:s.density==='compact'?'6px 12px':'10px 12px',
+      pFont:s.size==='larger'?'16px':s.size==='large'?'15px':'14px',
+      attrText:'data-theme="'+(s.matchSystem?'system':tid)+'" data-accent="'+s.accent.toLowerCase()+'" data-type="'+s.type+'"',
+      types:Object.keys(FT).map(k=>{const f=FT[k],sel=s.type===k;return {name:f[0],display:f[1],sans:f[2],weight:f[4],track:f[6],note:f[7],selected:sel,ring:sel?'0 0 0 2px '+set[1]:'none',pick:()=>this.set({type:k})};}),
+      bars:[[46,8],[52,6],[49,10],[58,5],[55,7],[62,4]].map(([d,c])=>({d:d+'%',c:c+'%'}))
+    };
+  }
+}
+</script>
+</body>
+</html>

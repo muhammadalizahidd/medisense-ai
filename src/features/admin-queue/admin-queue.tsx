@@ -91,7 +91,7 @@ function Exception() {
   return (
     <section
       aria-labelledby="exceptions"
-      className="mb-6 rounded-card border border-border bg-surface shadow-rule-over surface-lift"
+      className="mb-6 rounded-card border border-border bg-surface shadow-rule-over"
     >
       <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3 px-5 py-4">
         <div className="flex min-w-0 flex-1 items-start gap-3">
@@ -101,7 +101,7 @@ function Exception() {
             aria-hidden="true"
           />
           <div>
-            <h2 id="exceptions" className="headline text-h2">
+            <h2 id="exceptions" className="text-section font-semibold text-ink-900">
               1 exception: a form didn&apos;t sync
             </h2>
             <p className="mt-0.5 max-w-180 text-small text-ink-700">
@@ -153,11 +153,11 @@ function Reassign({
     <div
       role="group"
       aria-label={`Reassign ${task.title}`}
-      className="flex flex-wrap items-center gap-3 border-b border-border bg-surface-sunken px-4 py-3"
+      className="flex flex-wrap items-center gap-3 border-b border-border bg-sunken px-4 py-3"
     >
       <span className="text-small font-semibold">Reassign this task</span>
       {suggestion && (
-        <span className="text-caption font-medium text-brass">
+        <span className="text-caption font-medium text-ink-700">
           AI suggests {suggestion.owner}: {suggestion.reason}
         </span>
       )}
@@ -240,7 +240,7 @@ export function AdminQueue() {
       <Exception />
 
       {reminder && (
-        <div className="mb-6 flex flex-wrap items-center gap-2 rounded-card bg-monitor-bg px-5 py-3 text-small font-semibold text-monitor">
+        <div className="mb-6 flex flex-wrap items-center gap-2 rounded-card bg-watch-bg px-5 py-3 text-small font-semibold text-watch">
           <Bell className="size-4 flex-none" strokeWidth={1.5} aria-hidden="true" />
           Reminder, 8:00 am. {reminder.text}.
         </div>
@@ -259,7 +259,7 @@ export function AdminQueue() {
             { id: "escalated", label: "Escalated", count: count("escalated") },
           ]}
         />
-        <Caption className={cn(aiSorted && "text-brass")}>
+        <Caption className={cn(aiSorted && "text-ink-700")}>
           {advice.loading
             ? "AI is sorting these…"
             : aiSorted
@@ -270,7 +270,7 @@ export function AdminQueue() {
 
       <Card aria-label="Tasks" className="overflow-hidden">
         <div className="overflow-x-auto" role="table" aria-label="Admin tasks">
-          <div className="min-w-280">
+          <div className="md:min-w-280">
             <TableHeader columns={COLUMNS}>
               <div role="columnheader">Task and source</div>
               <div role="columnheader">Patient</div>
@@ -299,7 +299,7 @@ export function AdminQueue() {
                     <div role="cell" className="min-w-0 py-2.5">
                       <div className={cn("font-semibold", t.done && "line-through")}>{t.title}</div>
                       <div className="mt-0.5 flex items-center gap-1 text-caption font-medium text-ink-500">
-                        {t.source.startsWith("AI") && <PenNib className="size-3 text-brass" />}
+                        {t.source.startsWith("AI") && <PenNib className="size-3 text-ink-700" />}
                         {t.href && t.source === "AI from note" ? (
                           <Link href={t.href} className="font-semibold">
                             {sourceLabel(t)}
@@ -370,7 +370,7 @@ export function AdminQueue() {
               );
             })}
             {rows.length === 0 && (
-              <p className="px-5 py-10 headline text-h2 font-normal">{emptyCopy[filter]}</p>
+              <p className="px-5 py-10 type-display text-h2 font-normal">{emptyCopy[filter]}</p>
             )}
           </div>
         </div>

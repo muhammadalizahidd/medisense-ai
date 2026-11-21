@@ -1,4 +1,5 @@
 import "server-only";
+import { photoUrl } from "./photos";
 import type { ObjectId } from "mongodb";
 import type {
   AppointmentDto,
@@ -15,6 +16,7 @@ import type {
   NotificationDoc,
   TherapistDoc,
 } from "./models";
+import { completenessOf, statusOf } from "./participants";
 
 export type NameLookup = Map<string, string>;
 
@@ -70,12 +72,18 @@ export function clientSummary(client: ClientDoc, therapists: NameLookup): Client
   return {
     id: client._id.toHexString(),
     name: client.name,
+    photoUrl: photoUrl("client", client._id, client.photoAt),
     suburb: client.suburb,
     region: client.region,
     funding: client.funding,
     needs: needDtos(client, therapists),
     stage: stageOf(client),
     createdAt: client.createdAt.toISOString(),
+    mrn: client.mrn ?? null,
+    phone: client.phone,
+    participantStatus: statusOf(client),
+    completeness: completenessOf(client)?.percent ?? null,
+    missing: completenessOf(client)?.missing ?? [],
   };
 }
 

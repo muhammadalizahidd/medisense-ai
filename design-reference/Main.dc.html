@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<title>Medisense · Design direction</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&amp;family=Instrument+Serif&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1D56D0}a:hover{color:#1E40AF}
+</style>
+</helmet>
+<div style="width: 1440px; min-height: 1560px; box-sizing: border-box; background: #F6F4EF; color: #1C1A17; font-family: 'Instrument Sans', system-ui, sans-serif; font-size: 14px; line-height: 1.5; font-feature-settings: 'ss01', 'tnum'; padding: 72px 80px; display: flex; flex-direction: column; gap: 56px">
+
+  <header style="display: flex; justify-content: space-between; align-items: flex-end; gap: 48px; border-bottom: 1px solid #E4E0D7; padding-bottom: 40px">
+    <div style="display: flex; flex-direction: column; gap: 16px; max-width: 860px">
+      <div style="display: flex; align-items: center; gap: 12px">
+        <div style="width: 32px; height: 32px; border-radius: 10px; background: #1C1A17; color: #F6F4EF; display: flex; align-items: center; justify-content: center; font-family: 'Instrument Serif', serif; font-size: 22px; line-height: 1">m</div>
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #655F56">Medisense · Clinical Operations &amp; Supervision · Redesign v1</span>
+      </div>
+      <h1 style="margin: 0; font-family: 'Instrument Serif', serif; font-weight: 400; font-size: 64px; line-height: 1.02; letter-spacing: -0.01em">A calm, precise clinical instrument with editorial confidence.</h1>
+      <p style="margin: 0; font-size: 17px; line-height: 1.55; color: #3D3933; max-width: 720px">Quiet neutral surfaces, colour only where it means something, and one honest visual language for what AI drafted, what a rule computed and what a person signed. Every screen keeps its content and actions; only the way they are presented changes.</p>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px; min-width: 280px; font-size: 13px; color: #655F56">
+      <div style="display: flex; justify-content: space-between; gap: 24px"><span>Default theme</span><span style="color: #1C1A17; font-weight: 600">Premium Light</span></div>
+      <div style="display: flex; justify-content: space-between; gap: 24px"><span>Brand theme</span><span style="color: #1C1A17; font-weight: 600">Clinical Blue (exact)</span></div>
+      <div style="display: flex; justify-content: space-between; gap: 24px"><span>Default accent</span><span style="color: #1C1A17; font-weight: 600">Blue · #1570EF</span></div>
+      <div style="display: flex; justify-content: space-between; gap: 24px"><span>Themes / accents</span><span style="color: #1C1A17; font-weight: 600">13 / 15 + custom</span></div>
+      <div style="display: flex; justify-content: space-between; gap: 24px"><span>Contrast</span><span style="color: #1B6E40; font-weight: 600">WCAG AA, every pair</span></div>
+    </div>
+  </header>
+
+  <section style="display: flex; flex-direction: column; gap: 20px">
+    <h2 style="margin: 0; font-family: 'Instrument Serif', serif; font-weight: 400; font-size: 32px; line-height: 1.1">Principles</h2>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px">
+      <div style="background: #FFFFFF; border: 1px solid #E4E0D7; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 8px">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #655F56">01</span>
+        <h3 style="margin: 0; font-size: 16px; font-weight: 600">Systems supporting therapists</h3>
+        <p style="margin: 0; color: #3D3933">AI output is always a draft on a draft surface. Nothing a model wrote looks finished until a person signs it.</p>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #E4E0D7; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 8px">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #655F56">02</span>
+        <h3 style="margin: 0; font-size: 16px; font-weight: 600">Three layers, never mixed</h3>
+        <p style="margin: 0; color: #3D3933">AI drafts (dashed edge), rules compute (solid edge, “Rule” or “Automation” tag), people decide (signature: name, time, lock).</p>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #E4E0D7; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 8px">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #655F56">03</span>
+        <h3 style="margin: 0; font-size: 16px; font-weight: 600">Calm confidence</h3>
+        <p style="margin: 0; color: #3D3933">Pressure comes with its reason. At Risk is a labelled tag and a “why” line, never a flashing banner.</p>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #E4E0D7; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 8px">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #655F56">04</span>
+        <h3 style="margin: 0; font-size: 16px; font-weight: 600">Density with breathing room</h3>
+        <p style="margin: 0; color: #3D3933">40px rows, 14px body, hairline separation. Dense tables sit inside generous 40px page gutters.</p>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #E4E0D7; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 8px">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #655F56">05</span>
+        <h3 style="margin: 0; font-size: 16px; font-weight: 600">Colour means something</h3>
+        <p style="margin: 0; color: #3D3933">Neutral by default. The accent marks the primary action and selection; semantic colours mark status and never take the accent.</p>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #E4E0D7; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 8px">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #655F56">06</span>
+        <h3 style="margin: 0; font-size: 16px; font-weight: 600">One of everything</h3>
+        <p style="margin: 0; color: #3D3933">One shell, one header (two sizes), one panel, one table, one tag system, one sheet. Live and sample modules share them.</p>
+      </div>
+    </div>
+  </section>
+
+  <section style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px">
+    <div style="display: flex; flex-direction: column; gap: 16px">
+      <h2 style="margin: 0; font-family: 'Instrument Serif', serif; font-weight: 400; font-size: 32px; line-height: 1.1">The three-layer language</h2>
+      <p style="margin: 0; color: #3D3933">One mark per layer, the same on every screen. The AI mark replaces the sparkle and wand icons: a small hollow diamond on a dashed draft surface.</p>
+      <div style="background: #F4F1EA; border: 1px dashed #B5AD9E; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; align-items: center; gap: 8px">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#3D3933" stroke-width="1.5" aria-hidden="true"><path d="M8 1.8 14.2 8 8 14.2 1.8 8Z"/><circle cx="8" cy="8" r="1.2" fill="#3D3933" stroke="none"/></svg>
+          <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #3D3933">AI draft · suggestions only</span>
+        </div>
+        <p style="margin: 0; color: #1C1A17">Oliver managed 3 of 4 steps of the morning routine with one verbal prompt, up from two prompts last week.</p>
+        <div style="display: flex; gap: 6px; flex-wrap: wrap">
+          <span style="font-size: 12px; color: #3D3933; background: #FFFFFF; border: 1px solid #E4E0D7; border-radius: 6px; padding: 2px 8px">Source · Visit 4 notes</span>
+          <span style="font-size: 12px; color: #3D3933; background: #FFFFFF; border: 1px solid #E4E0D7; border-radius: 6px; padding: 2px 8px">Source · Goal 2 reading</span>
+        </div>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #CFC8BB; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; align-items: center; gap: 8px">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#3D3933" stroke-width="1.5" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="3"/><path d="M5 8h6M8 5v6"/></svg>
+          <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #3D3933">Rule · completeness check</span>
+        </div>
+        <p style="margin: 0; color: #1C1A17">2 to confirm: NDIS plan document, plan manager contact.</p>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #E4E0D7; border-radius: 16px; padding: 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px">
+        <div style="display: flex; flex-direction: column; gap: 2px">
+          <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #655F56">Signed</span>
+          <span style="font-family: 'Instrument Serif', serif; font-size: 26px; line-height: 1.1">Daniel Okafor</span>
+          <span style="font-size: 13px; color: #655F56">Occupational Therapist · Tue, 10 Nov, 10:42 am</span>
+        </div>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1C1A17" stroke-width="1.75" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 16px">
+      <h2 style="margin: 0; font-family: 'Instrument Serif', serif; font-weight: 400; font-size: 32px; line-height: 1.1">Type and surface</h2>
+      <div style="background: #FFFFFF; border: 1px solid #E4E0D7; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 14px">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px; border-bottom: 1px solid #E4E0D7; padding-bottom: 12px"><span style="font-family: 'Instrument Serif', serif; font-size: 54px; line-height: 1.02">293 patients</span><span style="font-size: 12px; color: #655F56">Display · Serif 54</span></div>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px; border-bottom: 1px solid #E4E0D7; padding-bottom: 12px"><span style="font-family: 'Instrument Serif', serif; font-size: 32px; line-height: 1.05">Emily Carter</span><span style="font-size: 12px; color: #655F56">H1 · Serif 32–40</span></div>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px; border-bottom: 1px solid #E4E0D7; padding-bottom: 12px"><span style="font-size: 16px; font-weight: 600">Services and matching</span><span style="font-size: 12px; color: #655F56">Section · Sans 16 / 600</span></div>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px; border-bottom: 1px solid #E4E0D7; padding-bottom: 12px"><span>Weekly · 8 visits · at home, Chermside</span><span style="font-size: 12px; color: #655F56">Body · Sans 14 / 1.5</span></div>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px; border-bottom: 1px solid #E4E0D7; padding-bottom: 12px"><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #655F56">Funding · NDIS plan managed</span><span style="font-size: 12px; color: #655F56">Label caps · 11 / 600 / 0.08em</span></div>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px"><span style="font-family: 'JetBrains Mono', monospace; font-size: 13px">MSR-48K2Q7 · INV-00412 · 15_048_0128_1_3</span><span style="font-size: 12px; color: #655F56">Mono · 13</span></div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px">
+        <div style="height: 72px; border-radius: 12px; background: #F6F4EF; border: 1px solid #E4E0D7; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; color: #655F56">page</div>
+        <div style="height: 72px; border-radius: 12px; background: #FFFFFF; border: 1px solid #E4E0D7; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; color: #655F56">surface</div>
+        <div style="height: 72px; border-radius: 12px; background: #EFECE5; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; color: #655F56">sunken</div>
+        <div style="height: 72px; border-radius: 12px; background: #1C1A17; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; color: #EFECE5">ink 900</div>
+        <div style="height: 72px; border-radius: 12px; background: #1570EF; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; color: #FFFFFF">accent fill</div>
+        <div style="height: 72px; border-radius: 12px; background: #F4F1EA; border: 1px dashed #B5AD9E; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; color: #3D3933">AI draft</div>
+      </div>
+    </div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 16px">
+    <h2 style="margin: 0; font-family: 'Instrument Serif', serif; font-weight: 400; font-size: 32px; line-height: 1.1">How the 12 observed problems are resolved</h2>
+    <div style="background: #FFFFFF; border: 1px solid #E4E0D7; border-radius: 16px; overflow: hidden">
+      <div style="display: grid; grid-template-columns: 48px minmax(0, 1fr) minmax(0, 2fr); gap: 16px; padding: 10px 20px; background: #EFECE5; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #655F56"><span>#</span><span>Problem</span><span>Decision</span></div>
+      <div style="display: grid; grid-template-columns: 48px minmax(0, 1fr) minmax(0, 2fr); gap: 16px; padding: 10px 20px; border-top: 1px solid #E4E0D7"><span style="font-family: 'JetBrains Mono', monospace; color: #655F56">1</span><span>Hero too tall</span><span style="color: #3D3933">Compact header (≈104px: back link, serif title 32, meta row, tags, actions) on every working page. Landing hero only on Overview and therapist home.</span></div>
+      <div style="display: grid; grid-template-columns: 48px minmax(0, 1fr) minmax(0, 2fr); gap: 16px; padding: 10px 20px; border-top: 1px solid #E4E0D7"><span style="font-family: 'JetBrains Mono', monospace; color: #655F56">2</span><span>Inconsistent language</span><span style="color: #3D3933">Flat and editorial: no gradients, no glow, no resting shadows. The landing hero is a flat surface panel with a large serif greeting.</span></div>
+      <div style="display: grid; grid-template-columns: 48px minmax(0, 1fr) minmax(0, 2fr); gap: 16px; padding: 10px 20px; border-top: 1px solid #E4E0D7"><span style="font-family: 'JetBrains Mono', monospace; color: #655F56">3</span><span>Duplicate-looking modules</span><span style="color: #3D3933">“Live care” pinned first with a live dot. Sample modules carry a quiet “Sample data” tag in the header and sidebar group. Routes unchanged; groups collapse.</span></div>
+      <div style="display: grid; grid-template-columns: 48px minmax(0, 1fr) minmax(0, 2fr); gap: 16px; padding: 10px 20px; border-top: 1px solid #E4E0D7"><span style="font-family: 'JetBrains Mono', monospace; color: #655F56">4</span><span>Long records</span><span style="color: #3D3933">One Tabs component: underline style, counts, alert count for waiting items, sticky under the top bar, kept in the URL.</span></div>
+      <div style="display: grid; grid-template-columns: 48px minmax(0, 1fr) minmax(0, 2fr); gap: 16px; padding: 10px 20px; border-top: 1px solid #E4E0D7"><span style="font-family: 'JetBrains Mono', monospace; color: #655F56">5</span><span>Tables overflow</span><span style="color: #3D3933">Columns carry a priority (P1–P3). Below 1024 P3 hides; below 768 rows stack into cards showing P1 plus the status tag.</span></div>
+      <div style="display: grid; grid-template-columns: 48px minmax(0, 1fr) minmax(0, 2fr); gap: 16px; padding: 10px 20px; border-top: 1px solid #E4E0D7"><span style="font-family: 'JetBrains Mono', monospace; color: #655F56">6</span><span>Noisy status</span><span style="color: #3D3933">Primary status = tinted tag with dot. Secondary meta (Telehealth, Invoiced, Patient confirmed) = outline or plain icon + text, never tinted.</span></div>
+      <div style="display: grid; grid-template-columns: 48px minmax(0, 1fr) minmax(0, 2fr); gap: 16px; padding: 10px 20px; border-top: 1px solid #E4E0D7"><span style="font-family: 'JetBrains Mono', monospace; color: #655F56">7</span><span>Selection patterns</span><span style="color: #3D3933">Segmented = filter a view (≤6). Choice pills = one answer in a form (≤7). Select = long lists. Tick = declarations and consents. Switch = on/off settings.</span></div>
+      <div style="display: grid; grid-template-columns: 48px minmax(0, 1fr) minmax(0, 2fr); gap: 16px; padding: 10px 20px; border-top: 1px solid #E4E0D7"><span style="font-family: 'JetBrains Mono', monospace; color: #655F56">8</span><span>AI / rules / people</span><span style="color: #3D3933">The three-layer language above, on every screen.</span></div>
+      <div style="display: grid; grid-template-columns: 48px minmax(0, 1fr) minmax(0, 2fr); gap: 16px; padding: 10px 20px; border-top: 1px solid #E4E0D7"><span style="font-family: 'JetBrains Mono', monospace; color: #655F56">9</span><span>Thin feedback</span><span style="color: #3D3933">Toasts after decisions, inline “Saved” with time, field errors under the field plus a summary at the top of the sheet.</span></div>
+      <div style="display: grid; grid-template-columns: 48px minmax(0, 1fr) minmax(0, 2fr); gap: 16px; padding: 10px 20px; border-top: 1px solid #E4E0D7"><span style="font-family: 'JetBrains Mono', monospace; color: #655F56">10</span><span>Patient app in a frame</span><span style="color: #3D3933">Designed at 390×844 first; the desktop frame only wraps it. Safe areas and bottom sheets are part of the app, not the frame.</span></div>
+      <div style="display: grid; grid-template-columns: 48px minmax(0, 1fr) minmax(0, 2fr); gap: 16px; padding: 10px 20px; border-top: 1px solid #E4E0D7"><span style="font-family: 'JetBrains Mono', monospace; color: #655F56">11</span><span>No dark mode</span><span style="color: #3D3933">13 themes (your 6 palettes + 7 new, 3 dark), 15 accents + custom, 6 typefaces, Match system, density and text size.</span></div>
+      <div style="display: grid; grid-template-columns: 48px minmax(0, 1fr) minmax(0, 2fr); gap: 16px; padding: 10px 20px; border-top: 1px solid #E4E0D7"><span style="font-family: 'JetBrains Mono', monospace; color: #655F56">12</span><span>Serif at small sizes</span><span style="color: #3D3933">Serif tokens start at 24px. Panel titles, tabs and labels are always Instrument Sans.</span></div>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1560}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

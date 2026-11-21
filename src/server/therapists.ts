@@ -13,9 +13,11 @@ import {
 import { brisbaneDay, brisbaneMinutes, isoWeekday, slotLabel } from "@/lib/live/time";
 import type { TherapistCardDto, TherapistDetailDto } from "@/lib/live/types";
 import { hashPassword } from "./auth";
+import { ensureStaff, staffBlocks } from "./staff";
 import { collections } from "./db";
 import { UserFacingError } from "./http";
 import { adminIds, audit, publish } from "./live";
+import { photoUrl, putPhoto } from "./photos";
 import { availabilitySummary, isAway } from "./matching";
 import type { AppointmentDoc, TherapistDoc, UserDoc } from "./models";
 
@@ -149,13 +151,53 @@ async function ratingsByTherapist(): Promise<Ratings> {
   return new Map(rows.map((r) => [r._id.toHexString(), { sum: r.sum, count: r.count }]));
 }
 
-function card(t: TherapistDoc, ratings: Ratings): TherapistCardDto {
+type SessionCounts = Map<string, { completed: number; upcoming: number; patients: number }>;
+
+async function sessionCounts(): Promise<SessionCounts> {
+  const { appointments } = await collections();
+  const now = new Date();
+  const rows = await appointments
+    .aggregate<{ _id: ObjectId; completed: number; upcoming: number; patients: ObjectId[] }>([
+      { $match: { status: { $in: ["completed", "booked"] } } },
+      {
+        $group: {
+          _id: "$therapistId",
+          completed: { $sum: { $cond: [{ $eq: ["$status", "completed"] }, 1, 0] } },
+          upcoming: {
+            $sum: {
+              $cond: [{ $and: [{ $eq: ["$status", "booked"] }, { $gte: ["$start", now] }] }, 1, 0],
+            },
+          },
+          patients: {
+            $addToSet: { $cond: [{ $eq: ["$status", "completed"] }, "$clientId", "$$REMOVE"] },
+          },
+        },
+      },
+    ])
+    .toArray();
+  return new Map(
+    rows.map((r) => [
+      r._id.toHexString(),
+      { completed: r.completed, upcoming: r.upcoming, patients: r.patients.length },
+    ]),
+  );
+}
+
+function card(t: TherapistDoc, ratings: Ratings, counts?: SessionCounts): TherapistCardDto {
   const r = ratings.get(t._id.toHexString());
   return {
     id: t._id.toHexString(),
     active: t.active !== false,
+    staffId: t.staff?.staffId ?? null,
+    engagement: t.staff?.status ?? (t.active === false ? "Inactive" : "Active"),
+    approvedServices: (t.staff?.competencies ?? [])
+      .filter((c) => c.status === "Approved")
+      .map((c) => c.support),
+    blocks: staffBlocks(t, null, null),
+    credentialDays: soonestExpiry(t),
     registrationExpiry: t.credentials?.registrationExpiry ?? null,
     name: t.name,
+    photoUrl: photoUrl("therapist", t._id, t.photoAt),
     discipline: t.discipline,
     region: t.region,
     seniority: t.seniority,
@@ -164,16 +206,30 @@ function card(t: TherapistDoc, ratings: Ratings): TherapistCardDto {
     capacity: t.capacity,
     availability: availabilitySummary(t),
     rating: r ? { average: Math.round((r.sum / r.count) * 10) / 10, count: r.count } : null,
+    sessions: counts?.get(t._id.toHexString()) ?? { completed: 0, upcoming: 0, patients: 0 },
   };
 }
 
+/** Days until the first required credential runs out. */
+function soonestExpiry(t: TherapistDoc) {
+  const on = Date.parse(new Date().toISOString().slice(0, 10));
+  const days = (t.staff?.credentials ?? [])
+    .filter((c) => c.required && c.expiry)
+    .map((c) => Math.round((Date.parse(c.expiry) - on) / 86_400_000));
+  return days.length ? Math.min(...days) : null;
+}
+
 export async function listTherapists(): Promise<TherapistCardDto[]> {
-  const { therapists } = await collections();
-  const [rows, ratings] = await Promise.all([
-    therapists.find().sort({ discipline: 1, name: 1 }).toArray(),
+  const { therapists, db } = await collections();
+  const [found, ratings, counts] = await Promise.all([
+    therapists.find().sort({ name: 1 }).toArray(),
     ratingsByTherapist(),
+    sessionCounts(),
   ]);
-  return rows.map((t) => card(t, ratings));
+  // Staff from before Module 04 get their record (and STF number) once, in name order.
+  const rows = [];
+  for (const t of found) rows.push(await ensureStaff(db, t));
+  return rows.map((t) => card(t, ratings, counts));
 }
 
 export async function therapistDetail(id: ObjectId): Promise<TherapistDetailDto> {
@@ -198,8 +254,40 @@ export async function therapistDetail(id: ObjectId): Promise<TherapistDetailDto>
     .toArray();
   const patientName = new Map(patients.map((p) => [p._id.toHexString(), p.name]));
   const now = new Date();
+  const calls = await db.telehealth
+    .find(
+      { appointmentId: { $in: visits.map((v) => v._id) } },
+      { projection: { appointmentId: 1, recording: 1 } },
+    )
+    .toArray();
+  const callOf = new Map(calls.map((c) => [c.appointmentId.toHexString(), c]));
+  const done = visits.filter((v) => v.status === "completed");
+  const perPatient = new Map<string, { count: number; last: Date }>();
+  for (const v of done) {
+    const k = v.clientId.toHexString();
+    const was = perPatient.get(k);
+    perPatient.set(k, {
+      count: (was?.count ?? 0) + 1,
+      last: was && was.last > v.start ? was.last : v.start,
+    });
+  }
+  // Everyone they've been assigned, plus anyone they've seen without a current assignment.
+  const assignedIds = new Set(assigned.map((a) => a.clientId.toHexString()));
+  const seenOnly = patients.filter(
+    (p) => !assignedIds.has(p._id.toHexString()) && perPatient.has(p._id.toHexString()),
+  );
+  const counts = new Map([
+    [
+      t._id.toHexString(),
+      {
+        completed: done.length,
+        upcoming: visits.filter((v) => v.status === "booked" && v.start >= now).length,
+        patients: perPatient.size,
+      },
+    ],
+  ]);
   return {
-    ...card(t, ratings),
+    ...card(t, ratings, counts),
     email: account?.email ?? "",
     phone: account?.phone ?? null,
     profile: t.profile ?? { bio: "", qualifications: "", languages: ["English"] },
@@ -212,13 +300,57 @@ export async function therapistDetail(id: ObjectId): Promise<TherapistDetailDto>
       noShows: visits.filter((v) => v.status === "no-show").length,
       lateCancellations: visits.filter((v) => v.status === "late-cancelled").length,
     },
-    patients: assigned.map((a) => ({
-      id: a.clientId.toHexString(),
-      name: patientName.get(a.clientId.toHexString()) ?? "Patient",
-      discipline: a.discipline,
-      since: (a.respondedAt ?? a.createdAt).toISOString(),
-      discharged: Boolean(patients.find((p) => p._id.equals(a.clientId))?.discharged),
-    })),
+    patients: [
+      ...assigned.map((a) => ({
+        id: a.clientId.toHexString(),
+        name: patientName.get(a.clientId.toHexString()) ?? "Patient",
+        discipline: a.discipline,
+        since: (a.respondedAt ?? a.createdAt).toISOString(),
+        discharged: Boolean(patients.find((p) => p._id.equals(a.clientId))?.discharged),
+        sessions: perPatient.get(a.clientId.toHexString())?.count ?? 0,
+        lastSession: perPatient.get(a.clientId.toHexString())?.last.toISOString() ?? null,
+      })),
+      ...seenOnly.map((p) => {
+        const first = [...done].reverse().find((v) => v.clientId.equals(p._id));
+        return {
+          id: p._id.toHexString(),
+          name: p.name,
+          discipline: t.discipline,
+          since: (first?.start ?? p._id.getTimestamp()).toISOString(),
+          discharged: Boolean(p.discharged),
+          sessions: perPatient.get(p._id.toHexString())?.count ?? 0,
+          lastSession: perPatient.get(p._id.toHexString())?.last.toISOString() ?? null,
+        };
+      }),
+    ].filter((p, i, all) => all.findIndex((x) => x.id === p.id) === i),
+    sessionLog: visits.map((v) => {
+      const call = callOf.get(v._id.toHexString());
+      const rec = call?.recording;
+      const noteState = v.note
+        ? v.note.status === "Final"
+          ? "Signed"
+          : (v.note.status ?? "Signed")
+        : v.status === "completed"
+          ? "Not written"
+          : null;
+      return {
+        id: v._id.toHexString(),
+        ref: v.ref ?? null,
+        start: v.start.toISOString(),
+        patientId: v.clientId.toHexString(),
+        patient: patientName.get(v.clientId.toHexString()) ?? "Patient",
+        discipline: v.discipline,
+        modality: v.modality ?? "In person",
+        status: v.status,
+        minutes: v.checkOut?.minutes ?? null,
+        note: noteState,
+        recording:
+          rec && rec.status !== "Ready" && rec.segments.length > 0
+            ? { status: rec.status, playable: rec.status === "Available" }
+            : null,
+        rating: v.feedback?.rating ?? null,
+      };
+    }),
     feedback: visits
       .filter((v) => v.feedback)
       .slice(0, 20)
@@ -250,7 +382,7 @@ export async function resetStaffPassword(admin: UserDoc, therapistId: ObjectId) 
   const temporary = Array.from({ length: 14 }, () => alphabet[randomInt(alphabet.length)]).join("");
   await users.updateOne(
     { _id: t.userId },
-    { $set: { passwordHash: await hashPassword(temporary) } },
+    { $set: { passwordHash: await hashPassword(temporary), mustChangePassword: true } },
   );
   await sessions.deleteMany({ userId: t.userId });
   await audit(admin, `Reset the password for ${t.name}`, null);
@@ -278,6 +410,8 @@ export const newTherapistSchema = z.object({
   registrationExpiry: z.string().regex(DAY, "Enter the registration expiry date"),
   screeningExpiry: z.string().regex(DAY, "Enter the worker screening expiry date"),
   assessmentScopes: z.array(z.enum(supports)).max(20),
+  /** Optional profile photo, already cropped in the browser (data URL). */
+  photo: z.string().max(600_000, "The photo is too large.").nullable().optional(),
 });
 
 /**
@@ -285,7 +419,7 @@ export const newTherapistSchema = z.object({
  * login with a temporary password shown once. They're offered in matching straight away.
  */
 export async function createTherapist(admin: UserDoc, input: z.infer<typeof newTherapistSchema>) {
-  const { users, therapists } = await collections();
+  const { users, therapists, db } = await collections();
   if (await users.findOne({ email: input.email })) {
     throw new UserFacingError("An account already uses this email.", 409);
   }
@@ -312,13 +446,15 @@ export async function createTherapist(admin: UserDoc, input: z.infer<typeof newT
     name: input.name,
     role: "therapist",
     passwordHash: await hashPassword(temporary),
+    mustChangePassword: true,
+    createdBy: admin._id,
     invite: null,
     therapistId,
     clientId: null,
     phone: input.phone || null,
     createdAt: new Date(),
   });
-  await therapists.insertOne({
+  const doc: TherapistDoc = {
     _id: therapistId,
     slug,
     name: input.name,
@@ -342,7 +478,11 @@ export async function createTherapist(admin: UserDoc, input: z.infer<typeof newT
     active: true,
     availabilityUpdatedAt: null,
     userId,
-  });
+  };
+  await therapists.insertOne(doc);
+  if (input.photo) await putPhoto("therapist", therapistId, input.photo);
+  // Module 04: they start Pending Verification until a Clinical Lead verifies and approves.
+  await ensureStaff(db, doc, true);
   await audit(admin, `Added therapist ${input.name} (${input.discipline}, ${input.region})`, null);
   await publish(await adminIds(), "care", {});
   return { id: therapistId.toHexString(), email: input.email, temporaryPassword: temporary };

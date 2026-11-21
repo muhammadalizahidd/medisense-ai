@@ -71,7 +71,7 @@ export function AttentionPanel({
   return (
     <Card aria-labelledby="needs-attention" className="flex h-full flex-col">
       <div className="px-5 pt-5 pb-3.5">
-        <h2 id="needs-attention" className="headline text-h2">
+        <h2 id="needs-attention" className="text-section font-semibold text-ink-900">
           Needs your attention
         </h2>
       </div>
@@ -81,7 +81,7 @@ export function AttentionPanel({
             key={item.eyebrow}
             className="flex flex-col gap-1.5 bg-surface px-5 py-4 last:sm:col-span-2 last:xl:col-span-1"
           >
-            <div className={cn("eyebrow", item.urgent && "text-over")}>{item.eyebrow}</div>
+            <div className={cn("label-caps", item.urgent && "text-over")}>{item.eyebrow}</div>
             <div className="font-semibold">{item.title}</div>
             <div className="mb-2 text-small text-ink-700">{item.detail}</div>
             <ButtonLink href={item.href} className="mt-auto self-start">
@@ -91,7 +91,7 @@ export function AttentionPanel({
           </div>
         ))}
       </div>
-      <p className="rounded-b-card border-t border-border bg-surface-sunken px-5 pt-3.5 pb-4 text-caption font-medium text-ink-500">
+      <p className="rounded-b-card border-t border-border bg-sunken px-5 pt-3.5 pb-4 text-caption font-medium text-ink-500">
         Operational indicators only. Not clinical risk assessments.
       </p>
     </Card>

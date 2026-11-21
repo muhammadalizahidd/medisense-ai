@@ -12,6 +12,7 @@ import { useResource } from "@/lib/live/client";
 import { isFinal, type ReferralStatus } from "@/lib/live/referral";
 import { relativeTime } from "@/lib/live/time";
 import type { ReferralSummaryDto } from "@/lib/live/types";
+import { TableFrame } from "@/components/ui/table-frame";
 import { EmptyNote, ErrorNote, LiveBadge, Skeleton } from "./bits";
 
 export const referralTone: Record<ReferralStatus, TagTone> = {
@@ -65,7 +66,7 @@ export function ReferralQueue() {
   return (
     <>
       <PageHeader
-        eyebrow="Patient onboarding"
+        eyebrow="Live care"
         title="Referrals and intake"
         description="Every referral moves through the completeness check, intake review, clinical triage and funding before matching. Nothing is re-entered: accepting one creates the patient and their service requests."
         actions={
@@ -77,12 +78,12 @@ export function ReferralQueue() {
                 void navigator.clipboard?.writeText(`${window.location.origin}/refer`);
                 setCopied(true);
               }}
-              className="on-light inline-flex h-9 cursor-pointer items-center gap-2 rounded-control border border-border-strong bg-surface px-3 text-small font-semibold text-ink-900 hover:bg-canvas"
+              className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-control border border-border-strong bg-surface px-3 text-small font-semibold text-ink-900 hover:bg-canvas"
             >
               <Copy className="size-3.5" aria-hidden="true" />
               {copied ? "Link copied" : "Copy public form link"}
             </button>
-            <ButtonLink href="/refer" target="_blank" className="on-light">
+            <ButtonLink href="/refer" target="_blank">
               <ExternalLink className="size-3.5" aria-hidden="true" />
               Public form
             </ButtonLink>
@@ -153,25 +154,25 @@ export function ReferralQueue() {
         </label>
       </div>
 
-      {error && !data ? (
-        <ErrorNote message={error} onRetry={reload} />
-      ) : loading && !data ? (
-        <div className="flex flex-col gap-2">
-          {[0, 1, 2].map((i) => (
-            <Skeleton key={i} className="h-14" />
-          ))}
-        </div>
-      ) : rows.length === 0 ? (
-        <EmptyNote title={all.length ? "No referrals here." : "No referrals yet."}>
-          {all.length ? (
-            "Try another filter or search."
-          ) : (
-            <Link href="/refer">Open the public referral form</Link>
-          )}
-        </EmptyNote>
-      ) : (
-        <div className="overflow-x-auto rounded-card border border-border bg-surface surface-lift">
-          <table className="w-full min-w-240 text-left text-small">
+      <TableFrame>
+        {error && !data ? (
+          <ErrorNote message={error} onRetry={reload} />
+        ) : loading && !data ? (
+          <div className="flex flex-col gap-2">
+            {[0, 1, 2].map((i) => (
+              <Skeleton key={i} className="h-14" />
+            ))}
+          </div>
+        ) : rows.length === 0 ? (
+          <EmptyNote title={all.length ? "No referrals here." : "No referrals yet."}>
+            {all.length ? (
+              "Try another filter or search."
+            ) : (
+              <Link href="/refer">Open the public referral form</Link>
+            )}
+          </EmptyNote>
+        ) : (
+          <table className="table-stack w-full text-left text-small md:min-w-240">
             <thead className="border-b border-border text-caption text-ink-500">
               <tr>
                 <th className="px-4 py-3 font-medium">Referral</th>
@@ -235,8 +236,8 @@ export function ReferralQueue() {
               ))}
             </tbody>
           </table>
-        </div>
-      )}
+        )}
+      </TableFrame>
     </>
   );
 }

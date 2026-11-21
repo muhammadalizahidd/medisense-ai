@@ -87,13 +87,12 @@ function HomeTab({ onNote, onTab }: { onNote: () => void; onTab: (id: string) =>
         <div className="mt-4 flex items-center gap-4">
           <Ring
             percent={(done / sarahDay.length) * 100}
-            light
             label={`${done} of ${sarahDay.length} visits done`}
           >
-            <span className="headline text-h2 text-white">
+            <span className="type-display text-h2 text-ink-900">
               {done}/{sarahDay.length}
             </span>
-            <span className="text-[10px] text-white/80">visits</span>
+            <span className="text-[10px] text-ink-500">visits</span>
           </Ring>
           <p className="min-w-0 text-small text-ink-700">
             {noteApproved
@@ -109,9 +108,9 @@ function HomeTab({ onNote, onTab }: { onNote: () => void; onTab: (id: string) =>
               key={s.label}
               type="button"
               onClick={() => onTab(s.tab)}
-              className="cursor-pointer rounded-card border border-border bg-surface px-2.5 py-3 text-left surface-lift"
+              className="cursor-pointer rounded-card border border-border bg-surface px-2.5 py-3 text-left"
             >
-              <span className="block headline text-h1">{s.value}</span>
+              <span className="block type-display text-h1">{s.value}</span>
               <span className="block text-caption leading-3.5 text-ink-500">{s.label}</span>
             </button>
           ))}
@@ -143,7 +142,7 @@ function HomeTab({ onNote, onTab }: { onNote: () => void; onTab: (id: string) =>
               </div>
             </div>
             {next.leaveBy && (
-              <p className="mt-2 flex items-center gap-1.5 text-small font-medium text-monitor">
+              <p className="mt-2 flex items-center gap-1.5 text-small font-medium text-watch">
                 <Car className="size-4" strokeWidth={1.5} aria-hidden="true" />
                 Leave by {next.leaveBy}
               </p>
@@ -194,12 +193,12 @@ function ScheduleTab({ onNote }: { onNote: () => void }) {
                 aria-pressed={day === d.id}
                 onClick={() => setDay(d.id)}
                 className={cn(
-                  "flex cursor-pointer flex-col items-center rounded-control! py-2 text-white",
-                  day === d.id ? "bg-white text-[var(--hero-ink)]!" : "bg-white/12",
+                  "flex cursor-pointer flex-col items-center rounded-control py-2",
+                  day === d.id ? "bg-accent-fill text-on-accent" : "bg-sunken text-ink-700",
                 )}
               >
                 <span className="text-[11px] font-medium opacity-85">{weekday?.slice(0, 3)}</span>
-                <span className="headline text-h2">{date}</span>
+                <span className="type-display text-h2">{date}</span>
               </button>
             );
           })}
@@ -248,7 +247,7 @@ function ScheduleTab({ onNote }: { onNote: () => void }) {
             key={v.id}
             type="button"
             onClick={() => setOpenId(v.id)}
-            className="mb-3 flex w-full cursor-pointer items-center gap-3 rounded-card border border-border bg-surface p-4 text-left surface-lift"
+            className="mb-3 flex w-full cursor-pointer items-center gap-3 rounded-card border border-border bg-surface p-4 text-left"
           >
             <Avatar name={v.title} />
             <span className="min-w-0 flex-1">
@@ -614,7 +613,7 @@ function ClientsTab() {
             key={c.id}
             type="button"
             onClick={() => setOpenId(c.id)}
-            className="mb-2.5 flex w-full cursor-pointer items-center gap-3 rounded-card border border-border bg-surface p-3.5 text-left surface-lift"
+            className="mb-2.5 flex w-full cursor-pointer items-center gap-3 rounded-card border border-border bg-surface p-3.5 text-left"
           >
             <Avatar name={c.name} />
             <span className="min-w-0 flex-1">
@@ -739,8 +738,8 @@ function TasksTab({ offline, queued }: { offline: boolean; queued: string[] }) {
               aria-pressed={show === f.id}
               onClick={() => setShow(f.id)}
               className={cn(
-                "h-8 cursor-pointer rounded-full px-3.5 text-small font-semibold text-white",
-                show === f.id ? "bg-white text-[var(--hero-ink)]!" : "bg-white/12",
+                "h-8 cursor-pointer rounded-full px-3.5 text-small font-semibold",
+                show === f.id ? "bg-accent-fill text-on-accent" : "bg-sunken text-ink-700",
               )}
             >
               {f.label}
@@ -766,7 +765,7 @@ function TasksTab({ offline, queued }: { offline: boolean; queued: string[] }) {
                 {t.client}, due {t.due}
               </p>
               {saved ? (
-                <p className="mt-2 text-small font-medium text-monitor">
+                <p className="mt-2 text-small font-medium text-watch">
                   Saved on this phone. It sends when you&apos;re back online.
                 </p>
               ) : t.done ? (
@@ -902,7 +901,7 @@ function NoteView({ offline, onBack }: { offline: boolean; onBack: () => void })
             type="button"
             onClick={onBack}
             aria-label="Back"
-            className="flex size-9 flex-none cursor-pointer items-center justify-center rounded-full bg-white/15 text-ink-900"
+            className="flex size-9 flex-none cursor-pointer items-center justify-center rounded-full bg-sunken text-ink-900"
           >
             <ArrowLeft className="size-5" strokeWidth={1.75} aria-hidden="true" />
           </button>
@@ -960,7 +959,7 @@ function NoteView({ offline, onBack }: { offline: boolean; onBack: () => void })
                 aria-label={dictation.listening ? "Stop dictating" : "Start dictating"}
                 disabled={!dictation.supported}
                 onClick={() => (dictation.listening ? dictation.stop() : dictation.start())}
-                className="primary-glow flex size-22 cursor-pointer items-center justify-center rounded-full bg-accent-fill text-on-accent disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex size-22 cursor-pointer items-center justify-center rounded-full bg-accent-fill text-on-accent disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {dictation.listening ? (
                   <MicOff className="size-8" strokeWidth={1.5} aria-hidden="true" />
@@ -983,7 +982,7 @@ function NoteView({ offline, onBack }: { offline: boolean; onBack: () => void })
                   rows={8}
                   value={text}
                   onChange={(e) => setText(e.target.value)}
-                  className="w-full rounded-control border border-border-strong bg-surface-raised px-3 py-2 text-small font-normal text-ink-900 outline-none focus:border-accent focus:shadow-focus"
+                  className="w-full rounded-control border border-border-strong bg-raised px-3 py-2 text-small font-normal text-ink-900 outline-none focus:border-accent focus:shadow-focus"
                 />
               </label>
               {story.error && (
@@ -992,7 +991,7 @@ function NoteView({ offline, onBack }: { offline: boolean; onBack: () => void })
                 </p>
               )}
               {offline && (
-                <p className="mt-2 text-small text-monitor">
+                <p className="mt-2 text-small text-watch">
                   AI needs a connection. Your text stays here until you&apos;re back online.
                 </p>
               )}
@@ -1059,7 +1058,7 @@ export function StaffApp() {
       {offline && (
         <p
           role="status"
-          className="sticky top-0 z-10 bg-monitor py-1 text-center text-caption font-semibold text-white"
+          className="sticky top-0 z-10 bg-watch py-1 text-center text-caption font-semibold text-white"
         >
           Offline{queued.length ? `, ${queued.length} waiting to send` : ""}
         </p>

@@ -153,7 +153,7 @@ export function Billing() {
 
       <section className={cn(draftSurface(false), "mt-6 px-5 py-4")}>
         <AiMark>AI claims summary, recommendation only</AiMark>
-        <p className="mt-1.5 headline text-section font-normal" aria-busy={summary.loading}>
+        <p className="mt-1.5 type-display text-section font-normal" aria-busy={summary.loading}>
           {summary.loading ? "AI is reading this week's sessions…" : summary.data}
         </p>
       </section>
@@ -273,7 +273,7 @@ export function Billing() {
           </div>
         </div>
         <div className="overflow-x-auto" role="table" aria-label="Claim lines">
-          <div className="min-w-220">
+          <div className="md:min-w-220">
             <TableHeader columns={COLUMNS}>
               <div>Patient</div>
               <div>When</div>
@@ -342,7 +342,7 @@ export function Billing() {
             ))}
           </dl>
           {open.needsNote ? (
-            <p className="mt-4 rounded-control bg-monitor-bg px-3.5 py-3 text-small text-monitor">
+            <p className="mt-4 rounded-control bg-watch-bg px-3.5 py-3 text-small text-watch">
               Held back: the session note isn&apos;t approved yet.{" "}
               <Link href="/tasks" className="font-semibold">
                 View tasks

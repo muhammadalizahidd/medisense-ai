@@ -81,7 +81,7 @@ export function PortalPreview() {
 
       <div className="lg:col-span-8">
         <div className="overflow-hidden rounded-sheet border border-border-strong bg-canvas shadow-overlay">
-          <div className="flex items-center gap-2 border-b border-border bg-surface-sunken px-4 py-2.5">
+          <div className="flex items-center gap-2 border-b border-border bg-sunken px-4 py-2.5">
             <span aria-hidden="true" className="flex gap-1.5">
               <i className="size-2.5 rounded-full bg-border-strong" />
               <i className="size-2.5 rounded-full bg-border-strong" />

@@ -109,3 +109,47 @@ export function DashboardLoading() {
     </main>
   );
 }
+
+/** A phone app loading: the device with a header, a hero card and list rows. */
+export function PhoneLoading() {
+  const pulse = "animate-pulse bg-sunken motion-reduce:animate-none";
+  return (
+    <div
+      className="flex min-h-dvh items-center justify-center bg-canvas md:py-8"
+      aria-busy="true"
+      role="status"
+    >
+      <span className="sr-only">Loading…</span>
+      <div className="flex h-dvh w-full flex-col overflow-hidden bg-page md:h-197 md:max-h-[calc(100dvh-4rem)] md:w-95 md:rounded-[48px] md:border-[11px] md:border-ink-900 md:shadow-overlay">
+        <div className="px-5 pt-14 pb-5">
+          <div className={cn(pulse, "h-3 w-28 rounded-tag")} />
+          <div className={cn(pulse, "mt-3 h-8 w-52 rounded-control")} />
+        </div>
+        <div className="flex flex-1 flex-col gap-3 px-4">
+          <div className={cn(pulse, "h-36 rounded-card")} />
+          <div className="grid grid-cols-2 gap-2.5">
+            <div className={cn(pulse, "h-16 rounded-card")} />
+            <div className={cn(pulse, "h-16 rounded-card")} />
+          </div>
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="flex items-center gap-3 rounded-card border border-border bg-surface p-3"
+            >
+              <div className={cn(pulse, "size-10 flex-none rounded-full")} />
+              <div className="flex-1">
+                <div className={cn(pulse, "h-3.5 w-32 rounded-tag")} />
+                <div className={cn(pulse, "mt-2 h-3 w-20 rounded-tag")} />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="flex h-17 items-center justify-around border-t border-border bg-surface px-4">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <div key={i} className={cn(pulse, "size-6 rounded-control")} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}

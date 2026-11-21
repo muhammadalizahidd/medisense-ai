@@ -19,8 +19,8 @@ function PortalSection({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-card border border-border bg-surface px-5 py-4 surface-lift">
-      <h3 className="mb-3 flex items-center gap-2 font-serif text-section font-medium">
+    <section className="rounded-card border border-border bg-surface px-5 py-4">
+      <h3 className="mb-3 flex items-center gap-2 font-display text-section font-medium">
         <Icon className="size-4 text-accent" strokeWidth={1.5} aria-hidden="true" />
         {title}
       </h3>
@@ -53,9 +53,9 @@ export function FamilyView() {
 
   return (
     <div className="flex flex-col gap-4 px-6 py-6">
-      <div className="page-hero">
-        <p className="eyebrow">Medisense family portal</p>
-        <h2 className="mt-1 headline text-h1">Hi {family.viewer.split(" ")[0]},</h2>
+      <div>
+        <p className="label-caps">Medisense family portal</p>
+        <h2 className="mt-1 type-display text-h1">Hi {family.viewer.split(" ")[0]},</h2>
         <p className="mt-1 text-small text-ink-700">
           Here is how {family.client} is going with {family.clinician},{" "}
           {family.clinicianRole.toLowerCase()}.
@@ -64,7 +64,7 @@ export function FamilyView() {
 
       <div className="grid gap-4 md:grid-cols-2">
         <PortalSection title="Next visit" icon={CalendarDays}>
-          <div className="headline text-h2 font-normal">{family.nextAppointment.when}</div>
+          <div className="type-display text-h2 font-normal">{family.nextAppointment.when}</div>
           <Caption>
             {family.nextAppointment.where} · with {family.nextAppointment.with}
           </Caption>
@@ -139,7 +139,7 @@ export function FamilyView() {
             {family.goals.map((g) => (
               <li key={g.text} className="flex flex-col gap-1.5">
                 <span className="text-small font-semibold">{g.text}</span>
-                <div className="relative h-2 rounded-full bg-surface-sunken">
+                <div className="relative h-2 rounded-full bg-sunken">
                   <span
                     className="absolute inset-y-0 left-0 rounded-full bg-accent-fill"
                     style={{ width: `${g.progress}%` }}
@@ -198,11 +198,11 @@ export function FamilyView() {
                     key={`${m.at}-${m.text}`}
                     className={cn(
                       "max-w-[85%] rounded-control px-3 py-2 text-small",
-                      mine ? "self-end bg-accent-tint" : "self-start bg-surface-sunken",
+                      mine ? "self-end bg-accent-tint" : "self-start bg-sunken",
                     )}
                   >
                     {m.text}
-                    <span className="mt-0.5 block text-eyebrow text-ink-500">
+                    <span className="mt-0.5 block text-label text-ink-500">
                       {m.from.split(" ")[0]} · {m.at}
                     </span>
                   </li>
@@ -223,7 +223,7 @@ export function FamilyView() {
                 onChange={(e) => setDraft(e.target.value)}
                 placeholder="Write a message"
                 aria-label="Message"
-                className="h-8 min-w-0 flex-1 rounded-control border border-border-strong bg-surface-raised px-2.5 text-small outline-none focus:border-accent"
+                className="h-8 min-w-0 flex-1 rounded-control border border-border-strong bg-raised px-2.5 text-small outline-none focus:border-accent"
               />
               <Button size="sm" variant="primary" type="submit" disabled={!draft.trim()}>
                 <Send className="size-3.5" strokeWidth={1.5} aria-hidden="true" />

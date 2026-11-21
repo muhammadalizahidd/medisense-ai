@@ -61,4 +61,18 @@ export type RecordingDto = {
   deleted: { reason: string; byName: string; at: string } | null;
   accessLog: { byName: string; purpose: string; action: string; at: string }[];
   canManage: boolean;
+  discipline: string;
+  modality: string;
+  /** What was said, when transcription was consented (shown with the recording). */
+  transcript: { speaker: string; text: string }[];
+  hasVideo: boolean;
+  hasAudio: boolean;
+};
+
+export type RecordingPlayback = {
+  label: string;
+  durationSec: number;
+  download: false;
+  video: string | null;
+  audio: string | null;
 };

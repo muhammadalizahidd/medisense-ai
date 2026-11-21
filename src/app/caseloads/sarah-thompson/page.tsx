@@ -6,6 +6,7 @@ import { CaseloadMix } from "@/features/caseload/caseload-mix";
 import { ClientTable } from "@/features/caseload/client-table";
 import { LiveMetrics, LiveScoreBreakdown, LiveScoreTag } from "@/features/caseload/live-caseload";
 import { WorkloadPanel } from "@/features/caseload/workload-panel";
+import { photoFor } from "@/lib/avatars";
 
 export const metadata: Metadata = { title: "Sarah Thompson · Caseload · Medisense" };
 
@@ -17,9 +18,18 @@ export default function SarahCaseloadPage() {
         leading={
           <span
             aria-hidden="true"
-            className="flex size-14 flex-none items-center justify-center rounded-full bg-chart-sand text-figure font-semibold text-ink-900"
+            className="flex size-14 flex-none items-center justify-center overflow-hidden rounded-full bg-border-strong text-section font-semibold text-ink-900"
           >
-            {sarahProfile.initials}
+            {photoFor(sarahProfile.name) ? (
+              // eslint-disable-next-line @next/next/no-img-element -- small local portrait
+              <img
+                src={photoFor(sarahProfile.name) ?? ""}
+                alt=""
+                className="size-full rounded-full object-cover"
+              />
+            ) : (
+              sarahProfile.initials
+            )}
           </span>
         }
         eyebrow="Clinician caseload"

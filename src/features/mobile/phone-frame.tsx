@@ -1,7 +1,18 @@
 "use client";
 
-import { ArrowLeft, BatteryFull, Signal, Wifi, X, type LucideIcon } from "lucide-react";
-import type { ReactNode } from "react";
+import {
+  ArrowLeft,
+  ChevronLeft,
+  BatteryFull,
+  Check,
+  HeartPulse,
+  LockKeyhole,
+  Signal,
+  Wifi,
+  X,
+  type LucideIcon,
+} from "lucide-react";
+import { useState, type ReactNode } from "react";
 import { ButtonLink } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import { useNow } from "@/lib/live/client";
@@ -20,7 +31,7 @@ function StatusBar() {
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none absolute inset-x-0 top-0 z-20 hidden h-11 items-center justify-between px-7 text-caption font-semibold text-white md:flex"
+      className="pointer-events-none absolute inset-x-0 top-0 z-20 hidden h-11 items-center justify-between bg-page px-7 text-caption font-semibold text-ink-900 md:flex"
     >
       <span>{time}</span>
       <span className="flex items-center gap-1">
@@ -53,7 +64,7 @@ export function PhoneFrame({
   children: ReactNode;
 }) {
   return (
-    <div className="hero-page flex min-h-dvh items-center justify-center gap-16 bg-canvas md:py-8 lg:px-10">
+    <div className="flex min-h-dvh items-center justify-center gap-16 bg-canvas md:py-8 lg:px-10">
       <div className="fixed top-4 left-4 z-10 hidden md:block">
         <ButtonLink href="/">
           <ArrowLeft className="size-4" strokeWidth={1.5} aria-hidden="true" />
@@ -61,23 +72,38 @@ export function PhoneFrame({
         </ButtonLink>
       </div>
 
-      <div className="hidden max-w-92 lg:block">
-        <h1 className="headline text-[44px] leading-13 blue:text-white">{name}</h1>
-        <p className="mt-3 text-body text-ink-700 blue:text-white/85">{description}</p>
-        <ul className="mt-6 flex flex-col gap-2.5 text-small text-ink-700 blue:text-white/85">
+      <div className="hidden max-w-96 lg:block">
+        <p className="flex items-center gap-2.5 text-label font-semibold tracking-[0.12em] text-ink-500 uppercase">
+          <span
+            aria-hidden="true"
+            className="flex size-7 items-center justify-center rounded-control bg-ink-900 text-page"
+          >
+            <HeartPulse className="size-3.5" strokeWidth={2} />
+          </span>
+          Medisense
+        </p>
+        <h1 className="mt-6 type-display text-[52px] leading-[1.02] tracking-tight">{name}</h1>
+        <p className="mt-4 text-body leading-relaxed text-ink-700">{description}</p>
+        <ul className="mt-8 flex flex-col divide-y divide-border border-y border-border">
           {features.map((f) => (
-            <li key={f} className="flex gap-2.5">
+            <li key={f} className="flex items-center gap-3 py-3 text-small text-ink-900">
               <span
                 aria-hidden="true"
-                className="mt-2 size-1.5 flex-none rounded-full bg-accent-fill blue:bg-white"
-              />
+                className="flex size-6 flex-none items-center justify-center rounded-full bg-accent-tint text-accent"
+              >
+                <Check className="size-3.5" strokeWidth={2.5} />
+              </span>
               {f}
             </li>
           ))}
         </ul>
+        <p className="mt-6 flex items-center gap-2 text-caption text-ink-500">
+          <LockKeyhole className="size-3.5" aria-hidden="true" />
+          Private to you and your care team. Clinical notes stay with your clinicians.
+        </p>
       </div>
 
-      <div className="relative flex h-dvh w-full flex-col overflow-hidden bg-canvas md:h-197 md:max-h-[calc(100dvh-4rem)] md:w-95 md:rounded-[44px] md:border-10 md:border-ink-900 md:shadow-overlay">
+      <div className="relative flex h-dvh w-full flex-col overflow-hidden bg-page md:h-197 md:max-h-[calc(100dvh-4rem)] md:w-95 md:rounded-[48px] md:border-[11px] md:border-ink-900 md:shadow-overlay md:ring-1 md:ring-border-strong">
         <span
           aria-hidden="true"
           className="absolute top-2.5 left-1/2 z-30 hidden h-6 w-24 -translate-x-1/2 rounded-full bg-ink-900 md:block"
@@ -115,7 +141,7 @@ export function PhoneFrame({
                       aria-hidden="true"
                     />
                     {badge ? (
-                      <span className="absolute -top-1 right-2 flex h-4.5 min-w-4.5 items-center justify-center rounded-full border-2 border-surface bg-over-dot px-1 text-eyebrow leading-none font-bold text-white">
+                      <span className="absolute -top-1 right-2 flex h-4.5 min-w-4.5 items-center justify-center rounded-full border-2 border-surface bg-over-dot px-1 text-label leading-none font-bold text-white">
                         {badge > 9 ? "9+" : badge}
                         <span className="sr-only"> unread</span>
                       </span>
@@ -123,7 +149,7 @@ export function PhoneFrame({
                   </span>
                   <span
                     className={cn(
-                      "max-w-full truncate text-eyebrow",
+                      "max-w-full truncate text-label",
                       current ? "font-bold text-accent" : "font-medium text-ink-500",
                     )}
                   >
@@ -158,11 +184,15 @@ export function AppHeader({
   children?: ReactNode;
 }) {
   return (
-    <header className="page-hero rounded-t-none! pt-12!">
+    <header className="bg-page px-5 pt-14 pb-5 md:pt-16">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          {eyebrow && <p className="text-caption font-medium text-ink-700">{eyebrow}</p>}
-          <h2 className="mt-0.5 headline text-[28px] leading-8.5">{title}</h2>
+          {eyebrow && (
+            <p className="text-label font-semibold tracking-[0.1em] text-ink-500 uppercase">
+              {eyebrow}
+            </p>
+          )}
+          <h2 className="mt-1.5 type-display text-[30px] leading-9 tracking-tight">{title}</h2>
         </div>
         {aside}
       </div>
@@ -184,19 +214,63 @@ export function AppCard({
 }) {
   return (
     <section
-      className={cn(
-        "mb-3 rounded-card border border-border bg-surface p-4 surface-lift",
-        className,
-      )}
+      className={cn("mb-3 rounded-card border border-border bg-surface p-4 shadow-lift", className)}
     >
       {(title || action) && (
         <div className="mb-2.5 flex items-center justify-between gap-2">
-          {title && <h3 className="headline text-section">{title}</h3>}
+          {title && <h3 className="text-section font-semibold">{title}</h3>}
           {action}
         </div>
       )}
       {children}
     </section>
+  );
+}
+
+/** A small uppercase heading between groups of cards. */
+export function AppSection({ title, action }: { title: string; action?: ReactNode }) {
+  return (
+    <div className="mt-5 mb-2.5 flex items-center justify-between gap-2 px-1">
+      <h3 className="text-label font-semibold tracking-[0.1em] text-ink-500 uppercase">{title}</h3>
+      {action}
+    </div>
+  );
+}
+
+/** What a screen shows when there is nothing yet: never a blank screen. */
+export function AppEmpty({
+  icon: Icon,
+  title,
+  children,
+  action,
+  compact,
+}: {
+  icon: LucideIcon;
+  title: string;
+  children?: ReactNode;
+  action?: ReactNode;
+  compact?: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "mb-3 flex flex-col items-center rounded-card border border-dashed border-border-strong bg-surface text-center",
+        compact ? "px-5 py-5" : "px-6 py-9",
+      )}
+    >
+      <span
+        aria-hidden="true"
+        className={cn(
+          "flex items-center justify-center rounded-full bg-accent-tint text-accent ring-8 ring-accent-tint/40",
+          compact ? "mb-3 size-10" : "mb-4 size-12",
+        )}
+      >
+        <Icon className={compact ? "size-4.5" : "size-5.5"} strokeWidth={1.75} />
+      </span>
+      <p className="text-body font-semibold text-ink-900">{title}</p>
+      {children && <p className="mt-1 max-w-68 text-small text-ink-700">{children}</p>}
+      {action && <div className="mt-4">{action}</div>}
+    </div>
   );
 }
 
@@ -225,10 +299,10 @@ export function AppSheet({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="relative flex max-h-[88%] flex-col rounded-t-[28px] bg-surface-raised"
+        className="relative flex max-h-[88%] flex-col rounded-t-[28px] bg-raised"
       >
         <header className="flex items-center justify-between gap-3 px-5 pt-5 pb-3">
-          <h3 className="headline text-h2">{title}</h3>
+          <h3 className="text-section font-semibold text-ink-900">{title}</h3>
           <button
             type="button"
             onClick={onClose}
@@ -244,5 +318,95 @@ export function AppSheet({
         )}
       </div>
     </div>
+  );
+}
+
+/**
+ * A full portal screen inside the app: the same screen and data as the web, with the app's own
+ * back button. Pages opened here hide the desktop sidebar and top bar (html[data-embedded]).
+ */
+export function AppWebView({
+  title,
+  href,
+  onClose,
+}: {
+  title: string;
+  href: string;
+  onClose: () => void;
+}) {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <div className="absolute inset-0 z-40 flex flex-col bg-page">
+      <header className="flex items-center gap-3 border-b border-border bg-surface px-3 pt-12 pb-3">
+        <button
+          type="button"
+          aria-label="Back"
+          onClick={onClose}
+          className="flex size-9 cursor-pointer items-center justify-center rounded-full bg-sunken"
+        >
+          <ChevronLeft className="size-4.5" aria-hidden="true" />
+        </button>
+        <p className="min-w-0 flex-1 truncate text-body font-semibold text-ink-900">{title}</p>
+      </header>
+      <div className="relative min-h-0 flex-1">
+        {/* Behind the page: it shows until the page paints over it, not until every file loads. */}
+        {!loaded && (
+          <div className="absolute inset-0 flex flex-col gap-3 p-4" aria-hidden="true">
+            <div className="h-24 animate-pulse rounded-card bg-sunken" />
+            <div className="h-40 animate-pulse rounded-card bg-sunken" />
+            <div className="h-40 animate-pulse rounded-card bg-sunken" />
+          </div>
+        )}
+        <iframe
+          title={title}
+          src={href}
+          onLoad={() => setLoaded(true)}
+          allow="camera; microphone; display-capture; autoplay"
+          className="absolute inset-0 size-full border-0 bg-transparent"
+        />
+      </div>
+    </div>
+  );
+}
+
+export type BadgeTone =
+  "blue" | "orange" | "teal" | "violet" | "green" | "amber" | "red" | "indigo" | "ink";
+
+const badgeTones: Record<BadgeTone, string> = {
+  blue: "bg-series-1",
+  orange: "bg-series-2",
+  teal: "bg-series-3",
+  violet: "bg-series-4",
+  green: "bg-healthy",
+  amber: "bg-watch",
+  red: "bg-over",
+  indigo: "bg-available",
+  ink: "bg-ink-900",
+};
+
+/** A filled, rounded-square icon in one of the palette's colours: each kind of thing keeps its own. */
+export function IconBadge({
+  icon: Icon,
+  tone = "blue",
+  size = 40,
+  className,
+}: {
+  icon: LucideIcon;
+  tone?: BadgeTone;
+  size?: number;
+  className?: string;
+}) {
+  return (
+    <span
+      aria-hidden="true"
+      style={{ width: size, height: size }}
+      className={cn(
+        "flex flex-none items-center justify-center rounded-control text-page ring-1 ring-ink-900/5",
+        badgeTones[tone],
+        className,
+      )}
+    >
+      <Icon style={{ width: size * 0.46, height: size * 0.46 }} strokeWidth={2} />
+    </span>
   );
 }

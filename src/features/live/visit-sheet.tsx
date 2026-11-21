@@ -6,13 +6,15 @@ import {
   LogIn,
   LogOut,
   ShieldAlert,
-  Sparkles,
   Target,
   TriangleAlert,
+  WifiOff,
 } from "lucide-react";
-import { useState } from "react";
+import { AiIcon } from "@/components/ai/provenance";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet } from "@/components/ui/sheet";
+import { toast } from "@/components/ui/toast";
 import { api, useNow, useResource } from "@/lib/live/client";
 import { shortDate, slotLabel, timeOfDay } from "@/lib/live/time";
 import type { AppointmentDto } from "@/lib/live/types";
@@ -51,6 +53,43 @@ type Briefing = {
 const local = (iso: string) =>
   new Date(new Date(iso).getTime() + 10 * 3_600_000).toISOString().slice(0, 16);
 const fromLocal = (value: string) => new Date(`${value}:00+10:00`).toISOString();
+
+type SessionDraft = {
+  measures: Record<string, { value: string; note: string }>;
+  interventions: string;
+  response: string;
+  incidents: string;
+  followUp: string;
+};
+
+const draftKey = (id: string) => `ms-visit-draft-${id}`;
+
+function readDraft(id: string): { at: string; body: SessionDraft } | null {
+  try {
+    const raw = typeof window === "undefined" ? null : window.localStorage.getItem(draftKey(id));
+    return raw ? (JSON.parse(raw) as { at: string; body: SessionDraft }) : null;
+  } catch {
+    return null;
+  }
+}
+
+function subscribeOnline(listener: () => void) {
+  window.addEventListener("online", listener);
+  window.addEventListener("offline", listener);
+  return () => {
+    window.removeEventListener("online", listener);
+    window.removeEventListener("offline", listener);
+  };
+}
+
+/** True while the browser has a connection (AT-30). */
+function useOnline() {
+  return useSyncExternalStore(
+    subscribeOnline,
+    () => navigator.onLine,
+    () => true,
+  );
+}
 
 /**
  * The home, school or community visit (section 11): pre-visit summary, arrival check-in, the
@@ -93,6 +132,62 @@ export function VisitSheet({
   const [followUp, setFollowUp] = useState(visit.session?.followUp ?? "");
   const [reason, setReason] = useState("");
   const [remaining, setRemaining] = useState("");
+  const online = useOnline();
+  const saved: SessionDraft = {
+    measures: Object.fromEntries(
+      (visit.session?.goals ?? []).map((g) => [g.goalId, { value: g.value, note: g.note }]),
+    ),
+    interventions: visit.session?.interventions ?? "",
+    response: visit.session?.response ?? "",
+    incidents: visit.session?.incidents ?? "",
+    followUp: visit.session?.followUp ?? "",
+  };
+  const current: SessionDraft = { measures, interventions, response, incidents, followUp };
+  // A draft left on this device that differs from the saved visit: the clinician chooses (AT-30).
+  const [conflict, setConflict] = useState(() => {
+    const d = readDraft(visit.id);
+    return d && JSON.stringify(d.body) !== JSON.stringify(saved) ? d : null;
+  });
+  const [pendingSync, setPendingSync] = useState(() => Boolean(readDraft(visit.id)));
+  const syncing = useRef(false);
+
+  // Every change is kept on the device until the server has it.
+  useEffect(() => {
+    if (conflict) return;
+    if (JSON.stringify(current) === JSON.stringify(saved) && !readDraft(visit.id)) return;
+    try {
+      window.localStorage.setItem(
+        draftKey(visit.id),
+        JSON.stringify({ at: new Date().toISOString(), body: current }),
+      );
+    } catch {
+      // Storage full or blocked: the server save still works when online.
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the fields are the dependencies
+  }, [measures, interventions, response, incidents, followUp, conflict]);
+
+  // Back online with a draft waiting: send it, once.
+  useEffect(() => {
+    if (!online || !pendingSync || conflict || !checkedIn || syncing.current) return;
+    syncing.current = true;
+    const d = readDraft(visit.id);
+    if (!d) return;
+    api(`/api/visits/${visit.id}/session`, { body: bodyOf(d.body) })
+      .then(() => {
+        window.localStorage.removeItem(draftKey(visit.id));
+        setPendingSync(false);
+        toast("Offline notes synced", {
+          tone: "success",
+          detail: "Your draft is saved to the visit.",
+        });
+        onChanged();
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        syncing.current = false;
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs when the connection returns
+  }, [online, pendingSync, conflict, checkedIn]);
   const [busy, setBusy] = useState(false);
   const [fail, setFail] = useState<string | null>(null);
 
@@ -109,15 +204,22 @@ export function VisitSheet({
   }
 
   const b = data?.briefing;
-  const sessionBody = () => ({
-    goals: Object.entries(measures)
-      .filter(([, m]) => m.value || m.note)
-      .map(([goalId, m]) => ({ goalId, value: m.value, note: m.note })),
-    interventions,
-    response,
-    incidents,
-    followUp,
-  });
+  const sessionBody = () => bodyOf(current);
+  /** Saves to the visit; offline, keeps it on the device and syncs on reconnect. */
+  async function saveSession() {
+    if (!navigator.onLine) {
+      setPendingSync(true);
+      toast("Saved on this device", {
+        tone: "warning",
+        detail: "You're offline. It syncs to the visit when the connection is back.",
+      });
+      return false;
+    }
+    await api(`/api/visits/${visit.id}/session`, { body: sessionBody() });
+    window.localStorage.removeItem(draftKey(visit.id));
+    setPendingSync(false);
+    return true;
+  }
 
   const footer =
     stage === "brief" ? (
@@ -150,10 +252,11 @@ export function VisitSheet({
       <>
         <Button
           variant="primary"
-          disabled={busy}
+          disabled={busy || !online}
+          title={online ? undefined : "Check out once you're back online"}
           onClick={() =>
             run(async () => {
-              await api(`/api/visits/${visit.id}/session`, { body: sessionBody() });
+              if (!(await saveSession())) return;
               await api(`/api/visits/${visit.id}/checkout`, {
                 body: late ? { at: fromLocal(outAt) } : {},
               });
@@ -169,12 +272,11 @@ export function VisitSheet({
           disabled={busy}
           onClick={() =>
             run(async () => {
-              await api(`/api/visits/${visit.id}/session`, { body: sessionBody() });
-              onChanged();
+              if (await saveSession()) onChanged();
             })
           }
         >
-          Save progress
+          {online ? "Save progress" : "Save on this device"}
         </Button>
         <Button variant="ghost" onClick={() => setStage("end")}>
           End early
@@ -233,6 +335,64 @@ export function VisitSheet({
         ))}
       </ol>
 
+      {!online && (
+        <p
+          role="status"
+          className="mb-4 flex items-center gap-2 rounded-control bg-watch-bg px-3 py-2 text-small text-ink-900"
+        >
+          <WifiOff className="size-4 flex-none text-watch" aria-hidden="true" />
+          Offline. Your notes are kept on this device and sync when the connection is back.
+        </p>
+      )}
+      {online && pendingSync && !conflict && (
+        <p
+          role="status"
+          className="mb-4 rounded-control bg-accent-tint px-3 py-2 text-small text-ink-900"
+        >
+          Syncing notes saved on this device…
+        </p>
+      )}
+      {conflict && (
+        <div
+          role="alert"
+          className="mb-4 rounded-card border border-watch/40 bg-watch-bg p-4 text-small text-ink-900"
+        >
+          <p className="font-semibold">Notes on this device differ from the saved visit</p>
+          <p className="mt-0.5 text-ink-700">
+            Saved on this device{" "}
+            {new Date(conflict.at).toLocaleString("en-AU", { timeZone: "Australia/Brisbane" })}.
+            Nothing has been overwritten. Choose which to keep.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              variant="primary"
+              onClick={() => {
+                setMeasures(conflict.body.measures);
+                setInterventions(conflict.body.interventions);
+                setResponse(conflict.body.response);
+                setIncidents(conflict.body.incidents);
+                setFollowUp(conflict.body.followUp);
+                setConflict(null);
+                setPendingSync(true);
+              }}
+            >
+              Use this device&apos;s notes
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                window.localStorage.removeItem(draftKey(visit.id));
+                setConflict(null);
+                setPendingSync(false);
+              }}
+            >
+              Keep the saved version
+            </Button>
+          </div>
+        </div>
+      )}
       {error && !b ? (
         <ErrorNote message={error} onRetry={reload} />
       ) : !b ? (
@@ -281,9 +441,12 @@ export function VisitSheet({
               </section>
               <AiBriefing visitId={visit.id} />
               {b.precautions && (
-                <p className="flex gap-2 rounded-control bg-over-bg px-3 py-2 text-small">
+                <p className="flex gap-2 rounded-control border border-over bg-over-bg px-3 py-2 text-small text-ink-900">
                   <ShieldAlert className="mt-0.5 size-4 flex-none text-over" aria-hidden="true" />
-                  {b.precautions}
+                  <span>
+                    <strong className="font-bold text-over">Precaution: </strong>
+                    {b.precautions}
+                  </span>
                 </p>
               )}
               <h3 className="text-body font-semibold">On arrival</h3>
@@ -316,7 +479,7 @@ export function VisitSheet({
                     type="datetime-local"
                     value={inAt}
                     onChange={(e) => setInAt(e.target.value)}
-                    className="h-9 rounded-control border border-border-strong bg-surface-raised px-3 text-small"
+                    className="h-9 rounded-control border border-border-strong bg-raised px-3 text-small"
                   />
                 </label>
               )}
@@ -406,7 +569,7 @@ export function VisitSheet({
                     type="datetime-local"
                     value={outAt}
                     onChange={(e) => setOutAt(e.target.value)}
-                    className="h-9 rounded-control border border-border-strong bg-surface-raised px-3 text-small"
+                    className="h-9 rounded-control border border-border-strong bg-raised px-3 text-small"
                   />
                 </label>
               )}
@@ -471,7 +634,7 @@ function AiBriefing({ visitId }: { visitId: string }) {
             }
           }}
         >
-          <Sparkles className="size-3.5" aria-hidden="true" />
+          <AiIcon className="size-3.5" />
           {busy ? "Preparing…" : "AI briefing"}
         </Button>
         {fail && <p className="mt-1 text-caption text-over">{fail}</p>}
@@ -484,8 +647,7 @@ function AiBriefing({ visitId }: { visitId: string }) {
       className="rounded-card border border-accent/30 bg-accent-tint p-4 text-small"
     >
       <p className="mb-2 flex items-center gap-2 font-semibold">
-        <Sparkles className="size-4 text-accent" aria-hidden="true" /> AI briefing · check before
-        relying on it
+        <AiIcon className="size-4" /> AI briefing · check before relying on it
       </p>
       <ul className="flex flex-col gap-1.5">
         {data.points.map((p) => (
@@ -501,4 +663,16 @@ function AiBriefing({ visitId }: { visitId: string }) {
       )}
     </section>
   );
+}
+
+function bodyOf(d: SessionDraft) {
+  return {
+    goals: Object.entries(d.measures)
+      .filter(([, m]) => m.value || m.note)
+      .map(([goalId, m]) => ({ goalId, value: m.value, note: m.note })),
+    interventions: d.interventions,
+    response: d.response,
+    incidents: d.incidents,
+    followUp: d.followUp,
+  };
 }

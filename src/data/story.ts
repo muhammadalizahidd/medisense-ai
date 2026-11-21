@@ -321,8 +321,8 @@ export const roadmap = [
     why: "Therapists work from cars and patient homes, so this comes first.",
     modules: [
       {
-        name: "Staff mobile app",
-        href: "/mobile/staff",
+        name: "Therapist mobile app",
+        href: "/mobile/therapist",
         does: "My day, AI dictation and note approval, with visits available offline.",
       },
       {

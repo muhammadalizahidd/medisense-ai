@@ -1,15 +1,19 @@
+import type { Appearance } from "@/app/theme-script";
 import type {
   CaseloadStatus,
   Discipline,
   DocumentKind,
+  DocumentStatus,
   Frequency,
   FundingStream,
   Region,
   ServiceLocation,
   StaffRole,
   SubmitterRole,
+  ServiceDecision,
   Support,
 } from "./catalogue";
+import type { ParticipantStatus } from "./participant";
 import type { Gap, ReferralInput, ReferralStatus } from "./referral";
 
 /** JSON shapes the API returns. Dates are ISO strings. */
@@ -22,6 +26,35 @@ export type SessionUser = {
   email: string;
   role: Role;
   staffRoles: StaffRole[];
+  appearance: Appearance | null;
+  /** Signed in with a temporary password: they set their own before going on. */
+  mustChangePassword?: boolean;
+};
+
+/** User control lists staff logins only; patients sign in by MRN and are managed from their record. */
+export type UserKind = "Office staff" | "Therapist";
+export type UserStatus = "Active" | "Must set password" | "Never signed in" | "Deactivated";
+
+/** One account in User control. */
+export type UserAccountDto = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  kind: UserKind;
+  staffRoles: StaffRole[];
+  status: UserStatus;
+  lastSignInAt: string | null;
+  createdAt: string;
+  createdBy: string | null;
+  /** A therapist's staff record; null for office staff. */
+  href: string | null;
+  isSelf: boolean;
+};
+
+export type UserControlDto = {
+  users: UserAccountDto[];
+  superAdmins: number;
 };
 
 export type NeedStatus = "needs-therapist" | "waiting" | "assigned" | "completed";
@@ -42,12 +75,21 @@ export type ClientStage = "Needs a therapist" | "Waiting for therapist" | "Activ
 export type ClientSummaryDto = {
   id: string;
   name: string;
+  /** Uploaded profile photo; null falls back to the default photo or initials. */
+  photoUrl: string | null;
   suburb: string;
   region: Region;
   funding: FundingStream;
   needs: NeedDto[];
   stage: ClientStage;
   createdAt: string;
+  mrn: string | null;
+  phone: string | null;
+  /** Module 03 participant status, separate from each service. */
+  participantStatus: ParticipantStatus;
+  /** Profile completeness, 0–100; null before the profile is built. */
+  completeness: number | null;
+  missing: string[];
 };
 
 export type VisitStatus =
@@ -121,6 +163,11 @@ export type AssignmentDto = {
 
 export type DocumentDto = {
   id: string;
+  status?: DocumentStatus;
+  version?: number;
+  supersedes?: string | null;
+  replacedBy?: string | null;
+  review?: { byName: string; at: string; reason: string } | null;
   kind: DocumentKind;
   name: string;
   size: number;
@@ -129,6 +176,8 @@ export type DocumentDto = {
 };
 
 export type ClientDetailDto = ClientSummaryDto & {
+  /** Medical record number; the patient signs in to the app with it. */
+  mrn: string | null;
   precautions: string | null;
   documents: DocumentDto[];
   referrals: { id: string; reference: string }[];
@@ -221,6 +270,7 @@ export type TherapistHomeDto = {
 
 export type ClientHomeDto = {
   name: string;
+  mrn: string | null;
   phone: string | null;
   emergencyContact: { name: string; relationship: string; phone: string } | null;
   discharged: { at: string; reason: string } | null;
@@ -282,6 +332,15 @@ export type ConversationDto = {
   unread: number;
 };
 
+/** A file sent in a conversation: a document, photo, video clip or voice note. */
+export type MessageAttachment = {
+  kind: "document" | "image" | "video" | "audio";
+  name: string;
+  url: string;
+  mime: string;
+  size: number;
+};
+
 export type MessageDto = {
   id: string;
   conversationId: string;
@@ -291,6 +350,7 @@ export type MessageDto = {
   createdAt: string;
   /** True once the other person has opened the conversation after it was sent. */
   seen: boolean;
+  attachment: MessageAttachment | null;
 };
 
 export type LiveEvent =
@@ -322,7 +382,17 @@ export type TimeOffDto = { id: string; from: string; to: string; reason: string 
 
 export type TherapistCardDto = {
   id: string;
+  /** Uploaded profile photo; null falls back to the default photo or initials. */
+  photoUrl: string | null;
   active: boolean;
+  /** Module 04. */
+  staffId: string | null;
+  engagement: string;
+  approvedServices: string[];
+  /** Hard stops now (status, credentials); empty when they can take new patients. */
+  blocks: string[];
+  /** Days until the soonest required credential expires; null when none expire. */
+  credentialDays: number | null;
   registrationExpiry: string | null;
   name: string;
   discipline: Discipline;
@@ -333,6 +403,24 @@ export type TherapistCardDto = {
   capacity: number;
   availability: AvailabilitySummary;
   rating: { average: number; count: number } | null;
+  /** Sessions delivered so far, booked ahead, and how many patients they've seen. */
+  sessions: { completed: number; upcoming: number; patients: number };
+};
+
+/** One session on a therapist's record, with everything that hangs off it. */
+export type TherapistSessionDto = {
+  id: string;
+  ref: string | null;
+  start: string;
+  patientId: string;
+  patient: string;
+  discipline: string;
+  modality: "In person" | "Telehealth";
+  status: string;
+  minutes: number | null;
+  note: "Signed" | "Draft" | "Pending Signature" | "Amended" | "Not written" | null;
+  recording: { status: string; playable: boolean } | null;
+  rating: number | null;
 };
 
 export type TherapistDetailDto = TherapistCardDto & {
@@ -349,7 +437,11 @@ export type TherapistDetailDto = TherapistCardDto & {
     discipline: Discipline;
     since: string;
     discharged: boolean;
+    /** Sessions delivered to this patient, and the latest one. */
+    sessions: number;
+    lastSession: string | null;
   }[];
+  sessionLog: TherapistSessionDto[];
   feedback: { rating: number; comment: string; at: string; patient: string; visit: string }[];
   history: { id: string; action: string; at: string }[];
 };
@@ -420,6 +512,17 @@ export type ReferralDetailDto = ReferralSummaryDto & {
   } | null;
   outcome: { reason: string; byName: string; at: string } | null;
   clientId: string | null;
+  mrn: string | null;
+  /** Intake's decision for each requested support; empty until the referral is accepted. */
+  services: {
+    index: number;
+    support: string;
+    decision: ServiceDecision;
+    reason: string;
+    needId: string | null;
+    byName: string;
+    at: string;
+  }[];
   documents: DocumentDto[];
   history: { status: ReferralStatus; byName: string; note: string; at: string }[];
   activity: { id: string; action: string; actor: string; at: string }[];

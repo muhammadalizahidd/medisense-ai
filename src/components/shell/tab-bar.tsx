@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Sheet } from "@/components/ui/sheet";
 import { cn } from "@/lib/cn";
 import { isActive, isStandalone, navigationFor } from "@/lib/navigation";
+import { useSession } from "@/lib/live/client";
 import { useDemoStore } from "@/state/demo-store";
 import { darkFocus } from "./sidebar";
 
@@ -15,7 +16,11 @@ export function TabBar() {
   const pathname = usePathname();
   const role = useDemoStore((s) => s.role);
   const [more, setMore] = useState(false);
-  const groups = navigationFor(role);
+  const { user: account } = useSession();
+  // The live sections come first, as in the sidebar, so the real workflow is one tap away.
+  const groups = navigationFor(role, account?.role === "admin" ? account.staffRoles : null, {
+    liveOnly: Boolean(account),
+  });
   const items = groups.flatMap((g) => g.items).slice(0, 4);
 
   if (isStandalone(pathname)) return null;
@@ -25,7 +30,7 @@ export function TabBar() {
       <nav
         aria-label="Primary, phone"
         style={darkFocus}
-        className="sticky bottom-0 z-20 grid h-16 flex-none grid-cols-5 border-t border-sidebar-border bg-sidebar md:hidden"
+        className="sticky bottom-0 z-20 grid h-16 flex-none grid-cols-5 border-t border-sidebar-border bg-sidebar md:hidden print:hidden"
       >
         {items.map(({ href, label, icon: Icon }) => {
           const active = isActive(pathname, href);
@@ -58,7 +63,7 @@ export function TabBar() {
           <nav aria-label="All screens" className="flex flex-col gap-4">
             {groups.map(({ group, items: links }) => (
               <div key={group}>
-                <h3 className="mb-1 text-caption font-semibold text-ink-500">{group}</h3>
+                <h3 className="mb-1 label-caps">{group}</h3>
                 {links.map(({ href, label, icon: Icon }) => (
                   <Link
                     key={href}

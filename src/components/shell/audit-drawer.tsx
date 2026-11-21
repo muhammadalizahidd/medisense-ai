@@ -46,12 +46,12 @@ export function AuditDrawer({ open, onClose }: { open: boolean; onClose: () => v
         role="dialog"
         aria-modal="true"
         aria-label="Audit trail"
-        className="fixed inset-y-0 right-0 z-41 flex w-105 max-w-full flex-col rounded-l-sheet border-l border-border bg-surface-raised shadow-overlay"
+        className="fixed inset-y-0 right-0 z-41 flex w-105 max-w-full flex-col rounded-l-sheet border-l border-border bg-raised shadow-overlay"
       >
         <div className="flex items-start justify-between gap-3 border-b border-border px-6 pt-6 pb-5">
           <div>
-            <p className="eyebrow">Audit trail</p>
-            <h2 className="mt-1.5 headline text-h2">Recent activity</h2>
+            <p className="label-caps">Audit trail</p>
+            <h2 className="mt-1.5 type-display text-h2">Recent activity</h2>
             <p className="mt-1 text-small text-ink-700">
               Every AI generation and every human approval is recorded.
             </p>
@@ -70,7 +70,7 @@ export function AuditDrawer({ open, onClose }: { open: boolean; onClose: () => v
         <div className="flex-1 overflow-y-auto px-6 pt-5 pb-6">
           {groups.map(({ day, items }) => (
             <div key={day} className="mb-5">
-              <div className="mb-3 eyebrow">{auditDayLabels[day] ?? day}</div>
+              <div className="mb-3 label-caps">{auditDayLabels[day] ?? day}</div>
               <ol className="ml-11.5 border-l border-border">
                 {items.map((e) => (
                   <li key={e.id} className="relative flex gap-3.5 pb-4.5 pl-4.5">
@@ -81,17 +81,17 @@ export function AuditDrawer({ open, onClose }: { open: boolean; onClose: () => v
                       aria-hidden="true"
                       className={cn(
                         "absolute top-1.5 -left-1 size-1.75 rounded-full",
-                        e.isAi ? "bg-brass" : "bg-accent",
+                        e.isAi ? "bg-ink-700" : "bg-accent",
                       )}
                     />
                     <div className="flex min-w-0 flex-col gap-0.5">
                       <div
                         className={cn(
                           "flex items-center gap-1.5 text-small font-semibold",
-                          e.isAi ? "text-brass" : "text-ink-900",
+                          e.isAi ? "text-ink-700" : "text-ink-900",
                         )}
                       >
-                        {e.isAi && <PenNib className="size-3.5 text-brass" />}
+                        {e.isAi && <PenNib className="size-3.5 text-ink-700" />}
                         {e.actor}
                       </div>
                       <div className="text-small text-ink-900">{e.action}</div>

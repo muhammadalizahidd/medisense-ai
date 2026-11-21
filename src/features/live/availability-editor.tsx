@@ -255,7 +255,7 @@ export function AvailabilityEditor({
         >
           Saved. The care team now sees: {saved.availability.pattern}.
           {saved.clashes.length > 0 && (
-            <span className="mt-1 block text-monitor">
+            <span className="mt-1 block text-watch">
               {saved.clashes.length} booked{" "}
               {saved.clashes.length === 1 ? "visit falls" : "visits fall"} outside your new hours:{" "}
               {saved.clashes.map((c) => `${c.patient}, ${c.when}`).join("; ")}. Use Cancel or change

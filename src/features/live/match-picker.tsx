@@ -1,6 +1,7 @@
 "use client";
 
-import { CalendarClock, CalendarOff, Send, Wand2 } from "lucide-react";
+import { CalendarClock, CalendarOff, Send } from "lucide-react";
+import { RuleIcon } from "@/components/ai/provenance";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -11,11 +12,12 @@ import { shortDate, slotLabel, timeOfDay } from "@/lib/live/time";
 import type { MatchDto } from "@/lib/live/types";
 import { cn } from "@/lib/cn";
 import { CaseloadTag, EmptyNote, ErrorNote, Skeleton } from "./bits";
+import { TextArea } from "./form-bits";
 
 const reasonTone = {
   good: "bg-healthy-bg text-healthy",
   neutral: "bg-canvas text-ink-700",
-  warn: "bg-monitor-bg text-monitor",
+  warn: "bg-watch-bg text-watch",
 };
 
 /** Ranked therapists for one therapy, with their open times. Picking a time sends the request. */
@@ -39,6 +41,8 @@ export function MatchPicker({
   const [choice, setChoice] = useState<{ therapist: MatchDto; start: string } | null>(null);
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [override, setOverride] = useState("");
+  const [needsReason, setNeedsReason] = useState(false);
 
   if (error && !data) return <ErrorNote message={error} onRetry={reload} />;
   if (loading && !data) {
@@ -76,13 +80,22 @@ export function MatchPicker({
     setSendError(null);
     try {
       await api(`/api/care/clients/${clientId}/requests`, {
-        body: { needId, therapistId: choice.therapist.therapistId, start: choice.start },
+        body: {
+          needId,
+          therapistId: choice.therapist.therapistId,
+          start: choice.start,
+          overrideReason: override.trim() || undefined,
+        },
       });
       setChoice(null);
+      setOverride("");
+      setNeedsReason(false);
       onSent();
     } catch (e) {
-      setSendError(e instanceof Error ? e.message : "Couldn't send the request.");
-      reload();
+      const message = e instanceof Error ? e.message : "Couldn't send the request.";
+      if (/override/i.test(message)) setNeedsReason(true);
+      else reload();
+      setSendError(message);
     } finally {
       setSending(false);
     }
@@ -96,7 +109,7 @@ export function MatchPicker({
           caseload health and how soon they can start. Choose a time to send the request.
         </p>
         <Button size="sm" disabled={sending} onClick={autoAllocate}>
-          <Wand2 className="size-3.5" aria-hidden="true" />
+          <RuleIcon className="size-3.5" />
           Auto-allocate (low-risk rule)
         </Button>
       </div>
@@ -118,12 +131,12 @@ export function MatchPicker({
                 <p className="flex flex-wrap items-center gap-2 text-small font-semibold">
                   {m.name}
                   {!m.eligible && (
-                    <span className="rounded-tag bg-over-bg px-1.5 py-0.5 text-eyebrow text-over">
+                    <span className="rounded-tag bg-over-bg px-1.5 py-0.5 text-label text-over">
                       Unavailable
                     </span>
                   )}
                   {index === 0 && m.eligible && (
-                    <span className="rounded-tag bg-accent-fill px-1.5 py-0.5 text-eyebrow text-on-accent">
+                    <span className="rounded-tag bg-accent-fill px-1.5 py-0.5 text-label text-on-accent">
                       Best match
                     </span>
                   )}
@@ -140,7 +153,7 @@ export function MatchPicker({
                   {m.availability.away.map((a) => (
                     <span
                       key={`${a.from}-${a.to}`}
-                      className="inline-flex items-center gap-1 text-monitor"
+                      className="inline-flex items-center gap-1 text-watch"
                     >
                       <CalendarOff className="size-3.5" aria-hidden="true" />
                       Away {shortDate(`${a.from}T00:00:00+10:00`)}
@@ -214,8 +227,20 @@ export function MatchPicker({
           {sendError}
         </p>
       )}
+      {needsReason && (
+        <div className="mt-3">
+          <TextArea
+            label="Why not one of the top three suggestions?"
+            required
+            rows={2}
+            value={override}
+            onChange={setOverride}
+            hint="Recorded with the request. Eligibility itself can't be overridden."
+          />
+        </div>
+      )}
       {choice && (
-        <div className="sticky bottom-4 mt-4 flex flex-wrap items-center justify-between gap-3 rounded-control border border-accent bg-surface-raised px-4 py-3 shadow-overlay">
+        <div className="sticky bottom-4 mt-4 flex flex-wrap items-center justify-between gap-3 rounded-control border border-accent bg-raised px-4 py-3 shadow-overlay">
           <p className="text-small">
             Ask <strong>{choice.therapist.name}</strong> to take this patient, first visit{" "}
             <strong>{slotLabel(choice.start)}</strong>. The time is held until they reply.

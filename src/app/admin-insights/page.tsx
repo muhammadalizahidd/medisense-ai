@@ -42,7 +42,7 @@ export default function AdminInsightsPage() {
           className="flex flex-col overflow-hidden lg:col-span-7"
         >
           <div className="border-b border-border px-5 pt-5 pb-4">
-            <h2 id="opportunities" className="headline text-h2">
+            <h2 id="opportunities" className="text-section font-semibold text-ink-900">
               Safe automation opportunities
             </h2>
             <Caption className="mt-1">
@@ -60,7 +60,7 @@ export default function AdminInsightsPage() {
                 <div className="text-small text-ink-700">{o.description}</div>
               </div>
               <div className="flex items-center gap-2.5">
-                <div className="relative h-1.5 flex-1 rounded-full bg-surface-sunken">
+                <div className="relative h-1.5 flex-1 rounded-full bg-sunken">
                   <span
                     className="absolute inset-y-0 left-0 rounded-full bg-accent"
                     style={{ width: `${(o.hours / maxHours) * 100}%` }}
@@ -71,10 +71,12 @@ export default function AdminInsightsPage() {
               <Tag tone={o.live ? "live" : "neutral"}>{o.live ? "Live" : "Available"}</Tag>
             </div>
           ))}
-          <div className="mt-auto flex flex-wrap items-baseline justify-between gap-3 bg-surface-sunken px-5 py-4">
-            <span className="eyebrow">Total</span>
+          <div className="mt-auto flex flex-wrap items-baseline justify-between gap-3 bg-sunken px-5 py-4">
+            <span className="label-caps">Total</span>
             <span>
-              <span className="headline text-stat font-normal">{automationTotal.hours}</span>{" "}
+              <span className="type-display text-h1-compact font-normal">
+                {automationTotal.hours}
+              </span>{" "}
               <span className="text-small text-ink-700">{automationTotal.fte}</span>{" "}
               <span className="ml-1.5 text-caption font-medium text-ink-500">· Estimate</span>
             </span>
@@ -90,12 +92,12 @@ export default function AdminInsightsPage() {
 
         <section
           aria-label="Guardrails"
-          className="stat-band grid gap-px overflow-hidden rounded-card border border-border bg-border lg:col-span-12 lg:grid-cols-3"
+          className="grid gap-px overflow-hidden rounded-card border border-border bg-border lg:col-span-12 lg:grid-cols-3"
         >
           {guardrails.map((g, i) => (
             <div key={g.title} className="flex flex-col gap-2 bg-surface px-6 py-5.5">
-              <span className="eyebrow">Guardrail {i + 1}</span>
-              <span className="headline text-h2 font-normal">{g.title}</span>
+              <span className="label-caps">Guardrail {i + 1}</span>
+              <span className="type-display text-h2 font-normal">{g.title}</span>
               <span className="text-small text-ink-700">{g.body}</span>
             </div>
           ))}

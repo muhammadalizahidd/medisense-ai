@@ -1,5 +1,6 @@
 import "server-only";
-import { createHash, randomBytes, randomInt, randomUUID } from "node:crypto";
+import { carryReferralPhoto } from "./photos";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { Binary, ObjectId } from "mongodb";
 import { z } from "zod";
 import { generateJson } from "@/lib/ai/engine";
@@ -14,6 +15,8 @@ import {
   type Discipline,
   type DocumentKind,
   type Region,
+  referralReferenceFor,
+  serviceDecisions,
 } from "@/lib/live/catalogue";
 import {
   canMove,
@@ -29,11 +32,18 @@ import {
 } from "@/lib/live/referral";
 import type { PublicReferralDto, ReferralDetailDto, ReferralSummaryDto } from "@/lib/live/types";
 import { brisbaneDay } from "@/lib/live/time";
-import { newInviteCode } from "./auth";
 import { collections } from "./db";
+import { mrnAccess, mrnHash, nextMrn } from "./mrn";
 import { UserFacingError } from "./http";
 import { adminIds, notify, publish } from "./live";
-import type { ClientDoc, ClientNeed, DocumentDoc, ReferralDoc, UserDoc } from "./models";
+import type {
+  ClientDoc,
+  ClientNeed,
+  DocumentDoc,
+  ReferralDoc,
+  ServiceRecord,
+  UserDoc,
+} from "./models";
 
 const sha256 = (value: string) => createHash("sha256").update(value).digest("hex");
 
@@ -60,11 +70,6 @@ export function regionForPostcode(postcode: string): Region | null {
   if (n >= 4100 && n <= 4299) return "Brisbane South";
   if ((n >= 4000 && n <= 4099) || (n >= 4500 && n <= 4599)) return "Brisbane North";
   return null;
-}
-
-function newReference() {
-  const alphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
-  return `MSR-${Array.from({ length: 6 }, () => alphabet[randomInt(alphabet.length)]).join("")}`;
 }
 
 const fullName = (r: ReferralInput) =>
@@ -140,6 +145,11 @@ async function storeFiles(
     data: new Binary(f.bytes),
     uploadedBy,
     at: new Date(),
+    status: "Pending review",
+    version: 1,
+    supersedes: null,
+    replacedBy: null,
+    review: null,
   }));
   await documents.insertMany(docs);
   return docs;
@@ -168,7 +178,19 @@ async function tellAdmins(referralId: ObjectId, note?: { title: string; body: st
  * Lifecycle phases 1–2: a referral arrives (from anyone, no account needed), gets a reference and
  * a private tracking link, and the completeness and duplicate checks run straight away.
  */
-export async function submitReferral(raw: unknown, files: IncomingFile[], staff: UserDoc | null) {
+/** A referral sent by a signed-in patient: filed under their MRN and linked to their record. */
+async function patientReference(mrn: string, skip = 0) {
+  const { referrals } = await collections();
+  const taken = (await referrals.countDocuments({ mrn })) + skip;
+  return taken ? `${referralReferenceFor(mrn)}-${taken + 1}` : referralReferenceFor(mrn);
+}
+
+export async function submitReferral(
+  raw: unknown,
+  files: IncomingFile[],
+  staff: UserDoc | null,
+  patient: ClientDoc | null = null,
+) {
   const input = referralSchema.parse(raw);
   if (input.participant.dateOfBirth > brisbaneDay(new Date()).toISOString().slice(0, 10)) {
     throw new UserFacingError("The date of birth can't be in the future.");
@@ -176,18 +198,23 @@ export async function submitReferral(raw: unknown, files: IncomingFile[], staff:
   if (files.length > MAX_FILES) throw new UserFacingError(`Attach up to ${MAX_FILES} files.`);
   files.forEach(checkFile);
 
-  const { referrals } = await collections();
+  const { referrals, db } = await collections();
   const _id = new ObjectId();
   const token = randomBytes(24).toString("base64url");
   const now = new Date();
+  // A signed-in patient keeps their MRN, so the referral shows in their app straight away.
+  const known = patient?.mrn ? patient : null;
+  let mrn = known?.mrn ?? (await nextMrn(db, now));
   const stored = await storeFiles(files, { referralId: _id, clientId: null }, input.submitter.name);
   const gaps = completenessGaps(input, stored);
   const duplicates = await findDuplicates(input, _id);
   const by = staff?.name ?? input.submitter.name;
   const doc: ReferralDoc = {
     _id,
-    reference: newReference(),
+    reference: known ? await patientReference(mrn) : referralReferenceFor(mrn),
+    mrn,
     trackingHash: sha256(token),
+    access: { codeHash: mrnHash(mrn), ...mrnAccess(now) },
     status: "Under Admin Review",
     data: input,
     region: regionForPostcode(
@@ -198,7 +225,10 @@ export async function submitReferral(raw: unknown, files: IncomingFile[], staff:
     gaps,
     infoRequests: [],
     duplicates,
-    duplicateDecision: null,
+    // The patient signed in with their MRN, so this is them: no duplicate to decide.
+    duplicateDecision: known
+      ? { clientId: known._id, byName: "Signed-in patient (MRN verified)", at: now }
+      : null,
     owner: staff ? { id: staff._id, name: staff.name } : null,
     triage: null,
     fundingReview: null,
@@ -225,8 +255,15 @@ export async function submitReferral(raw: unknown, files: IncomingFile[], staff:
       await referrals.insertOne(doc);
       break;
     } catch (error) {
+      if (attempt < 3 && (error as { code?: number }).code === 11000 && known) {
+        doc.reference = await patientReference(mrn, attempt + 1);
+        continue;
+      }
       if (attempt < 3 && (error as { code?: number }).code === 11000) {
-        doc.reference = newReference();
+        mrn = await nextMrn(db, now);
+        doc.mrn = mrn;
+        doc.reference = referralReferenceFor(mrn);
+        doc.access = { codeHash: mrnHash(mrn), ...mrnAccess(now) };
         continue;
       }
       throw error;
@@ -239,7 +276,14 @@ export async function submitReferral(raw: unknown, files: IncomingFile[], staff:
       gaps.length ? `${gaps.length} to confirm.` : "Complete."
     }${duplicates.length ? " Possible duplicate." : ""}`,
   });
-  return { id: _id.toHexString(), reference: doc.reference, trackingToken: token };
+  return {
+    id: _id.toHexString(),
+    reference: doc.reference,
+    trackingToken: token,
+    /** The MRN: the family signs in to the patient app with it. */
+    appCode: mrn,
+    appEmail: (input.participant.email || input.booking.email).toLowerCase(),
+  };
 }
 
 async function byToken(token: string) {
@@ -251,7 +295,10 @@ async function byToken(token: string) {
 
 /** What the tracking link shows: the status and anything asked for, never the referral's content. */
 export async function trackReferral(token: string): Promise<PublicReferralDto> {
-  const r = await byToken(token);
+  return publicView(await byToken(token));
+}
+
+function publicView(r: ReferralDoc): PublicReferralDto {
   const open = r.infoRequests.find((q) => !q.answeredAt);
   return {
     reference: r.reference,
@@ -297,7 +344,18 @@ async function setStatus(
 
 /** The submitter answers a request for information through their secure link. */
 export async function answerInfoRequest(token: string, answer: string, files: IncomingFile[]) {
-  const referral = await byToken(token);
+  await answerInfo(await byToken(token), answer, files);
+}
+
+/** A signed-in patient's own referral, found by its reference and their MRN. */
+export async function patientReferral(mrn: string, reference: string) {
+  const { referrals } = await collections();
+  const referral = await referrals.findOne({ reference, mrn });
+  if (!referral) throw new UserFacingError("Referral not found.", 404);
+  return referral;
+}
+
+export async function answerInfo(referral: ReferralDoc, answer: string, files: IncomingFile[]) {
   const open = referral.infoRequests.find((q) => !q.answeredAt);
   if (!open || referral.status !== "Needs Information") {
     throw new UserFacingError("There's nothing waiting for an answer.", 409);
@@ -313,7 +371,10 @@ export async function answerInfoRequest(token: string, answer: string, files: In
   );
   const { referrals, documents } = await collections();
   const allDocs = await documents
-    .find({ referralId: referral._id }, { projection: { kind: 1 } })
+    .find(
+      { referralId: referral._id, status: { $nin: ["Rejected", "Superseded"] } },
+      { projection: { kind: 1 } },
+    )
     .toArray();
   const now = new Date();
   await referrals.updateOne(
@@ -347,25 +408,39 @@ export async function answerInfoRequest(token: string, answer: string, files: In
 }
 
 export async function withdrawByToken(token: string) {
-  const referral = await byToken(token);
-  const updated = await setStatus(
-    referral,
-    "Withdrawn",
-    referral.data.submitter.name,
-    "By the submitter",
-    {
-      outcome: {
-        reason: "Withdrawn by the submitter",
-        byName: referral.data.submitter.name,
-        at: new Date(),
-      },
+  await withdrawReferral(await byToken(token), "Withdrawn by the submitter");
+}
+
+export async function withdrawReferral(referral: ReferralDoc, reason: string) {
+  const updated = await setStatus(referral, "Withdrawn", referral.data.submitter.name, reason, {
+    outcome: {
+      reason,
+      byName: referral.data.submitter.name,
+      at: new Date(),
     },
-  );
+  });
   await log(referral.data.submitter.name, null, "Withdrew the referral", updated);
   await tellAdmins(referral._id, {
     title: `Referral ${referral.reference} withdrawn`,
-    body: "The submitter withdrew it through their tracking link.",
+    body: reason,
   });
+}
+
+/** A stored file as staff see it, with its review state and version. */
+export function documentDto(d: Omit<DocumentDoc, "data">) {
+  return {
+    id: d._id.toHexString(),
+    status: d.status ?? "Pending review",
+    version: d.version ?? 1,
+    supersedes: d.supersedes?.toHexString() ?? null,
+    replacedBy: d.replacedBy?.toHexString() ?? null,
+    review: d.review ? { ...d.review, at: d.review.at.toISOString() } : null,
+    kind: d.kind,
+    name: d.name,
+    size: d.size,
+    uploadedBy: d.uploadedBy,
+    at: d.at.toISOString(),
+  };
 }
 
 function summary(r: ReferralDoc): ReferralSummaryDto {
@@ -443,14 +518,9 @@ export async function referralDetail(id: ObjectId, viewer: UserDoc): Promise<Ref
       : null,
     outcome: r.outcome ? { ...r.outcome, at: r.outcome.at.toISOString() } : null,
     clientId: r.clientId?.toHexString() ?? null,
-    documents: docs.map((d) => ({
-      id: d._id.toHexString(),
-      kind: d.kind,
-      name: d.name,
-      size: d.size,
-      uploadedBy: d.uploadedBy,
-      at: d.at.toISOString(),
-    })),
+    mrn: r.mrn ?? null,
+    services: (r.services ?? []).map((x) => ({ ...x, at: x.at.toISOString() })),
+    documents: docs.map(documentDto),
     history: r.history.map((h) => ({ ...h, at: h.at.toISOString() })),
     activity: activity.map((a) => ({
       id: a._id.toHexString(),
@@ -496,6 +566,24 @@ export const referralActionSchema = z.discriminatedUnion("type", [
     type: z.literal("accept"),
     /** Who delivers each "Other" support, by its position in the referral. */
     otherDisciplines: z.record(z.string(), z.enum(disciplines)).default({}),
+    /** Accept, waitlist or decline each support, by its position. Missing means accept. */
+    services: z
+      .record(
+        z.string(),
+        z.object({ decision: z.enum(serviceDecisions), reason: z.string().trim().max(500) }),
+      )
+      .default({}),
+  }),
+  z.object({
+    type: z.literal("start-service"),
+    index: z.number().int().min(0),
+    discipline: z.enum(disciplines).optional(),
+  }),
+  z.object({
+    type: z.literal("document-review"),
+    documentId: z.string(),
+    decision: z.enum(["Accepted", "Rejected"]),
+    reason: z.string().trim().max(500),
   }),
   z.object({
     type: z.literal("waitlist"),
@@ -517,7 +605,10 @@ export type ReferralAction = z.infer<typeof referralActionSchema>;
 export async function referralAction(admin: UserDoc, id: ObjectId, action: ReferralAction) {
   const { referrals } = await collections();
   let r = await loadReferral(id);
-  const result: { inviteCode?: string; inviteExpires?: Date; clientId?: string } = {};
+  const result: {
+    mrn?: string;
+    clientId?: string;
+  } = {};
 
   switch (action.type) {
     case "take-ownership": {
@@ -701,7 +792,39 @@ export async function referralAction(admin: UserDoc, id: ObjectId, action: Refer
       break;
     }
     case "accept": {
-      Object.assign(result, await accept(admin, r, action.otherDisciplines));
+      Object.assign(result, await accept(admin, r, action.otherDisciplines, action.services));
+      break;
+    }
+    case "start-service": {
+      await startWaitlistedService(admin, r, action.index, action.discipline);
+      break;
+    }
+    case "document-review": {
+      const { documents } = await collections();
+      const docId = ObjectId.isValid(action.documentId) ? new ObjectId(action.documentId) : null;
+      const doc = docId ? await documents.findOne({ _id: docId, referralId: id }) : null;
+      if (!doc) throw new UserFacingError("Document not found.", 404);
+      if (doc.status === "Superseded") {
+        throw new UserFacingError("A newer version replaced this document.", 409);
+      }
+      if (action.decision === "Rejected" && !action.reason) {
+        throw new UserFacingError("Say why the document is rejected.");
+      }
+      await documents.updateOne(
+        { _id: doc._id },
+        {
+          $set: {
+            status: action.decision,
+            review: { byName: admin.name, at: new Date(), reason: action.reason },
+          },
+        },
+      );
+      await log(
+        admin.name,
+        admin._id,
+        `${action.decision === "Accepted" ? "Accepted" : "Rejected"} document ${doc.name} (version ${doc.version ?? 1})${action.reason ? `: ${action.reason}` : ""}`,
+        r,
+      );
       break;
     }
     case "waitlist": {
@@ -777,39 +900,86 @@ export function acceptBlockers(r: ReferralDoc): string[] {
  * Lifecycle phase 5 → 6: the referral is ready for booking. One participant record (new, or the
  * existing one intake confirmed), with a separate service request for each support asked for.
  */
+/** The service request a requested support becomes on the patient record. */
+function needFor(
+  r: ReferralDoc,
+  s: ReferralDoc["data"]["supports"][number],
+  discipline: Discipline | undefined,
+): ClientNeed {
+  const info = supportInfo(s.support);
+  const who = info.discipline ?? discipline;
+  if (!who) throw new UserFacingError(`Choose who delivers "${s.details || "Other"}".`);
+  const details = [
+    s.nursingType && s.nursingType !== "Other" ? s.nursingType : "",
+    s.details,
+    s.frequency === "Other" ? s.frequencyOther : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  return {
+    id: randomUUID(),
+    support: s.support,
+    discipline: who,
+    frequency: frequencyFor(s),
+    details,
+    location: r.data.location.type,
+    status: "needs-therapist",
+    therapistId: null,
+    referralId: r._id,
+  };
+}
+
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+
 async function accept(
   admin: UserDoc,
   r: ReferralDoc,
   otherDisciplines: Record<string, Discipline>,
+  choices: Record<string, { decision: ServiceRecord["decision"]; reason: string }>,
 ) {
   const blockers = acceptBlockers(r);
   if (blockers.length) throw new UserFacingError(blockers.join(" "), 409);
   const db = await collections();
   const input = r.data;
+  const now = new Date();
 
-  const needs: ClientNeed[] = input.supports.map((s, i) => {
-    const info = supportInfo(s.support);
-    const discipline = info.discipline ?? otherDisciplines[String(i)];
-    if (!discipline) throw new UserFacingError(`Choose who delivers "${s.details || "Other"}".`);
-    const details = [
-      s.nursingType && s.nursingType !== "Other" ? s.nursingType : "",
-      s.details,
-      s.frequency === "Other" ? s.frequencyOther : "",
-    ]
-      .filter(Boolean)
-      .join(" · ");
+  const decided = input.supports.map((s, i) => ({
+    s,
+    i,
+    decision: choices[String(i)]?.decision ?? ("Accepted" as const),
+    reason: choices[String(i)]?.reason ?? "",
+  }));
+  if (!decided.some((d) => d.decision === "Accepted")) {
+    throw new UserFacingError(
+      "Accept at least one service. To hold every service, waitlist or decline the referral instead.",
+    );
+  }
+  const unexplained = decided.find((d) => d.decision !== "Accepted" && !d.reason);
+  if (unexplained) {
+    throw new UserFacingError(
+      `Give a reason for ${unexplained.decision.toLowerCase()} ${unexplained.s.support}.`,
+    );
+  }
+  const needs: ClientNeed[] = [];
+  const services: ServiceRecord[] = decided.map((d) => {
+    let needId: string | null = null;
+    if (d.decision === "Accepted") {
+      const need = needFor(r, d.s, otherDisciplines[String(d.i)]);
+      needs.push(need);
+      needId = need.id;
+    }
     return {
-      id: randomUUID(),
-      support: s.support,
-      discipline,
-      frequency: frequencyFor(s),
-      details,
-      location: input.location.type,
-      status: "needs-therapist",
-      therapistId: null,
-      referralId: r._id,
+      index: d.i,
+      support: d.s.support,
+      decision: d.decision,
+      reason: d.reason,
+      needId,
+      byName: admin.name,
+      at: now,
     };
   });
+  const held = services.filter((x) => x.decision === "Waitlisted").length;
+  const declined = services.filter((x) => x.decision === "Declined").length;
 
   const precaution = r.triage?.precaution ?? "";
   const notes = [
@@ -821,7 +991,7 @@ async function accept(
     .filter(Boolean)
     .join("\n");
 
-  const result: { inviteCode?: string; inviteExpires?: Date; clientId?: string } = {};
+  const result: { mrn?: string; clientId?: string } = {};
   let clientId: ObjectId;
   const existingId = r.duplicateDecision?.clientId ?? null;
 
@@ -833,11 +1003,21 @@ async function accept(
     const fresh = needs.filter((n) => !already.has(n.support));
     if (!fresh.length)
       throw new UserFacingError("The patient already has every support requested.", 409);
+    // A record from before MRNs gets one now; the patient signs in with it.
+    const mrn = existing.mrn ?? r.mrn ?? (await nextMrn(db.db, now));
+    if (!existing.mrn) {
+      await db.users.updateOne(
+        { _id: existing.userId },
+        { $set: { invite: { codeHash: mrnHash(mrn), ...mrnAccess(now) } } },
+      );
+    }
+    result.mrn = mrn;
     await db.clients.updateOne(
       { _id: existingId },
       {
         $push: { needs: { $each: fresh } },
         $set: {
+          mrn,
           discharged: null,
           ...(precaution
             ? { precautions: [existing.precautions, precaution].filter(Boolean).join("\n") }
@@ -856,8 +1036,8 @@ async function accept(
     }
     clientId = new ObjectId();
     const userId = new ObjectId();
-    const { code, invite } = newInviteCode();
-    const now = new Date();
+    const mrn = r.mrn ?? (await nextMrn(db.db, now));
+    const invite = { codeHash: mrnHash(mrn), ...mrnAccess(now) };
     await db.users.insertOne({
       _id: userId,
       email,
@@ -871,6 +1051,7 @@ async function accept(
     });
     const client: ClientDoc = {
       _id: clientId,
+      mrn,
       name: fullName(input),
       dateOfBirth: input.participant.dateOfBirth,
       email,
@@ -888,33 +1069,49 @@ async function accept(
       createdAt: now,
     };
     await db.clients.insertOne(client);
-    result.inviteCode = code;
-    result.inviteExpires = invite.expiresAt;
+    result.mrn = mrn;
   }
 
   // Documents follow the participant, so the therapist sees them on the record.
+  await carryReferralPhoto(r._id, clientId);
   await db.documents.updateMany({ referralId: r._id }, { $set: { clientId } });
+  // Module 06, workflow step 1: the funding draft follows the participant (participant-reported).
+  {
+    const { planFromReferral } = await import("./funding");
+    await planFromReferral(r, clientId, admin.name);
+    await db.fundingPlans.updateMany({ referralId: r._id }, { $set: { clientId } });
+  }
   const updated = await setStatus(
     r,
     "Accepted",
     admin.name,
-    `${needs.length} service request${needs.length === 1 ? "" : "s"} created`,
+    [
+      `${plural(needs.length, "service request")} created`,
+      held && `${held} waitlisted`,
+      declined && `${declined} declined`,
+    ]
+      .filter(Boolean)
+      .join(", "),
     {
       clientId,
+      services,
       outcome: { reason: "Ready for booking", byName: admin.name, at: new Date() },
     },
   );
   await log(
     admin.name,
     admin._id,
-    `Accepted the referral; ${needs.length} service request${needs.length === 1 ? "" : "s"} ready for matching`,
+    `Accepted the referral; ${plural(needs.length, "service request")} ready for matching${services
+      .filter((x) => x.decision !== "Accepted")
+      .map((x) => `; ${x.support} ${x.decision.toLowerCase()}: ${x.reason}`)
+      .join("")}`,
     updated,
   );
   await db.audit.insertOne({
     _id: new ObjectId(),
     actorId: admin._id,
     actorName: admin.name,
-    action: `Accepted referral ${r.reference}: ${input.supports.map((s) => s.support).join(", ")}`,
+    action: `Accepted referral ${r.reference}: ${needs.map((n) => n.support).join(", ")}`,
     clientId,
     referralId: r._id,
     at: new Date(),
@@ -924,12 +1121,83 @@ async function accept(
   return result;
 }
 
+/** A waitlisted service from an accepted referral starts: it becomes a service request. */
+async function startWaitlistedService(
+  admin: UserDoc,
+  r: ReferralDoc,
+  index: number,
+  discipline: Discipline | undefined,
+) {
+  const record = r.services?.find((x) => x.index === index);
+  const support = r.data.supports[index];
+  if (r.status !== "Accepted" || !r.clientId || !record || !support) {
+    throw new UserFacingError("That service can't be started from here.", 409);
+  }
+  if (record.decision !== "Waitlisted") {
+    throw new UserFacingError(`${record.support} isn't on the waitlist.`, 409);
+  }
+  const db = await collections();
+  const need = needFor(r, support, discipline);
+  await db.clients.updateOne({ _id: r.clientId }, { $push: { needs: need } });
+  await db.referrals.updateOne(
+    { _id: r._id, "services.index": index },
+    {
+      $set: {
+        "services.$.decision": "Accepted",
+        "services.$.needId": need.id,
+        "services.$.reason": `Off the waitlist (${record.reason})`,
+        "services.$.byName": admin.name,
+        "services.$.at": new Date(),
+        updatedAt: new Date(),
+      },
+    },
+  );
+  await log(admin.name, admin._id, `Started ${record.support} from the waitlist`, r);
+  await publish(await adminIds(), "care", { clientId: r.clientId.toHexString() });
+}
+
+/** A new version of a referral document. The earlier one is kept and marked superseded. */
+export async function replaceDocument(
+  admin: UserDoc,
+  referralId: ObjectId,
+  documentId: ObjectId,
+  file: IncomingFile,
+) {
+  const { documents } = await collections();
+  const r = await loadReferral(referralId);
+  const old = await documents.findOne({ _id: documentId, referralId }, { projection: { data: 0 } });
+  if (!old) throw new UserFacingError("Document not found.", 404);
+  if (old.status === "Superseded") {
+    throw new UserFacingError("Replace the latest version instead.", 409);
+  }
+  checkFile({ ...file, kind: old.kind });
+  const [fresh] = await storeFiles(
+    [{ ...file, kind: old.kind }],
+    { referralId, clientId: old.clientId },
+    admin.name,
+  );
+  const version = (old.version ?? 1) + 1;
+  await documents.updateOne({ _id: fresh!._id }, { $set: { version, supersedes: old._id } });
+  await documents.updateOne(
+    { _id: old._id },
+    { $set: { status: "Superseded", replacedBy: fresh!._id } },
+  );
+  await log(
+    admin.name,
+    admin._id,
+    `Replaced ${old.name} (version ${old.version ?? 1}) with ${fresh!.name} (version ${version})`,
+    r,
+  );
+  await tellAdmins(referralId);
+}
+
 /** A stored document, for staff who can see the referral or the patient. */
 export async function documentFile(user: UserDoc, id: ObjectId) {
   const { documents, clients, audit } = await collections();
   const doc = await documents.findOne({ _id: id });
   if (!doc) throw new UserFacingError("Document not found.", 404);
   if (user.role === "therapist") {
+    if (doc.area === "funding") throw new UserFacingError("Document not found.", 404);
     const client = doc.clientId ? await clients.findOne({ _id: doc.clientId }) : null;
     const mine = user.therapistId;
     if (
@@ -1002,4 +1270,34 @@ export async function aiReferralReview(id: ObjectId) {
       throw new UserFacingError(`AI isn't available: ${error.message}`, 409);
     throw new UserFacingError("The AI answer couldn't be read. Try again.", 409);
   }
+}
+
+/**
+ * The app code before acceptance: with the email from the referral, it shows the referral's
+ * progress in the patient app. Nothing personal is shown, as with the tracking link.
+ */
+/** A referral that isn't accepted yet, found by its app code alone. */
+export async function referralByCodeOnly(code: string) {
+  const { referrals } = await collections();
+  const r = await referrals.findOne({
+    "access.codeHash": sha256(code.trim().toUpperCase()),
+    "access.expiresAt": { $gt: new Date() },
+  });
+  return r ? publicView(r) : null;
+}
+
+export async function referralByCode(email: string, code: string) {
+  const { referrals } = await collections();
+  const hash = sha256(code.trim().toUpperCase());
+  const e = email.trim().toLowerCase();
+  const r = await referrals.findOne({
+    "access.codeHash": hash,
+    "access.expiresAt": { $gt: new Date() },
+    $or: [
+      { "data.participant.email": e },
+      { "data.booking.email": e },
+      { "data.submitter.email": e },
+    ],
+  });
+  return r ? publicView(r) : null;
 }

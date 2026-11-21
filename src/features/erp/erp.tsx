@@ -140,7 +140,7 @@ function Finance() {
                   <span className="block text-small font-semibold">{r.from}</span>
                   <Caption>{r.age}</Caption>
                 </span>
-                <span className="headline text-section">{money(r.amount)}</span>
+                <span className="text-section font-semibold">{money(r.amount)}</span>
               </li>
             ))}
           </ul>
@@ -173,7 +173,7 @@ function People() {
           {clinicians.map((c) => (
             <article
               key={c.id}
-              className="flex items-center gap-3 rounded-card border border-border bg-surface p-3.5 surface-lift"
+              className="flex items-center gap-3 rounded-card border border-border bg-surface p-3.5"
             >
               <Avatar name={c.name} size={44} />
               <div className="min-w-0 flex-1">
@@ -188,7 +188,7 @@ function People() {
                       c.utilisation >= 100
                         ? "bg-over-dot"
                         : c.utilisation >= 95
-                          ? "bg-monitor-dot"
+                          ? "bg-watch-dot"
                           : "bg-accent-fill",
                     )}
                     style={{ width: `${Math.min(c.utilisation, 100)}%` }}
@@ -274,7 +274,7 @@ function Payroll() {
           />
         </div>
         <div className="overflow-x-auto" role="table" aria-label="Pay run">
-          <div className="min-w-160">
+          <div className="md:min-w-160">
             <TableHeader columns={PAY}>
               <div>Name</div>
               <div>Hours</div>
@@ -385,7 +385,7 @@ function Purchasing() {
                     <i
                       className={cn(
                         "block h-full rounded-full",
-                        percent >= 90 ? "bg-monitor-dot" : "bg-accent-fill",
+                        percent >= 90 ? "bg-watch-dot" : "bg-accent-fill",
                       )}
                       style={{ width: `${percent}%` }}
                     />

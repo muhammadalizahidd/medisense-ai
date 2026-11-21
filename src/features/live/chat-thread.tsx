@@ -1,6 +1,15 @@
 "use client";
 
-import { AlertCircle, Check, CheckCheck, Clock, SendHorizontal } from "lucide-react";
+import {
+  AlertCircle,
+  Check,
+  CheckCheck,
+  Clock,
+  Download,
+  FileText,
+  Mic,
+  SendHorizontal,
+} from "lucide-react";
 import {
   useCallback,
   useEffect,
@@ -11,7 +20,7 @@ import {
 } from "react";
 import { api, useLiveEvents } from "@/lib/live/client";
 import { shortDate, timeOfDay } from "@/lib/live/time";
-import type { MessageDto } from "@/lib/live/types";
+import type { MessageAttachment, MessageDto } from "@/lib/live/types";
 import { cn } from "@/lib/cn";
 import { ErrorNote, Skeleton } from "./bits";
 
@@ -213,11 +222,12 @@ export function ChatThread({
                   <Bubble
                     mine={mine}
                     body={m.body}
+                    attachment={m.attachment}
                     time={timeOfDay(m.createdAt)}
                     state={mine ? (m.seen ? "seen" : "sent") : null}
                   />
                   {m.id === lastMine?.id && m.seen && (
-                    <span className="mt-0.5 self-end text-eyebrow text-ink-500">Seen</span>
+                    <span className="mt-0.5 self-end text-label text-ink-500">Seen</span>
                   )}
                 </li>
               );
@@ -291,14 +301,79 @@ export function ChatThread({
 
 type BubbleState = "sending" | "sent" | "seen" | "failed" | null;
 
+const fileSize = (n: number) =>
+  n > 1e6 ? `${(n / 1e6).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1e3))} KB`;
+
+/** A sent file, playable or viewable in place. */
+function Attachment({ a, mine }: { a: MessageAttachment; mine: boolean }) {
+  if (a.kind === "image")
+    return (
+      <a href={a.url} target="_blank" rel="noreferrer" className="mb-1.5 block">
+        {/* eslint-disable-next-line @next/next/no-img-element -- local demo media */}
+        <img src={a.url} alt={a.name} className="max-h-64 w-full rounded-control object-cover" />
+      </a>
+    );
+  if (a.kind === "video")
+    return (
+      <video
+        src={a.url}
+        controls
+        preload="metadata"
+        className="mb-1.5 aspect-video w-full rounded-control bg-call-stage"
+      />
+    );
+  const Icon = a.kind === "audio" ? Mic : FileText;
+  return (
+    <div
+      className={cn(
+        "mb-1.5 flex flex-col gap-2 rounded-control p-2.5",
+        mine ? "bg-on-accent/15" : "bg-sunken",
+      )}
+    >
+      <div className="flex items-center gap-2.5">
+        <span
+          className={cn(
+            "flex size-9 flex-none items-center justify-center rounded-control",
+            mine ? "bg-on-accent/20" : "bg-surface text-accent",
+          )}
+        >
+          <Icon className="size-4" aria-hidden="true" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate font-semibold">{a.name}</span>
+          <span className={cn("block text-label", mine ? "text-on-accent/80" : "text-ink-500")}>
+            {a.kind === "audio" ? "Voice note" : "PDF document"} · {fileSize(a.size)}
+          </span>
+        </span>
+        {a.kind === "document" && (
+          <a
+            href={a.url}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={`Open ${a.name}`}
+            className="flex size-8 flex-none items-center justify-center rounded-full hover:bg-on-accent/10"
+          >
+            <Download className="size-4" aria-hidden="true" />
+          </a>
+        )}
+      </div>
+      {a.kind === "audio" && (
+        <audio src={a.url} controls preload="metadata" className="h-9 w-64 max-w-full" />
+      )}
+    </div>
+  );
+}
+
 function Bubble({
   mine,
   body,
+  attachment = null,
   time,
   state,
 }: {
   mine: boolean;
   body: string;
+  attachment?: MessageAttachment | null;
   time: string;
   state: BubbleState;
 }) {
@@ -319,10 +394,11 @@ function Bubble({
           : "self-start rounded-card rounded-bl-tag bg-surface text-ink-900",
       )}
     >
-      <p className="break-words whitespace-pre-wrap">{body}</p>
+      {attachment && <Attachment a={attachment} mine={mine} />}
+      {body && <p className="break-words whitespace-pre-wrap">{body}</p>}
       <p
         className={cn(
-          "mt-0.5 flex items-center justify-end gap-1 text-eyebrow",
+          "mt-0.5 flex items-center justify-end gap-1 text-label",
           mine ? "text-on-accent/80" : "text-ink-500",
         )}
       >

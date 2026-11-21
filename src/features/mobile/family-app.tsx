@@ -66,7 +66,7 @@ function ChangePanel({ onClose }: { onClose: () => void }) {
           rows={4}
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          className="w-full rounded-control border border-border-strong bg-surface-raised px-3 py-2 text-small text-ink-900 outline-none focus:border-accent focus:shadow-focus"
+          className="w-full rounded-control border border-border-strong bg-raised px-3 py-2 text-small text-ink-900 outline-none focus:border-accent focus:shadow-focus"
         />
       </Field>
     </AppSheet>
@@ -82,7 +82,7 @@ function VisitCard({ onChange }: { onChange: () => void }) {
       <div className="flex items-center gap-3">
         <Avatar name={family.clinician} size={48} />
         <div className="min-w-0">
-          <p className="headline text-section">{family.nextAppointment.when}</p>
+          <p className="text-section font-semibold">{family.nextAppointment.when}</p>
           <Caption>
             {family.nextAppointment.where}, with {family.nextAppointment.with}
           </Caption>
@@ -156,13 +156,12 @@ function HomeTab({ onChange, onTab }: { onChange: () => void; onTab: (id: string
         <div className="mt-4 flex items-center gap-4">
           <Ring
             percent={percent}
-            light
             label={`${done.length} of ${family.homeProgram.length} home activities done`}
           >
-            <span className="headline text-h2 text-white">
+            <span className="type-display text-h2 text-ink-900">
               {done.length}/{family.homeProgram.length}
             </span>
-            <span className="text-[10px] text-white/80">this week</span>
+            <span className="text-[10px] text-ink-500">this week</span>
           </Ring>
           <p className="min-w-0 text-small text-ink-700">
             Here&apos;s how {family.client} is going with {clinicianFirst}.
@@ -179,10 +178,10 @@ function HomeTab({ onChange, onTab }: { onChange: () => void; onTab: (id: string
         <button
           type="button"
           onClick={() => onTab("progress")}
-          className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-card border border-border bg-surface p-4 text-left surface-lift"
+          className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-card border border-border bg-surface p-4 text-left"
         >
           <span>
-            <span className="block headline text-section">{family.client}&apos;s goals</span>
+            <span className="block text-section font-semibold">{family.client}&apos;s goals</span>
             <Caption>{family.goals.length} goals in progress</Caption>
           </span>
           <ChevronRight className="size-5 text-ink-500" strokeWidth={1.5} aria-hidden="true" />
@@ -283,7 +282,7 @@ function MessagesTab() {
               className={cn(
                 "max-w-[84%] rounded-[18px] px-3.5 py-2.5 text-small",
                 mine
-                  ? "primary-glow self-end rounded-br-md bg-accent-fill text-on-accent"
+                  ? "self-end rounded-br-md bg-accent-fill text-on-accent"
                   : "self-start rounded-bl-md border border-border bg-surface",
               )}
             >
@@ -430,7 +429,7 @@ export function FamilyApp() {
     () => false,
   );
 
-  if (!hydrated) return <div className="hero-page min-h-dvh bg-canvas" />;
+  if (!hydrated) return <div className="min-h-dvh bg-canvas" />;
   if (!signedIn) return <SignIn />;
 
   return (

@@ -7,10 +7,10 @@ import {
   Lock,
   Plus,
   Send,
-  Sparkles,
   Trash2,
   TriangleAlert,
 } from "lucide-react";
+import { AiIcon } from "@/components/ai/provenance";
 import { useEffect, useRef, useState } from "react";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page";
@@ -114,7 +114,7 @@ function Editor({ a, reload }: { a: AssessmentDto; reload: () => void }) {
         actions={
           <div className="flex items-center gap-2">
             {editable && (
-              <span className="on-light text-caption text-ink-500">
+              <span className="text-caption text-ink-500">
                 {saved === "saving"
                   ? "Saving…"
                   : saved === "error"
@@ -312,7 +312,7 @@ function Editor({ a, reload }: { a: AssessmentDto; reload: () => void }) {
                     {gaps.map((g) => (
                       <li key={g} className="flex gap-2">
                         <TriangleAlert
-                          className="mt-0.5 size-3.5 flex-none text-monitor"
+                          className="mt-0.5 size-3.5 flex-none text-watch"
                           aria-hidden="true"
                         />
                         {g}
@@ -487,7 +487,7 @@ function SignedPanel({
                   }
                 }}
               >
-                <Sparkles className="size-3.5" aria-hidden="true" />
+                <AiIcon className="size-3.5" />
                 {drafting ? "Drafting…" : "Draft with AI"}
               </Button>
               {draftNote && <p className="mb-2 text-caption text-ink-700">{draftNote}</p>}
@@ -659,7 +659,7 @@ function AiCheck({ id }: { id: string }) {
           }
         }}
       >
-        <Sparkles className="size-3.5" aria-hidden="true" />
+        <AiIcon className="size-3.5" />
         {busy ? "Checking…" : "AI consistency check"}
       </Button>
       {fail && <p className="mt-1 text-caption text-over">{fail}</p>}

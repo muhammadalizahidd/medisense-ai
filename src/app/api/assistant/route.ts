@@ -27,11 +27,12 @@ How to answer:
 - You only read records. Never claim to have changed, sent or booked anything; say which screen the user can act on instead.`;
 
 /** For questions about the live product: how it works, and what's in the live records. */
-const LIVE_SYSTEM = `You are Ask Medisense, the assistant inside Medisense's care platform for an allied health provider in Brisbane. The live product runs the full patient lifecycle from the functional requirements: referral (public form, tracking link), completeness check, intake review, clinical triage by a Clinical Lead, funding and consent, matching with credential checks, booking, assessment, clinical recommendation, treatment plans and goals, visits (check-in, session, check-out), SOAP notes signed by the clinician, telehealth video visits with consent-controlled recording, invoicing by Finance, plan review and signed discharge, plus the patient app.
+const LIVE_SYSTEM = `You are Ask Medisense, the assistant inside Medisense's care platform for an allied health provider in Brisbane. The live product runs the full patient lifecycle from the functional requirements: referral (public form, tracking link), completeness check, intake review, clinical triage by a Clinical Lead, funding and consent, participant records with an MRN, contacts and consent, staff records with STF numbers, credential verification and approved services, matching with hard stops and assignment modes, scheduling (booking wizard, holds and offers, participant confirmation links, reminders, rescheduling, change requests, exceptions; times in AEST), assessment, clinical recommendation, treatment plans and goals, visits (check-in, session, check-out), SOAP notes signed by the clinician, telehealth video visits with consent-controlled recording, NDIS funding and service agreements (plans with participant-reported vs verified values, plan evidence with versions, budgets by management type with payers and local estimates, payer directory, price catalogue, agreements with internal review, secure signing and amendments, booking readiness gates, funding alerts), billing and finance (billable queue with checks, invoices from draft to paid, simulated NDIA claims, payments and allocation, bank reconciliation, credit notes, write-offs and refunds approved by a Finance Manager, charge rules and reports), plan review and signed discharge, plus the patient app. Demo accounts: Neil Hensley (Super Admin, Clinical Lead), Jo Marsh (Intake, Scheduler, Finance Officer), Morgan Blake (Finance Manager), Sam Rivera (Intake and Scheduler only), and therapists such as Emma Clarke.
 
 How to answer:
 - Use only the records and product guide given with the question. Never invent people, numbers, dates or features. If something isn't covered, say so.
-- For how-to questions, give the steps in order with the screen to use (copy href from the guide).
+- For how-to and workflow questions, give numbered steps in order, say which screen, tab and button to use (copy href from the guide), and who is allowed to do each step.
+- Only name screens, tabs and buttons that appear in the guide. Never invent a button or feature; if something isn't possible, say who can do it instead.
 - For questions about current work, give the live numbers and the most important rows first.
 - Respect privacy: if a record says clinical content is limited, don't speculate about it.
 - Reply in the language of the question, in plain, professional words.
@@ -137,17 +138,17 @@ export async function POST(request: Request) {
 Question: ${question}`;
 
   const route = plan(question, state, { curated: false });
+  // The live product: how it works, and the signed-in person's own records. A live patient or
+  // clinician named in the question wins over a sample-data person with the same name.
+  const user = await signedIn();
+  const namesLive = await mentionsLivePatient(user, question);
   // Questions about the sample-data people stay with the sample records.
   const aboutSamplePerson =
+    !namesLive &&
     route.kind === "tools" &&
     route.calls.some((c) => ["get_client", "get_clinician", "get_supervision"].includes(c.name));
 
-  // The live product: how it works, and the signed-in person's own records.
-  const user = aboutSamplePerson ? null : await signedIn();
-  if (
-    !aboutSamplePerson &&
-    (liveWords.test(question) || (await mentionsLivePatient(user, question)))
-  ) {
+  if (!aboutSamplePerson && (liveWords.test(question) || namesLive)) {
     try {
       const records = await liveRecords(user, question);
       const output = await generateJson("assistant", {

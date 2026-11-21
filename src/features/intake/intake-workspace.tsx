@@ -117,12 +117,12 @@ export function IntakeWorkspace() {
     <>
       <section
         aria-label="Intake summary"
-        className="stat-band grid grid-cols-2 gap-px overflow-hidden rounded-card border border-border bg-border lg:grid-cols-5"
+        className="grid grid-cols-2 gap-px overflow-hidden rounded-card border border-border bg-border lg:grid-cols-5"
       >
         {metrics.map((m) => (
           <div key={m.label} className="flex flex-col gap-1.5 bg-surface px-5 py-4">
-            <span className="eyebrow">{m.label}</span>
-            <span className="headline text-stat font-normal">{m.value}</span>
+            <span className="label-caps">{m.label}</span>
+            <span className="type-display text-h1-compact font-normal">{m.value}</span>
             <Caption>{m.caption}</Caption>
           </div>
         ))}
@@ -327,10 +327,10 @@ function ReferralDetail({
     <Card aria-labelledby="referral-title" className="overflow-hidden">
       <div className="flex flex-wrap items-start justify-between gap-3 px-6 pt-5 pb-4">
         <div>
-          <p className="eyebrow">
+          <p className="label-caps">
             {referral.sourceDetail} · {referral.received}
           </p>
-          <h2 id="referral-title" className="mt-1.5 headline text-h2">
+          <h2 id="referral-title" className="mt-1.5 type-display text-h2">
             {referral.client}
             {referral.age === null ? "" : `, ${referral.age}`}
           </h2>
@@ -343,7 +343,7 @@ function ReferralDetail({
 
       <div className="grid gap-px border-t border-border bg-border lg:grid-cols-2">
         <div className="bg-surface px-5 py-4">
-          <div className="mb-2 flex items-center gap-1.5 eyebrow">
+          <div className="mb-2 flex items-center gap-1.5 label-caps">
             <FileText className="size-3.5" strokeWidth={1.5} aria-hidden="true" />
             Original referral
           </div>
@@ -367,8 +367,8 @@ function ReferralDetail({
 
         <div className="bg-surface px-5 py-4">
           <div className="mb-2 flex items-center justify-between gap-2">
-            <span className="flex items-center gap-1.5 eyebrow text-brass">
-              <PenNib className="size-3.5 text-brass" />
+            <span className="flex items-center gap-1.5 label-caps text-ink-700">
+              <PenNib className="size-3.5 text-ink-700" />
               AI-extracted details
             </span>
             <Caption>Hover to see the source line</Caption>
@@ -395,7 +395,7 @@ function ReferralDetail({
                   <dt className="text-caption font-semibold text-ink-500">{f.label}</dt>
                   <dd className="text-small">{f.value}</dd>
                   <span className="flex items-center gap-1">
-                    <span className="font-mono text-eyebrow text-ink-400">L{f.line}</span>
+                    <span className="font-mono text-label text-ink-400">L{f.line}</span>
                     {f.confidence === "Check" && <Tag tone="monitor">Check</Tag>}
                   </span>
                 </div>
@@ -427,8 +427,8 @@ function ReferralDetail({
         )}
 
         {missing.length > 0 && !finished && (
-          <div className="rounded-control border border-border bg-monitor-bg px-4 py-3">
-            <div className="mb-1 text-small font-semibold text-monitor">
+          <div className="rounded-control border border-border bg-watch-bg px-4 py-3">
+            <div className="mb-1 text-small font-semibold text-watch">
               Missing before the first visit · {missing.length}
             </div>
             <ul className="flex list-disc flex-col gap-0.5 pl-4.5 text-small">
@@ -466,7 +466,7 @@ function ReferralDetail({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               aria-label="Request email"
-              className="w-full resize-y rounded-control border border-border-strong bg-surface-raised px-3 py-2 text-small text-ink-900 outline-none focus:border-accent focus:shadow-focus"
+              className="w-full resize-y rounded-control border border-border-strong bg-raised px-3 py-2 text-small text-ink-900 outline-none focus:border-accent focus:shadow-focus"
             />
             <div className="flex gap-2">
               <Button

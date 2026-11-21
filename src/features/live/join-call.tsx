@@ -21,7 +21,7 @@ import { useNow, useResource } from "@/lib/live/client";
 import type { TelehealthDto } from "@/lib/live/telehealth";
 import { slotLabel } from "@/lib/live/time";
 import { cn } from "@/lib/cn";
-import { ErrorNote, Skeleton } from "./bits";
+import { Skeleton } from "./bits";
 import { TextField, Tick } from "./form-bits";
 import { RecordingBadge, SelfView } from "./telehealth-room";
 
@@ -43,10 +43,12 @@ export function JoinCall({ token }: { token: string }) {
   const [fail, setFail] = useState<string | null>(null);
   const [left, setLeft] = useState(false);
 
+  const dead = Boolean(error && !data);
   useEffect(() => {
+    if (dead) return;
     const t = setInterval(reload, 3000);
     return () => clearInterval(t);
-  }, [reload]);
+  }, [reload, dead]);
 
   async function act(body: Record<string, unknown>) {
     setBusy(true);
@@ -69,7 +71,20 @@ export function JoinCall({ token }: { token: string }) {
     }
   }
 
-  if (error && !data) return <ErrorNote message={error} onRetry={reload} />;
+  if (error && !data) {
+    return (
+      <div className="max-w-140 rounded-card border border-border bg-surface p-8 shadow-lift">
+        <p className="text-label font-semibold tracking-[0.1em] text-ink-500 uppercase">
+          Video visit
+        </p>
+        <h2 className="mt-2 type-display text-h2">This link can&apos;t be used</h2>
+        <p className="mt-2 text-body text-ink-700">{error}</p>
+        <div className="mt-6">
+          <Button onClick={reload}>Try again</Button>
+        </div>
+      </div>
+    );
+  }
   if (!data) return <Skeleton className="h-96 max-w-180" />;
   const c = data.call;
   if (left) {
@@ -163,8 +178,8 @@ type Act = (body: Record<string, unknown>) => Promise<boolean>;
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-card border border-border bg-surface p-6 surface-lift">
-      <h2 className="mb-4 headline text-h2">{title}</h2>
+    <section className="rounded-card border border-border bg-surface p-6">
+      <h2 className="mb-4 type-display text-h2">{title}</h2>
       {children}
     </section>
   );
@@ -402,12 +417,17 @@ function InCall({
   return (
     <section className="rounded-card bg-ink-900 p-3">
       <div className="mb-2 flex items-center justify-between">
-        <p className="text-eyebrow font-semibold tracking-wide text-surface/70 uppercase">
+        <p className="text-label font-semibold tracking-wide text-surface/70 uppercase">
           DEMO ONLY · simulated video
         </p>
         <RecordingBadge status={c.recording.status} />
       </div>
-      <div className={cn("grid gap-3", c.screenShare ? "md:grid-cols-3" : "md:grid-cols-2")}>
+      <div
+        className={cn(
+          "grid grid-cols-1 gap-3",
+          c.screenShare ? "md:grid-cols-3" : "md:grid-cols-2",
+        )}
+      >
         {c.screenShare && (
           <div className="flex aspect-video items-center justify-center rounded-card bg-surface/10 text-small text-surface md:col-span-2">
             {c.therapist.split(" ")[0]} is sharing their screen

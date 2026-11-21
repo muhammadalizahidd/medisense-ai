@@ -75,7 +75,7 @@ export function CaseloadHealth({
       </div>
 
       <div className="overflow-x-auto" role="table" aria-label="Caseload health by clinician">
-        <div className="min-w-200">
+        <div className="md:min-w-200">
           <TableHeader columns={COLUMNS} className="px-3">
             <div>Clinician</div>
             <div>Capacity</div>
@@ -134,7 +134,7 @@ export function CaseloadHealth({
                       </div>
                     )}
                   {c.draftsAwaiting > 0 && (
-                    <div className="text-caption text-brass">{c.draftsAwaiting} draft</div>
+                    <div className="text-caption text-ink-700">{c.draftsAwaiting} draft</div>
                   )}
                 </div>
                 <div className="text-right">{c.followUpsOverdue}</div>
@@ -149,7 +149,7 @@ export function CaseloadHealth({
                   height={30}
                   unit="score"
                 />
-                <div className="text-right font-serif text-figure">
+                <div className="text-right font-display text-section">
                   {c.score}
                   {previous?.get(c.id)?.score !== undefined &&
                     previous.get(c.id)?.score !== c.score && (

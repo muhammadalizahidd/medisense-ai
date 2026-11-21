@@ -110,7 +110,8 @@ export function useLiveEvents(onEvent: Listener, enabled = true) {
 }
 
 export function useLiveStatus() {
-  const [value, setValue] = useState(status);
+  // Server and first client render agree on "connecting"; the real state arrives after mount.
+  const [value, setValue] = useState<typeof status>("connecting");
   useEffect(() => {
     const update = () => setValue(status);
     statusListeners.add(update);
@@ -123,6 +124,16 @@ export function useLiveStatus() {
 }
 
 /* ------------------------------------------------------------- data hooks */
+
+/** Identical reads already on their way are shared, so several components cost one request. */
+const sharedInFlight = new Map<string, Promise<unknown>>();
+function shared<T>(url: string): Promise<T> {
+  const pending = sharedInFlight.get(url);
+  if (pending) return pending as Promise<T>;
+  const p = api<T>(url).finally(() => sharedInFlight.delete(url));
+  sharedInFlight.set(url, p);
+  return p;
+}
 
 export type Resource<T> = {
   data: T | null;
@@ -150,7 +161,7 @@ export function useResource<T>(
   useEffect(() => {
     if (!url) return undefined;
     let cancelled = false;
-    api<T>(url)
+    shared<T>(url)
       .then((data) => !cancelled && setState({ data, error: null, loading: false }))
       .catch(
         (error: unknown) =>
@@ -166,9 +177,15 @@ export function useResource<T>(
     };
   }, [url, version]);
 
+  // The first "connected" arrives right after the page's own first load; reloading then fetched
+  // everything twice. Only a reconnect (a later "connected") can have missed changes.
+  const connectedOnce = useRef(false);
   useLiveEvents(
     (event) => {
-      if (event.type === "connected" || reloadOn?.(event)) reload();
+      if (event.type === "connected") {
+        if (connectedOnce.current) reload();
+        connectedOnce.current = true;
+      } else if (reloadOn?.(event)) reload();
     },
     url !== null && reloadOn !== undefined,
   );
@@ -176,14 +193,32 @@ export function useResource<T>(
   return { ...state, reload };
 }
 
+/*
+ * Parts of the page that outlive a sign-in (the sidebar sits in the root layout) would keep the
+ * signed-out answer from the login screen. Signing in or out tells every useSession to ask again.
+ */
+const sessionListeners = new Set<() => void>();
+
+export function sessionChanged() {
+  sessionListeners.forEach((listener) => listener());
+}
+
 export function useSession() {
   const me = useResource<{ user: SessionUser | null }>("/api/auth/me");
-  return { user: me.data?.user ?? null, loading: me.loading && !me.data, reload: me.reload };
+  const { reload } = me;
+  useEffect(() => {
+    sessionListeners.add(reload);
+    return () => {
+      sessionListeners.delete(reload);
+    };
+  }, [reload]);
+  return { user: me.data?.user ?? null, loading: me.loading && !me.data, reload };
 }
 
 export async function signOut() {
   await api("/api/auth/logout", { method: "POST" });
   disconnect();
+  sessionChanged();
 }
 
 /* ------------------------------------------------------------- the time */

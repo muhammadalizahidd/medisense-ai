@@ -15,14 +15,14 @@ export function ScoreBreakdown({
     <Card aria-labelledby="why-score" className="flex h-full flex-col px-6 pt-5 pb-4.5">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 id="why-score" className="headline text-h2">
+          <h2 id="why-score" className="text-section font-semibold text-ink-900">
             Why this score
           </h2>
           <Caption className="mt-1">Six configured indicators, weighted to {max}.</Caption>
         </div>
         <div className="text-right">
-          <span className="headline text-kpi font-normal">{total}</span>
-          <span className="font-serif text-figure text-ink-500"> / {max}</span>
+          <span className="type-display text-h1 font-normal">{total}</span>
+          <span className="font-display text-section text-ink-500"> / {max}</span>
         </div>
       </div>
 
@@ -36,7 +36,7 @@ export function ScoreBreakdown({
               <div className="text-small font-semibold">{f.label}</div>
               <Caption>{f.detail}</Caption>
             </div>
-            <div className="relative h-1 rounded-full bg-surface-sunken">
+            <div className="relative h-1 rounded-full bg-sunken">
               <span
                 className="absolute inset-y-0 left-0 rounded-full bg-accent"
                 style={{ width: `${(f.points / f.max) * 100}%` }}
@@ -52,10 +52,7 @@ export function ScoreBreakdown({
       <div className="mt-4.5">
         <div className="flex h-2 overflow-hidden rounded-full" aria-hidden="true">
           <span className="bg-healthy-bg" style={{ flex: thresholds.monitor }} />
-          <span
-            className="bg-monitor-bg"
-            style={{ flex: thresholds.atRisk - thresholds.monitor }}
-          />
+          <span className="bg-watch-bg" style={{ flex: thresholds.atRisk - thresholds.monitor }} />
           <span className="bg-over-bg" style={{ flex: max - thresholds.atRisk }} />
         </div>
         <div className="relative h-0" aria-hidden="true">

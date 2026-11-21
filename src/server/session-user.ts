@@ -8,4 +8,6 @@ export const sessionUser = (u: UserDoc): SessionUser => ({
   email: u.email,
   role: u.role,
   staffRoles: u.staffRoles ?? [],
+  appearance: u.appearance ?? null,
+  mustChangePassword: Boolean(u.mustChangePassword),
 });
