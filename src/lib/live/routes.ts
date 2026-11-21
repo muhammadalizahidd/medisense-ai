@@ -1,8 +1,11 @@
 import type { Role } from "./types";
 
-/** Where each kind of account lands after signing in. */
-export function homeFor(role: Role) {
-  if (role === "admin") return "/care";
+/**
+ * Where each kind of account lands after signing in. A Super Admin starts on the organisation
+ * dashboard; other admins start on their patients.
+ */
+export function homeFor(role: Role, staffRoles?: readonly string[] | null) {
+  if (role === "admin") return staffRoles?.includes("Super Admin") ? "/" : "/care";
   if (role === "therapist") return "/therapist";
   return "/mobile/patient";
 }

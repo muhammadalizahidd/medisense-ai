@@ -1,5 +1,6 @@
 import {
   ChartColumn,
+  UserCog,
   CircleUserRound,
   Landmark,
   Stethoscope,
@@ -65,7 +66,7 @@ export const navigation: { group: string; items: NavItem[] }[] = [
   {
     group: "Organisation",
     items: [
-      { href: "/", label: "Overview", icon: LayoutDashboard, roles: [L] },
+      { href: "/", label: "Dashboard", icon: LayoutDashboard, roles: [L, A] },
       { href: "/since-yesterday", label: "Since yesterday", icon: History, roles: [L] },
       { href: "/before-after", label: "Before and after", icon: ArrowLeftRight, roles: [L] },
       { href: "/team-capacity", label: "Team capacity", icon: Users, roles: [L, S] },
@@ -123,6 +124,7 @@ export const navigation: { group: string; items: NavItem[] }[] = [
       { href: "/care/reports", label: "Reports and analytics", icon: ChartColumn, roles: [L, A] },
       { href: "/care/ai-agent", label: "Operations agent", icon: BotMessageSquare, roles: [L, A] },
       { href: "/care/ai-oversight", label: "AI oversight", icon: BotMessageSquare, roles: [L, A] },
+      { href: "/care/users", label: "User control", icon: UserCog, roles: [A] },
       { href: "/therapist/workspace", label: "My workspace", icon: Briefcase, roles: [C] },
       { href: "/therapist/tasks", label: "My tasks", icon: ListChecks, roles: [C] },
       { href: "/therapist/reports", label: "My reports", icon: ChartColumn, roles: [C] },
@@ -235,6 +237,8 @@ const roleLayouts: Partial<Record<Role, Section[]>> = {
     { group: "Mobile apps", hrefs: ["/mobile/family"] },
   ],
   Admin: [
+    // The organisation dashboard, first in the menu: only a Super Admin opens it (see pageAccess).
+    { group: "Dashboard", live: true, hrefs: ["/"] },
     {
       group: "Patients",
       live: true,
@@ -266,6 +270,7 @@ const roleLayouts: Partial<Record<Role, Section[]>> = {
       live: true,
       hrefs: ["/care/operations", "/care/reports", "/care/ai-oversight"],
     },
+    { group: "Administration", live: true, hrefs: ["/care/users"] },
     {
       group: "Apps",
       live: true,
@@ -328,6 +333,9 @@ export const pageAccess: Record<string, StaffRole[]> = {
   "/care/reports": [INTAKE, SCHED, FINM, LEAD, OPS],
   "/care/ai-agent": [INTAKE, SCHED, OPS],
   "/care/ai-oversight": CARE,
+  // No responsibility opens these: they are the Super Admin's.
+  "/": [],
+  "/care/users": [],
   "/intake": [INTAKE],
   "/forms": [INTAKE, SCHED],
   "/patients-requiring-attention": [LEAD],
@@ -426,6 +434,10 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
   {
     prefix: "/care/ai-agent",
     meta: { section: "Live care", page: "Operations agent", role: "Admin" },
+  },
+  {
+    prefix: "/care/users",
+    meta: { section: "Administration", page: "User control", role: "Admin" },
   },
   {
     prefix: "/care/ai-oversight",
@@ -696,7 +708,7 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
   { prefix: "/patients", meta: { section: "Clinical", page: "Patients", role: "Leadership" } },
 ];
 
-const overview: RouteMeta = { section: "Organisation", page: "Overview", role: "Leadership" };
+const overview: RouteMeta = { section: "Organisation", page: "Dashboard", role: "Leadership" };
 
 export function routeMeta(pathname: string): RouteMeta {
   return routes.find((r) => pathname.startsWith(r.prefix))?.meta ?? overview;

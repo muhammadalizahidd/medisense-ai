@@ -120,6 +120,11 @@ export interface UserDoc {
   phone?: string | null;
   /** True once staff have left: they can't sign in. */
   disabled?: boolean;
+  /** Set with a temporary password from User control: they choose their own at next sign-in. */
+  mustChangePassword?: boolean;
+  lastSignInAt?: Date | null;
+  /** The Super Admin who created the account in User control. */
+  createdBy?: ObjectId | null;
   /** Admin responsibilities; a Clinical Lead or Super Admin makes clinical triage decisions. */
   staffRoles?: StaffRole[];
   /** Theme, accent, typeface, density and text size, saved from Appearance. */

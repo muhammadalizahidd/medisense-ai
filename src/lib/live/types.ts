@@ -27,6 +27,34 @@ export type SessionUser = {
   role: Role;
   staffRoles: StaffRole[];
   appearance: Appearance | null;
+  /** Signed in with a temporary password: they set their own before going on. */
+  mustChangePassword?: boolean;
+};
+
+/** User control lists staff logins only; patients sign in by MRN and are managed from their record. */
+export type UserKind = "Office staff" | "Therapist";
+export type UserStatus = "Active" | "Must set password" | "Never signed in" | "Deactivated";
+
+/** One account in User control. */
+export type UserAccountDto = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  kind: UserKind;
+  staffRoles: StaffRole[];
+  status: UserStatus;
+  lastSignInAt: string | null;
+  createdAt: string;
+  createdBy: string | null;
+  /** A therapist's staff record; null for office staff. */
+  href: string | null;
+  isSelf: boolean;
+};
+
+export type UserControlDto = {
+  users: UserAccountDto[];
+  superAdmins: number;
 };
 
 export type NeedStatus = "needs-therapist" | "waiting" | "assigned" | "completed";

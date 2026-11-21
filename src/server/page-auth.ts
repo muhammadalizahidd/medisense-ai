@@ -18,6 +18,8 @@ export async function requirePageUser(next: string, ...roles: UserRole[]) {
     throw error;
   }
   if (!user) redirect(`/login?next=${encodeURIComponent(next)}`);
-  if (roles.length && !roles.includes(user.role)) redirect(homeFor(user.role));
+  // A temporary password from User control must be replaced before any page opens.
+  if (user.mustChangePassword) redirect(`/login?next=${encodeURIComponent(next)}`);
+  if (roles.length && !roles.includes(user.role)) redirect(homeFor(user.role, user.staffRoles));
   return user;
 }

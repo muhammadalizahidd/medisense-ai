@@ -54,7 +54,7 @@ export const redirectOnly = [
 export const guides: Record<string, PageGuide> = {
   /* ------------------------------------------------------------------ leadership story */
   "/": g(
-    "Overview",
+    "Dashboard",
     "The leadership view of the whole practice: caseload health, capacity, documentation and patients who need attention, on one screen.",
     [
       "See the six headline figures and how they moved over twelve weeks",
@@ -1117,6 +1117,21 @@ export const guides: Record<string, PageGuide> = {
       "Follow up with the clinical lead where reviews are late.",
     ],
     "Assurance that AI is used safely, without exposing private content.",
+  ),
+  "/care/users": g(
+    "User control",
+    "Every staff login in one place, for Super Admins: office staff and therapists. Create users, decide what each person is responsible for, reset passwords and deactivate people who leave. Patients sign in with their MRN and are managed from their record.",
+    [
+      "Create a user with a temporary password shown once",
+      "Choose responsibilities and preview the exact menu they'll see",
+      "Reset a password, or deactivate and reactivate an account",
+      "See who has never signed in or still has to set a password",
+    ],
+    [
+      "Pass the temporary password on in person or by phone; they choose their own at first sign-in.",
+      "Deactivate leavers straight away: they're signed out on every device.",
+    ],
+    "The right people get in with the right access, and nobody keeps access after they leave.",
   ),
   "/join/[token]": g(
     "Join a video visit",

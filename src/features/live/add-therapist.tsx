@@ -29,11 +29,18 @@ const weekdays = [
 type Created = { id: string; email: string; temporaryPassword: string };
 
 /** Admin module A04: add a therapist with credentials and working days; they get a login. */
-export function AddTherapist({ onAdded }: { onAdded: () => void }) {
+export function AddTherapist({
+  onAdded,
+  secondary = false,
+}: {
+  onAdded: () => void;
+  /** Beside another primary action (User control), the button steps back. */
+  secondary?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <Button variant="primary" onClick={() => setOpen(true)}>
+      <Button variant={secondary ? "secondary" : "primary"} onClick={() => setOpen(true)}>
         <UserPlus className="size-4" aria-hidden="true" />
         Add therapist
       </Button>
@@ -105,8 +112,8 @@ function AddTherapistSheet({ onClose, onAdded }: { onClose: () => void; onAdded:
         <div className="flex flex-col gap-4 text-small">
           <p>
             Give {form.name.split(" ")[0]} these sign-in details in person or by phone. The
-            temporary password is shown only once; they change it under <strong>My profile</strong>,
-            then set their working hours and time off.
+            temporary password is shown only once; they choose their own password the first time
+            they sign in, then set their working hours and time off.
           </p>
           <dl className="grid grid-cols-[120px_1fr] gap-y-2 rounded-card bg-canvas p-4">
             <dt className="text-ink-500">Email</dt>

@@ -20,8 +20,19 @@ export async function POST(request: Request) {
       throw new UserFacingError("Your current password is incorrect.");
     }
     const { users, sessions } = await collections();
-    await users.updateOne({ _id: user._id }, { $set: { passwordHash: await hashPassword(next) } });
-    await audit(user, "Changed their password", null);
+    if (next === current)
+      throw new UserFacingError("Choose a password different from the current one.");
+    await users.updateOne(
+      { _id: user._id },
+      { $set: { passwordHash: await hashPassword(next), mustChangePassword: false } },
+    );
+    await audit(
+      user,
+      user.mustChangePassword
+        ? "Set their own password at first sign-in"
+        : "Changed their password",
+      null,
+    );
     return {
       ok: true,
       signedOutElsewhere: (await sessions.countDocuments({ userId: user._id })) > 1,

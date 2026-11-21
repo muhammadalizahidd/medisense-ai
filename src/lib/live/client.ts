@@ -177,14 +177,32 @@ export function useResource<T>(
   return { ...state, reload };
 }
 
+/*
+ * Parts of the page that outlive a sign-in (the sidebar sits in the root layout) would keep the
+ * signed-out answer from the login screen. Signing in or out tells every useSession to ask again.
+ */
+const sessionListeners = new Set<() => void>();
+
+export function sessionChanged() {
+  sessionListeners.forEach((listener) => listener());
+}
+
 export function useSession() {
   const me = useResource<{ user: SessionUser | null }>("/api/auth/me");
-  return { user: me.data?.user ?? null, loading: me.loading && !me.data, reload: me.reload };
+  const { reload } = me;
+  useEffect(() => {
+    sessionListeners.add(reload);
+    return () => {
+      sessionListeners.delete(reload);
+    };
+  }, [reload]);
+  return { user: me.data?.user ?? null, loading: me.loading && !me.data, reload };
 }
 
 export async function signOut() {
   await api("/api/auth/logout", { method: "POST" });
   disconnect();
+  sessionChanged();
 }
 
 /* ------------------------------------------------------------- the time */

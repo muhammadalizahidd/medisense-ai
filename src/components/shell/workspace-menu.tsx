@@ -170,7 +170,7 @@ export function WorkspaceMenu() {
               </div>
               <nav aria-label="Account" className="border-t border-border p-1.5">
                 <Link
-                  href={homeFor(account.role)}
+                  href={homeFor(account.role, account.staffRoles)}
                   onClick={() => setOpen(false)}
                   className={rowClass}
                 >

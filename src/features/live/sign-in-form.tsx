@@ -4,7 +4,7 @@ import { AlertCircle, Eye, EyeOff, KeyRound, Loader2, Lock, Mail } from "lucide-
 import { useState, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Segmented } from "@/components/ui/segmented";
-import { api } from "@/lib/live/client";
+import { api, sessionChanged } from "@/lib/live/client";
 import type { PublicReferralDto, SessionUser } from "@/lib/live/types";
 import { cn } from "@/lib/cn";
 
@@ -53,6 +53,8 @@ export function SignInForm({
   initialEmail = "",
   initialCode = "",
   staffOnly = false,
+  pendingUser = null,
+  onChoosePassword,
 }: {
   onSignedIn: (user: SessionUser) => void;
   /** A referral code whose referral isn't accepted yet: show its progress instead. */
@@ -62,6 +64,10 @@ export function SignInForm({
   initialCode?: string;
   /** Staff apps (the therapist app): email and password only, no patient MRN option. */
   staffOnly?: boolean;
+  /** Signed in with a temporary password from User control: start on choosing a new one. */
+  pendingUser?: SessionUser | null;
+  /** Told when a temporary password was accepted and the "choose your own" step opens. */
+  onChoosePassword?: (user: SessionUser) => void;
 }) {
   const [mode, setMode] = useState<Mode>(initialMode);
   const [email, setEmail] = useState(initialEmail);
@@ -71,6 +77,7 @@ export function SignInForm({
   const [capsLock, setCapsLock] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [pending, setPending] = useState<SessionUser | null>(pendingUser);
   const activating = mode === "activate";
 
   const watchCaps = (event: KeyboardEvent<HTMLInputElement>) =>
@@ -101,6 +108,13 @@ export function SignInForm({
         setBusy(false);
         return;
       }
+      sessionChanged();
+      if (result.user?.mustChangePassword) {
+        setPending(result.user);
+        onChoosePassword?.(result.user);
+        setBusy(false);
+        return;
+      }
       if (result.user) onSignedIn(result.user);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't sign in. Try again.");
@@ -123,6 +137,16 @@ export function SignInForm({
       )}
     </button>
   );
+
+  if (pending) {
+    return (
+      <ChoosePassword
+        user={pending}
+        temporary={password}
+        onDone={() => onSignedIn({ ...pending, mustChangePassword: false })}
+      />
+    );
+  }
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
@@ -212,6 +236,123 @@ export function SignInForm({
           <Loader2 className="size-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
         )}
         {busy ? "Signing in…" : activating ? "Continue" : "Sign in"}
+      </Button>
+    </form>
+  );
+}
+
+/**
+ * First sign-in with a temporary password from User control (or a reset): the person chooses
+ * their own before going anywhere. The temporary one is asked for only if it isn't known here.
+ */
+function ChoosePassword({
+  user,
+  temporary,
+  onDone,
+}: {
+  user: SessionUser;
+  temporary: string;
+  onDone: () => void;
+}) {
+  const [current, setCurrent] = useState(temporary);
+  const [next, setNext] = useState("");
+  const [again, setAgain] = useState("");
+  const [show, setShow] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function save(event: FormEvent) {
+    event.preventDefault();
+    setError(null);
+    if (!current) return setError("Enter the temporary password you were given.");
+    if (next.length < 10) return setError("Use at least 10 characters.");
+    if (next !== again) return setError("The two passwords don't match.");
+    if (next === current) return setError("Choose a password different from the temporary one.");
+    setBusy(true);
+    try {
+      await api("/api/me/password", { body: { current, next } });
+      sessionChanged();
+      onDone();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Couldn't save your password.");
+      setBusy(false);
+    }
+  }
+
+  const strength = next.length >= 14 ? "Strong" : next.length >= 10 ? "Good" : "Too short";
+  return (
+    <form onSubmit={save} className="flex flex-col gap-4" noValidate>
+      <p className="rounded-control bg-accent-tint px-3 py-2 text-caption text-ink-700">
+        Signed in as <strong>{user.email}</strong>. Choose a password only you know; the temporary
+        one stops working once you save.
+      </p>
+      {!temporary && (
+        <IconField id="temporary" label="Temporary password" icon={<KeyRound className="size-4" />}>
+          <input
+            id="temporary"
+            type="password"
+            autoComplete="current-password"
+            value={current}
+            onChange={(e) => setCurrent(e.target.value)}
+            className={inputBare}
+          />
+        </IconField>
+      )}
+      <IconField
+        id="new-password"
+        label="New password"
+        icon={<Lock className="size-4" />}
+        hint={next ? `${strength} · at least 10 characters` : "At least 10 characters"}
+        trailing={
+          <button
+            type="button"
+            onClick={() => setShow(!show)}
+            aria-label={show ? "Hide passwords" : "Show passwords"}
+            aria-pressed={show}
+            className="flex size-8 flex-none cursor-pointer items-center justify-center rounded-control text-ink-500 hover:bg-canvas hover:text-ink-900"
+          >
+            {show ? (
+              <EyeOff className="size-4" aria-hidden="true" />
+            ) : (
+              <Eye className="size-4" aria-hidden="true" />
+            )}
+          </button>
+        }
+      >
+        <input
+          id="new-password"
+          type={show ? "text" : "password"}
+          autoComplete="new-password"
+          autoFocus
+          value={next}
+          onChange={(e) => setNext(e.target.value)}
+          className={inputBare}
+        />
+      </IconField>
+      <IconField id="new-password-again" label="Type it again" icon={<Lock className="size-4" />}>
+        <input
+          id="new-password-again"
+          type={show ? "text" : "password"}
+          autoComplete="new-password"
+          value={again}
+          onChange={(e) => setAgain(e.target.value)}
+          className={inputBare}
+        />
+      </IconField>
+      {error && (
+        <p
+          role="alert"
+          className="flex items-start gap-2 rounded-control bg-over-bg px-3 py-2.5 text-small text-over"
+        >
+          <AlertCircle className="mt-0.5 size-4 flex-none" aria-hidden="true" />
+          {error}
+        </p>
+      )}
+      <Button type="submit" variant="primary" disabled={busy} className="h-11 text-body">
+        {busy && (
+          <Loader2 className="size-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+        )}
+        {busy ? "Saving…" : "Save and continue"}
       </Button>
     </form>
   );

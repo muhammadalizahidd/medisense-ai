@@ -455,7 +455,7 @@ function ResetPassword({ therapistId, name }: { therapistId: string; name: strin
             <div className="flex flex-col gap-3">
               <p className="text-small text-ink-700">
                 Give {first} this temporary password in person or by phone. It&apos;s shown only
-                once. Ask them to change it in My profile after signing in.
+                once. They choose their own password as soon as they sign in with it.
               </p>
               <p className="rounded-control border border-border bg-canvas px-4 py-3 font-mono text-h2 tracking-wider break-all">
                 {temporary}

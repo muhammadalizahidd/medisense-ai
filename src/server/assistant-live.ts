@@ -174,14 +174,31 @@ async function patientList(user: UserDoc, input: Record<string, unknown>): Promi
       t.name,
     ]),
   );
+  // "Who needs a therapist?" must list only the waiting services: in the full list they are lost.
+  const waiting = str(input, "focus") === "waiting";
+  const open = (n: { status: string; therapistId: unknown }) =>
+    n.status === "needs-therapist" || !n.therapistId;
   const items = (await visiblePatients(user))
     .filter((p) => !q || norm(`${p.name} ${p.suburb}`).includes(q))
+    .filter((p) => !waiting || p.needs.some(open))
     .map((p) => ({
       label: p.name,
-      detail: `${stageOf(p)}; ${p.suburb}, ${p.region}; ${p.funding}; ${p.needs.map((n) => `${n.support} (${n.therapistId ? names.get(n.therapistId.toHexString()) : "no clinician yet"})`).join(", ")}`,
+      detail: waiting
+        ? `${p.needs
+            .filter(open)
+            .map((n) => n.support)
+            .join(
+              ", ",
+            )} waiting for a therapist; ${stageOf(p)}; ${p.suburb}, ${p.region}; ${p.funding}`
+        : `${stageOf(p)}; ${p.suburb}, ${p.region}; ${p.funding}; ${p.needs.map((n) => `${n.support} (${n.therapistId ? names.get(n.therapistId.toHexString()) : "no clinician yet"})`).join(", ")}`,
       href: patientHref(user, p._id),
     }));
-  return { summary: `${items.length} patient${items.length === 1 ? "" : "s"} you can see.`, items };
+  return {
+    summary: waiting
+      ? `${items.length} patient${items.length === 1 ? " is" : "s are"} waiting for a therapist for at least one service.`
+      : `${items.length} patient${items.length === 1 ? "" : "s"} you can see.`,
+    items,
+  };
 }
 
 async function patient(user: UserDoc, input: Record<string, unknown>): Promise<Result> {
@@ -786,8 +803,11 @@ export function liveTools(user: UserDoc | null): LiveTool[] {
       {
         name: "live_patients",
         description:
-          "Live patients the person may see, with stage, region, funding and each service's clinician.",
-        properties: { query: prop("Optional name or suburb") },
+          "Live patients the person may see, with stage, region, funding and each service's clinician. focus 'waiting' lists only patients with a service still waiting for a therapist.",
+        properties: {
+          query: prop("Optional name or suburb"),
+          focus: prop("Optional: 'waiting' for patients still waiting for a therapist"),
+        },
         run: (i) => patientList(user, i),
       },
       {
@@ -1031,7 +1051,13 @@ export async function liveRecords(user: UserDoc | null, question: string) {
                   : "";
       calls.push({ name: "live_operations", input: { focus } });
     }
-    if (/patients|caseload|who is|which patient/.test(q))
+    if (
+      /(need|needs|waiting|without|no|yet to get|still to get)\b.{0,30}\b(therapist|clinician)|unassigned|not (yet )?(been )?assigned|to be assigned|awaiting (a )?(therapist|clinician|allocation)/.test(
+        q,
+      )
+    )
+      calls.push({ name: "live_patients", input: { focus: "waiting" } });
+    else if (/patients|caseload|who is|which patient/.test(q))
       calls.push({ name: "live_patients", input: {} });
     if (
       /staff|clinician|take new patients|therapist|credential|registration|screening|insurance|indemnity|expir|verif|approved service|competenc|stf-|on leave|suspend|coverage|capacity/.test(

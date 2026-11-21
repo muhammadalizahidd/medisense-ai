@@ -8,7 +8,7 @@ import { collections } from "./db";
 import type { UserDoc, UserRole } from "./models";
 
 export const SESSION_COOKIE = "medisense_session";
-const SESSION_DAYS = 14;
+export const SESSION_DAYS = 14;
 const INVITE_DAYS = 14;
 
 const sha256 = (value: string) => createHash("sha256").update(value).digest("hex");
@@ -26,8 +26,10 @@ export async function checkPassword(user: UserDoc | null, password: string) {
 export async function startSession(userId: ObjectId) {
   const token = randomBytes(32).toString("base64url");
   const expiresAt = new Date(Date.now() + SESSION_DAYS * 86_400_000);
-  const { sessions } = await collections();
+  const { sessions, users } = await collections();
   await sessions.insertOne({ _id: sha256(token), userId, expiresAt });
+  // User control shows who has never signed in, and when each person last did.
+  await users.updateOne({ _id: userId }, { $set: { lastSignInAt: new Date() } });
   const jar = await cookies();
   jar.set(SESSION_COOKIE, token, {
     httpOnly: true,

@@ -10,7 +10,9 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { sessionChanged } from "@/lib/live/client";
 import { homeFor } from "@/lib/live/routes";
+import type { SessionUser } from "@/lib/live/types";
 import { cn } from "@/lib/cn";
 import { SignInForm } from "./sign-in-form";
 
@@ -42,15 +44,20 @@ export function SignInScreen({
   offline,
   testAccounts,
   oneClick = false,
+  pendingUser = null,
 }: {
   next: string | null;
   offline: boolean;
+  /** Already signed in with a temporary password: only the "choose your password" step shows. */
+  pendingUser?: SessionUser | null;
   testAccounts: TestAccount[] | null;
   /** Local development: a demo account signs in with one click (no password in the browser). */
   oneClick?: boolean;
 }) {
   const router = useRouter();
   const [prefill, setPrefill] = useState<{ email: string; key: number } | null>(null);
+  // Set once a temporary password is accepted, so the heading matches the "choose" step.
+  const [choosing, setChoosing] = useState<SessionUser | null>(pendingUser);
   const staffArea = Boolean(
     next &&
     STAFF_AREAS.some((p) => next === p || next.startsWith(`${p}/`) || next.startsWith(`${p}?`)),
@@ -96,11 +103,13 @@ export function SignInScreen({
           <div className="mb-8 lg:hidden">
             <Brand />
           </div>
-          <h1 className="type-display text-h1">Sign in</h1>
+          <h1 className="type-display text-h1">{choosing ? "Choose your password" : "Sign in"}</h1>
           <p className="mt-1.5 mb-6 text-small text-ink-700">
-            {staffArea
-              ? "Staff and therapists sign in with their work email and password."
-              : "Staff and therapists use their work email. Patients and families sign in with the MRN (medical record number) from their care team."}
+            {choosing
+              ? `Welcome, ${choosing.name.split(" ")[0]}. You signed in with a temporary password: choose your own to continue.`
+              : staffArea
+                ? "Staff and therapists sign in with their work email and password."
+                : "Staff and therapists use their work email. Patients and families sign in with the MRN (medical record number) from their care team."}
           </p>
           {offline && (
             <p
@@ -115,8 +124,10 @@ export function SignInScreen({
               key={prefill?.key ?? 0}
               initialEmail={prefill?.email}
               staffOnly={staffArea}
+              pendingUser={pendingUser}
+              onChoosePassword={setChoosing}
               onSignedIn={(user) => {
-                router.replace(next ?? homeFor(user.role));
+                router.replace(next ?? homeFor(user.role, user.staffRoles));
                 router.refresh();
               }}
             />
@@ -128,7 +139,7 @@ export function SignInScreen({
               {!staffArea && " Patients can ask their care team for their MRN."}
             </p>
           </div>
-          {testAccounts && (
+          {testAccounts && !choosing && (
             <details className="mt-6 rounded-control border border-dashed border-border-strong bg-surface px-4 py-3">
               <summary className="cursor-pointer text-small font-semibold">Demo accounts</summary>
               <p className="mt-2 mb-3 text-caption text-ink-500">
@@ -150,10 +161,11 @@ export function SignInScreen({
                           body: JSON.stringify({ email: a.email }),
                         });
                         const body = (await res.json().catch(() => ({}))) as {
-                          user?: { role: Parameters<typeof homeFor>[0] };
+                          user?: { role: Parameters<typeof homeFor>[0]; staffRoles?: string[] };
                         };
                         if (res.ok && body.user) {
-                          router.replace(next ?? homeFor(body.user.role));
+                          sessionChanged();
+                          router.replace(next ?? homeFor(body.user.role, body.user.staffRoles));
                           router.refresh();
                         }
                       }}

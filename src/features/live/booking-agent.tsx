@@ -143,7 +143,14 @@ function Chip({
  * The booking agent: a guided chat with fixed tasks for the signed-in person. Each step reads live
  * records, the times offered are real free slots, and the booking is a proposal they confirm.
  */
-export function BookingAgent({ compact = false }: { compact?: boolean }) {
+export function BookingAgent({
+  compact = false,
+  dock = false,
+}: {
+  compact?: boolean;
+  /** In an app with a tab bar: the message box sits on its own bar just above it, as in chat apps. */
+  dock?: boolean;
+}) {
   const r = useResource<BookingAgentDto>(ENDPOINT);
   const d = r.data;
   const [f, setF] = useState<Flow>(fresh);
@@ -602,35 +609,60 @@ export function BookingAgent({ compact = false }: { compact?: boolean }) {
           </button>
         </Agent>
       )}
-      <div ref={end} className="scroll-mb-20" />
+      <div ref={end} className={dock ? "h-24 scroll-mb-40" : "scroll-mb-20"} />
 
       <form
         onSubmit={(e) => {
           e.preventDefault();
           void sendText(text);
         }}
-        className="sticky bottom-0 flex items-center gap-2 bg-page pt-1"
+        className={cn(
+          "flex items-center gap-2",
+          dock
+            ? "absolute inset-x-0 bottom-18 z-20 border-t border-border bg-page px-3 pt-2.5 pb-3 md:bottom-21"
+            : "sticky bottom-0 bg-page pt-1",
+        )}
       >
-        <input
-          aria-label="Tell the booking agent"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder={
-            isClient
-              ? "e.g. Book a video visit on Tuesday morning"
-              : "e.g. Book Harper on Tuesday morning"
-          }
-          className="h-10 min-w-0 flex-1 rounded-full border border-border-strong bg-surface px-4 text-small"
-        />
-        <button
-          type="submit"
-          aria-label="Send to the booking agent"
-          disabled={busy || !text.trim()}
-          className="flex size-10 flex-none cursor-pointer items-center justify-center rounded-full bg-accent-fill text-on-accent disabled:opacity-40"
+        <div
+          className={cn(
+            "flex min-w-0 flex-1 items-center gap-1.5",
+            dock &&
+              "rounded-full border border-border-strong bg-surface p-1.5 pl-4 shadow-lift focus-within:border-accent-fill",
+          )}
         >
-          <Send className="size-4" aria-hidden="true" />
-        </button>
+          <input
+            aria-label="Tell the booking agent"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder={
+              isClient
+                ? "e.g. Book a video visit on Tuesday morning"
+                : "e.g. Book Harper on Tuesday morning"
+            }
+            className={cn(
+              "min-w-0 flex-1 text-small",
+              dock
+                ? "h-9 bg-transparent text-ink-900 outline-none placeholder:text-ink-500 focus-visible:shadow-none"
+                : "h-10 rounded-full border border-border-strong bg-surface px-4",
+            )}
+          />
+          {dock && <SendButton busy={busy} empty={!text.trim()} />}
+        </div>
+        {!dock && <SendButton busy={busy} empty={!text.trim()} />}
       </form>
     </div>
+  );
+}
+
+function SendButton({ busy, empty }: { busy: boolean; empty: boolean }) {
+  return (
+    <button
+      type="submit"
+      aria-label="Send to the booking agent"
+      disabled={busy || empty}
+      className="flex size-9 flex-none cursor-pointer items-center justify-center rounded-full bg-accent-fill text-on-accent transition-transform duration-140 active:scale-95 disabled:opacity-40"
+    >
+      <Send className="size-4" aria-hidden="true" />
+    </button>
   );
 }

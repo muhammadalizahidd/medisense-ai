@@ -6,6 +6,8 @@ import { SignInScreen, type TestAccount } from "@/features/live/sign-in-screen";
 import { homeFor, safeNext } from "@/lib/live/routes";
 import { currentUser } from "@/server/auth";
 import { DatabaseUnavailable } from "@/server/db";
+import { sessionUser } from "@/server/session-user";
+import type { SessionUser } from "@/lib/live/types";
 import { staffEmail } from "@/server/seed";
 
 export const metadata: Metadata = { title: "Sign in · Medisense" };
@@ -48,9 +50,12 @@ function testAccounts(): TestAccount[] | null {
 async function SignInGate({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
   const next = safeNext((await searchParams).next);
   let offline = false;
+  // Signed in with a temporary password: they choose their own here before going anywhere.
+  let pending: SessionUser | null = null;
   try {
     const user = await currentUser();
-    if (user) redirect(next ?? homeFor(user.role));
+    if (user?.mustChangePassword) pending = sessionUser(user);
+    else if (user) redirect(next ?? homeFor(user.role, user.staffRoles));
   } catch (error) {
     if (!(error instanceof DatabaseUnavailable)) throw error;
     offline = true;
@@ -59,7 +64,8 @@ async function SignInGate({ searchParams }: { searchParams: Promise<{ next?: str
     <SignInScreen
       next={next}
       offline={offline}
-      testAccounts={testAccounts()}
+      pendingUser={pending}
+      testAccounts={pending ? null : testAccounts()}
       oneClick={process.env.HIDE_TEST_ACCOUNTS !== "1"}
     />
   );

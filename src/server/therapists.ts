@@ -382,7 +382,7 @@ export async function resetStaffPassword(admin: UserDoc, therapistId: ObjectId) 
   const temporary = Array.from({ length: 14 }, () => alphabet[randomInt(alphabet.length)]).join("");
   await users.updateOne(
     { _id: t.userId },
-    { $set: { passwordHash: await hashPassword(temporary) } },
+    { $set: { passwordHash: await hashPassword(temporary), mustChangePassword: true } },
   );
   await sessions.deleteMany({ userId: t.userId });
   await audit(admin, `Reset the password for ${t.name}`, null);
@@ -446,6 +446,8 @@ export async function createTherapist(admin: UserDoc, input: z.infer<typeof newT
     name: input.name,
     role: "therapist",
     passwordHash: await hashPassword(temporary),
+    mustChangePassword: true,
+    createdBy: admin._id,
     invite: null,
     therapistId,
     clientId: null,
