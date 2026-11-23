@@ -5,6 +5,6 @@ import { sessionUser } from "@/server/session-user";
 export async function GET() {
   return handle(async () => {
     const user = await currentUser();
-    return { user: user ? sessionUser(user) : null };
+    return { user: user ? await sessionUser(user) : null };
   });
 }

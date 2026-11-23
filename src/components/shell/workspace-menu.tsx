@@ -1,18 +1,6 @@
 "use client";
 
-import {
-  Briefcase,
-  ChevronDown,
-  ClipboardList,
-  LayoutGrid,
-  LogIn,
-  LogOut,
-  Palette,
-  Stethoscope,
-  UserCheck,
-  UserRound,
-  type LucideIcon,
-} from "lucide-react";
+import { ChevronDown, LayoutGrid, LogIn, LogOut, Palette, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -20,16 +8,9 @@ import { Avatar } from "@/components/ui/premium";
 import { cn } from "@/lib/cn";
 import { signOut, useSession } from "@/lib/live/client";
 import { homeFor } from "@/lib/live/routes";
-import { roleHome, roleUsers, type Role } from "@/lib/navigation";
+import { roleUsers, type Role } from "@/lib/navigation";
 import { useDemoStore } from "@/state/demo-store";
 import { photoFor } from "@/lib/avatars";
-
-const workspaces: { id: Role; label: string; detail: string; icon: LucideIcon }[] = [
-  { id: "Leadership", label: "Director", detail: "Organisation overview", icon: Briefcase },
-  { id: "Clinician", label: "Therapist", detail: "Caseload, visits and notes", icon: Stethoscope },
-  { id: "Admin", label: "Admin", detail: "Intake and operations", icon: ClipboardList },
-  { id: "Supervisor", label: "Supervisor", detail: "Team and supervision", icon: UserCheck },
-];
 
 /** A row in the menu: icon, label, optional hint. */
 const rowClass =

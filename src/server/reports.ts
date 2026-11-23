@@ -4,7 +4,7 @@ import {
   confidentialDisciplines,
   dayKey,
   emptyFacts,
-  scopeFor,
+  scopeFromPermissions,
   type AppointmentFact,
   type AppointmentMode,
   type ManagementMode,
@@ -17,13 +17,15 @@ import { invoiceTotals } from "./finance";
 import type { ClientDoc, UserDoc } from "./models";
 import { reportSettings, type ReportSettings } from "./report-settings";
 import { canSee, opsCan } from "./operations";
+import { heldPermissions } from "./permissions";
 
 /**
  * Module 09: every report reads the same records the owning modules write (section 14). Facts
  * are cut to the viewer's scope here, on the server, so nothing outside it reaches the browser.
  */
 
-export const reportScope = (u: UserDoc): ReportScope => scopeFor(u.staffRoles ?? [], u.role);
+export const reportScope = (u: UserDoc): ReportScope =>
+  scopeFromPermissions(heldPermissions(u), u.role, u.staffRoles ?? []);
 
 const DAY = 86_400_000;
 /** Breaks, training and admin taken out of rostered time before utilisation (AT-21). */

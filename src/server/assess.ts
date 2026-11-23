@@ -1,4 +1,5 @@
 import "server-only";
+import { can } from "./permissions";
 import { randomUUID } from "node:crypto";
 import { ObjectId } from "mongodb";
 import { generateJson } from "@/lib/ai/engine";
@@ -162,9 +163,9 @@ async function extFor(a: AssessmentDoc) {
 
 /* ------------------------------------------------------------------ access (section 2) */
 
-const has = (u: UserDoc, ...roles: string[]) =>
-  Boolean(u.staffRoles?.some((r) => roles.includes(r)));
-const isLead = (u: UserDoc) => u.role === "admin" && has(u, "Clinical Lead", "Super Admin");
+/** The clinical view of assessments, and co-signing: the assessments.view and assessments.cosign permissions. */
+const canView = (u: UserDoc) => u.role === "admin" && can(u, "assessments.view");
+const canCoSign = (u: UserDoc) => u.role === "admin" && can(u, "assessments.cosign");
 
 function viewOf(
   u: UserDoc,
@@ -175,7 +176,7 @@ function viewOf(
     return { view: "none", edit: false };
   }
   if (u.role !== "admin") return { view: "none", edit: false };
-  if (isLead(u)) return { view: "clinical", edit: false };
+  if (canView(u)) return { view: "clinical", edit: false };
   return { view: "status", edit: false };
 }
 
@@ -349,7 +350,7 @@ export async function assessDetail(u: UserDoc, id: ObjectId): Promise<AssessDto>
     restricted,
     canEdit:
       access.edit && !["Finalised", "Amended", "Cancelled", "Pending Review"].includes(status),
-    canCoSign: isLead(u) && cs && Boolean(a.signed) && !e.coSign,
+    canCoSign: canCoSign(u) && cs && Boolean(a.signed) && !e.coSign,
     view: clinical ? "clinical" : "status",
     nextVisit: iso(next?.start),
     contacts: (client.contacts ?? [])
@@ -519,7 +520,7 @@ export async function assessAction(u: UserDoc, id: ObjectId, action: AssessActio
   const status = statusOf(a, e, cs);
 
   if (action.type === "co-sign") {
-    if (!isLead(u)) throw new UserFacingError("Only a Clinical Lead co-signs.", 409);
+    if (!canCoSign(u)) throw new UserFacingError("Only a Clinical Lead co-signs.", 409);
     if (!a.signed || e.coSign) throw new UserFacingError("Nothing to co-sign.", 409);
     set.coSign = { by: u.name, at: now };
     note = `Co-signed by ${u.name}`;

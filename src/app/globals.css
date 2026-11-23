@@ -1680,3 +1680,20 @@ html[data-embedded] *::-webkit-scrollbar {
     0 0 0 1.5px var(--color-surface),
     0 0 0 2.5px var(--color-border);
 }
+
+/* A dialog rises 8px and fades in; with reduced motion it simply appears. */
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .dialog-panel {
+    animation: dialog-in var(--duration-base) var(--ease-out) both;
+  }
+}

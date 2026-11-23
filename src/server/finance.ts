@@ -1,4 +1,5 @@
 import "server-only";
+import { can } from "./permissions";
 import { ObjectId, type Db } from "mongodb";
 import { z } from "zod";
 import { supportInfo, type Support } from "@/lib/live/catalogue";
@@ -51,12 +52,10 @@ import type {
 
 /* ------------------------------------------------------------------ roles (section 2, AC-31) */
 
-const has = (u: UserDoc, ...roles: string[]) =>
-  Boolean(u.staffRoles?.some((r) => roles.includes(r)));
-export const isOfficer = (u: UserDoc) =>
-  u.role === "admin" && has(u, "Finance", "Finance Manager", "Super Admin");
-export const isManager = (u: UserDoc) =>
-  u.role === "admin" && has(u, "Finance Manager", "Super Admin");
+/** Works billing: the finance.work permission. */
+export const isOfficer = (u: UserDoc) => u.role === "admin" && can(u, "finance.work");
+/** Approves finance exceptions: the finance.approve permission. */
+export const isManager = (u: UserDoc) => u.role === "admin" && can(u, "finance.approve");
 
 export function mustOfficer(u: UserDoc) {
   if (!isOfficer(u)) throw new UserFacingError("Only Finance can do this.", 409);

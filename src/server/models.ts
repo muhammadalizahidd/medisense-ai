@@ -8,7 +8,6 @@ import type {
   Region,
   ServiceLocation,
   ServiceDecision,
-  StaffRole,
   Support,
 } from "@/lib/live/catalogue";
 import type {
@@ -126,12 +125,43 @@ export interface UserDoc {
   /** The Super Admin who created the account in User control. */
   createdBy?: ObjectId | null;
   /** Admin responsibilities; a Clinical Lead or Super Admin makes clinical triage decisions. */
-  staffRoles?: StaffRole[];
+  staffRoles?: string[];
   /** Theme, accent, typeface, density and text size, saved from Appearance. */
   appearance?: Appearance;
   /** Module 10 personal work settings; never organisational clinical policy. */
   workspacePrefs?: WorkspacePrefs;
   createdAt: Date;
+}
+
+/**
+ * An office-staff role and the permissions it grants (see lib/permissions/catalogue). Built-in
+ * roles start from the catalogue defaults; the Super Admin can edit them and add more.
+ */
+export interface RoleDoc {
+  _id: ObjectId;
+  /** Stable identifier; the display name can change. */
+  slug: string;
+  name: string;
+  /**
+   * Built-in roles only: the original name, which is what people's staffRoles store and what the
+   * existing role checks compare, so renaming a built-in role never changes anyone's access.
+   */
+  legacyName?: string;
+  description: string;
+  builtIn: boolean;
+  permissions: string[];
+  /** Every permission that existed when this role was last seeded, so new ones are added once. */
+  knownPermissions: string[];
+  createdAt: Date;
+  updatedAt: Date;
+  updatedBy: ObjectId | null;
+}
+
+/** Platform-wide facts. The single Super Admin account is recorded here. */
+export interface PlatformDoc {
+  _id: "platform";
+  superAdminId: ObjectId;
+  updatedAt: Date;
 }
 
 export interface SessionDoc {

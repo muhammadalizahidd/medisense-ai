@@ -1187,9 +1187,7 @@ export function ExportsTab({ c }: { c: Ctx }) {
                           </span>
                         )}
                         {e.status === "Ready" &&
-                          (e.mine ||
-                            c.hub.scope.label.startsWith("Director") ||
-                            c.hub.scope.label === "Operations Manager") && (
+                          (e.mine || c.hub.scope.share.includes("Organisation")) && (
                             <Button size="sm" variant="danger" onClick={() => setRevoke(e)}>
                               Revoke link
                             </Button>
@@ -1288,8 +1286,7 @@ function SettingsCard({ c }: { c: Ctx }) {
   const [vals, setVals] = useState<Record<string, number>>({});
   const [reason, setReason] = useState("");
   const [error, setError] = useState("");
-  const canThresholds =
-    c.hub.scope.label.startsWith("Director") || c.hub.scope.label === "Operations Manager";
+  const canThresholds = c.hub.scope.share.includes("Organisation");
   const canDeadlines = c.hub.scope.clinicalDetail;
   const start = (kind: "thresholds" | "deadlines") => {
     setVals(kind === "thresholds" ? { ...st.thresholds } : { ...st.deadlines });

@@ -1,5 +1,6 @@
 import "server-only";
 import type { ObjectId } from "mongodb";
+import { can } from "./permissions";
 import { findTopics, productTopics } from "@/lib/knowledge/product";
 import { money } from "@/lib/live/clinical";
 import { slotLabel, relativeTime } from "@/lib/live/time";
@@ -20,10 +21,10 @@ import { staffBlocks } from "./staff";
 type Item = { label: string; detail: string; href: string };
 type Result = { summary: string; items: Item[]; note?: string };
 
-const isLead = (u: UserDoc) =>
-  Boolean(u.staffRoles?.some((r) => r === "Clinical Lead" || r === "Super Admin"));
-const isFinance = (u: UserDoc) =>
-  Boolean(u.staffRoles?.some((r) => r === "Finance" || r === "Super Admin"));
+/** Who decides clinical triage: the referrals.triage permission. */
+const isLead = (u: UserDoc) => can(u, "referrals.triage");
+/** Who sees billing: the finance.work permission. */
+const isFinance = (u: UserDoc) => can(u, "finance.work");
 const norm = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();
 const str = (input: Record<string, unknown>, key: string) => {
   const v = input[key];
@@ -207,7 +208,7 @@ async function patient(user: UserDoc, input: Record<string, unknown>): Promise<R
   if (!p)
     return { summary: `No patient matching "${str(input, "name")}" that you can see.`, items: [] };
   const db = await collections();
-  const clinical = user.role === "therapist" || isLead(user);
+  const clinical = user.role === "therapist" || can(user, "records.view.clinical");
   const [visits, assessments, plans, invoices, therapists] = await Promise.all([
     db.appointments
       .find({ clientId: p._id, status: { $ne: "tentative" } })

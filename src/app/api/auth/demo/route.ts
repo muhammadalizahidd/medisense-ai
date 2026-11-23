@@ -19,6 +19,6 @@ export async function POST(request: Request) {
     const user = await users.findOne({ email, role: { $in: ["admin", "therapist"] } });
     if (!user || user.disabled) throw new UserFacingError("Demo account not found.", 404);
     await startSession(user._id);
-    return { user: sessionUser(user) };
+    return { user: await sessionUser(user) };
   });
 }

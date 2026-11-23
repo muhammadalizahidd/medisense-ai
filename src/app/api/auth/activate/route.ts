@@ -69,6 +69,6 @@ export async function POST(request: Request) {
       },
     );
     await startSession(user._id);
-    return { user: sessionUser(user) };
+    return { user: await sessionUser(user) };
   });
 }

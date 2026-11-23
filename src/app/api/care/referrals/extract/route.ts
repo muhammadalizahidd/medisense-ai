@@ -6,6 +6,7 @@ import {
   type ReferralExtraction,
 } from "@/lib/live/referral-extract";
 import { requireUser } from "@/server/auth";
+import { mustCan } from "@/server/permissions";
 import { handle, readJson, UserFacingError } from "@/server/http";
 import { audit } from "@/server/live";
 
@@ -32,6 +33,7 @@ Use Australian English.`;
 export async function POST(request: Request) {
   return handle(async () => {
     const admin = await requireUser("admin");
+    mustCan(admin, "referrals.process");
     const { source, text } = await readJson(request, schema);
     let extracted: ReferralExtraction;
     try {

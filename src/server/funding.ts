@@ -1,4 +1,5 @@
 import "server-only";
+import { can } from "./permissions";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { Binary, ObjectId, type Db } from "mongodb";
 import { z } from "zod";
@@ -65,15 +66,12 @@ import type {
 
 /* ------------------------------------------------------------------ roles */
 
-const has = (u: UserDoc, ...roles: string[]) =>
-  Boolean(u.staffRoles?.some((r) => roles.includes(r)));
-/** Funding/Finance officers verify evidence and keep budgets (section 2, AT-10). */
-export const canVerify = (u: UserDoc) => u.role === "admin" && has(u, "Finance", "Super Admin");
-/** Intake and Finance create drafts, request information and upload evidence. */
-export const canEditFunding = (u: UserDoc) =>
-  u.role === "admin" && has(u, "Finance", "Intake Officer", "Super Admin");
-export const isClinicalLead = (u: UserDoc) =>
-  u.role === "admin" && has(u, "Clinical Lead", "Super Admin");
+/** Verify evidence and keep budgets (section 2, AT-10): the funding.verify permission. */
+export const canVerify = (u: UserDoc) => u.role === "admin" && can(u, "funding.verify");
+/** Create drafts, request information and upload evidence: the funding.edit permission. */
+export const canEditFunding = (u: UserDoc) => u.role === "admin" && can(u, "funding.edit");
+/** The clinical gate on a funding plan: the funding.clinical-gate permission. */
+export const isClinicalLead = (u: UserDoc) => u.role === "admin" && can(u, "funding.clinical-gate");
 
 function mustEdit(u: UserDoc) {
   if (!canEditFunding(u)) {

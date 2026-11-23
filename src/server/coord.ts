@@ -1,4 +1,5 @@
 import "server-only";
+import { can } from "./permissions";
 import { ObjectId } from "mongodb";
 import { generateJson } from "@/lib/ai/engine";
 import { AiError } from "@/lib/ai/types";
@@ -110,7 +111,8 @@ export function blankFields(): CareTaskDoc["fields"] {
 
 const has = (u: UserDoc, ...roles: string[]) =>
   Boolean(u.staffRoles?.some((r) => roles.includes(r)));
-const isLead = (u: UserDoc) => u.role === "admin" && has(u, "Clinical Lead", "Super Admin");
+/** Reviews and completes clinical tasks: the coordination.review permission. */
+const isLead = (u: UserDoc) => u.role === "admin" && can(u, "coordination.review");
 const SUPERVISOR = "Helen Brooks";
 
 function involved(u: UserDoc, t: CareTaskDoc) {

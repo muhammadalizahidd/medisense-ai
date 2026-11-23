@@ -7,6 +7,7 @@ import { useState, useSyncExternalStore, type CSSProperties } from "react";
 import { caseNotes } from "@/data/case-note";
 import { cn } from "@/lib/cn";
 import { isActive, isStandalone, navigationFor, roleUsers } from "@/lib/navigation";
+import { pageAccessFor } from "@/lib/permissions/pages";
 import { useUnreadMessages } from "@/features/live/conversations";
 import { useSession } from "@/lib/live/client";
 import { useDemoStore } from "@/state/demo-store";
@@ -80,7 +81,7 @@ export function Sidebar() {
 
   if (isStandalone(pathname)) return null;
 
-  const all = navigationFor(role, account?.role === "admin" ? account.staffRoles : null, {
+  const all = navigationFor(role, account?.role === "admin" ? pageAccessFor(account) : null, {
     liveOnly: Boolean(account),
   });
   // Search matches a page's own name or its section's, so "finance" lists the whole section.

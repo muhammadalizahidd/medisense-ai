@@ -3,6 +3,8 @@
  * and the screens, so an export always matches what was on screen (AT-29).
  */
 
+import { reportDetailId, reportReadId } from "@/lib/permissions/catalogue";
+
 /* ------------------------------------------------------------------ dates (Brisbane) */
 
 const OFFSET = 10 * 3_600_000;
@@ -478,9 +480,9 @@ export type ReportScope = {
   teams: string[];
 };
 
-/** A person's reporting scope is the union of their admin roles (section 8). */
-export function scopeFor(staffRoles: readonly string[], role: string): ReportScope {
-  // Section 8: a therapist sees their own caseload only (the server filters the records).
+/** Therapists and patients keep fixed scopes, whatever roles they carry (section 8). */
+function fixedScope(role: string): ReportScope {
+  // A therapist sees their own caseload only (the server filters the records).
   if (role === "therapist")
     return {
       label: "Therapist (own caseload)",
@@ -491,77 +493,20 @@ export function scopeFor(staffRoles: readonly string[], role: string): ReportSco
       schedule: false,
       teams: ["Clinical"],
     };
-  if (role !== "admin")
-    return {
-      label: "Participant",
-      domains: [],
-      detail: [],
-      clinicalDetail: false,
-      share: [],
-      schedule: false,
-      teams: [],
-    };
-  const d = new Set<Domain>();
-  const det = new Set<Domain>();
-  const share = new Set<ShareScope>(["Private"]);
-  const teams = new Set<string>();
-  const has = (r: string) => staffRoles.includes(r);
-  let clinical = false;
-  let schedule = false;
-  const add = (list: Domain[], detail: Domain[] = list) => {
-    list.forEach((x) => d.add(x));
-    detail.forEach((x) => det.add(x));
+  return {
+    label: "Participant",
+    domains: [],
+    detail: [],
+    clinicalDetail: false,
+    share: [],
+    schedule: false,
+    teams: [],
   };
-  if (has("Super Admin")) {
-    add(
-      [...domains],
-      domains.filter((x) => x !== "Clinical Operations"),
-    );
-    ["Team", "Organisation"].forEach((s) => share.add(s as ShareScope));
-    ["Intake", "Scheduling", "Clinical", "Finance", "Operations"].forEach((t) => teams.add(t));
-    schedule = true;
-  }
-  if (has("Operations Manager")) {
-    add(
-      [
-        "Referrals",
-        "Participants",
-        "Staff",
-        "Scheduling",
-        "Clinical Operations",
-        "Telehealth",
-        "Automation",
-        "Audit",
-      ],
-      ["Referrals", "Participants", "Staff", "Scheduling", "Telehealth", "Automation", "Audit"],
-    );
-    ["Team", "Organisation"].forEach((s) => share.add(s as ShareScope));
-    teams.add("Operations");
-    schedule = true;
-  }
-  if (has("Intake Officer")) {
-    add(["Referrals", "Participants"]);
-    share.add("Team");
-    teams.add("Intake");
-  }
-  if (has("Scheduler")) {
-    add(["Scheduling", "Telehealth"]);
-    share.add("Team");
-    teams.add("Scheduling");
-  }
-  if (has("Clinical Lead")) {
-    add(["Clinical Operations", "Staff", "Scheduling", "Participants", "Telehealth"]);
-    clinical = true;
-    share.add("Team");
-    teams.add("Clinical");
-    schedule = true;
-  }
-  if (has("Finance") || has("Finance Manager")) {
-    add(["Finance"]);
-    share.add("Team");
-    teams.add("Finance");
-    if (has("Finance Manager")) schedule = true;
-  }
+}
+
+/** Names a person's roles for the reports header. It only labels the scope; permissions decide it. */
+function scopeLabel(staffRoles: readonly string[]): string {
+  const has = (r: string) => staffRoles.includes(r);
   const label = has("Super Admin")
     ? has("Clinical Lead")
       ? "Director (clinical scope)"
@@ -579,14 +524,44 @@ export function scopeFor(staffRoles: readonly string[], role: string): ReportSco
             ]
               .filter(Boolean)
               .join(", ") || "Staff";
+  return label;
+}
+
+/**
+ * A person's reporting scope, from the permissions their roles grant (section 8). Therapists and
+ * patients keep their fixed scopes. Row-level detail only counts for a domain the person can read.
+ */
+export function scopeFromPermissions(
+  held: ReadonlySet<string> | readonly string[],
+  role: string,
+  staffRoles: readonly string[],
+): ReportScope {
+  if (role !== "admin") return fixedScope(role);
+  const has = (id: string) =>
+    Array.isArray(held) ? held.includes(id) : (held as ReadonlySet<string>).has(id);
+  const read = domains.filter((d) => has(reportReadId(d)));
+  const detail = read.filter((d) => has(reportDetailId(d)));
+  const teamPermissions: [string, string][] = [
+    ["operations.team.intake", "Intake"],
+    ["operations.team.scheduling", "Scheduling"],
+    ["operations.team.clinical", "Clinical"],
+    ["operations.team.finance", "Finance"],
+    ["operations.team.operations", "Operations"],
+  ];
   return {
-    label,
-    domains: domains.filter((x) => d.has(x)),
-    detail: domains.filter((x) => det.has(x)),
-    clinicalDetail: clinical,
-    share: shareScopes.filter((s) => share.has(s)),
-    schedule,
-    teams: [...teams],
+    // The label only names the person's roles; what they can see comes from the permissions.
+    label: scopeLabel(staffRoles),
+    domains: read,
+    detail,
+    clinicalDetail: has("reports.clinical-detail"),
+    share: shareScopes.filter(
+      (s) =>
+        s === "Private" ||
+        (s === "Team" && has("reports.share.team")) ||
+        (s === "Organisation" && has("reports.share.organisation")),
+    ),
+    schedule: has("reports.schedule"),
+    teams: teamPermissions.filter(([id]) => has(id)).map(([, team]) => team),
   };
 }
 

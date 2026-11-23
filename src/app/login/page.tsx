@@ -54,7 +54,7 @@ async function SignInGate({ searchParams }: { searchParams: Promise<{ next?: str
   let pending: SessionUser | null = null;
   try {
     const user = await currentUser();
-    if (user?.mustChangePassword) pending = sessionUser(user);
+    if (user?.mustChangePassword) pending = await sessionUser(user);
     else if (user) redirect(next ?? homeFor(user.role, user.staffRoles));
   } catch (error) {
     if (!(error instanceof DatabaseUnavailable)) throw error;

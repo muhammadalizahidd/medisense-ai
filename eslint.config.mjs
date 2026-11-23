@@ -18,7 +18,21 @@ const eslintConfig = defineConfig([
       "react/self-closing-comp": "error",
     },
   },
-  globalIgnores([".next/**", ".next-prod/**", ".netlify/**", ".vercel/**", "out/**", "build/**", "next-env.d.ts"]),
+  {
+    // Command-line scripts print to the terminal on purpose.
+    files: ["scripts/**"],
+    rules: { "no-console": "off" },
+  },
+  globalIgnores([
+    ".next/**",
+    ".next-prod/**",
+    ".netlify/**",
+    ".vercel/**",
+    ".tmp-check/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+  ]),
 ]);
 
 export default eslintConfig;

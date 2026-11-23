@@ -7,7 +7,7 @@ export async function GET() {
   return handle(async () => {
     const user = await requireUser("admin", "therapist");
     return {
-      user: { ...sessionUser(user), phone: user.phone ?? null },
+      user: { ...(await sessionUser(user)), phone: user.phone ?? null },
       therapist: user.role === "therapist" ? await myTherapistDetail(user) : null,
     };
   });

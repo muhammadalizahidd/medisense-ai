@@ -1,3 +1,4 @@
+import { canOpenPage, type PageAccess } from "@/lib/permissions/pages";
 import {
   ChartColumn,
   UserCog,
@@ -43,8 +44,6 @@ import {
   type LucideIcon,
   BotMessageSquare,
 } from "lucide-react";
-
-import type { StaffRole } from "@/lib/live/catalogue";
 
 export type Role = "Leadership" | "Admin" | "Supervisor" | "Clinician";
 
@@ -300,65 +299,13 @@ const roleLayouts: Partial<Record<Role, Section[]>> = {
   ],
 };
 
-const INTAKE: StaffRole = "Intake Officer";
-const SCHED: StaffRole = "Scheduler";
-const FIN: StaffRole = "Finance";
-const FINM: StaffRole = "Finance Manager";
-const OPS: StaffRole = "Operations Manager";
-const LEAD: StaffRole = "Clinical Lead";
-/** The care office: everyone who works with patients day to day sees the clinical summaries. */
-const CARE: StaffRole[] = [INTAKE, SCHED, LEAD, OPS];
-
-/**
- * Which admin responsibilities open each staff page. A Super Admin sees everything; a page not
- * listed here is open to every admin. Pages stay reachable from links; this only tidies the menu.
- */
-export const pageAccess: Record<string, StaffRole[]> = {
-  "/care/referrals": [INTAKE, LEAD],
-  "/care": [INTAKE, SCHED, LEAD],
-  "/care/patient-requests": [INTAKE, SCHED, LEAD],
-  "/care/records": CARE,
-  "/care/assessments": CARE,
-  "/care/plans": CARE,
-  "/care/progress": CARE,
-  "/care/therapists": [SCHED, LEAD, OPS],
-  "/care/sessions": CARE,
-  "/care/documentation": CARE,
-  "/care/coordination": [INTAKE, SCHED, LEAD, OPS],
-  "/telehealth/recordings": [SCHED, LEAD, OPS],
-  "/care/schedule": [SCHED, OPS],
-  "/care/funding": [INTAKE, FIN, FINM],
-  "/care/billing": [FIN, FINM],
-  "/care/operations": [INTAKE, SCHED, FINM, LEAD, OPS],
-  "/care/reports": [INTAKE, SCHED, FINM, LEAD, OPS],
-  "/care/ai-agent": [INTAKE, SCHED, OPS],
-  "/care/ai-oversight": CARE,
-  // No responsibility opens these: they are the Super Admin's.
-  "/": [],
-  "/care/users": [],
-  "/intake": [INTAKE],
-  "/forms": [INTAKE, SCHED],
-  "/patients-requiring-attention": [LEAD],
-  "/patients": [INTAKE, SCHED, LEAD],
-  "/schedule": [SCHED],
-  "/reports": [LEAD],
-  "/billing": [FIN, FINM],
-};
-
-/** Whether someone with these admin responsibilities works on a page. */
-export function canOpen(href: string, staffRoles: readonly StaffRole[] | null | undefined) {
-  if (!staffRoles?.length || staffRoles.includes("Super Admin")) return true;
-  const need = pageAccess[href];
-  return !need || need.some((r) => staffRoles.includes(r));
-}
-
 /**
  * The sidebar for one role, with that person's main work first and split into sections. When a
- * signed-in admin's responsibilities are known, pages outside them are left out of the menu.
+ * signed-in admin's permissions are known, pages they cannot open are left out of the menu.
  */
 export function navigationFor(
   role: Role,
-  staffRoles?: readonly StaffRole[] | null,
+  access?: PageAccess | null,
   { liveOnly = false }: { liveOnly?: boolean } = {},
 ) {
   const layout = roleLayouts[role];
@@ -378,12 +325,12 @@ export function navigationFor(
           items: list.filter((i) => i.roles.includes(role)),
         }))
         .sort((a, b) => Number(b.live) - Number(a.live));
-  const scoped = role === "Admin" ? staffRoles : null;
+  const scoped = role === "Admin" ? access : null;
   return (
     sections
       // Signed-in people see the live product only; the sample screens stay for presenting.
       .filter((g) => !liveOnly || g.live)
-      .map((g) => ({ ...g, items: g.items.filter((i) => canOpen(i.href, scoped)) }))
+      .map((g) => ({ ...g, items: g.items.filter((i) => canOpenPage(i.href, scoped)) }))
       .filter((g) => g.items.length > 0)
   );
 }

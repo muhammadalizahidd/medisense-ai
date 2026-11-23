@@ -1,4 +1,5 @@
 import "server-only";
+import { can } from "./permissions";
 import { z } from "zod";
 import { collections } from "./db";
 import { UserFacingError } from "./http";
@@ -85,7 +86,8 @@ export async function saveReportSettings(u: UserDoc, input: z.infer<typeof setti
   const lines: string[] = [];
   const set: Partial<Doc> = {};
   if (input.thresholds) {
-    if (!s.label.startsWith("Director") && s.label !== "Operations Manager")
+    // Alert thresholds are organisation-wide, so they need organisation-wide reporting authority.
+    if (!can(u, "reports.share.organisation"))
       throw new UserFacingError(
         "Only a Director or Operations Manager can change alert thresholds.",
         409,

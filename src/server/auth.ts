@@ -4,8 +4,10 @@ import { createHash, randomBytes, randomInt } from "node:crypto";
 import type { ObjectId } from "mongodb";
 import { cookies } from "next/headers";
 import { connection } from "next/server";
+import { AuthError } from "./auth-error";
 import { collections } from "./db";
 import type { UserDoc, UserRole } from "./models";
+import { loadPermissions } from "./permissions";
 
 export const SESSION_COOKIE = "medisense_session";
 export const SESSION_DAYS = 14;
@@ -61,14 +63,12 @@ export async function currentUser(): Promise<UserDoc | null> {
   const session = await sessions.findOne({ _id: sha256(token), expiresAt: { $gt: new Date() } });
   if (!session) return null;
   const user = await users.findOne({ _id: session.userId });
-  return user?.disabled ? null : user;
+  if (!user || user.disabled) return null;
+  // What this person may do is worked out once here and read by can() for the rest of the request.
+  return loadPermissions(user);
 }
 
-export class AuthError extends Error {
-  constructor(readonly status: 401 | 403) {
-    super(status === 401 ? "Please sign in." : "You don't have access to this.");
-  }
-}
+export { AuthError };
 
 export async function requireUser(...roles: UserRole[]) {
   const user = await currentUser();

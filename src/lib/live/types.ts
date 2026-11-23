@@ -8,7 +8,6 @@ import type {
   FundingStream,
   Region,
   ServiceLocation,
-  StaffRole,
   SubmitterRole,
   ServiceDecision,
   Support,
@@ -25,7 +24,9 @@ export type SessionUser = {
   name: string;
   email: string;
   role: Role;
-  staffRoles: StaffRole[];
+  staffRoles: string[];
+  /** What this person may do, from their roles. Empty for therapists and patients. */
+  permissions: string[];
   appearance: Appearance | null;
   /** Signed in with a temporary password: they set their own before going on. */
   mustChangePassword?: boolean;
@@ -42,7 +43,7 @@ export type UserAccountDto = {
   email: string;
   phone: string | null;
   kind: UserKind;
-  staffRoles: StaffRole[];
+  staffRoles: string[];
   status: UserStatus;
   lastSignInAt: string | null;
   createdAt: string;

@@ -1,5 +1,6 @@
 "use client";
 
+import { pageAccessFor } from "@/lib/permissions/pages";
 import {
   ArrowRight,
   Bot,
@@ -1150,7 +1151,7 @@ const sectionIcon: Record<string, LucideIcon> = {
 
 function WorkTab({ ctx }: { ctx: Ctx }) {
   const [query, setQuery] = useState("");
-  const all = navigationFor("Admin", ctx.user.staffRoles).filter(
+  const all = navigationFor("Admin", pageAccessFor(ctx.user)).filter(
     (g) => g.live && g.group !== "Account" && g.group !== "Apps",
   );
   const count = all.reduce((n, g) => n + g.items.length, 0);
@@ -1246,7 +1247,7 @@ function WorkTab({ ctx }: { ctx: Ctx }) {
 /* ------------------------------------------------------------------ me */
 
 function MeTab({ ctx, onSignedOut }: { ctx: Ctx; onSignedOut: () => void }) {
-  const sections = navigationFor("Admin", ctx.user.staffRoles).filter(
+  const sections = navigationFor("Admin", pageAccessFor(ctx.user)).filter(
     (g) => g.live && g.group !== "Account",
   );
   const pages = sections.reduce((n, g) => n + g.items.length, 0);

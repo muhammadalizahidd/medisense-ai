@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { requireUser } from "@/server/auth";
+import { can } from "@/server/permissions";
 import { collections } from "@/server/db";
 import {
   billableDto,
@@ -31,15 +32,14 @@ export async function GET(_: Request, { params }: Params) {
         ],
       })
       .toArray();
-    const roles = user.staffRoles ?? [];
     return {
       invoice: await invoiceDto07(inv, names, await chargeRules()),
       billables: lines.map((b) =>
         billableDto(b, names, new Map([[id.toHexString(), inv.number]]), new Map()),
       ),
       can: {
-        officer: roles.some((r) => ["Finance", "Finance Manager", "Super Admin"].includes(r)),
-        manager: roles.some((r) => ["Finance Manager", "Super Admin"].includes(r)),
+        officer: can(user, "finance.work"),
+        manager: can(user, "finance.approve"),
       },
     };
   });

@@ -1,4 +1,5 @@
 import { requireUser } from "@/server/auth";
+import { mustCan } from "@/server/permissions";
 import { withdrawRequest } from "@/server/care-admin";
 import { respond, respondSchema } from "@/server/care-therapist";
 import { handle, parseId, readJson } from "@/server/http";
@@ -17,6 +18,7 @@ export async function POST(request: Request, { params }: Context) {
 export async function DELETE(_: Request, { params }: Context) {
   return handle(async () => {
     const admin = await requireUser("admin");
+    mustCan(admin, "schedule.assign");
     await withdrawRequest(admin, parseId((await params).id));
     return { ok: true };
   });
