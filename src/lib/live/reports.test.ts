@@ -352,6 +352,6 @@ describe("Module 09 roles, builder and exports", () => {
   it("AT-28: exported CSV carries metadata and neutralises formula cells", () => {
     const csv = toCsv([{ key: "a", label: "A" }], [{ a: "=SUM(1)" }], [["Unit", "bookings"]]);
     expect(csv).toContain("# Unit");
-    expect(csv).toContain('"=SUM(1)"');
+    expect(csv).toContain("'=SUM(1)");
   });
 });
