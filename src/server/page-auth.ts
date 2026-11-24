@@ -7,6 +7,23 @@ import { DatabaseUnavailable } from "./db";
 import type { UserRole } from "./models";
 import { heldPermissions } from "./permissions";
 
+type SignedIn = NonNullable<Awaited<ReturnType<typeof currentUser>>>;
+
+/**
+ * Where a person is sent when a page turns them away. An admin whose permissions don't open their
+ * usual home goes to their profile instead, which every signed-in person can open. Sending them to
+ * the home they can't open would bounce them back and forth.
+ */
+function landingFor(user: SignedIn): string {
+  const home = homeFor(user.role, user.staffRoles);
+  if (user.role !== "admin") return home;
+  const access = pageAccessFor({
+    permissions: [...heldPermissions(user)],
+    staffRoles: user.staffRoles ?? [],
+  });
+  return canOpenPage(home, access) ? home : "/profile";
+}
+
 /**
  * For live pages: sends people who aren't signed in to the sign-in screen, and people with the
  * wrong role, or without the permissions the page needs, to their own home. Returns null when the
@@ -23,7 +40,7 @@ export async function requirePageUser(next: string, ...roles: UserRole[]) {
   if (!user) redirect(`/login?next=${encodeURIComponent(next)}`);
   // A temporary password from User control must be replaced before any page opens.
   if (user.mustChangePassword) redirect(`/login?next=${encodeURIComponent(next)}`);
-  if (roles.length && !roles.includes(user.role)) redirect(homeFor(user.role, user.staffRoles));
+  if (roles.length && !roles.includes(user.role)) redirect(landingFor(user));
   // An admin also needs a permission that opens this page, so typing the address gets no further
   // than the menu does.
   const access = pageAccessFor({
@@ -31,7 +48,7 @@ export async function requirePageUser(next: string, ...roles: UserRole[]) {
     staffRoles: user.staffRoles ?? [],
   });
   if (user.role === "admin" && !canOpenPage(next, access)) {
-    redirect(homeFor(user.role, user.staffRoles));
+    redirect(landingFor(user));
   }
   return user;
 }
