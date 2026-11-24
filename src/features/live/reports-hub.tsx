@@ -1,15 +1,6 @@
 "use client";
 
-import {
-  CalendarClock,
-  ChevronRight,
-  Download,
-  Filter,
-  Plus,
-  RefreshCw,
-  Stethoscope,
-} from "lucide-react";
-import Link from "next/link";
+import { CalendarClock, ChevronRight, Download, Filter, Plus, RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -33,10 +24,13 @@ import {
 } from "./reports-areas";
 import { ExportSheet, FilterBar, useReportCtx, useReportFilters, type Ctx } from "./reports-bits";
 import { BuilderTab } from "./reports-builder";
+import { TherapistList } from "./therapist-picker";
+import { TherapistReportsHub } from "./therapist-reports-hub";
 
 const tabs = [
   { id: "overview", label: "Overview" },
   ...AREAS.map((a) => ({ id: a.id, label: a.label })),
+  { id: "therapists", label: "Therapists" },
 ] as const;
 type Tab = (typeof tabs)[number]["id"];
 
@@ -50,6 +44,7 @@ type Open =
   | { kind: "download" }
   | { kind: "filters" }
   | { kind: "about" }
+  | { kind: "therapist"; id: string; name: string }
   | null;
 
 /** Module 09: operational reports and analytics, scoped to the person's role. */
@@ -85,7 +80,14 @@ function Hub({
 
   const visible = AREAS.filter((a) => areaVisible(a, c));
   const newInsights = hub.insights.filter((i) => i.status === "New").length;
-  const current: Tab = visible.some((a) => a.id === tab) ? tab : "overview";
+  const current: Tab =
+    tab === "therapists"
+      ? viewTherapists
+        ? tab
+        : "overview"
+      : visible.some((a) => a.id === tab)
+        ? tab
+        : "overview";
 
   const openArea = (id: AreaId, pick?: string) => setOpen({ kind: "area", id, pick });
   const openView = (v: ViewDto) => {
@@ -128,15 +130,6 @@ function Hub({
               <Download className="size-4" aria-hidden="true" />
               Download
             </Button>
-            {viewTherapists && (
-              <Link
-                href="/care/reports/therapists"
-                className="inline-flex h-10 items-center gap-2 rounded-control border border-border-strong px-4 text-small font-semibold text-ink-900 hover:bg-sunken"
-              >
-                <Stethoscope className="size-4" aria-hidden="true" />
-                Therapist reports
-              </Link>
-            )}
             <Button onClick={() => setOpen({ kind: "schedules" })}>
               <CalendarClock className="size-4" aria-hidden="true" />
               Schedules
@@ -168,6 +161,7 @@ function Hub({
               label: a.label,
               count: a.id === "automation" ? newInsights || undefined : undefined,
             })),
+            ...(viewTherapists ? [{ id: "therapists" as const, label: "Therapists" }] : []),
           ]}
           value={current}
           onChange={(t: Tab) => setTab(t)}
@@ -207,8 +201,18 @@ function Hub({
             />
           </TabPanel>
         ))}
+        {viewTherapists && (
+          <TabPanel id="therapists" value={current}>
+            <TherapistList onOpen={(t) => setOpen({ kind: "therapist", id: t.id, name: t.name })} />
+          </TabPanel>
+        )}
       </div>
 
+      {open?.kind === "therapist" && (
+        <Dialog title={open.name} onRequestClose={close}>
+          <TherapistReportsHub therapistId={open.id} embedded />
+        </Dialog>
+      )}
       {open?.kind === "area" && area && (
         <AreaDialog c={c} area={area} initial={open.pick} onClose={close} />
       )}

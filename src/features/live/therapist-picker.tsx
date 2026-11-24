@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronRight } from "lucide-react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { PageHeader } from "@/components/ui/page";
 import { SearchField } from "@/components/ui/search-field";
@@ -12,7 +12,7 @@ import { cn } from "@/lib/cn";
 import { ErrorNote, LiveBadge, Skeleton } from "./bits";
 import { td, th } from "./reports-bits";
 
-type Choice = {
+export type TherapistChoice = {
   id: string;
   name: string;
   discipline: string;
@@ -22,9 +22,12 @@ type Choice = {
   sessions: number;
 };
 
-/** Choose a therapist to open their reports. The figures are for finding someone, not for ranking. */
-export function TherapistPicker() {
-  const { data, error, loading, reload } = useResource<{ therapists: Choice[] }>(
+/**
+ * The therapists whose reports an admin may open, with a search and a discipline filter. A whole
+ * row opens the therapist. The figures are for finding someone, not for ranking.
+ */
+export function TherapistList({ onOpen }: { onOpen: (t: TherapistChoice) => void }) {
+  const { data, error, loading, reload } = useResource<{ therapists: TherapistChoice[] }>(
     "/api/care/reports/therapists",
     (e) => e.type === "care",
   );
@@ -42,12 +45,6 @@ export function TherapistPicker() {
   );
   return (
     <>
-      <PageHeader
-        eyebrow="Reports"
-        title="Therapist reports"
-        description="Choose a therapist to see their caseload, sessions, notes and progress. Opening someone's reports is recorded."
-        actions={<LiveBadge />}
-      />
       <div className="flex flex-wrap items-center gap-3">
         <SearchField
           label="Search therapists"
@@ -70,7 +67,7 @@ export function TherapistPicker() {
           </Select>
         </div>
         <p className="ml-auto text-caption text-ink-500">
-          {shown.length} of {all.length} therapists
+          {shown.length} of {all.length} therapists · opening a therapist&apos;s reports is recorded
         </p>
       </div>
       <section className="mt-4 overflow-hidden rounded-card border border-border bg-surface">
@@ -91,14 +88,22 @@ export function TherapistPicker() {
               </thead>
               <tbody>
                 {shown.map((t) => (
-                  <tr key={t.id} className="border-t border-border hover:bg-sunken">
+                  <tr
+                    key={t.id}
+                    onClick={() => onOpen(t)}
+                    className="cursor-pointer border-t border-border hover:bg-sunken"
+                  >
                     <td className={td}>
-                      <Link
-                        href={`/care/reports/therapists/${t.id}`}
-                        className="font-semibold text-accent hover:underline"
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onOpen(t);
+                        }}
+                        className="cursor-pointer text-left font-semibold text-accent hover:underline"
                       >
                         {t.name}
-                      </Link>
+                      </button>
                       {!t.active && (
                         <span className="ml-2 align-middle">
                           <Tag tone="neutral">Inactive</Tag>
@@ -123,6 +128,22 @@ export function TherapistPicker() {
           </p>
         )}
       </section>
+    </>
+  );
+}
+
+/** The standalone page: the same list, which opens a therapist's reports page. */
+export function TherapistPicker() {
+  const router = useRouter();
+  return (
+    <>
+      <PageHeader
+        eyebrow="Reports"
+        title="Therapist reports"
+        description="Choose a therapist to see their caseload, sessions, notes and progress. Opening someone's reports is recorded."
+        actions={<LiveBadge />}
+      />
+      <TherapistList onOpen={(t) => router.push(`/care/reports/therapists/${t.id}`)} />
     </>
   );
 }

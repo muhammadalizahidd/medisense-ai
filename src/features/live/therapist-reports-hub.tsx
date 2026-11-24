@@ -43,7 +43,14 @@ const POPULATION_KEY = "ms-therapist-population";
  * A therapist's reports: their own for a therapist, or any therapist's for an admin who may view
  * them. Same layout and the same dialogs as the organisation reports.
  */
-export function TherapistReportsHub({ therapistId }: { therapistId?: string }) {
+export function TherapistReportsHub({
+  therapistId,
+  embedded = false,
+}: {
+  therapistId?: string;
+  /** Inside a dialog on the reports page: no page header, and tabs don't touch the address. */
+  embedded?: boolean;
+}) {
   const url = therapistId
     ? `/api/care/reports/therapist/${therapistId}`
     : "/api/care/reports/therapist";
@@ -51,10 +58,12 @@ export function TherapistReportsHub({ therapistId }: { therapistId?: string }) {
     url,
     (e) => e.type === "care",
   );
-  const [tab, setTab] = useTab(tabs);
+  const [urlTab, setUrlTab] = useTab(tabs);
+  const [localTab, setLocalTab] = useState<Tab>("overview");
+  const [tab, setTab] = embedded ? [localTab, setLocalTab] : [urlTab, setUrlTab];
   if (error && !data) return <ErrorNote message={error} onRetry={reload} />;
   if (loading || !data) return <Skeleton className="h-[720px]" />;
-  return <Hub dto={data} tab={tab} setTab={setTab} reload={reload} />;
+  return <Hub dto={data} tab={tab} setTab={setTab} reload={reload} embedded={embedded} />;
 }
 
 function Hub({
@@ -62,11 +71,13 @@ function Hub({
   tab,
   setTab,
   reload,
+  embedded,
 }: {
   dto: TherapistHubDto;
   tab: Tab;
   setTab: (t: Tab) => void;
   reload: () => void;
+  embedded: boolean;
 }) {
   const { hub, subject, self } = dto;
   const [f, setF] = useReportFilters(hub.today, `ms-therapist-filters-${subject.id}`);
@@ -111,25 +122,12 @@ function Hub({
         subject: subject.name,
       }}
     >
-      <PageHeader
-        eyebrow={self ? "Live care" : "Therapist reports"}
-        title={self ? "Progress and reports" : subject.name}
-        description={
-          self
-            ? undefined
-            : `${subject.discipline} · ${subject.region}. You are viewing this therapist's reports. Opening them is recorded.`
-        }
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
-            {!self && (
-              <Link
-                href="/care/reports/therapists"
-                className="inline-flex h-10 items-center gap-2 rounded-control border border-border-strong px-4 text-small font-semibold text-ink-900 hover:bg-sunken"
-              >
-                <ArrowLeft className="size-4" aria-hidden="true" />
-                All therapists
-              </Link>
-            )}
+      {embedded ? (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-small text-ink-700">
+            {subject.discipline} · {subject.region}. Read-only. Opening these reports is recorded.
+          </p>
+          <div className="flex items-center gap-2">
             <Button onClick={() => setOpen({ kind: "filters" })}>
               <Filter className="size-4" aria-hidden="true" />
               {period}
@@ -142,12 +140,53 @@ function Hub({
             <Button size="sm" variant="ghost" aria-label="Refresh" onClick={reload}>
               <RefreshCw className="size-4" aria-hidden="true" />
             </Button>
-            <LiveBadge />
           </div>
-        }
-      />
+        </div>
+      ) : (
+        <PageHeader
+          eyebrow={self ? "Live care" : "Therapist reports"}
+          title={self ? "Progress and reports" : subject.name}
+          description={
+            self
+              ? undefined
+              : `${subject.discipline} · ${subject.region}. You are viewing this therapist's reports. Opening them is recorded.`
+          }
+          actions={
+            <div className="flex flex-wrap items-center gap-2">
+              {!self && (
+                <Link
+                  href="/care/reports/therapists"
+                  className="inline-flex h-10 items-center gap-2 rounded-control border border-border-strong px-4 text-small font-semibold text-ink-900 hover:bg-sunken"
+                >
+                  <ArrowLeft className="size-4" aria-hidden="true" />
+                  All therapists
+                </Link>
+              )}
+              <Button onClick={() => setOpen({ kind: "filters" })}>
+                <Filter className="size-4" aria-hidden="true" />
+                {period}
+                {rest.length > 0 && (
+                  <span className="rounded-full bg-accent-tint px-1.5 text-caption font-semibold text-accent">
+                    +{rest.length}
+                  </span>
+                )}
+              </Button>
+              <Button size="sm" variant="ghost" aria-label="Refresh" onClick={reload}>
+                <RefreshCw className="size-4" aria-hidden="true" />
+              </Button>
+              <LiveBadge />
+            </div>
+          }
+        />
+      )}
       <div className="mt-4">
-        <Tabs label="Reports" tabs={visible} value={current} onChange={(t: Tab) => setTab(t)} />
+        <Tabs
+          label="Reports"
+          tabs={visible}
+          value={current}
+          onChange={(t: Tab) => setTab(t)}
+          sticky={!embedded}
+        />
       </div>
       <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-caption text-ink-500">
         {rest.map((s) => (

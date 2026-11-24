@@ -42,12 +42,15 @@ export function Tabs<T extends string>({
   onChange,
   label,
   className,
+  sticky = true,
 }: {
   tabs: readonly TabDef<T>[];
   value: T;
   onChange: (id: T) => void;
   label: string;
   className?: string;
+  /** Stays under the top bar while the page scrolls. Off inside a dialog, which scrolls itself. */
+  sticky?: boolean;
 }) {
   function onKey(event: KeyboardEvent<HTMLButtonElement>, index: number) {
     const step = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
@@ -58,7 +61,7 @@ export function Tabs<T extends string>({
     document.getElementById(`tab-${next.id}`)?.focus();
   }
   return (
-    <div className={cn("sticky top-(--topbar-h) z-10 mb-4 bg-page", className)}>
+    <div className={cn(sticky && "sticky top-(--topbar-h) z-10", "mb-4 bg-page", className)}>
       <div
         role="tablist"
         aria-label={label}
