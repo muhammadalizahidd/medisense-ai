@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { domains, scopeFromPermissions } from "@/lib/live/reports";
+import {
+  domains,
+  scopeFromPermissions,
+  therapistDomains,
+  therapistViewScope,
+} from "@/lib/live/reports";
+import { defaultScope } from "@/test/scope";
 import { legacyAdminScope } from "@/test/legacy-report-scope";
 import {
   builtInRoles,
@@ -85,7 +91,15 @@ describe("report scope from permissions", () => {
     const all = new Set(permissionIds);
     const therapist = scopeFromPermissions(all, "therapist", ["Finance"]);
     expect(therapist.label).toBe("Therapist (own caseload)");
-    expect(therapist.domains).toEqual(["Staff", "Scheduling", "Clinical Operations", "Telehealth"]);
+    // Patients are included: the server cuts them to the therapist's own caseload.
+    expect(therapist.domains).toEqual([
+      "Staff",
+      "Scheduling",
+      "Clinical Operations",
+      "Telehealth",
+      "Participants",
+    ]);
+    expect(therapist.domains).not.toContain("Finance");
     expect(therapist.share).toEqual(["Private"]);
     const patient = scopeFromPermissions(all, "client", []);
     expect(patient.label).toBe("Participant");
@@ -98,5 +112,29 @@ describe("report scope from permissions", () => {
       expect(permissionIds).toContain(reportReadId(d));
       expect(permissionIds).toContain(reportDetailId(d));
     }
+  });
+});
+
+describe("an admin looking at one therapist's reports", () => {
+  it("sees only the therapist's areas, and only those the admin may read", () => {
+    const admin = defaultScope(["Operations Manager"]);
+    const view = therapistViewScope(admin);
+    expect(view.domains).toEqual(expect.arrayContaining(["Scheduling"]));
+    for (const d of view.domains) expect(therapistDomains).toContain(d);
+    for (const d of view.domains) expect(admin.domains).toContain(d);
+    expect(view.domains).not.toContain("Finance");
+  });
+
+  it("keeps record detail to what the admin's own scope allows", () => {
+    const view = therapistViewScope(defaultScope(["Operations Manager"]));
+    expect(view.clinicalDetail).toBe(false);
+    expect(view.share).toEqual(["Private"]);
+    expect(view.schedule).toBe(false);
+  });
+
+  it("gives the Super Admin every therapist area, with clinical detail", () => {
+    const view = therapistViewScope(defaultScope(["Super Admin"]));
+    expect([...view.domains].sort()).toEqual([...therapistDomains].sort());
+    expect(view.clinicalDetail).toBe(true);
   });
 });

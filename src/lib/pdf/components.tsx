@@ -63,7 +63,7 @@ const s = StyleSheet.create({
   rule: { width: 22, height: 2, backgroundColor: c.accent, marginBottom: 5 },
   sectionTitle: { fontSize: size.section, fontWeight: 600, color: c.navy },
   tiles: { flexDirection: "row", gap: 8 },
-  tile: { flex: 1, backgroundColor: c.mintSoft, borderRadius: 4, padding: 10 },
+  tile: { flex: 1, minWidth: 0, backgroundColor: c.mintSoft, borderRadius: 4, padding: 10 },
   tileLabel: { fontSize: size.small, color: c.ink700, fontWeight: 500 },
   tileValue: { marginTop: 4, fontSize: size.value, fontWeight: 600, color: c.navy },
   tileNote: { marginTop: 2, fontSize: size.tiny, color: c.ink500 },
@@ -76,7 +76,7 @@ const s = StyleSheet.create({
     borderBottomColor: c.border,
   },
   metaKey: { width: 84, color: c.ink500, fontSize: size.small },
-  metaValue: { flex: 1, fontWeight: 500, lineHeight: 1.4 },
+  metaValue: { flex: 1, minWidth: 0, fontWeight: 500, lineHeight: 1.4 },
   th: {
     flexDirection: "row",
     backgroundColor: c.navy,
@@ -192,14 +192,25 @@ export function Section({ title, children }: { title: string; children: ReactNod
 
 export type Tile = { label: string; value: string; note?: string };
 
+/** The type size for a headline number, so a long amount fits its tile instead of spilling over. */
+export function tileValueSize(value: string, tiles: number) {
+  const gap = 8;
+  const room = (TABLE_WIDTH - gap * (tiles - 1)) / tiles - 20;
+  // A digit in Inter SemiBold is about 0.6 of the type size wide.
+  return Math.max(11, Math.min(size.value, Math.floor(room / (Math.max(1, value.length) * 0.6))));
+}
+
 /** Up to four headline numbers, side by side. */
 export function StatTiles({ tiles }: { tiles: Tile[] }) {
+  const shown = tiles.slice(0, 4);
   return (
     <View style={s.tiles} wrap={false}>
-      {tiles.slice(0, 4).map((t) => (
+      {shown.map((t) => (
         <View key={t.label} style={s.tile}>
           <Text style={s.tileLabel}>{t.label}</Text>
-          <Text style={s.tileValue}>{t.value}</Text>
+          <Text style={[s.tileValue, { fontSize: tileValueSize(t.value, shown.length) }]}>
+            {t.value}
+          </Text>
           {t.note ? <Text style={s.tileNote}>{t.note}</Text> : null}
         </View>
       ))}
@@ -237,14 +248,68 @@ export type TableColumn = {
 };
 export type TableRow = Record<string, string>;
 
-const weight = (col: TableColumn) => col.flex ?? (col.align === "right" ? 1 : 1.6);
+/** Width of one character at the table's type size, in points: ordinary text, and unbroken tokens. */
+const CHAR = 4.6;
+const CHAR_TOKEN = 5.4;
+const PAD = 8;
+const MAX_WHOLE = 20;
+const PAGE_WIDTH = 595.28;
+/** The width a table has to fill: the page less its side margins. */
+export const TABLE_WIDTH = PAGE_WIDTH - size.page.side * 2;
+
+const longestToken = (text: string) => Math.max(0, ...text.split(/\s+/).map((w) => w.length));
+
+/**
+ * Column widths in points, from what is in the columns. Each column wants the width of its longest
+ * cell (capped) and never less than its longest single word, so a reference, a name or an amount is
+ * not broken mid-word. When everything fits, the spare width is shared out (more to a column with a
+ * larger `flex`). When it doesn't, the columns that can wrap (sentences) give up room first and the
+ * ones that can't (references, numbers) keep theirs.
+ */
+export function columnWidths(
+  columns: TableColumn[],
+  rows: TableRow[],
+  total = TABLE_WIDTH,
+): number[] {
+  const sample = rows.slice(0, 300);
+  const spec = columns.map((col) => {
+    const cells = [col.label, ...sample.map((r) => r[col.key] ?? "")];
+    const longest = Math.min(34, Math.max(...cells.map((v) => v.length)));
+    const word = Math.max(...cells.map(longestToken));
+    return {
+      need: Math.max(6, longest) * CHAR + PAD,
+      // A token longer than this can be broken, so it never forces the whole table wider.
+      min: Math.max(5, Math.min(word, MAX_WHOLE)) * CHAR_TOKEN + PAD,
+      share: col.flex ?? 1,
+    };
+  });
+  // A word is never wider than the whole line it has to share.
+  const need = spec.map((x) => Math.max(x.need, x.min));
+  const needs = need.reduce((n, v) => n + v, 0);
+  if (needs <= total) {
+    const shares = spec.reduce((n, x) => n + x.share, 0);
+    return need.map((v, i) => v + ((total - needs) * (spec[i]?.share ?? 1)) / shares);
+  }
+  const mins = spec.reduce((n, x) => n + x.min, 0);
+  if (mins >= total) {
+    // Even the longest words don't fit: shrink evenly and let the longest break.
+    return spec.map((x) => (x.min / mins) * total);
+  }
+  const room = total - mins;
+  const wants = need.reduce((n, v, i) => n + (v - (spec[i]?.min ?? 0)), 0) || 1;
+  return spec.map((x, i) => x.min + (((need[i] ?? 0) - x.min) / wants) * room);
+}
 
 /** A table whose header repeats on every page and whose rows never split across pages. */
 export function DataTable({ columns, rows }: { columns: TableColumn[]; rows: TableRow[] }) {
+  const widths = columnWidths(columns, rows);
+  // Eight or more columns get slightly smaller type, so a wide report stays tidy.
+  const dense = columns.length >= 8;
   const cell = (col: TableColumn) => ({
-    flex: weight(col),
+    width: widths[columns.indexOf(col)] ?? 60,
+    flexShrink: 0,
     textAlign: col.align,
-    paddingRight: 6,
+    paddingRight: PAD,
   });
   return (
     <View>
@@ -258,7 +323,7 @@ export function DataTable({ columns, rows }: { columns: TableColumn[]; rows: Tab
       {rows.map((row, i) => (
         <View key={i} style={[s.tr, i % 2 ? s.trAlt : {}]} wrap={false}>
           {columns.map((col) => (
-            <Text key={col.key} style={[s.tdText, cell(col)]}>
+            <Text key={col.key} style={[s.tdText, dense ? { fontSize: size.tiny } : {}, cell(col)]}>
               {row[col.key] ?? "—"}
             </Text>
           ))}

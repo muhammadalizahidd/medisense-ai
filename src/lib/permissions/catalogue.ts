@@ -487,6 +487,13 @@ export const permissions: readonly PermissionDef[] = [
     [OPS],
   ),
   action(
+    "reports.therapist",
+    P,
+    "View therapist reports",
+    "Open the reports of any one therapist: their caseload, sessions, notes and progress.",
+    [OPS, CL],
+  ),
+  action(
     "reports.schedule",
     P,
     "Schedule report deliveries",
@@ -576,5 +583,6 @@ export const enforcedPermissions: readonly string[] = [
   "reports.share.team",
   "reports.share.organisation",
   "reports.schedule",
+  "reports.therapist",
   ...reportPermissions.map((p) => p.id),
 ];

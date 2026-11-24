@@ -1,12 +1,21 @@
 "use client";
 
-import { CalendarClock, ChevronRight, Download, Filter, Plus, RefreshCw } from "lucide-react";
+import {
+  CalendarClock,
+  ChevronRight,
+  Download,
+  Filter,
+  Plus,
+  RefreshCw,
+  Stethoscope,
+} from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { PageHeader } from "@/components/ui/page";
 import { TabPanel, Tabs, useTab } from "@/components/ui/tabs";
-import { useResource } from "@/lib/live/client";
+import { useResource, useSession } from "@/lib/live/client";
 import type { ReportsHubDto, ViewDto } from "@/lib/live/report-dto";
 import { reportById } from "@/lib/live/report-catalogue";
 import { filterSummary } from "@/lib/live/reports";
@@ -69,6 +78,8 @@ function Hub({
   const [f, setF] = useReportFilters(hub.today);
   const c = useReportCtx(hub, f, setF, reload);
   const [open, setOpen] = useState<Open>(null);
+  const { user } = useSession();
+  const viewTherapists = Boolean(user?.permissions.includes("reports.therapist"));
   const [builderView, setBuilderView] = useState<ViewDto | null>(null);
   const close = () => setOpen(null);
 
@@ -117,6 +128,15 @@ function Hub({
               <Download className="size-4" aria-hidden="true" />
               Download
             </Button>
+            {viewTherapists && (
+              <Link
+                href="/care/reports/therapists"
+                className="inline-flex h-10 items-center gap-2 rounded-control border border-border-strong px-4 text-small font-semibold text-ink-900 hover:bg-sunken"
+              >
+                <Stethoscope className="size-4" aria-hidden="true" />
+                Therapist reports
+              </Link>
+            )}
             <Button onClick={() => setOpen({ kind: "schedules" })}>
               <CalendarClock className="size-4" aria-hidden="true" />
               Schedules

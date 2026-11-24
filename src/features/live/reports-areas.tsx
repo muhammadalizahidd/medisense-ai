@@ -52,9 +52,16 @@ import { SectionProvider, useSection, type Section } from "./reports-section";
 const domainOf = (reportId: string): Domain => reportById.get(reportId)?.domain ?? domains[0];
 
 export type AreaId =
-  "referrals" | "participants" | "capacity" | "visits" | "clinical" | "finance" | "automation";
+  | "patients"
+  | "referrals"
+  | "participants"
+  | "capacity"
+  | "visits"
+  | "clinical"
+  | "finance"
+  | "automation";
 
-type Area = {
+export type Area = {
   id: AreaId;
   /** The tab's name. */
   label: string;
@@ -62,6 +69,8 @@ type Area = {
   /** The area opens for anyone who can read at least one of these. */
   domains: Domain[];
   tables: string[];
+  /** Tables that are not catalogue reports, such as a therapist's patient list. */
+  custom?: { id: string; label: string }[];
   /** The headline number on Overview, then a smaller one beneath it. */
   headline: [string, string];
   Tab: (props: { c: Ctx }) => ReactNode;
@@ -164,10 +173,11 @@ const areaTables = (a: Area, c: Ctx) =>
 
 /* ------------------------------------------------------------------ wording */
 
-const show = (r: MetricResult) => (r.value === null ? "N/A" : formatValue(r.value, r.def.unit));
+export const show = (r: MetricResult) =>
+  r.value === null ? "N/A" : formatValue(r.value, r.def.unit);
 
 /** How a number moved, in words: "Up 12% on the previous period". Empty when it can't be said. */
-function movement(r: MetricResult) {
+export function movement(r: MetricResult) {
   const d = delta(r);
   if (!d) return null;
   const size =
@@ -192,6 +202,8 @@ function takeaway(id: AreaId, c: Ctx) {
     return d && !d.flat ? `, ${d.up ? "up" : "down"} on the previous period` : "";
   };
   switch (id) {
+    case "patients":
+      return `${n("caseload")} patients on the caseload, and ${n("patients-seen")} seen in the period. On the caseload but not seen: ${n("caseload-not-seen")}.`;
     case "referrals":
       return `${n("new-referrals")} new referrals${trend("new-referrals")}. ${n("missing-info")} are waiting on information.`;
     case "participants":
@@ -237,10 +249,12 @@ export function AreaPage({
             Open the full report
             <ChevronRight className="size-4" aria-hidden="true" />
           </Button>
-          <Button onClick={onDownload}>
-            <Download className="size-4" aria-hidden="true" />
-            Download
-          </Button>
+          {!c.readOnly && area.tables.length > 0 && (
+            <Button onClick={onDownload}>
+              <Download className="size-4" aria-hidden="true" />
+              Download
+            </Button>
+          )}
         </div>
       </header>
       <SectionProvider value={{ kind: "summary" }}>
@@ -271,9 +285,11 @@ export function AreaDialog({
     area.id === "visits" &&
     c.hub.scope.domains.includes(domainOf("R07")) &&
     c.hub.scope.domains.includes(domainOf("R10"));
+  const custom = area.custom ?? [];
   const options: { id: Choice; label: string }[] = [
     { id: "measures", label: "Measures" },
     ...(both ? [{ id: "telehealth", label: "Telehealth" }] : []),
+    ...custom,
     ...tables.map((id) => ({ id, label: reportById.get(id)?.title ?? id })),
   ];
   const [pick, setPick] = useState<Choice>(
@@ -281,10 +297,13 @@ export function AreaDialog({
   );
   const [downloading, setDownloading] = useState(false);
 
-  const section: Section = tables.includes(pick)
-    ? { kind: "table", id: pick }
-    : { kind: "measures" };
-  const reportId = tables.includes(pick) ? pick : (tables[0] ?? null);
+  const isCustom = custom.some((x) => x.id === pick);
+  const section: Section =
+    tables.includes(pick) || isCustom ? { kind: "table", id: pick } : { kind: "measures" };
+  // A custom table brings its own download, and someone else's reports are never exported from
+  // here: an export would use the viewer's own scope, not the therapist's.
+  const reportId =
+    c.readOnly || isCustom ? null : tables.includes(pick) ? pick : (tables[0] ?? null);
   const body =
     pick === "telehealth" ? (
       <SectionProvider value={{ kind: "measures" }}>
@@ -349,7 +368,15 @@ const SEVERITY: Record<InsightDto["severity"], TagTone> = {
   "Urgent Operational": "over",
 };
 
-function Tile({ c, area, onOpen }: { c: Ctx; area: Area; onOpen: () => void }) {
+export function Tile({
+  c,
+  area,
+  onOpen,
+}: {
+  c: Ctx;
+  area: Pick<Area, "headline" | "label">;
+  onOpen: () => void;
+}) {
   const main = c.run(area.headline[0]);
   const second = c.run(area.headline[1]);
   const move = movement(main);
@@ -399,14 +426,15 @@ function Tile({ c, area, onOpen }: { c: Ctx; area: Area; onOpen: () => void }) {
   );
 }
 
-type Measure = "referrals" | "sessions" | "revenue";
+type Measure = "referrals" | "sessions" | "patients" | "revenue";
 
 /** One chart for the organisation, with a switch for what it counts. */
-function Activity({ c }: { c: Ctx }) {
+export function Activity({ c }: { c: Ctx }) {
   const has = (d: Domain) => c.hub.scope.domains.includes(d);
   const options: { id: Measure; label: string }[] = [
     ...(has(domainOf("R01")) ? [{ id: "referrals" as const, label: "Referrals" }] : []),
     ...(has(domainOf("R07")) ? [{ id: "sessions" as const, label: "Sessions delivered" }] : []),
+    ...(has(domainOf("R04")) ? [{ id: "patients" as const, label: "Patients seen" }] : []),
     ...(has(domainOf("R14")) ? [{ id: "revenue" as const, label: "Revenue invoiced" }] : []),
   ];
   const [pick, setPick] = useState<Measure | null>(null);
@@ -423,11 +451,17 @@ function Activity({ c }: { c: Ctx }) {
         ? c.facts.referrals.filter((r) => inBucket(r.submittedAt)).length
         : measure === "sessions"
           ? c.facts.appointments.filter((a) => isDelivered(a) && inBucket(a.start)).length
-          : Math.round(
-              c.facts.invoices
-                .filter((i) => inBucket(i.issuedAt))
-                .reduce((s, i) => s + i.gross - i.credits, 0),
-            );
+          : measure === "patients"
+            ? new Set(
+                c.facts.appointments
+                  .filter((a) => isDelivered(a) && inBucket(a.start))
+                  .map((a) => a.participantId),
+              ).size
+            : Math.round(
+                c.facts.invoices
+                  .filter((i) => inBucket(i.issuedAt))
+                  .reduce((s, i) => s + i.gross - i.credits, 0),
+              );
     return { x: bucketLabel(b, c.f.grain), value };
   });
   const label = options.find((o) => o.id === measure)?.label ?? "";

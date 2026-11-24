@@ -13,7 +13,11 @@ export function registerFonts() {
     family: FONT,
     fonts: [400, 500, 600, 700].map((weight) => ({ src: file(weight), fontWeight: weight })),
   });
-  // A name or a reference number should never be split across two lines.
-  Font.registerHyphenationCallback((word) => [word]);
+  // Ordinary words stay whole. A long unbroken token (a reference, a link) is allowed to break every
+  // 10 characters, as a last resort when its column is too narrow, so it can never run into the
+  // column beside it or off the page. Dashes inside it are left alone.
+  Font.registerHyphenationCallback((word) =>
+    word.length <= 14 ? [word] : (word.match(/.{1,10}/g) ?? [word]),
+  );
   registered = true;
 }

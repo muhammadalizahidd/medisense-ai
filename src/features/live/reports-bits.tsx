@@ -77,6 +77,8 @@ export type Ctx = {
   run: (id: string) => MetricResult;
   reload: () => void;
   setF: (f: Partial<ReportFilters>) => void;
+  /** Someone else's reports are open: no saving or downloading from here, which would use the viewer's own scope. */
+  readOnly?: boolean;
 };
 
 export function useReportCtx(
@@ -84,6 +86,7 @@ export function useReportCtx(
   f: ReportFilters,
   setF: Ctx["setF"],
   reload: () => void,
+  readOnly = false,
 ): Ctx {
   const names = useMemo(() => new Map(Object.entries(hub.names)), [hub.names]);
   const facts = useMemo(() => scoped(hub.facts, f, names), [hub.facts, f, names]);
@@ -91,7 +94,16 @@ export function useReportCtx(
     () => ({ today: hub.today, now: hub.now, earliest: hub.earliest }),
     [hub.today, hub.now, hub.earliest],
   );
-  return { hub, f, facts, names, setF, reload, run: (id: string) => runMetric(id, facts, f, ctx) };
+  return {
+    hub,
+    f,
+    facts,
+    names,
+    setF,
+    reload,
+    readOnly,
+    run: (id: string) => runMetric(id, facts, f, ctx),
+  };
 }
 
 /* ------------------------------------------------------------------ filters (section 3) */
@@ -99,17 +111,17 @@ export function useReportCtx(
 const KEY = "ms-report-filters";
 
 /** Applied filters survive drilldown and back navigation in this tab (AT-46). */
-export function useReportFilters(today: string) {
+export function useReportFilters(today: string, storageKey = KEY) {
   const [f, set] = useState<ReportFilters>(() => blankFilters(today));
   useEffect(() => {
-    const saved = sessionStorage.getItem(KEY);
+    const saved = sessionStorage.getItem(storageKey);
     // eslint-disable-next-line react-hooks/set-state-in-effect -- restore the applied filters once after mount
     if (saved) set({ ...blankFilters(today), ...(JSON.parse(saved) as Partial<ReportFilters>) });
-  }, [today]);
+  }, [today, storageKey]);
   const update = (patch: Partial<ReportFilters>) =>
     set((cur) => {
       const next = { ...cur, ...patch };
-      sessionStorage.setItem(KEY, JSON.stringify(next));
+      sessionStorage.setItem(storageKey, JSON.stringify(next));
       return next;
     });
   return [f, update] as const;
@@ -119,10 +131,13 @@ export function FilterBar({
   hub,
   f,
   setF,
+  patients,
 }: {
   hub: ReportsHubDto;
   f: ReportFilters;
   setF: (p: Partial<ReportFilters>) => void;
+  /** A therapist's own patients, to filter every figure to one of them. */
+  patients?: { id: string; name: string }[];
 }) {
   const [d, setD] = useState(f);
   const [more, setMore] = useState(false);
@@ -219,6 +234,23 @@ export function FilterBar({
             ))}
           </Select>
         </div>
+        {patients && (
+          <div className="w-56 flex-none">
+            <Select
+              aria-label="Patient"
+              className="h-9"
+              value={d.patient}
+              onChange={(e) => patch({ patient: e.target.value })}
+            >
+              <option value="">All patients</option>
+              {patients.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </Select>
+          </div>
+        )}
         {sel(
           "Service setting",
           d.setting,
@@ -611,12 +643,21 @@ function ReportTableBody({
               </Select>
             </div>
           )}
-          <Button size="sm" variant="ghost" onClick={() => setSaving(true)} disabled={!run.allowed}>
-            <Save className="size-3.5" aria-hidden="true" /> Save view
-          </Button>
-          <Button size="sm" variant="secondary" onClick={() => setExporting(true)}>
-            <Download className="size-3.5" aria-hidden="true" /> Download
-          </Button>
+          {!c.readOnly && (
+            <>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setSaving(true)}
+                disabled={!run.allowed}
+              >
+                <Save className="size-3.5" aria-hidden="true" /> Save view
+              </Button>
+              <Button size="sm" variant="secondary" onClick={() => setExporting(true)}>
+                <Download className="size-3.5" aria-hidden="true" /> Download
+              </Button>
+            </>
+          )}
         </div>
       }
     >

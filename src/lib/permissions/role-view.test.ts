@@ -125,7 +125,7 @@ describe("reportMatrix", () => {
       detailId: reportDetailId("Referrals"),
     });
     expect(extras.map((p) => p.id)).toEqual(reportExtras.map((p) => p.id));
-    expect(extras).toHaveLength(4);
+    expect(extras).toHaveLength(5);
   });
 
   it("accounts for every permission in the Reports group, so a new domain cannot be missed", () => {

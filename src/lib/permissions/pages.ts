@@ -35,6 +35,7 @@ export const pagePermissions: Record<string, readonly string[]> = {
     "operations.clinical",
     "operations.matching",
   ],
+  "/care/reports/therapists": ["reports.therapist"],
   "/care/reports": [
     "reports.read.referrals",
     "reports.read.participants",
