@@ -22,8 +22,13 @@ function sourceFiles(dir: string): string[] {
 
 function checkedIds() {
   const found = new Map<string, string[]>();
-  for (const root of ["src/server", "src/app/api", "src/lib/live"]) {
-    for (const file of sourceFiles(root)) {
+  // The app switches are read in one place, the apps module, so that file is scanned too.
+  const files = [
+    ...["src/server", "src/app/api", "src/lib/live"].flatMap(sourceFiles),
+    "src/lib/permissions/apps.ts",
+  ];
+  {
+    for (const file of files) {
       const lines = readFileSync(file, "utf8").split(/\r?\n/);
       lines.forEach((line, i) => {
         // The check and its permission id sit on the same line or the next (long calls wrap).

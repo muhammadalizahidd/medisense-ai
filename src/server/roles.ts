@@ -7,6 +7,7 @@ import {
   SUPER_ADMIN_ROLE,
   type RoleLike,
 } from "@/lib/permissions/can";
+import { limitToApps } from "@/lib/permissions/apps";
 import { builtInRoles } from "@/lib/permissions/catalogue";
 import { collections } from "./db";
 import { UserFacingError } from "./http";
@@ -40,7 +41,12 @@ export async function loadRoles(): Promise<RoleLike[]> {
  */
 export async function permissionsOf(user: Pick<UserDoc, "role" | "staffRoles">): Promise<string[]> {
   if (user.role !== "admin") return [];
-  return [...effectivePermissions(user.staffRoles, await loadRoles())];
+  return [
+    ...limitToApps(
+      new Set(effectivePermissions(user.staffRoles, await loadRoles())),
+      user.staffRoles,
+    ),
+  ];
 }
 
 export async function userCan(

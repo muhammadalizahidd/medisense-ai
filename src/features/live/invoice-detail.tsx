@@ -20,7 +20,7 @@ import { PageHeader } from "@/components/ui/page";
 import { TabPanel, Tabs, useTab } from "@/components/ui/tabs";
 import { Tag } from "@/components/ui/tag";
 import { toast } from "@/components/ui/toast";
-import { api, useResource } from "@/lib/live/client";
+import { api, downloadFile, useResource } from "@/lib/live/client";
 import {
   aud,
   billToTypes,
@@ -734,15 +734,11 @@ function Loaded({
                 <Button
                   variant="secondary"
                   onClick={async () => {
-                    await act(
-                      { type: "download" },
-                      "Download recorded",
-                      "Use print to save a PDF.",
-                    );
-                    setTimeout(() => window.print(), 300);
+                    await act({ type: "download" }, "Download recorded");
+                    downloadFile(`/api/care/billing/${inv.id}/pdf`);
                   }}
                 >
-                  Download or print
+                  Download PDF
                 </Button>
                 {["Draft", "Pending Approval", "Approved", "Issued"].includes(inv.status) && (
                   <Button variant="soft-danger" size="sm" onClick={() => setSheet("void")}>

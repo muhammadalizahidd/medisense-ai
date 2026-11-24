@@ -96,7 +96,7 @@ describe("the central check", () => {
       slug: "triage-desk",
       name: "Triage Desk",
       builtIn: false,
-      permissions: ["referrals.process"],
+      permissions: ["app.admin", "referrals.process"],
     });
     const person = await withRoles("triage-desk");
     expect(can(person, "referrals.process")).toBe(true);
@@ -155,7 +155,7 @@ describe("billing follows the finance permissions", () => {
       slug: "biller",
       name: "Biller",
       builtIn: false,
-      permissions: ["finance.work", "finance.approve"],
+      permissions: ["app.admin", "finance.work", "finance.approve"],
     });
     const biller = await withRoles("biller");
     expect(isOfficer(biller)).toBe(true);

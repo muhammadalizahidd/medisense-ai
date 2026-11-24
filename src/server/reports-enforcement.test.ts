@@ -53,7 +53,7 @@ describe("reportScope", () => {
       slug: "auditor",
       name: "Auditor",
       builtIn: false,
-      permissions: ["reports.read.audit", "reports.detail.audit"],
+      permissions: ["app.admin", "reports.read.audit", "reports.detail.audit"],
     });
     const scope = reportScope(await as("admin", "auditor"));
     expect(scope.domains).toEqual(["Audit"]);

@@ -7,12 +7,14 @@ import {
   defaultPermissionsFor,
   type BuiltInRoleSlug,
 } from "@/lib/permissions/catalogue";
-import { roleKey, SUPER_ADMIN_ROLE } from "@/lib/permissions/can";
+import { isSuperAdmin, roleKey, SUPER_ADMIN_ROLE } from "@/lib/permissions/can";
 import type { RoleDto, RolesDto } from "@/lib/permissions/types";
 import { collections } from "./db";
+import { AuthError } from "./auth";
 import { UserFacingError } from "./http";
 import { adminIds, audit, publish } from "./live";
 import type { RoleDoc, UserDoc } from "./models";
+import { can, heldPermissions } from "./permissions";
 import { loadRoles } from "./roles";
 import { requireSuperAdmin } from "./user-control";
 
@@ -104,8 +106,17 @@ async function membersOf(roles: readonly RoleDoc[]) {
 const resolveRolesFor = (role: RoleDoc) => (value: string) =>
   value === role.slug || value === role.legacyName;
 
+/**
+ * Who may look at and change roles. The Super Admin always may. Someone with "Manage roles" may
+ * read them, and change only the app switches they hold themselves (see updateRole).
+ */
+function requireRoleManager(me: UserDoc) {
+  if (isSuperAdmin(me.staffRoles)) return;
+  if (!can(me, "roles.manage")) throw new AuthError(403);
+}
+
 export async function listRoles(me: UserDoc): Promise<RolesDto> {
-  requireSuperAdmin(me);
+  requireRoleManager(me);
   // Creates any built-in role that is missing, so the list is never empty.
   await loadRoles();
   const { roles, users } = await collections();
@@ -150,8 +161,9 @@ export async function createRole(me: UserDoc, input: z.infer<typeof newRoleSchem
   requireSuperAdmin(me);
   await assertNameFree(input.name);
   const { roles } = await collections();
-  let permissions: string[] = [];
-  if (input.copyFrom) permissions = [...(await find(input.copyFrom)).permissions];
+  // A new role starts with the admin app on, so what it is given works straight away.
+  let permissions: string[] = ["app.admin"];
+  if (input.copyFrom) permissions = [...permissions, ...(await find(input.copyFrom)).permissions];
   const existing = new Set((await roles.find().toArray()).map((r) => r.slug));
   const base = slugify(input.name);
   let slug = base;
@@ -183,8 +195,13 @@ export async function updateRole(
   slug: string,
   input: z.infer<typeof updateRoleSchema>,
 ) {
-  requireSuperAdmin(me);
+  requireRoleManager(me);
+  const superAdmin = isSuperAdmin(me.staffRoles);
   const role = await find(slug);
+  const renamed = input.name !== undefined && input.name !== role.name;
+  const redescribed = input.description !== undefined && input.description !== role.description;
+  // A role manager changes only app switches, and only the ones they hold themselves.
+  if (!superAdmin && (renamed || redescribed)) throw new AuthError(403);
   const set: Partial<RoleDoc> = { updatedAt: new Date(), updatedBy: me._id };
   const notes: string[] = [];
   if (input.name !== undefined && input.name !== role.name) {
@@ -199,6 +216,12 @@ export async function updateRole(
   if (input.permissions !== undefined) {
     const next = cleanPermissions(input.permissions);
     const { added, removed } = diff(role.permissions, next);
+    if (!superAdmin) {
+      const held = heldPermissions(me);
+      for (const id of [...added, ...removed]) {
+        if (!id.startsWith("app.") || !held.has(id)) throw new AuthError(403);
+      }
+    }
     if (added.length || removed.length) {
       set.permissions = next;
       if (added.length) notes.push(`allowed ${added.map(labelOf).join(", ")}`);

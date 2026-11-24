@@ -35,6 +35,8 @@ export function RolesPermissions({
   onChanged,
   creating,
   onCreatingChange,
+  superAdmin = true,
+  heldApps = [],
 }: {
   roles: RoleDto[];
   loading: boolean;
@@ -42,9 +44,13 @@ export function RolesPermissions({
   /** The New role sheet is opened from the page header, so the parent owns this. */
   creating: boolean;
   onCreatingChange: (open: boolean) => void;
+  /** A role manager who isn't the Super Admin switches only the apps they hold. */
+  superAdmin?: boolean;
+  heldApps?: readonly string[];
 }) {
   const [openSlug, setOpenSlug] = useOpenRole();
   const open = roles.find((r) => r.slug === openSlug);
+  const editable = (id: string) => superAdmin || (id.startsWith("app.") && heldApps.includes(id));
 
   return (
     <div className="mt-5">
@@ -57,6 +63,8 @@ export function RolesPermissions({
       {open && (
         <RoleDialog
           role={open}
+          superAdmin={superAdmin}
+          editable={editable}
           onClose={() => setOpenSlug(null)}
           onChanged={onChanged}
           onDeleted={() => {

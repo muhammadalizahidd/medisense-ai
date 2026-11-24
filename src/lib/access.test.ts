@@ -1,8 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { accessFor } from "./access";
+import { accessFor, type Session } from "./access";
+import { ALL_APPS, appsForRole, landingPath } from "./permissions/apps";
+import type { Role } from "./live/types";
 
-const to = (path: string, role: Parameters<typeof accessFor>[1]) => {
-  const a = accessFor(path, role);
+/** An admin with every app, as the Super Admin has; other roles get the apps they are fixed to. */
+const sessionFor = (role: Role | null): Session | null => {
+  if (!role) return null;
+  const apps = role === "admin" ? ALL_APPS : appsForRole(role, [], []);
+  return { role, apps, home: landingPath(role, [], apps) };
+};
+const to = (path: string, role: Role | null) => {
+  const a = accessFor(path, sessionFor(role));
   return a.allow ? "allow" : a.redirect;
 };
 
@@ -38,6 +46,7 @@ describe("page access", () => {
   it("lets admins see staff screens but not a therapist's workspace", () => {
     expect(to("/team-capacity", "admin")).toBe("allow");
     expect(to("/care/billing", "admin")).toBe("allow");
-    expect(to("/therapist", "admin")).toBe("/care");
+    // An admin with every app (as the Super Admin has) may open the therapist app too.
+    expect(to("/therapist", "admin")).toBe("allow");
   });
 });

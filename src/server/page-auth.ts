@@ -1,28 +1,11 @@
 import "server-only";
 import { redirect } from "next/navigation";
-import { homeFor } from "@/lib/live/routes";
+import { appForPath, appOpen, appsForRole, landingPath } from "@/lib/permissions/apps";
 import { canOpenPage, pageAccessFor } from "@/lib/permissions/pages";
 import { currentUser } from "./auth";
 import { DatabaseUnavailable } from "./db";
 import type { UserRole } from "./models";
 import { heldPermissions } from "./permissions";
-
-type SignedIn = NonNullable<Awaited<ReturnType<typeof currentUser>>>;
-
-/**
- * Where a person is sent when a page turns them away. An admin whose permissions don't open their
- * usual home goes to their profile instead, which every signed-in person can open. Sending them to
- * the home they can't open would bounce them back and forth.
- */
-function landingFor(user: SignedIn): string {
-  const home = homeFor(user.role, user.staffRoles);
-  if (user.role !== "admin") return home;
-  const access = pageAccessFor({
-    permissions: [...heldPermissions(user)],
-    staffRoles: user.staffRoles ?? [],
-  });
-  return canOpenPage(home, access) ? home : "/profile";
-}
 
 /**
  * For live pages: sends people who aren't signed in to the sign-in screen, and people with the
@@ -40,7 +23,17 @@ export async function requirePageUser(next: string, ...roles: UserRole[]) {
   if (!user) redirect(`/login?next=${encodeURIComponent(next)}`);
   // A temporary password from User control must be replaced before any page opens.
   if (user.mustChangePassword) redirect(`/login?next=${encodeURIComponent(next)}`);
-  if (roles.length && !roles.includes(user.role)) redirect(landingFor(user));
+  const apps = appsForRole(user.role, heldPermissions(user), user.staffRoles);
+  // A therapist or mobile app opens for anyone whose role switches it on, not only for the role it
+  // was built for.
+  const app = appForPath(next);
+  const grantedByApp = app !== null && app !== "admin" && appOpen(next, apps, user.role);
+  if (
+    !appOpen(next, apps, user.role) ||
+    (roles.length && !roles.includes(user.role) && !grantedByApp)
+  ) {
+    redirect(landingPath(user.role, user.staffRoles, apps));
+  }
   // An admin also needs a permission that opens this page, so typing the address gets no further
   // than the menu does.
   const access = pageAccessFor({
@@ -48,7 +41,7 @@ export async function requirePageUser(next: string, ...roles: UserRole[]) {
     staffRoles: user.staffRoles ?? [],
   });
   if (user.role === "admin" && !canOpenPage(next, access)) {
-    redirect(landingFor(user));
+    redirect(landingPath(user.role, user.staffRoles, apps));
   }
   return user;
 }

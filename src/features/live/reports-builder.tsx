@@ -552,6 +552,7 @@ function SavedViews({ c, openView }: { c: Ctx; openView: (v: ViewDto) => void })
       )}
       {rename && (
         <Sheet
+          above
           title={rename.mode === "clone" ? "Clone view" : "Rename view"}
           description={
             rename.mode === "clone" ? "The copy is private to you until you share it." : undefined

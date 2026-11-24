@@ -1,4 +1,5 @@
 import { isSuperAdmin } from "./can";
+import { appOpen, appsFor, type AppAccess } from "./apps";
 
 /**
  * Which permissions open each staff page. Holding any one of them opens it; an empty list means
@@ -51,18 +52,28 @@ export const pagePermissions: Record<string, readonly string[]> = {
     "operations.team.operations",
   ],
   "/care/ai-oversight": CARE_OFFICE,
-  // No permission opens these: they belong to the Super Admin.
+  // No permission opens the dashboard: it belongs to the Super Admin. Role managers open User
+  // control for the roles tab; the account actions there stay with the Super Admin.
   "/": [],
-  "/care/users": [],
+  "/care/users": ["roles.manage"],
 };
 
 /** What a signed-in admin brings to a page check. */
-export type PageAccess = { permissions: readonly string[]; superAdmin: boolean };
+export type PageAccess = {
+  permissions: readonly string[];
+  superAdmin: boolean;
+  /** The apps the person has. A page of an app that is off is closed, whatever its permissions. */
+  apps: AppAccess;
+};
 
 export const pageAccessFor = (user: {
   permissions: readonly string[];
   staffRoles: readonly string[];
-}): PageAccess => ({ permissions: user.permissions, superAdmin: isSuperAdmin(user.staffRoles) });
+}): PageAccess => ({
+  permissions: user.permissions,
+  superAdmin: isSuperAdmin(user.staffRoles),
+  apps: appsFor(user.permissions, user.staffRoles),
+});
 
 /** The permissions a page asks for, or undefined when any admin may open it. */
 export function pageRequirement(path: string): readonly string[] | undefined {
@@ -84,7 +95,9 @@ export function pageRequirement(path: string): readonly string[] | undefined {
  * are still loading) every page shows, as before.
  */
 export function canOpenPage(path: string, access: PageAccess | null | undefined): boolean {
-  if (!access || access.superAdmin) return true;
+  if (!access) return true;
+  if (!appOpen(path, access.apps)) return false;
+  if (access.superAdmin) return true;
   const need = pageRequirement(path);
   if (!need) return true;
   return need.some((id) => access.permissions.includes(id));

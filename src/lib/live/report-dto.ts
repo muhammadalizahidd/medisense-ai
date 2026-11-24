@@ -15,6 +15,9 @@ import {
 } from "./reports";
 
 export const exportFormats = ["CSV", "XLSX", "PDF summary"] as const;
+
+/** What people read. The stored name stays "PDF summary" so older exports keep opening. */
+export const formatLabel = (format: string) => (format === "PDF summary" ? "PDF" : format);
 export type ExportFormat = (typeof exportFormats)[number];
 export const exportContents = [
   "Summary only",

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { navigationFor } from "@/lib/navigation";
 import { legacyCanOpen, legacyPageAccess } from "@/test/legacy-pages";
+import { ALL_APPS, NO_APPS } from "./apps";
 import { builtInRoles, defaultPermissionsFor, permissionIds } from "./catalogue";
 import {
   canOpenPage,
@@ -18,8 +19,9 @@ import {
 const accessFor = (slug: (typeof builtInRoles)[number]["slug"]): PageAccess => ({
   permissions: defaultPermissionsFor(slug),
   superAdmin: false,
+  apps: ALL_APPS,
 });
-const superAdmin: PageAccess = { permissions: permissionIds, superAdmin: true };
+const superAdmin: PageAccess = { permissions: permissionIds, superAdmin: true, apps: ALL_APPS };
 
 const pages = Object.keys(legacyPageAccess);
 const detailPaths = pages.filter((p) => p !== "/").map((p) => `${p}/6a1f0c9e8b7d4e2a3c5b1f90`);
@@ -51,8 +53,12 @@ describe("page access equals the old menu", () => {
 
 describe("how a page is found", () => {
   it("opens any page that is not listed, for every admin", () => {
-    expect(canOpenPage("/profile", { permissions: [], superAdmin: false })).toBe(true);
-    expect(canOpenPage("/messages", { permissions: [], superAdmin: false })).toBe(true);
+    expect(canOpenPage("/profile", { permissions: [], superAdmin: false, apps: ALL_APPS })).toBe(
+      true,
+    );
+    expect(canOpenPage("/messages", { permissions: [], superAdmin: false, apps: ALL_APPS })).toBe(
+      true,
+    );
   });
 
   it("shows every page when there are no access details yet", () => {
@@ -84,22 +90,27 @@ describe("how a page is found", () => {
   });
 
   it("keeps the dashboard and User control for the Super Admin alone", () => {
-    const everything = { permissions: permissionIds, superAdmin: false };
+    const everything = { permissions: permissionIds, superAdmin: false, apps: ALL_APPS };
     expect(canOpenPage("/", everything)).toBe(false);
-    expect(canOpenPage("/care/users", everything)).toBe(false);
+    expect(canOpenPage("/care/users", everything)).toBe(true);
+    const withoutRoles = {
+      ...everything,
+      permissions: permissionIds.filter((id) => id !== "roles.manage"),
+    };
+    expect(canOpenPage("/care/users", withoutRoles)).toBe(false);
   });
 });
 
 describe("custom permissions", () => {
   it("opens the pages a custom set names", () => {
-    const biller: PageAccess = { permissions: ["finance.work"], superAdmin: false };
+    const biller: PageAccess = { permissions: ["finance.work"], superAdmin: false, apps: ALL_APPS };
     expect(canOpenPage("/care/billing", biller)).toBe(true);
     expect(canOpenPage("/care/funding", biller)).toBe(false);
     expect(canOpenPage("/care/records", biller)).toBe(false);
   });
 
   it("lets an admin with no permissions open only the pages anyone may", () => {
-    const none: PageAccess = { permissions: [], superAdmin: false };
+    const none: PageAccess = { permissions: [], superAdmin: false, apps: ALL_APPS };
     for (const path of pages) expect(canOpenPage(path, none)).toBe(false);
     expect(canOpenPage("/profile", none)).toBe(true);
   });
@@ -108,6 +119,7 @@ describe("custom permissions", () => {
     expect(pageAccessFor({ permissions: ["finance.work"], staffRoles: ["Finance"] })).toEqual({
       permissions: ["finance.work"],
       superAdmin: false,
+      apps: NO_APPS,
     });
     expect(
       pageAccessFor({ permissions: [], staffRoles: ["Super Admin", "Clinical Lead"] }).superAdmin,

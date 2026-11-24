@@ -87,7 +87,7 @@ describe("what each role gets in operations", () => {
       slug: "billing-desk",
       name: "Billing Desk",
       builtIn: false,
-      permissions: ["operations.team.finance"],
+      permissions: ["app.admin", "operations.team.finance"],
     });
     const person = await as("billing-desk");
     expect(opsCan(person).finance).toBe(true);
@@ -171,7 +171,7 @@ describe("deciding approvals", () => {
       slug: "adjuster",
       name: "Adjuster",
       builtIn: false,
-      permissions: ["approvals.decide.billing-adjustment"],
+      permissions: ["app.admin", "approvals.decide.billing-adjustment"],
     });
     expect(canDecide(await as("adjuster"), approval("Billing adjustment"))).toBe(true);
     expect(canDecide(await as("adjuster"), approval("Funding exception"))).toBe(false);

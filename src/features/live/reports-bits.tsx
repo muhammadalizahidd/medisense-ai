@@ -15,11 +15,12 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { Children, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Field, Sheet, inputClass } from "@/components/ui/sheet";
 import { Tag } from "@/components/ui/tag";
+import { SUMMARY_TILES, useSection } from "./reports-section";
 import { toast } from "@/components/ui/toast";
 import { api } from "@/lib/live/client";
 import { cn } from "@/lib/cn";
@@ -36,6 +37,7 @@ import {
 import {
   exportContents,
   exportFormats,
+  formatLabel,
   type ExportContents,
   type ExportFormat,
   type ReportsHubDto,
@@ -367,6 +369,8 @@ export function Kpi({
 }) {
   const d = delta(r);
   const [open, setOpen] = useState(false);
+  // The page summary keeps a tile to its number, its change and its meaning.
+  const compact = useSection().kind === "summary";
   return (
     <article className="flex min-w-0 flex-col rounded-card border border-border bg-surface p-4">
       <header className="flex items-start gap-2">
@@ -453,35 +457,41 @@ export function Kpi({
           {r.def.unit === "AUD" && r.note && <p className="mt-1">{r.note}</p>}
         </div>
       )}
-      <footer className="mt-auto flex items-center justify-between gap-2 pt-3">
-        <span className="rounded-tag border border-border-strong px-1.5 text-label font-semibold tracking-wide text-ink-500 uppercase">
-          {r.def.basis}
-        </span>
-        <span className="flex items-center gap-3">
-          {onDrill && (
-            <button
-              type="button"
-              onClick={onDrill}
-              className="cursor-pointer text-caption font-semibold text-accent hover:underline"
+      {!compact && (
+        <footer className="mt-auto flex items-center justify-between gap-2 pt-3">
+          <span className="rounded-tag border border-border-strong px-1.5 text-label font-semibold tracking-wide text-ink-500 uppercase">
+            {r.def.basis}
+          </span>
+          <span className="flex items-center gap-3">
+            {onDrill && (
+              <button
+                type="button"
+                onClick={onDrill}
+                className="cursor-pointer text-caption font-semibold text-accent hover:underline"
+              >
+                Drill down
+              </button>
+            )}
+            <Link
+              href={r.def.drill.href}
+              className="text-caption font-semibold text-accent hover:underline"
+              title={`Open ${r.def.drill.module}`}
             >
-              Drill down
-            </button>
-          )}
-          <Link
-            href={r.def.drill.href}
-            className="text-caption font-semibold text-accent hover:underline"
-            title={`Open ${r.def.drill.module}`}
-          >
-            {r.def.drill.module}
-          </Link>
-        </span>
-      </footer>
+              {r.def.drill.module}
+            </Link>
+          </span>
+        </footer>
+      )}
     </article>
   );
 }
 
 export function KpiGrid({ children }: { children: ReactNode }) {
-  return <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">{children}</div>;
+  const s = useSection();
+  if (s.kind === "table") return null;
+  const tiles =
+    s.kind === "summary" ? Children.toArray(children).slice(0, SUMMARY_TILES) : children;
+  return <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">{tiles}</div>;
 }
 
 /* ------------------------------------------------------------------ cards and tables */
@@ -534,8 +544,16 @@ const fmt = (v: Row[string], kind: Column["kind"]) => {
   return String(v);
 };
 
+/** A catalogue report (section 5). In the full-report dialog only the chosen table shows. */
+export function ReportTable(props: Parameters<typeof ReportTableBody>[0]) {
+  const s = useSection();
+  if (s.kind === "summary" || s.kind === "measures") return null;
+  if (s.kind === "table" && s.id !== props.id) return null;
+  return <ReportTableBody {...props} />;
+}
+
 /** A catalogue report (section 5): sortable, row limit, permission-checked, export and drilldown. */
-export function ReportTable({
+function ReportTableBody({
   c,
   id,
   extra,
@@ -572,11 +590,7 @@ export function ReportTable({
   const rows = run.allowed ? (sort ? sortRows(run.rows, sort.key, sort.dir) : run.rows) : [];
   return (
     <Card
-      title={
-        <span className="flex flex-wrap items-center gap-2">
-          <span className="font-mono text-caption text-ink-500">{def.id}</span> {def.title}
-        </span>
-      }
+      title={<span className="flex flex-wrap items-center gap-2">{def.title}</span>}
       sub={`${def.grain} · unit: ${def.unit} · date basis: ${def.basis}`}
       flush
       action={
@@ -601,7 +615,7 @@ export function ReportTable({
             <Save className="size-3.5" aria-hidden="true" /> Save view
           </Button>
           <Button size="sm" variant="secondary" onClick={() => setExporting(true)}>
-            <Download className="size-3.5" aria-hidden="true" /> Export
+            <Download className="size-3.5" aria-hidden="true" /> Download
           </Button>
         </div>
       }
@@ -811,7 +825,8 @@ export function ExportSheet({
   };
   return (
     <Sheet
-      title={`Export ${def ? `${def.id} ${def.title}` : spec?.name || "custom report"}`}
+      above
+      title={`Download ${def ? def.title : spec?.name || "custom report"}`}
       description="Mock download from the prototype. It uses the filters on screen and only the fields your role can see."
       onClose={onClose}
       footer={
@@ -826,7 +841,7 @@ export function ExportSheet({
           </a>
         ) : (
           <Button variant="primary" onClick={go} disabled={busy}>
-            {busy ? "Generating…" : "Generate export"}
+            {busy ? "Preparing…" : "Prepare download"}
           </Button>
         )
       }
@@ -836,7 +851,7 @@ export function ExportSheet({
           <div role="radiogroup" className="flex flex-wrap gap-2">
             {exportFormats.map((x) => (
               <button
-                key={x}
+                key={formatLabel(x)}
                 type="button"
                 role="radio"
                 aria-checked={format === x}
@@ -948,6 +963,7 @@ export function SaveViewSheet({
   };
   return (
     <Sheet
+      above
       title={existing ? "Edit saved view" : "Save view"}
       description="Saves the report with the filters on screen."
       onClose={onClose}
@@ -1052,6 +1068,7 @@ export function DrillSheet({ c, d, onClose }: { c: Ctx; d: Drill; onClose: () =>
   });
   return (
     <Sheet
+      above
       title={d.title}
       description={`Same filters as the report: ${filterSummary(c.f).join(" · ")}`}
       onClose={onClose}

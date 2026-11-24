@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { exportFile } from "@/lib/live/report-files";
+import { reportPdf } from "@/lib/pdf/report-pdf";
 import { requireUser } from "@/server/auth";
 import { handle, parseId, readJson } from "@/server/http";
 import { openExport, revokeExport } from "@/server/report-actions";
@@ -14,14 +15,19 @@ export async function GET(request: Request, { params }: Params) {
   try {
     const user = await requireUser("admin", "therapist");
     const e = await openExport(user, parseId((await params).id), format);
-    const file = exportFile(e, format ?? e.format, user.name);
-    return new NextResponse(file.body, {
-      headers: {
-        "Content-Type": file.type,
-        "Content-Disposition": `${file.inline ? "inline" : "attachment"}; filename="${file.name}"`,
-        "Cache-Control": "no-store",
+    const chosen = format ?? e.format;
+    const file =
+      chosen === "PDF summary" ? await reportPdf(e, user.name) : exportFile(e, chosen, user.name);
+    return new NextResponse(
+      new Uint8Array(file.body instanceof Buffer ? file.body : Buffer.from(file.body)),
+      {
+        headers: {
+          "Content-Type": file.type,
+          "Content-Disposition": `${file.inline ? "inline" : "attachment"}; filename="${file.name}"`,
+          "Cache-Control": "no-store",
+        },
       },
-    });
+    );
   } catch (error) {
     failure = error;
   }

@@ -43,6 +43,7 @@ const {
   updateRoleSchema,
 } = await import("./role-admin");
 const { assignableRoles } = await import("./roles");
+const { grantPermissions } = await import("./permissions");
 const { AuthError } = await import("./auth");
 
 const account = (name: string, staffRoles: string[], over: Partial<UserDoc> = {}) =>
@@ -120,13 +121,13 @@ describe("listing roles", () => {
 });
 
 describe("creating roles", () => {
-  it("makes a custom role with no permissions, a stable slug and an audit entry", async () => {
+  it("makes a custom role with only the admin app on, a stable slug and an audit entry", async () => {
     const { slug } = await create("Triage Desk", { description: "First look at referrals." });
     expect(slug).toBe("triage-desk");
     expect(role(slug)).toMatchObject({
       name: "Triage Desk",
       builtIn: false,
-      permissions: [],
+      permissions: ["app.admin"],
       description: "First look at referrals.",
     });
     expect(role(slug).legacyName).toBeUndefined();
@@ -315,5 +316,53 @@ describe("slugify", () => {
     ["???", "role"],
   ])("turns %s into %s", (name, expected) => {
     expect(slugify(name)).toBe(expected);
+  });
+});
+
+describe("a role manager who is not the Super Admin", () => {
+  const manager = (...held: string[]) =>
+    grantPermissions(account("Pat Lee", ["Scheduler"]), ["roles.manage", ...held]);
+
+  it("can read the roles", async () => {
+    const { roles } = await listRoles(manager());
+    expect(roles.length).toBeGreaterThan(0);
+  });
+
+  it("switches an app they hold, and nothing else changes", async () => {
+    const pat = manager("app.admin", "app.therapist");
+    const before = role("scheduler").permissions;
+    await updateRole(pat, "scheduler", { permissions: [...before, "app.therapist"] });
+    expect(role("scheduler").permissions).toContain("app.therapist");
+  });
+
+  it("cannot switch an app they do not hold", async () => {
+    const pat = manager("app.admin");
+    const before = role("scheduler").permissions;
+    await expect(
+      updateRole(pat, "scheduler", { permissions: [...before, "app.mobile.staff"] }),
+    ).rejects.toBeInstanceOf(AuthError);
+    expect(role("scheduler").permissions).not.toContain("app.mobile.staff");
+  });
+
+  it("cannot change any other permission, rename a role or change its description", async () => {
+    const pat = manager("app.admin");
+    const before = role("scheduler").permissions;
+    await expect(
+      updateRole(pat, "scheduler", { permissions: [...before, "finance.work"] }),
+    ).rejects.toBeInstanceOf(AuthError);
+    await expect(updateRole(pat, "scheduler", { name: "Booker" })).rejects.toBeInstanceOf(
+      AuthError,
+    );
+    await expect(updateRole(pat, "scheduler", { description: "x" })).rejects.toBeInstanceOf(
+      AuthError,
+    );
+  });
+
+  it("cannot create, delete or reset roles", async () => {
+    const pat = manager("app.admin");
+    await expect(
+      createRole(pat, newRoleSchema.parse({ name: "Triage Desk" })),
+    ).rejects.toBeInstanceOf(AuthError);
+    await expect(resetRole(pat, "scheduler")).rejects.toBeInstanceOf(AuthError);
   });
 });

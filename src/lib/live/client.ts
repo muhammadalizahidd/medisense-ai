@@ -243,3 +243,13 @@ export function useToday(): string | null {
   const now = useNow();
   return now === null ? null : new Date(now + 10 * 3_600_000).toISOString().slice(0, 10);
 }
+
+/** Starts a file download without leaving the page or opening a pop-up. */
+export function downloadFile(url: string) {
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "";
+  document.body.append(link);
+  link.click();
+  link.remove();
+}

@@ -206,26 +206,18 @@ describe("export files", () => {
     metrics: [{ label: "Total", value: "4", unit: "referrals" }],
   };
 
-  it("names CSV, Excel and PDF files by their export ref and report", () => {
+  it("names CSV and Excel files by their export ref and report", () => {
     expect(exportFile(snapshot, "CSV", "Neil").name).toBe("exp-1-r01.csv");
     expect(exportFile(snapshot, "XLSX", "Neil").name).toBe("exp-1-r01.xls");
-    expect(exportFile(snapshot, "PDF", "Neil").name).toBe("exp-1-r01.html");
   });
 
-  it("opens CSV and Excel as downloads, and the PDF page inline", () => {
+  it("opens CSV and Excel as downloads", () => {
     expect(exportFile(snapshot, "CSV", "Neil").inline).toBe(false);
     expect(exportFile(snapshot, "XLSX", "Neil").inline).toBe(false);
-    expect(exportFile(snapshot, "PDF", "Neil").inline).toBe(true);
-  });
-
-  it("escapes markup in the PDF title and cells", () => {
-    const html = exportFile(snapshot, "PDF", "Neil").body;
-    expect(html).not.toContain("<script>x</script>");
-    expect(html).toContain("&lt;b&gt;overview&lt;/b&gt;");
   });
 
   it("carries the report ID, owner, freshness and filters on every format", () => {
-    for (const format of ["CSV", "XLSX", "PDF"]) {
+    for (const format of ["CSV", "XLSX"]) {
       const body = exportFile(snapshot, format, "Neil").body;
       expect(body).toContain("EXP-1");
       expect(body).toContain("Neil");

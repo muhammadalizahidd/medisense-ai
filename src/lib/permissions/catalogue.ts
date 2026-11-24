@@ -37,6 +37,7 @@ const CL: BuiltInRoleSlug = "clinical-lead";
 const ALL: BuiltInRoleSlug[] = [INT, SCH, FIN, FM, OPS, CL];
 
 export const permissionGroups = [
+  "Roles and apps",
   "Referrals and intake",
   "Scheduling and therapists",
   "Clinical records and oversight",
@@ -74,6 +75,7 @@ const scope = (
   defaults: readonly BuiltInRoleSlug[],
 ): PermissionDef => ({ id, group, label, description, kind: "scope", defaults });
 
+const RA = "Roles and apps" as const;
 const R = "Referrals and intake" as const;
 const S = "Scheduling and therapists" as const;
 const C = "Clinical records and oversight" as const;
@@ -135,6 +137,32 @@ const reportPermissions: PermissionDef[] = reportDomains.flatMap((domain) => [
 ]);
 
 export const permissions: readonly PermissionDef[] = [
+  // Roles and apps. Built-in roles keep the admin app they have today; the other apps start off.
+  action(
+    "roles.manage",
+    RA,
+    "Manage roles",
+    "Open the roles tab and switch apps on or off for roles, but only the apps this person holds.",
+    [],
+  ),
+  action(
+    "app.admin",
+    RA,
+    "Admin app",
+    "Open the staff app: office screens, reports and settings.",
+    ALL,
+  ),
+  action(
+    "app.therapist",
+    RA,
+    "Therapist app",
+    "Open the therapist app: own caseload, sessions and notes.",
+    [],
+  ),
+  action("app.mobile.family", RA, "Mobile: family", "Open the family mobile app.", []),
+  action("app.mobile.patient", RA, "Mobile: patient", "Open the patient mobile app.", []),
+  action("app.mobile.staff", RA, "Mobile: staff", "Open the staff mobile app.", []),
+  action("app.mobile.therapist", RA, "Mobile: therapist", "Open the therapist mobile view.", []),
   // Referrals and intake
   action(
     "referrals.triage",
@@ -483,6 +511,14 @@ export const defaultPermissionsFor = (slug: BuiltInRoleSlug): string[] =>
  * enforced: the older role checks still decide. Modules are added here as they move over.
  */
 export const enforcedPermissions: readonly string[] = [
+  // Roles and apps
+  "roles.manage",
+  "app.admin",
+  "app.therapist",
+  "app.mobile.family",
+  "app.mobile.patient",
+  "app.mobile.staff",
+  "app.mobile.therapist",
   // Referrals and intake
   "referrals.triage",
   "referrals.process",

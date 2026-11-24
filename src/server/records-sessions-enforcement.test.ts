@@ -79,7 +79,7 @@ describe("record access", () => {
       slug: "records-clerk",
       name: "Records Clerk",
       builtIn: false,
-      permissions: ["records.view.scheduling"],
+      permissions: ["app.admin", "records.view.scheduling"],
     });
     expect(await level("Records Clerk")).toBe("scheduler");
     const finance = db.roles.docs.find((r) => r.slug === "finance") as unknown as RoleDoc;
@@ -99,7 +99,7 @@ describe("record access", () => {
       slug: "access-officer",
       name: "Access Officer",
       builtIn: false,
-      permissions: ["records.grant-access"],
+      permissions: ["app.admin", "records.grant-access"],
     });
     expect(isLead(await as("Clinical Lead"))).toBe(true);
     expect(isLead(await as("Access Officer"))).toBe(false);
@@ -150,7 +150,7 @@ describe("session views", () => {
       slug: "reviewer",
       name: "Reviewer",
       builtIn: false,
-      permissions: ["sessions.oversight"],
+      permissions: ["app.admin", "sessions.oversight"],
     });
     expect(viewOf(await as("Reviewer"), appointment("Occupational Therapy"))).toBe("lead");
     expect(viewOf(await as("Reviewer"), appointment("Psychology"))).toBe("status");

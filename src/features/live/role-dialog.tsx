@@ -26,7 +26,7 @@ import {
   type PermissionMode,
 } from "@/lib/permissions/role-view";
 import type { RoleDto } from "@/lib/permissions/types";
-import { PermissionGroupCard, ReportsCard } from "./permission-group-card";
+import { AppsCard, PermissionGroupCard, ReportsCard } from "./permission-group-card";
 import { DeleteSheet, DetailsSheet, ReviewSheet, UnsavedPrompt } from "./role-sheets";
 
 const reportPermissions = permissions.filter((p) => p.group === "Reports");
@@ -60,11 +60,17 @@ async function reset(role: RoleDto, onChanged: () => void) {
  */
 export function RoleDialog({
   role,
+  superAdmin = true,
+  editable = () => true,
   onClose,
   onChanged,
   onDeleted,
 }: {
   role: RoleDto;
+  /** Only the Super Admin renames, resets or deletes a role. */
+  superAdmin?: boolean;
+  /** Which permissions the viewer may switch. A role manager switches only the apps they hold. */
+  editable?: (id: string) => boolean;
   onClose: () => void;
   onChanged: () => void;
   onDeleted: () => void;
@@ -89,10 +95,14 @@ export function RoleDialog({
   const atDefault = defaults ? sameSet(saved, [...defaults]) : false;
 
   const apply = (next: Set<string>) => setEdits(sameSet(next, role.permissions) ? null : next);
-  const toggle = (id: string) => apply(toggled(draft, id));
-  const setGroup = (ids: string[], on: boolean) => apply(setMany(draft, ids, on));
+  const toggle = (id: string) => {
+    if (editable(id)) apply(toggled(draft, id));
+  };
+  const setGroup = (ids: string[], on: boolean) => apply(setMany(draft, ids.filter(editable), on));
 
-  const groups = groupPermissions(draft, query, mode).filter((g) => g.group !== "Reports");
+  const groups = groupPermissions(draft, query, mode).filter(
+    (g) => g.group !== "Reports" && g.group !== "Roles and apps",
+  );
   const matrix = reportMatrix(draft, query, mode);
   const showReports = matrix.rows.length + matrix.extras.length > 0;
   const reportsAllowed = reportPermissions.filter((p) => draft.has(p.id)).length;
@@ -128,38 +138,40 @@ export function RoleDialog({
           </>
         }
         actions={
-          <>
-            <Button size="sm" onClick={() => setEditing(true)}>
-              <UserCog className="size-4" aria-hidden="true" />
-              Edit details
-            </Button>
-            {role.builtIn ? (
-              <Button
-                size="sm"
-                disabled={atDefault || dirty}
-                title={dirty ? "Save or discard your changes first" : undefined}
-                onClick={() => reset(role, onChanged)}
-              >
-                <RotateCcw className="size-4" aria-hidden="true" />
-                Reset to default
+          !superAdmin ? undefined : (
+            <>
+              <Button size="sm" onClick={() => setEditing(true)}>
+                <UserCog className="size-4" aria-hidden="true" />
+                Edit details
               </Button>
-            ) : (
-              <Button
-                size="sm"
-                variant="danger"
-                disabled={role.memberCount > 0}
-                title={
-                  role.memberCount > 0
-                    ? `Take this role off the ${role.memberCount} ${role.memberCount === 1 ? "person" : "people"} who hold it first`
-                    : undefined
-                }
-                onClick={() => setDeleting(true)}
-              >
-                <Trash2 className="size-4" aria-hidden="true" />
-                Delete
-              </Button>
-            )}
-          </>
+              {role.builtIn ? (
+                <Button
+                  size="sm"
+                  disabled={atDefault || dirty}
+                  title={dirty ? "Save or discard your changes first" : undefined}
+                  onClick={() => reset(role, onChanged)}
+                >
+                  <RotateCcw className="size-4" aria-hidden="true" />
+                  Reset to default
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="danger"
+                  disabled={role.memberCount > 0}
+                  title={
+                    role.memberCount > 0
+                      ? `Take this role off the ${role.memberCount} ${role.memberCount === 1 ? "person" : "people"} who hold it first`
+                      : undefined
+                  }
+                  onClick={() => setDeleting(true)}
+                >
+                  <Trash2 className="size-4" aria-hidden="true" />
+                  Delete
+                </Button>
+              )}
+            </>
+          )
         }
         toolbar={
           <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
@@ -224,6 +236,13 @@ export function RoleDialog({
           </div>
         ) : (
           <div className="flex flex-col gap-4">
+            <AppsCard
+              saved={saved}
+              defaults={defaults}
+              draft={draft}
+              editable={editable}
+              onToggle={toggle}
+            />
             <div
               className="grid items-stretch gap-4"
               style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
@@ -240,6 +259,7 @@ export function RoleDialog({
                         saved={saved}
                         defaults={defaults}
                         draft={draft}
+                        editable={editable}
                         onToggle={toggle}
                         onSetMany={setGroup}
                       />
@@ -257,6 +277,7 @@ export function RoleDialog({
                 saved={saved}
                 defaults={defaults}
                 draft={draft}
+                editable={editable}
                 onToggle={toggle}
                 onSetMany={setGroup}
               />

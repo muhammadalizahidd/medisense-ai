@@ -2,7 +2,6 @@
 
 import {
   Archive,
-  BarChart3,
   CalendarClock,
   Download,
   FileClock,
@@ -30,16 +29,17 @@ import {
   distributionGroups,
   exportContents,
   exportFormats,
+  formatLabel,
   frequencies,
   type ExportDto,
   type InsightDto,
   type ScheduleDto,
   type ScheduleInput,
-  type ViewDto,
 } from "@/lib/live/report-dto";
 import { reportById, reports } from "@/lib/live/report-catalogue";
 import { datePresets, type Domain } from "@/lib/live/reports";
 import { Card, Kpi, KpiGrid, NA, ReportTable, td, th, type Ctx } from "./reports-bits";
+import { Measures, useSection } from "./reports-section";
 
 const when = (iso: string | null) =>
   iso
@@ -67,266 +67,6 @@ async function act(url: string, body: unknown, ok: string, reload: () => void) {
 
 export type Go = (tab: string) => void;
 
-/* ------------------------------------------------------------------ home */
-
-const categoryTabs: { domain: Domain; tab: string; title: string; metrics: string[] }[] = [
-  {
-    domain: "Referrals",
-    tab: "referrals",
-    title: "Referral and intake",
-    metrics: ["new-referrals", "missing-info"],
-  },
-  {
-    domain: "Participants",
-    tab: "participants",
-    title: "Participants and services",
-    metrics: ["active-participants", "unassigned"],
-  },
-  {
-    domain: "Staff",
-    tab: "capacity",
-    title: "Clinician capacity",
-    metrics: ["utilisation", "delivered-hours"],
-  },
-  {
-    domain: "Scheduling",
-    tab: "appointments",
-    title: "Appointments and visits",
-    metrics: ["delivered", "cancellation-rate"],
-  },
-  {
-    domain: "Clinical Operations",
-    tab: "clinical",
-    title: "Assessment and treatment",
-    metrics: ["assessment-backlog", "overdue-notes"],
-  },
-  {
-    domain: "Finance",
-    tab: "finance",
-    title: "Funding and finance",
-    metrics: ["issued-revenue", "overdue-receivables"],
-  },
-  {
-    domain: "Telehealth",
-    tab: "telehealth",
-    title: "Telehealth operations",
-    metrics: ["telehealth-adoption", "tech-failure"],
-  },
-  {
-    domain: "Automation",
-    tab: "automation",
-    title: "Automation and AI",
-    metrics: ["ai-accepted", "tasks-overdue"],
-  },
-];
-
-export function HomeTab({ c, go, openView }: { c: Ctx; go: Go; openView: (v: ViewDto) => void }) {
-  const cats = categoryTabs.filter((x) => c.hub.scope.domains.includes(x.domain));
-  const views = c.hub.views.filter((v) => v.status === "Active").slice(0, 6);
-  return (
-    <div className="flex flex-col gap-4">
-      {c.hub.insights.filter((i) => i.status === "New").length > 0 && (
-        <button
-          type="button"
-          onClick={() => go("automation")}
-          className="flex cursor-pointer items-center gap-3 rounded-card border border-border bg-surface p-4 text-left hover:shadow-lift"
-        >
-          <Lightbulb className="size-5 text-accent" aria-hidden="true" />
-          <span className="flex-1 text-small text-ink-900">
-            <b className="font-semibold">
-              {c.hub.insights.filter((i) => i.status === "New").length} new insights
-            </b>{" "}
-            raised by configured rules:{" "}
-            {c.hub.insights
-              .filter((i) => i.status === "New")
-              .slice(0, 3)
-              .map((i) => i.title.toLowerCase())
-              .join("; ")}
-            .
-          </span>
-          <RuleMark />
-        </button>
-      )}
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {cats.map((cat) => (
-          <section
-            key={cat.tab}
-            className="flex flex-col rounded-card border border-border bg-surface p-4"
-          >
-            <h2 className="text-section font-semibold text-ink-900">{cat.title}</h2>
-            <dl className="mt-3 flex flex-col gap-2">
-              {cat.metrics.map((id) => {
-                const r = c.run(id);
-                return (
-                  <div key={id} className="flex items-baseline justify-between gap-2">
-                    <dt className="text-caption text-ink-500">{r.def.label}</dt>
-                    <dd className="text-small font-semibold text-ink-900 tabular-nums">
-                      {r.value === null
-                        ? "N/A"
-                        : Intl.NumberFormat(
-                            "en-AU",
-                            r.def.unit === "AUD"
-                              ? { style: "currency", currency: "AUD", maximumFractionDigits: 0 }
-                              : { maximumFractionDigits: 1 },
-                          ).format(r.value) + (r.def.unit === "%" ? "%" : "")}
-                    </dd>
-                  </div>
-                );
-              })}
-            </dl>
-            <button
-              type="button"
-              onClick={() => go(cat.tab)}
-              className="mt-auto cursor-pointer pt-3 text-left text-caption font-semibold text-accent hover:underline"
-            >
-              Open {cat.title.charAt(0).toLowerCase() + cat.title.slice(1).replace(/ ai$/i, " AI")}
-            </button>
-          </section>
-        ))}
-      </div>
-      <div className="grid gap-4 xl:grid-cols-3">
-        <Card
-          title="Saved views"
-          sub="Yours and those shared with you"
-          icon={BarChart3}
-          flush
-          action={
-            <Button size="sm" variant="ghost" onClick={() => go("builder")}>
-              All views
-            </Button>
-          }
-        >
-          {views.length ? (
-            <ul className="divide-y divide-border">
-              {views.map((v) => (
-                <li key={v.id} className="flex items-center gap-2 px-4 py-2.5">
-                  <button
-                    type="button"
-                    onClick={() => openView(v)}
-                    className="min-w-0 flex-1 cursor-pointer text-left"
-                  >
-                    <span className="block truncate text-small font-semibold text-ink-900">
-                      {v.name}
-                    </span>
-                    <span className="text-caption text-ink-500">
-                      {v.reportId ?? "Custom"} · {v.owner} · {v.scope}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="p-4 text-small text-ink-500">No saved views yet.</p>
-          )}
-        </Card>
-        <Card
-          title="Scheduled runs"
-          sub="Next runs, Brisbane time"
-          icon={CalendarClock}
-          flush
-          action={
-            <Button size="sm" variant="ghost" onClick={() => go("schedules")}>
-              Schedules
-            </Button>
-          }
-        >
-          {c.hub.schedules.length ? (
-            <ul className="divide-y divide-border">
-              {c.hub.schedules.slice(0, 5).map((s) => (
-                <li key={s.id} className="flex items-center gap-2 px-4 py-2.5">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-small font-semibold text-ink-900">{s.name}</p>
-                    <p className="text-caption text-ink-500">
-                      {s.status === "Active"
-                        ? `Next ${when(s.nextRun)}`
-                        : (s.runs[0]?.detail ?? s.status)}
-                    </p>
-                  </div>
-                  <Tag tone={scheduleTone[s.status]}>{s.status}</Tag>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="p-4 text-small text-ink-500">No schedules.</p>
-          )}
-        </Card>
-        <Card
-          title="Recent exports"
-          sub="Snapshots you generated or received"
-          icon={FileClock}
-          flush
-          action={
-            <Button size="sm" variant="ghost" onClick={() => go("exports")}>
-              History
-            </Button>
-          }
-        >
-          {c.hub.exports.length ? (
-            <ul className="divide-y divide-border">
-              {c.hub.exports.slice(0, 5).map((e) => (
-                <li key={e.id} className="flex items-center gap-2 px-4 py-2.5">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-small font-semibold text-ink-900">{e.title}</p>
-                    <p className="text-caption text-ink-500">
-                      <span className="font-mono">{e.ref}</span> · {when(e.generatedAt)}
-                    </p>
-                  </div>
-                  <Tag tone={exportTone(e.status)}>{e.status}</Tag>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="p-4 text-small text-ink-500">No exports yet.</p>
-          )}
-        </Card>
-      </div>
-      <Methodology c={c} />
-      <Card
-        title="Report catalogue"
-        sub="Every report reads the records of the module that owns them"
-        icon={ListChecks}
-        flush
-      >
-        <table className="w-full">
-          <thead className="bg-sunken">
-            <tr>
-              <th className={th}>Report</th>
-              <th className={th}>Row grain</th>
-              <th className={th}>Date basis</th>
-              <th className={th}>Access</th>
-            </tr>
-          </thead>
-          <tbody>
-            {reports.map((r) => {
-              const ok = c.hub.scope.domains.includes(r.domain);
-              const detail = !r.detail || c.hub.scope.detail.includes(r.domain);
-              return (
-                <tr key={r.id} className="border-t border-border">
-                  <td className={td}>
-                    <span className="font-mono text-caption text-ink-500">{r.id}</span>{" "}
-                    <span className="font-semibold">{r.title}</span>
-                  </td>
-                  <td className={cn(td, "text-ink-700")}>{r.grain}</td>
-                  <td className={cn(td, "text-ink-700")}>{r.basis}</td>
-                  <td className={td}>
-                    {!ok ? (
-                      <Tag tone="neutral">Not in your role</Tag>
-                    ) : !detail ? (
-                      <Tag tone="outline">Aggregate only</Tag>
-                    ) : (
-                      <Tag tone="healthy">Available</Tag>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </Card>
-    </div>
-  );
-}
-
 /* ------------------------------------------------------------------ automation and AI (section 9) */
 
 const sevTone: Record<InsightDto["severity"], TagTone> = {
@@ -343,6 +83,9 @@ const insightTone: Record<InsightDto["status"], TagTone> = {
 
 export function AutomationTab({ c }: { c: Ctx }) {
   const has = (d: Domain) => c.hub.scope.domains.includes(d);
+  const section = useSection().kind;
+  // The page summary lists the five newest insights; the full report lists them all.
+  const insights = section === "summary" ? c.hub.insights.slice(0, 5) : c.hub.insights;
   return (
     <div className="flex flex-col gap-4">
       {has("Automation") && (
@@ -377,29 +120,35 @@ export function AutomationTab({ c }: { c: Ctx }) {
           </article>
         </KpiGrid>
       )}
-      <Card
-        title={
-          <span className="flex items-center gap-2">
-            Insights <RuleMark>Rule raised</RuleMark>
-          </span>
-        }
-        sub="Configured rules raise these; a person reviews each one. Nothing is changed automatically."
-        icon={Lightbulb}
-        flush
-      >
-        {c.hub.insights.length ? (
-          <ul className="divide-y divide-border">
-            {c.hub.insights.map((i) => (
-              <InsightRow key={i.id} i={i} c={c} />
-            ))}
-          </ul>
-        ) : (
-          <p className="p-4 text-small text-ink-500">
-            No rule is above its threshold for your areas right now.
-          </p>
-        )}
-      </Card>
-      {c.hub.scope.label !== "Therapist (own caseload)" && <SettingsCard c={c} />}
+      {section !== "table" && (
+        <Card
+          title={
+            <span className="flex items-center gap-2">
+              Insights <RuleMark>Rule raised</RuleMark>
+            </span>
+          }
+          sub="Configured rules raise these; a person reviews each one. Nothing is changed automatically."
+          icon={Lightbulb}
+          flush
+        >
+          {insights.length ? (
+            <ul className="divide-y divide-border">
+              {insights.map((i) => (
+                <InsightRow key={i.id} i={i} c={c} />
+              ))}
+            </ul>
+          ) : (
+            <p className="p-4 text-small text-ink-500">
+              No rule is above its threshold for your areas right now.
+            </p>
+          )}
+        </Card>
+      )}
+      {c.hub.scope.label !== "Therapist (own caseload)" && (
+        <Measures>
+          <SettingsCard c={c} />
+        </Measures>
+      )}
       {has("Automation") && <ReportTable c={c} id="R18" />}
       {has("Automation") && <ReportTable c={c} id="R19" />}
       {has("Audit") && <ReportTable c={c} id="R20" />}
@@ -557,6 +306,7 @@ function InsightRow({ i, c }: { i: InsightDto; c: Ctx }) {
       )}
       {dismiss && (
         <Sheet
+          above
           title="Dismiss insight"
           description="It stays dismissed until new evidence arrives. The reason is kept in its audit trail."
           onClose={() => setDismiss(false)}
@@ -658,8 +408,8 @@ function ScheduleCard({ s, c, onEdit }: { s: ScheduleDto; c: Ctx; onEdit: () => 
       sub={
         <>
           <span className="font-mono">{s.ref}</span> · {def ? `${def.id} ${def.title}` : s.reportId}{" "}
-          · {plan} at {s.time} AEST · {s.preset} · {s.format}, {s.contents.toLowerCase()} ·{" "}
-          {s.delivery} · owner {s.owner}
+          · {plan} at {s.time} AEST · {s.preset} · {formatLabel(s.format)},{" "}
+          {s.contents.toLowerCase()} · {s.delivery} · owner {s.owner}
         </>
       }
       icon={CalendarClock}
@@ -785,6 +535,7 @@ function ScheduleCard({ s, c, onEdit }: { s: ScheduleDto; c: Ctx; onEdit: () => 
       </div>
       {confirmDelete && (
         <Sheet
+          above
           title="Delete schedule"
           description="This removes the schedule. Reports it already generated stay in export history."
           onClose={() => setConfirmDelete(false)}
@@ -846,6 +597,7 @@ function ScheduleSheet({ c, s, onClose }: { c: Ctx; s: ScheduleDto | null; onClo
   const recipientPeople = c.hub.people.filter((x) => x.id !== c.hub.me.id);
   return (
     <Sheet
+      above
       title={s ? `Edit ${s.ref}` : "New scheduled report"}
       description="Recipients only receive what they're entitled to at the time of each run."
       onClose={onClose}
@@ -969,7 +721,9 @@ function ScheduleSheet({ c, s, onClose }: { c: Ctx; s: ScheduleDto | null; onClo
               onChange={(e) => p({ format: e.target.value as ScheduleInput["format"] })}
             >
               {exportFormats.map((x) => (
-                <option key={x}>{x}</option>
+                <option key={x} value={x}>
+                  {formatLabel(x)}
+                </option>
               ))}
             </Select>
           </Field>
@@ -1156,7 +910,7 @@ export function ExportsTab({ c }: { c: Ctx }) {
                     <td className={cn(td, "max-w-[260px] text-caption text-ink-700")}>
                       {e.summary.join(" · ")}
                     </td>
-                    <td className={td}>{e.format}</td>
+                    <td className={td}>{formatLabel(e.format)}</td>
                     <td className={td}>
                       <Tag tone={exportTone(e.status)}>{e.status}</Tag>
                       {e.revoked && (
@@ -1214,7 +968,7 @@ export function ExportsTab({ c }: { c: Ctx }) {
                 <span className="font-mono text-ink-500">{d.ref}</span>
                 <span className="text-ink-900">{d.by}</span>
                 <span className="text-ink-500">
-                  {when(d.at)} · {d.format}
+                  {when(d.at)} · {formatLabel(d.format)}
                 </span>
                 <Tag tone={d.outcome === "Downloaded" ? "healthy" : "over"}>
                   {d.outcome === "Downloaded" ? "Downloaded" : `Refused: ${d.outcome}`}
@@ -1228,6 +982,7 @@ export function ExportsTab({ c }: { c: Ctx }) {
       </Card>
       {revoke && (
         <Sheet
+          above
           title={`Revoke ${revoke.ref}`}
           description="Anyone holding this link loses access straight away. The snapshot stays in history."
           onClose={() => setRevoke(null)}
@@ -1377,6 +1132,7 @@ function SettingsCard({ c }: { c: Ctx }) {
       </div>
       {open && (
         <Sheet
+          above
           title={open === "thresholds" ? "Alert thresholds" : "Clinical deadlines"}
           description="Changes apply from the next report load and are kept in the change history."
           onClose={() => setOpen(null)}
@@ -1455,7 +1211,7 @@ const decisions: [string, string][] = [
   ],
 ];
 
-function Methodology({ c }: { c: Ctx }) {
+export function Methodology({ c }: { c: Ctx }) {
   return (
     <Card
       title="Definitions and open decisions"

@@ -1,5 +1,6 @@
 import "server-only";
 import { effectivePermissions } from "@/lib/permissions/can";
+import { limitToApps } from "@/lib/permissions/apps";
 import { AuthError } from "./auth-error";
 import { serverLog } from "./log";
 import type { UserDoc } from "./models";
@@ -19,7 +20,12 @@ const resolved = new WeakMap<object, ReadonlySet<string>>();
 export async function loadPermissions<T extends Actor>(user: T): Promise<T> {
   resolved.set(
     user,
-    user.role === "admin" ? effectivePermissions(user.staffRoles, await loadRoles()) : new Set(),
+    user.role === "admin"
+      ? limitToApps(
+          new Set(effectivePermissions(user.staffRoles, await loadRoles())),
+          user.staffRoles,
+        )
+      : new Set(),
   );
   return user;
 }

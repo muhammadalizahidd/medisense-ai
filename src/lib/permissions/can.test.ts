@@ -75,7 +75,9 @@ describe("effective permissions", () => {
   });
 
   it("stores a built-in role by its original name and a custom role by its slug", () => {
-    expect(roleKey({ slug: "intake-officer", legacyName: "Intake Officer" })).toBe("Intake Officer");
+    expect(roleKey({ slug: "intake-officer", legacyName: "Intake Officer" })).toBe(
+      "Intake Officer",
+    );
     expect(roleKey({ slug: "triage-desk" })).toBe("triage-desk");
   });
 });

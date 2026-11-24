@@ -34,6 +34,7 @@ import { cn } from "@/lib/cn";
 import { api, useNow, useResource } from "@/lib/live/client";
 import { enforcedPermissions, permissionGroups, permissions } from "@/lib/permissions/catalogue";
 import type { RoleDto, RolesDto } from "@/lib/permissions/types";
+import { pageAccessFor } from "@/lib/permissions/pages";
 import { relativeTime, shortDate } from "@/lib/live/time";
 import type { UserAccountDto, UserControlDto, UserKind, UserStatus } from "@/lib/live/types";
 import { navigationFor } from "@/lib/navigation";
@@ -60,8 +61,50 @@ const IN_TAB: Record<TabId, (k: UserKind) => boolean> = {
   roles: () => false,
 };
 
+/**
+ * User control. The Super Admin sees every account and every role. Someone with "Manage roles"
+ * sees the roles only, and switches only the apps they hold themselves.
+ */
+export function UserControl({
+  superAdmin = true,
+  heldApps = [],
+}: {
+  superAdmin?: boolean;
+  heldApps?: readonly string[];
+}) {
+  return superAdmin ? <AccountControl /> : <RoleManager heldApps={heldApps} />;
+}
+
+function RoleManager({ heldApps }: { heldApps: readonly string[] }) {
+  const rolesResource = useResource<RolesDto>("/api/care/roles", (e) => e.type === "care");
+  const roleList = rolesResource.data?.roles ?? [];
+  return (
+    <RolesContext.Provider value={roleList}>
+      <PageHeader
+        eyebrow="Administration"
+        title="Roles and apps"
+        description="Switch the apps you hold on or off for a role. Everything else about a role stays with the Super Admin."
+        actions={<LiveBadge />}
+      />
+      {rolesResource.error && !rolesResource.data ? (
+        <ErrorNote message={rolesResource.error} onRetry={rolesResource.reload} />
+      ) : (
+        <RolesPermissions
+          roles={roleList}
+          loading={rolesResource.loading && !rolesResource.data}
+          onChanged={rolesResource.reload}
+          creating={false}
+          onCreatingChange={() => undefined}
+          superAdmin={false}
+          heldApps={heldApps}
+        />
+      )}
+    </RolesContext.Provider>
+  );
+}
+
 /** Super Admin: every account in Medisense, who can get in, and what each person may do. */
-export function UserControl() {
+function AccountControl() {
   const { data, error, loading, reload } = useResource<UserControlDto>(
     "/api/care/users",
     (e) => e.type === "care",
@@ -618,9 +661,10 @@ function MenuPreview({ roles, title }: { roles: string[]; title: string }) {
   const permissions = [
     ...new Set(known.filter((r) => roles.includes(r.key)).flatMap((r) => r.permissions)),
   ];
-  const superAdmin = roles.includes("Super Admin");
-  const menu =
-    roles.length ? navigationFor("Admin", { permissions, superAdmin }, { liveOnly: true }) : [];
+  const staffRoles = roles.includes("Super Admin") ? ["Super Admin"] : [];
+  const menu = roles.length
+    ? navigationFor("Admin", pageAccessFor({ permissions, staffRoles }), { liveOnly: true })
+    : [];
   return (
     <section aria-label={title} className="rounded-card border border-border bg-sunken p-4">
       <p className="label-caps text-ink-500">{title}</p>

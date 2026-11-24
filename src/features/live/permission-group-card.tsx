@@ -5,7 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Tag } from "@/components/ui/tag";
 import { cn } from "@/lib/cn";
-import { enforcedPermissions, type PermissionDef } from "@/lib/permissions/catalogue";
+import {
+  enforcedPermissions,
+  permissionById,
+  type PermissionDef,
+} from "@/lib/permissions/catalogue";
 import type { GroupView, ReportRow } from "@/lib/permissions/role-view";
 
 /** One permission: its switch, name and description. A row that differs from what is saved is tinted. */
@@ -14,12 +18,14 @@ function PermissionRow({
   on,
   pending,
   changedFromDefault,
+  disabled = false,
   onToggle,
 }: {
   p: PermissionDef;
   on: boolean;
   pending: boolean;
   changedFromDefault: boolean;
+  disabled?: boolean;
   onToggle: () => void;
 }) {
   return (
@@ -30,13 +36,13 @@ function PermissionRow({
       )}
     >
       <span className="mt-0.5 flex-none">
-        <Switch on={on} label={p.label} onToggle={onToggle} />
+        <Switch on={on} label={p.label} onToggle={onToggle} disabled={disabled} />
       </span>
       {/* The words toggle it too, so the target is the whole row, not just the switch. */}
       <div
-        className="min-w-0 flex-1 cursor-pointer"
+        className={cn("min-w-0 flex-1", !disabled && "cursor-pointer")}
         onClick={(event) => {
-          if (!(event.target as HTMLElement).closest("button")) onToggle();
+          if (!disabled && !(event.target as HTMLElement).closest("button")) onToggle();
         }}
       >
         <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-small font-semibold text-ink-900">
@@ -57,12 +63,15 @@ function CardHeader({
   title,
   allowed,
   total,
+  locked = false,
   onAllowAll,
   onClear,
 }: {
   title: string;
   allowed: number;
   total: number;
+  /** Nothing in this card can be changed by the person looking at it. */
+  locked?: boolean;
   onAllowAll: () => void;
   onClear: () => void;
 }) {
@@ -75,10 +84,15 @@ function CardHeader({
         </p>
       </div>
       <div className="flex flex-none items-center gap-1">
-        <Button size="sm" variant="ghost" disabled={allowed === total} onClick={onAllowAll}>
+        <Button
+          size="sm"
+          variant="ghost"
+          disabled={locked || allowed === total}
+          onClick={onAllowAll}
+        >
           Allow all
         </Button>
-        <Button size="sm" variant="ghost" disabled={allowed === 0} onClick={onClear}>
+        <Button size="sm" variant="ghost" disabled={locked || allowed === 0} onClick={onClear}>
           Clear
         </Button>
       </div>
@@ -93,6 +107,7 @@ export function PermissionGroupCard({
   saved,
   defaults,
   draft,
+  editable = () => true,
   onToggle,
   onSetMany,
 }: {
@@ -103,10 +118,13 @@ export function PermissionGroupCard({
   /** The built-in role's defaults, or null for a custom role. */
   defaults: ReadonlySet<string> | null;
   draft: ReadonlySet<string>;
+  /** Whether the person looking can change a permission; the rest show but don't switch. */
+  editable?: (id: string) => boolean;
   onToggle: (id: string) => void;
   onSetMany: (ids: string[], on: boolean) => void;
 }) {
   const ids = view.items.map((p) => p.id);
+  const open = ids.filter(editable);
   return (
     <section
       aria-label={view.group}
@@ -119,14 +137,16 @@ export function PermissionGroupCard({
         title={view.group}
         allowed={view.allowed}
         total={view.total}
-        onAllowAll={() => onSetMany(ids, true)}
-        onClear={() => onSetMany(ids, false)}
+        locked={open.length === 0}
+        onAllowAll={() => onSetMany(open, true)}
+        onClear={() => onSetMany(open, false)}
       />
       <ul className="-mb-px">
         {view.items.map((p) => (
           <PermissionRow
             key={p.id}
             p={p}
+            disabled={!editable(p.id)}
             on={draft.has(p.id)}
             pending={draft.has(p.id) !== saved.has(p.id)}
             changedFromDefault={defaults ? draft.has(p.id) !== defaults.has(p.id) : false}
@@ -150,6 +170,7 @@ export function ReportsCard({
   saved,
   defaults,
   draft,
+  editable = () => true,
   onToggle,
   onSetMany,
 }: {
@@ -160,10 +181,12 @@ export function ReportsCard({
   saved: ReadonlySet<string>;
   defaults: ReadonlySet<string> | null;
   draft: ReadonlySet<string>;
+  editable?: (id: string) => boolean;
   onToggle: (id: string) => void;
   onSetMany: (ids: string[], on: boolean) => void;
 }) {
   const ids = [...rows.flatMap((r) => [r.readId, r.detailId]), ...extras.map((p) => p.id)];
+  const open = ids.filter(editable);
   const cell = (id: string, label: string): ReactNode => (
     <td className="w-24 px-2 py-2 text-center">
       <span
@@ -172,7 +195,12 @@ export function ReportsCard({
           draft.has(id) !== saved.has(id) && "bg-accent-tint",
         )}
       >
-        <Switch on={draft.has(id)} label={label} onToggle={() => onToggle(id)} />
+        <Switch
+          on={draft.has(id)}
+          label={label}
+          disabled={!editable(id)}
+          onToggle={() => onToggle(id)}
+        />
       </span>
     </td>
   );
@@ -185,8 +213,9 @@ export function ReportsCard({
         title="Reports"
         allowed={allowed}
         total={total}
-        onAllowAll={() => onSetMany(ids, true)}
-        onClear={() => onSetMany(ids, false)}
+        locked={open.length === 0}
+        onAllowAll={() => onSetMany(open, true)}
+        onClear={() => onSetMany(open, false)}
       />
       <div className="grid lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         {rows.length > 0 && (
@@ -231,11 +260,99 @@ export function ReportsCard({
                 on={draft.has(p.id)}
                 pending={draft.has(p.id) !== saved.has(p.id)}
                 changedFromDefault={defaults ? draft.has(p.id) !== defaults.has(p.id) : false}
+                disabled={!editable(p.id)}
                 onToggle={() => onToggle(p.id)}
               />
             ))}
           </ul>
         )}
+      </div>
+    </section>
+  );
+}
+
+const APP_ROWS: { title: string; ids: string[] }[] = [
+  { title: "Apps", ids: ["app.admin", "app.therapist"] },
+  {
+    title: "Mobile apps",
+    ids: ["app.mobile.family", "app.mobile.patient", "app.mobile.staff", "app.mobile.therapist"],
+  },
+  { title: "Roles", ids: ["roles.manage"] },
+];
+
+/**
+ * Which apps this role opens, laid out as rows of switches. An app that is off disappears from the
+ * person's menu and its pages and routes refuse them.
+ */
+export function AppsCard({
+  saved,
+  defaults,
+  draft,
+  editable = () => true,
+  onToggle,
+}: {
+  saved: ReadonlySet<string>;
+  defaults: ReadonlySet<string> | null;
+  draft: ReadonlySet<string>;
+  editable?: (id: string) => boolean;
+  onToggle: (id: string) => void;
+}) {
+  const all = APP_ROWS.flatMap((r) => r.ids);
+  const on = all.filter((id) => draft.has(id)).length;
+  return (
+    <section
+      aria-label="Apps and roles"
+      className="min-w-0 overflow-hidden rounded-card border border-border bg-surface"
+    >
+      <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
+        <div className="min-w-0">
+          <h3 className="text-section font-semibold text-ink-900">Apps and roles</h3>
+          <p className="text-caption text-ink-500 tabular-nums">
+            {on} of {all.length} on. An app that is off is hidden from the menu and closed to this
+            role, including by link.
+          </p>
+        </div>
+      </header>
+      <div className="flex flex-col divide-y divide-border">
+        {APP_ROWS.map((row) => (
+          <div key={row.title} className="px-4 py-3">
+            <p className="mb-2 label-caps text-ink-500">{row.title}</p>
+            <ul className="grid gap-x-6 gap-y-2 sm:grid-cols-2 lg:grid-cols-4">
+              {row.ids.map((id) => {
+                const p = permissionById(id);
+                if (!p) return null;
+                const pending = draft.has(id) !== saved.has(id);
+                return (
+                  <li
+                    key={id}
+                    className={cn(
+                      "flex items-start gap-3 rounded-control px-2 py-2",
+                      pending && "bg-accent-tint",
+                    )}
+                  >
+                    <span className="mt-0.5 flex-none">
+                      <Switch
+                        on={draft.has(id)}
+                        label={p.label}
+                        disabled={!editable(id)}
+                        onToggle={() => onToggle(id)}
+                      />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-small font-semibold text-ink-900">
+                        {p.label}
+                        {defaults && draft.has(id) !== defaults.has(id) && (
+                          <Tag tone="watch">Changed from default</Tag>
+                        )}
+                      </span>
+                      <span className="block text-caption text-ink-500">{p.description}</span>
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
       </div>
     </section>
   );
