@@ -1316,7 +1316,10 @@ export async function recordAction(u: UserDoc, clientId: ObjectId, action: Recor
       break;
     }
     case "risk-review": {
-      must(canReviewRisks(u) || a.level === "treating", "Only a qualified clinician reviews risks.");
+      must(
+        canReviewRisks(u) || a.level === "treating",
+        "Only a qualified clinician reviews risks.",
+      );
       set.risks = rec.risks.map((x) =>
         x.id === action.id
           ? { ...x, review: action.state, reviewer: u.name, reviewNote: action.note }

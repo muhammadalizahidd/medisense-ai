@@ -969,9 +969,7 @@ export async function workspace(user: UserDoc): Promise<WorkspaceDto> {
       region: t.region,
       capacity: t.capacity,
       sessionMinutes: t.sessionMinutes || 60,
-      supervisor:
-        (staff.find(dedicatedLead) ?? staff.find(isLead))?.name ??
-        null,
+      supervisor: (staff.find(dedicatedLead) ?? staff.find(isLead))?.name ?? null,
     },
     now: now.toISOString(),
     today: isoDay(today),

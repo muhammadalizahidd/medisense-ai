@@ -301,9 +301,9 @@ describe("update responsibilities", () => {
 
   it("rejects an empty list and unknown responsibilities", async () => {
     expect(() => rolesSchema.parse({ staffRoles: [] })).toThrow();
-    await expect(
-      updateRoles(superAdmin, scheduler._id, { staffRoles: ["Root"] }),
-    ).rejects.toThrow(/Unknown role/);
+    await expect(updateRoles(superAdmin, scheduler._id, { staffRoles: ["Root"] })).rejects.toThrow(
+      /Unknown role/,
+    );
     expect(scheduler.staffRoles).toEqual(["Scheduler"]);
   });
 

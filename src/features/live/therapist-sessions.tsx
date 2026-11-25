@@ -239,7 +239,9 @@ export function TherapistSessions({ t }: { t: TherapistDetailDto }) {
 export function TherapistPatients({ t }: { t: TherapistDetailDto }) {
   const rows = [...t.patients].sort((a, b) => b.sessions - a.sessions);
   if (rows.length === 0) {
-    return <EmptyNote title="No patients yet.">Patients appear once they&apos;re assigned.</EmptyNote>;
+    return (
+      <EmptyNote title="No patients yet.">Patients appear once they&apos;re assigned.</EmptyNote>
+    );
   }
   return (
     <TableFrame>

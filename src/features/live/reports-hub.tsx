@@ -218,7 +218,7 @@ function Hub({
       )}
       {open?.kind === "areaDownload" && area && <AreaDownload c={c} area={area} onClose={close} />}
       {open?.kind === "filters" && (
-        <Dialog title="Filters" size="sm" onRequestClose={close}>
+        <Dialog title="Filters" onRequestClose={close}>
           <FilterBar
             key={JSON.stringify(f)}
             hub={hub}
@@ -286,7 +286,6 @@ function DownloadChooser({
       <Dialog
         title="Download a report"
         description="Choose a report. You pick the format on the next step."
-        size="sm"
         onRequestClose={onClose}
         actions={
           <Button size="sm" onClick={onPast}>

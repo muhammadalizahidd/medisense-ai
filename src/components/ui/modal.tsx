@@ -4,8 +4,8 @@ import { type ReactNode } from "react";
 import { Dialog } from "./dialog";
 
 /**
- * A centred window for seeing a whole list without the page underneath changing shape: the "View
- * all" behind a short list. The body runs edge to edge so list rows keep their own padding.
+ * A "View all" list in the shared popup. Rows run edge to edge on a white card, so they keep
+ * their own padding inside the dialog's body.
  */
 export function Modal({
   title,
@@ -13,7 +13,6 @@ export function Modal({
   onClose,
   children,
   toolbar,
-  size = "md",
 }: {
   title: string;
   description?: ReactNode;
@@ -21,19 +20,14 @@ export function Modal({
   children: ReactNode;
   /** Filters or tabs that stay put while the body scrolls. */
   toolbar?: ReactNode;
+  /** Kept for callers; every popup now shares one size. */
   size?: "md" | "lg";
 }) {
   return (
-    <Dialog
-      title={title}
-      description={description}
-      onRequestClose={onClose}
-      toolbar={toolbar}
-      size={size === "lg" ? "wide" : "md"}
-      plain
-      flush
-    >
-      {children}
+    <Dialog title={title} description={description} onRequestClose={onClose} toolbar={toolbar}>
+      <div className="mx-auto w-full max-w-3xl overflow-hidden rounded-card border border-border bg-surface">
+        {children}
+      </div>
     </Dialog>
   );
 }
