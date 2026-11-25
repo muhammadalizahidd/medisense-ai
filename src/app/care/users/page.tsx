@@ -1,22 +1,25 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { PageContainer, PageLoading } from "@/components/ui/page";
-import { homeFor } from "@/lib/live/routes";
 import { OfflinePage } from "@/features/live/offline-page";
 import { UserControl } from "@/features/live/user-control";
+import { isSuperAdmin } from "@/lib/permissions/can";
 import { requirePageUser } from "@/server/page-auth";
+import { heldPermissions } from "@/server/permissions";
 
 export const metadata: Metadata = { title: "User control · Medisense" };
 
 async function PageContent() {
   const user = await requirePageUser("/care/users", "admin");
   if (!user) return <OfflinePage />;
-  // Only a Super Admin manages accounts; other admins go back to their own home.
-  if (!(user.staffRoles ?? []).includes("Super Admin")) redirect(homeFor(user.role));
+  // The Super Admin and anyone holding "Manage roles" open this page; requirePageUser sends
+  // everyone else to their own home.
   return (
     <PageContainer>
-      <UserControl />
+      <UserControl
+        superAdmin={isSuperAdmin(user.staffRoles)}
+        heldApps={[...heldPermissions(user)].filter((id) => id.startsWith("app."))}
+      />
     </PageContainer>
   );
 }

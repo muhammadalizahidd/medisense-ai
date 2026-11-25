@@ -3,6 +3,8 @@
  * and the screens, so an export always matches what was on screen (AT-29).
  */
 
+import { reportDetailId, reportReadId } from "@/lib/permissions/catalogue";
+
 /* ------------------------------------------------------------------ dates (Brisbane) */
 
 const OFFSET = 10 * 3_600_000;
@@ -478,90 +480,60 @@ export type ReportScope = {
   teams: string[];
 };
 
-/** A person's reporting scope is the union of their admin roles (section 8). */
-export function scopeFor(staffRoles: readonly string[], role: string): ReportScope {
-  // Section 8: a therapist sees their own caseload only (the server filters the records).
+/** The areas a therapist's own reports cover. Patients are theirs only: the server filters them. */
+export const therapistDomains: Domain[] = [
+  "Staff",
+  "Scheduling",
+  "Clinical Operations",
+  "Telehealth",
+  "Participants",
+];
+
+/**
+ * What an admin may see when looking at one therapist's reports: the therapist's areas, cut down
+ * to the areas and detail the admin's own report permissions allow.
+ */
+export function therapistViewScope(viewer: ReportScope): ReportScope {
+  const keep = (list: readonly Domain[]) =>
+    domains.filter((d) => therapistDomains.includes(d) && list.includes(d));
+  return {
+    label: "Therapist report",
+    domains: keep(viewer.domains),
+    detail: keep(viewer.detail),
+    clinicalDetail: viewer.clinicalDetail,
+    share: ["Private"],
+    schedule: false,
+    teams: ["Clinical"],
+  };
+}
+
+/** Therapists and patients keep fixed scopes, whatever roles they carry (section 8). */
+function fixedScope(role: string): ReportScope {
+  // A therapist sees their own caseload only (the server filters the records).
   if (role === "therapist")
     return {
       label: "Therapist (own caseload)",
-      domains: ["Staff", "Scheduling", "Clinical Operations", "Telehealth"],
-      detail: ["Staff", "Scheduling", "Clinical Operations", "Telehealth"],
+      domains: [...therapistDomains],
+      detail: [...therapistDomains],
       clinicalDetail: true,
       share: ["Private"],
       schedule: false,
       teams: ["Clinical"],
     };
-  if (role !== "admin")
-    return {
-      label: "Participant",
-      domains: [],
-      detail: [],
-      clinicalDetail: false,
-      share: [],
-      schedule: false,
-      teams: [],
-    };
-  const d = new Set<Domain>();
-  const det = new Set<Domain>();
-  const share = new Set<ShareScope>(["Private"]);
-  const teams = new Set<string>();
-  const has = (r: string) => staffRoles.includes(r);
-  let clinical = false;
-  let schedule = false;
-  const add = (list: Domain[], detail: Domain[] = list) => {
-    list.forEach((x) => d.add(x));
-    detail.forEach((x) => det.add(x));
+  return {
+    label: "Participant",
+    domains: [],
+    detail: [],
+    clinicalDetail: false,
+    share: [],
+    schedule: false,
+    teams: [],
   };
-  if (has("Super Admin")) {
-    add(
-      [...domains],
-      domains.filter((x) => x !== "Clinical Operations"),
-    );
-    ["Team", "Organisation"].forEach((s) => share.add(s as ShareScope));
-    ["Intake", "Scheduling", "Clinical", "Finance", "Operations"].forEach((t) => teams.add(t));
-    schedule = true;
-  }
-  if (has("Operations Manager")) {
-    add(
-      [
-        "Referrals",
-        "Participants",
-        "Staff",
-        "Scheduling",
-        "Clinical Operations",
-        "Telehealth",
-        "Automation",
-        "Audit",
-      ],
-      ["Referrals", "Participants", "Staff", "Scheduling", "Telehealth", "Automation", "Audit"],
-    );
-    ["Team", "Organisation"].forEach((s) => share.add(s as ShareScope));
-    teams.add("Operations");
-    schedule = true;
-  }
-  if (has("Intake Officer")) {
-    add(["Referrals", "Participants"]);
-    share.add("Team");
-    teams.add("Intake");
-  }
-  if (has("Scheduler")) {
-    add(["Scheduling", "Telehealth"]);
-    share.add("Team");
-    teams.add("Scheduling");
-  }
-  if (has("Clinical Lead")) {
-    add(["Clinical Operations", "Staff", "Scheduling", "Participants", "Telehealth"]);
-    clinical = true;
-    share.add("Team");
-    teams.add("Clinical");
-    schedule = true;
-  }
-  if (has("Finance") || has("Finance Manager")) {
-    add(["Finance"]);
-    share.add("Team");
-    teams.add("Finance");
-    if (has("Finance Manager")) schedule = true;
-  }
+}
+
+/** Names a person's roles for the reports header. It only labels the scope; permissions decide it. */
+function scopeLabel(staffRoles: readonly string[]): string {
+  const has = (r: string) => staffRoles.includes(r);
   const label = has("Super Admin")
     ? has("Clinical Lead")
       ? "Director (clinical scope)"
@@ -579,14 +551,44 @@ export function scopeFor(staffRoles: readonly string[], role: string): ReportSco
             ]
               .filter(Boolean)
               .join(", ") || "Staff";
+  return label;
+}
+
+/**
+ * A person's reporting scope, from the permissions their roles grant (section 8). Therapists and
+ * patients keep their fixed scopes. Row-level detail only counts for a domain the person can read.
+ */
+export function scopeFromPermissions(
+  held: ReadonlySet<string> | readonly string[],
+  role: string,
+  staffRoles: readonly string[],
+): ReportScope {
+  if (role !== "admin") return fixedScope(role);
+  const has = (id: string) =>
+    Array.isArray(held) ? held.includes(id) : (held as ReadonlySet<string>).has(id);
+  const read = domains.filter((d) => has(reportReadId(d)));
+  const detail = read.filter((d) => has(reportDetailId(d)));
+  const teamPermissions: [string, string][] = [
+    ["operations.team.intake", "Intake"],
+    ["operations.team.scheduling", "Scheduling"],
+    ["operations.team.clinical", "Clinical"],
+    ["operations.team.finance", "Finance"],
+    ["operations.team.operations", "Operations"],
+  ];
   return {
-    label,
-    domains: domains.filter((x) => d.has(x)),
-    detail: domains.filter((x) => det.has(x)),
-    clinicalDetail: clinical,
-    share: shareScopes.filter((s) => share.has(s)),
-    schedule,
-    teams: [...teams],
+    // The label only names the person's roles; what they can see comes from the permissions.
+    label: scopeLabel(staffRoles),
+    domains: read,
+    detail,
+    clinicalDetail: has("reports.clinical-detail"),
+    share: shareScopes.filter(
+      (s) =>
+        s === "Private" ||
+        (s === "Team" && has("reports.share.team")) ||
+        (s === "Organisation" && has("reports.share.organisation")),
+    ),
+    schedule: has("reports.schedule"),
+    teams: teamPermissions.filter(([id]) => has(id)).map(([, team]) => team),
   };
 }
 
@@ -602,6 +604,8 @@ export type ReportFilters = {
   mode: AppointmentMode | "";
   region: string;
   therapist: string;
+  /** One patient's id, or empty for everyone. Used on a therapist's own reports. */
+  patient: string;
   management: ManagementMode | "";
   status: string;
   search: string;
@@ -618,6 +622,7 @@ export const blankFilters = (today: string): ReportFilters => ({
   mode: "",
   region: "",
   therapist: "",
+  patient: "",
   management: "",
   status: "",
   search: "",
@@ -625,7 +630,7 @@ export const blankFilters = (today: string): ReportFilters => ({
   grain: "Week",
 });
 
-export function filterSummary(f: ReportFilters) {
+export function filterSummary(f: ReportFilters, patientName?: string) {
   return [
     `${f.preset === "Custom" ? "Custom" : f.preset}: ${f.from} to ${f.to}`,
     f.setting && `Setting: ${f.setting}`,
@@ -634,6 +639,7 @@ export function filterSummary(f: ReportFilters) {
     f.mode && `Mode: ${f.mode}`,
     f.region && `Region: ${f.region}`,
     f.therapist && `Therapist: ${f.therapist}`,
+    f.patient && `Patient: ${patientName ?? "one selected"}`,
     f.management && `Funding: ${f.management}`,
     f.status && `Status: ${f.status}`,
     f.search && `Search: "${f.search}"`,
@@ -653,8 +659,10 @@ export function scoped(
   const set = (s: ServiceSetting[]) => !f.setting || s.includes(f.setting);
   const therapistOk = (id: string | null) =>
     !f.therapist || (f.therapist === "Unassigned" ? !id : names.get(id ?? "") === f.therapist);
+  const patientOk = (id: string) => !f.patient || id === f.patient;
   const services = facts.services.filter(
     (s) =>
+      patientOk(s.participantId) &&
       set(s.settings) &&
       (!f.discipline || s.discipline === f.discipline) &&
       (!f.support || s.support === f.support) &&
@@ -666,6 +674,7 @@ export function scoped(
     ...facts,
     participants: facts.participants.filter(
       (p) =>
+        patientOk(p.id) &&
         set(p.settings) &&
         (!f.region || p.region === f.region) &&
         (!p.restricted || !f.search) &&
@@ -689,6 +698,7 @@ export function scoped(
     ),
     appointments: facts.appointments.filter(
       (a) =>
+        patientOk(a.participantId) &&
         set(a.settings) &&
         (!f.discipline || a.discipline === f.discipline) &&
         (!f.support || a.support === f.support) &&
@@ -699,6 +709,7 @@ export function scoped(
     ),
     assessments: facts.assessments.filter(
       (a) =>
+        patientOk(a.participantId) &&
         (!f.discipline || a.discipline === f.discipline) &&
         (!f.support || a.support === f.support) &&
         therapistOk(a.therapistId) &&
@@ -707,6 +718,7 @@ export function scoped(
     ),
     goalReviews: facts.goalReviews.filter(
       (g) =>
+        patientOk(g.participantId) &&
         (!f.discipline || g.discipline === f.discipline) &&
         (!f.support || g.support === f.support) &&
         (!g.restricted || !f.search) &&
@@ -714,6 +726,10 @@ export function scoped(
     ),
     telehealth: facts.telehealth.filter(
       (t) =>
+        (!f.patient ||
+          facts.appointments.some(
+            (a) => a.id === t.appointmentId && a.participantId === f.patient,
+          )) &&
         (!f.discipline || t.discipline === f.discipline) &&
         (!f.mode || f.mode === "Telehealth") &&
         therapistOk(t.therapistId) &&
@@ -808,6 +824,33 @@ const snapEnd = (to: string, ctx: Ctx) => (to < ctx.today ? to : ctx.today);
 const asOf = (iso: string | null, end: string) => Boolean(iso) && dayKey(iso as string) <= end;
 
 const ACTIVE_NEED = ["assigned", "waiting", "needs-therapist"];
+
+/** A patient is on someone's caseload while a service is assigned to a therapist and not closed. */
+const ON_CASELOAD = ["assigned", "waiting"];
+
+/** The patients on a caseload at a date. One function, so every screen reads the same number. */
+export function caseloadSet(f: ReportFacts, end: string): Set<string> {
+  return new Set(
+    f.services
+      .filter(
+        (s) =>
+          s.therapistId &&
+          ON_CASELOAD.includes(s.status) &&
+          asOf(s.requestedAt, end) &&
+          !(s.closedAt && dayKey(s.closedAt) <= end),
+      )
+      .map((s) => s.participantId),
+  );
+}
+
+/** The patients who had a delivered session in a range, whoever's caseload they are on. */
+export function seenSet(f: ReportFacts, from: string, to: string): Set<string> {
+  return new Set(
+    f.appointments
+      .filter((a) => isDelivered(a) && inRange(a.start, from, to))
+      .map((a) => a.participantId),
+  );
+}
 const OPEN_ASSESSMENT = ["Draft", "In Progress", "Awaiting Review"];
 const ISSUED = ["Issued", "Part-Paid", "Paid", "Disputed", "Credited"];
 
@@ -1382,6 +1425,102 @@ export const metrics: MetricDef[] = [
         f.tasks.filter((t) => !["Completed", "Cancelled"].includes(t.status) && t.dueAt < ctx.now)
           .length,
       ),
+  },
+  {
+    id: "caseload",
+    label: "Patients on caseload",
+    unit: "people",
+    domain: "Participants",
+    basis: "Snapshot at range end",
+    snapshot: true,
+    definition:
+      "Distinct patients with a service assigned to a therapist that is not closed on the snapshot date.",
+    limit:
+      "A patient with two services counts once. Patients still waiting for a therapist are not on a caseload.",
+    drill: { module: "Patients", href: "/care" },
+    compute: (f, _from, to, ctx) => count(caseloadSet(f, snapEnd(to, ctx)).size),
+  },
+  {
+    id: "patients-seen",
+    label: "Patients seen",
+    unit: "people",
+    domain: "Scheduling",
+    basis: "Appointment date",
+    definition: "Distinct patients with at least one delivered session in the period.",
+    limit: "Includes patients seen for a colleague. A cancelled or missed visit is not seen.",
+    drill: { module: "Appointments", href: "/care/schedule" },
+    compute: (f, from, to) => count(seenSet(f, from, to).size),
+  },
+  {
+    id: "caseload-not-seen",
+    label: "On caseload, not seen",
+    unit: "people",
+    domain: "Participants",
+    basis: "Snapshot at range end",
+    snapshot: true,
+    better: "down",
+    definition: "Patients on the caseload with no delivered session in the period.",
+    limit:
+      "A new patient whose first visit is booked later in the period counts here until it happens.",
+    drill: { module: "Patients", href: "/care" },
+    compute: (f, from, to, ctx) => {
+      const seen = seenSet(f, from, to);
+      return count([...caseloadSet(f, snapEnd(to, ctx))].filter((id) => !seen.has(id)).length);
+    },
+  },
+  {
+    id: "seen-off-caseload",
+    label: "Seen, not on caseload",
+    unit: "people",
+    domain: "Participants",
+    basis: "Snapshot at range end",
+    snapshot: true,
+    definition:
+      "Patients with a delivered session in the period who are not on the caseload: cover for a colleague, or a service that has since closed.",
+    limit: "Not a problem by itself; it shows where the caseload and the diary differ.",
+    drill: { module: "Patients", href: "/care" },
+    compute: (f, from, to, ctx) => {
+      const caseload = caseloadSet(f, snapEnd(to, ctx));
+      return count([...seenSet(f, from, to)].filter((id) => !caseload.has(id)).length);
+    },
+  },
+  {
+    id: "quiet-patients",
+    label: "Not seen in 30 days",
+    unit: "people",
+    domain: "Participants",
+    basis: "Snapshot at range end",
+    snapshot: true,
+    better: "down",
+    definition:
+      "Patients on the caseload with no delivered session in the 30 days to the range end.",
+    limit: "Some patients are on a planned break. This is a prompt to check, not a fault.",
+    drill: { module: "Patients", href: "/care" },
+    compute: (f, _from, to, ctx) => {
+      const end = snapEnd(to, ctx);
+      const recent = seenSet(f, shift(end, -29), end);
+      return count([...caseloadSet(f, end)].filter((id) => !recent.has(id)).length);
+    },
+  },
+  {
+    id: "attendance-rate",
+    label: "Attendance rate",
+    unit: "%",
+    domain: "Scheduling",
+    basis: "Appointment date",
+    better: "up",
+    definition:
+      "Delivered sessions divided by delivered sessions, did-not-attend and late cancellations.",
+    limit: "Cancellations with enough notice are not counted against attendance.",
+    drill: { module: "Appointments", href: "/care/schedule" },
+    compute: (f, from, to) => {
+      const inR = f.appointments.filter((a) => inRange(a.start, from, to));
+      const attended = inR.filter(isDelivered).length;
+      const missed = inR.filter(
+        (a) => a.status === "no-show" || a.status === "late-cancelled",
+      ).length;
+      return pct(attended, attended + missed);
+    },
   },
 ];
 

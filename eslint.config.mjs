@@ -19,7 +19,7 @@ const eslintConfig = defineConfig([
     },
   },
   {
-    // Command-line scripts report what they did on the terminal.
+    // Command-line scripts print to the terminal on purpose.
     files: ["scripts/**"],
     rules: { "no-console": "off" },
   },
@@ -28,11 +28,10 @@ const eslintConfig = defineConfig([
     ".next-prod/**",
     ".netlify/**",
     ".vercel/**",
+    ".tmp-check/**",
     "out/**",
     "build/**",
     "next-env.d.ts",
-    // Local scratch scripts, git-ignored.
-    ".tmp-check/**",
   ]),
 ]);
 

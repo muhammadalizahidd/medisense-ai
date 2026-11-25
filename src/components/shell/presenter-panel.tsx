@@ -50,7 +50,7 @@ const lastAiOf = (last: { kind: string; source: string; latencyMs: number | null
  * Presenter controls, kept out of the product. Opens with Ctrl + Shift + . and looks deliberately
  * unlike product UI, so nobody mistakes it for a feature.
  */
-export function PresenterPanel() {
+export function PresenterPanel({ startOpen = false }: { startOpen?: boolean }) {
   const router = useRouter();
   const role = useDemoStore((s) => s.role);
   const setRole = useDemoStore((s) => s.setRole);
@@ -60,7 +60,7 @@ export function PresenterPanel() {
   const advanceDay = useDemoStore((s) => s.advanceDay);
   const advanceToReminder = useDemoStore((s) => s.advanceToReminder);
   const resetDemo = useDemoStore((s) => s.resetDemo);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(startOpen);
   const [confirming, setConfirming] = useState(false);
   const [status, setStatus] = useState<KeyStatus | null>(null);
   const panel = useRef<HTMLElement>(null);

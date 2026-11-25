@@ -9,7 +9,7 @@ export async function GET(request: Request) {
     cached(cacheKey(request), 60_000, async () => {
       const user = await requireUser("admin", "therapist");
       return {
-        user: { ...sessionUser(user), phone: user.phone ?? null },
+        user: { ...(await sessionUser(user)), phone: user.phone ?? null },
         therapist: user.role === "therapist" ? await myTherapistDetail(user) : null,
       };
     }),

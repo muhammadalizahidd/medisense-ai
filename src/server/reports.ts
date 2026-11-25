@@ -4,7 +4,8 @@ import {
   confidentialDisciplines,
   dayKey,
   emptyFacts,
-  scopeFor,
+  scopeFromPermissions,
+  therapistViewScope,
   type AppointmentFact,
   type AppointmentMode,
   type ManagementMode,
@@ -14,16 +15,19 @@ import {
 } from "@/lib/live/reports";
 import { collections } from "./db";
 import { invoiceTotals } from "./finance";
+import type { ObjectId } from "mongodb";
 import type { ClientDoc, UserDoc } from "./models";
 import { reportSettings, type ReportSettings } from "./report-settings";
 import { canSee, opsCan } from "./operations";
+import { heldPermissions } from "./permissions";
 
 /**
  * Module 09: every report reads the same records the owning modules write (section 14). Facts
  * are cut to the viewer's scope here, on the server, so nothing outside it reaches the browser.
  */
 
-export const reportScope = (u: UserDoc): ReportScope => scopeFor(u.staffRoles ?? [], u.role);
+export const reportScope = (u: UserDoc): ReportScope =>
+  scopeFromPermissions(heldPermissions(u), u.role, u.staffRoles ?? []);
 
 const DAY = 86_400_000;
 /** Breaks, training and admin taken out of rostered time before utilisation (AT-21). */
@@ -69,15 +73,17 @@ const managementOf = (
 
 const iso = (d: Date | null | undefined) => (d ? d.toISOString() : null);
 
-export async function loadFacts(user: UserDoc) {
-  const scope = reportScope(user);
+export async function loadFacts(user: UserDoc, opts: { therapistId?: ObjectId } = {}) {
+  // An admin looking at one therapist's reports sees what that therapist's view holds, cut down to
+  // what the admin's own report permissions allow.
+  const scope = opts.therapistId ? therapistViewScope(reportScope(user)) : reportScope(user);
   const db = await collections();
   const has = (...d: string[]) => d.some((x) => (scope.domains as string[]).includes(x));
   const now = new Date();
   const today = dayKey(now);
   const facts: ReportFacts = emptyFacts();
   // Section 8: a therapist's reports cover their own caseload and nothing else.
-  const own = user.role === "therapist" ? user.therapistId : null;
+  const own = opts.therapistId ?? (user.role === "therapist" ? user.therapistId : null);
   if (user.role === "therapist" && !own) return emptyLoad(scope, now, await reportSettings());
   const none = <T>(v: T) => Promise.resolve(v);
   // Every query starts at once: none depends on another, and each round trip costs time.
@@ -209,10 +215,27 @@ export async function loadFacts(user: UserDoc) {
   };
   const [settings, clients, therapists, appointments, billables] = await Promise.all([
     reportSettings(),
-    db.clients
-      .find(
-        {},
-        {
+    // A therapist's patients are the people on their caseload and the people they have a visit
+    // with. The filter is in the query, so no other patient is ever read.
+    (async () => {
+      const filter = own
+        ? {
+            $or: [
+              { "needs.therapistId": own },
+              {
+                _id: {
+                  $in: (
+                    await db.appointments
+                      .find({ therapistId: own }, { projection: { clientId: 1 } })
+                      .toArray()
+                  ).map((a) => a.clientId),
+                },
+              },
+            ],
+          }
+        : {};
+      return db.clients
+        .find(filter, {
           projection: {
             name: 1,
             mrn: 1,
@@ -224,9 +247,9 @@ export async function loadFacts(user: UserDoc) {
             needs: 1,
             fundingDetails: 1,
           },
-        },
-      )
-      .toArray(),
+        })
+        .toArray();
+    })(),
     db.therapists.find(own ? { _id: own } : {}, { projection: { profile: 0 } }).toArray(),
     has("Scheduling", "Staff", "Telehealth", "Clinical Operations", "Participants")
       ? db.appointments
@@ -299,24 +322,27 @@ export async function loadFacts(user: UserDoc) {
       restricted: c.needs.some((n) => confidential(n.discipline)),
     }));
     facts.services = clients.flatMap((c) =>
-      c.needs.map((n) => ({
-        id: n.id,
-        referralId: n.referralId?.toHexString() ?? null,
-        participantId: c._id.toHexString(),
-        label: labelFor(c, n.discipline, "Participants"),
-        support: n.support,
-        discipline: n.discipline,
-        kind: supportInfo(n.support as Support).kind,
-        status: n.status,
-        therapistId: n.therapistId?.toHexString() ?? null,
-        location: n.location ?? "Home",
-        settings: settingsOf(c.funding, c.dateOfBirth, c.createdAt),
-        requestedAt: c.createdAt.toISOString(),
-        startedAt: iso(firstDelivered.get(`${c._id.toHexString()}:${n.id}`)),
-        closedAt:
-          n.status === "completed" ? (iso(c.discharged?.at) ?? null) : iso(c.discharged?.at),
-        restricted: confidential(n.discipline),
-      })),
+      c.needs
+        // A therapist's report holds their own services, not a colleague's on a shared patient.
+        .filter((n) => !own || n.therapistId?.equals(own))
+        .map((n) => ({
+          id: n.id,
+          referralId: n.referralId?.toHexString() ?? null,
+          participantId: c._id.toHexString(),
+          label: labelFor(c, n.discipline, "Participants"),
+          support: n.support,
+          discipline: n.discipline,
+          kind: supportInfo(n.support as Support).kind,
+          status: n.status,
+          therapistId: n.therapistId?.toHexString() ?? null,
+          location: n.location ?? "Home",
+          settings: settingsOf(c.funding, c.dateOfBirth, c.createdAt),
+          requestedAt: c.createdAt.toISOString(),
+          startedAt: iso(firstDelivered.get(`${c._id.toHexString()}:${n.id}`)),
+          closedAt:
+            n.status === "completed" ? (iso(c.discharged?.at) ?? null) : iso(c.discharged?.at),
+          restricted: confidential(n.discipline),
+        })),
     );
   }
 

@@ -20,7 +20,7 @@ export class ApiError extends Error {
 }
 
 /** Fetches JSON from the platform's API and turns error responses into readable messages. */
-export async function api<T>(url: string, init?: { method?: string; body?: unknown }): Promise<T> {
+async function request<T>(url: string, init?: { method?: string; body?: unknown }): Promise<T> {
   let response: Response;
   try {
     response = await fetch(url, {
@@ -38,6 +38,22 @@ export async function api<T>(url: string, init?: { method?: string; body?: unkno
     throw new ApiError(data.error ?? "Something went wrong. Try again.", response.status);
   }
   return data as T;
+}
+
+const inFlight = new Map<string, Promise<unknown>>();
+
+/**
+ * Reads share one request while it is in flight: the sidebar, top bar and account menu all ask
+ * for the signed-in user on every page, and they now cost one round trip instead of three.
+ */
+export function api<T>(url: string, init?: { method?: string; body?: unknown }): Promise<T> {
+  const method = init?.method ?? (init?.body === undefined ? "GET" : "POST");
+  if (method !== "GET") return request<T>(url, init);
+  const pending = inFlight.get(url);
+  if (pending) return pending as Promise<T>;
+  const started = request<T>(url, init).finally(() => inFlight.delete(url));
+  inFlight.set(url, started);
+  return started;
 }
 
 /* ------------------------------------------------------------ live events */
@@ -117,17 +133,17 @@ export function useLiveStatus() {
 /* ------------------------------------------------------------- data hooks */
 
 /** Identical reads already on their way are shared, so several components cost one request. */
-const inFlight = new Map<string, Promise<unknown>>();
+const sharedInFlight = new Map<string, Promise<unknown>>();
 function shared<T>(url: string): Promise<T> {
-  const pending = inFlight.get(url);
+  const pending = sharedInFlight.get(url);
   if (pending) return pending as Promise<T>;
   const p = api<T>(url)
     .then((data) => {
       lastGood.set(url, data);
       return data;
     })
-    .finally(() => inFlight.delete(url));
-  inFlight.set(url, p);
+    .finally(() => sharedInFlight.delete(url));
+  sharedInFlight.set(url, p);
   return p;
 }
 
@@ -145,7 +161,7 @@ const lastGood = new Map<string, unknown>();
  */
 export function preload(urls: string[]) {
   for (const url of urls) {
-    if (!lastGood.has(url) && !inFlight.has(url)) shared(url).catch(() => undefined);
+    if (!lastGood.has(url) && !sharedInFlight.has(url)) shared(url).catch(() => undefined);
   }
 }
 
@@ -266,4 +282,14 @@ export function useNow(): number | null {
 export function useToday(): string | null {
   const now = useNow();
   return now === null ? null : new Date(now + 10 * 3_600_000).toISOString().slice(0, 10);
+}
+
+/** Starts a file download without leaving the page or opening a pop-up. */
+export function downloadFile(url: string) {
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "";
+  document.body.append(link);
+  link.click();
+  link.remove();
 }

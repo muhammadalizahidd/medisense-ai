@@ -1,4 +1,5 @@
 import "server-only";
+import { can } from "./permissions";
 import { createHash, randomBytes } from "node:crypto";
 import { ObjectId } from "mongodb";
 import { z } from "zod";
@@ -688,8 +689,8 @@ export async function patientJoinLink(user: UserDoc, visitId: ObjectId) {
 
 /* ------------------------------------------------------ recording review */
 
-const isLead = (u: UserDoc) =>
-  Boolean(u.staffRoles?.some((r) => r === "Clinical Lead" || r === "Super Admin"));
+/** Sees every recording and manages restricted ones: the recordings.manage permission. */
+const isLead = (u: UserDoc) => can(u, "recordings.manage");
 
 /** Recordings the viewer may see: their own visits' (therapist) or all (Clinical Lead). */
 export async function listRecordings(user: UserDoc) {

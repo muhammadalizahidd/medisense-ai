@@ -1,10 +1,12 @@
 import "server-only";
 import { ObjectId } from "mongodb";
 import { z } from "zod";
-import type { StaffRole } from "@/lib/live/catalogue";
 import type { CredentialAlertKind, CredentialAlertsDto, CredentialRowDto } from "@/lib/live/hr";
 import { AuthError } from "./auth";
 import { collections } from "./db";
+import { can } from "./permissions";
+import { loadRoles } from "./roles";
+import { roleKey, SUPER_ADMIN_ROLE } from "@/lib/permissions/can";
 import { UserFacingError } from "./http";
 import { adminIds, audit, notify, publish } from "./live";
 import type { StaffDoc, TherapistDoc, UserDoc } from "./models";
@@ -17,11 +19,12 @@ import { credentialState, ensureStaff, today } from "./staff";
  * verifies what comes back on the staff record.
  */
 
-export const HR_ROLES: StaffRole[] = ["Super Admin", "Clinical Lead", "Operations Manager"];
+/** The permission that opens People and HR; the Super Admin holds every permission. */
+export const HR_PERMISSION = "hr.manage";
 const DAY_MS = 86_400_000;
 
 export function requireHr(u: UserDoc) {
-  if (u.role !== "admin" || !(u.staffRoles ?? []).some((r) => HR_ROLES.includes(r))) {
+  if (u.role !== "admin" || !can(u, "hr.manage")) {
     throw new AuthError(403);
   }
 }
@@ -191,4 +194,21 @@ export async function requestRenewal(me: UserDoc, input: z.infer<typeof renewalS
   await audit(me, `Requested renewal of ${c.name} from ${t.name}`, null);
   await publish(await adminIds(), "care", {});
   return { name: t.name, credential: c.name };
+}
+
+/** Everyone who works on People and HR today: the Super Admin and any role that grants it. */
+export async function hrUserIds() {
+  const roles = await loadRoles();
+  const keys = [
+    SUPER_ADMIN_ROLE,
+    ...roles.filter((r) => r.permissions.includes(HR_PERMISSION)).map(roleKey),
+  ];
+  const { users } = await collections();
+  const rows = await users
+    .find(
+      { role: "admin", disabled: { $ne: true }, staffRoles: { $in: keys } },
+      { projection: { _id: 1 } },
+    )
+    .toArray();
+  return rows.map((u) => u._id);
 }

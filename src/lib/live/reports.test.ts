@@ -1,3 +1,4 @@
+import { defaultScope } from "@/test/scope";
 import { describe, expect, it } from "vitest";
 import {
   ageBucket,
@@ -17,7 +18,6 @@ import {
   presetRange,
   rangeError,
   runMetric,
-  scopeFor,
   scoped,
   weekOf,
   type AppointmentFact,
@@ -304,17 +304,17 @@ describe("Module 09 KPI definitions", () => {
 
 describe("Module 09 roles, builder and exports", () => {
   it("AT-10 / AT-11: operations is aggregate-only for clinical work; finance can't see telehealth", () => {
-    const ops = scopeFor(["Operations Manager"], "admin");
+    const ops = defaultScope(["Operations Manager"], "admin");
     expect(ops.domains).toContain("Clinical Operations");
     expect(ops.detail).not.toContain("Clinical Operations");
-    const fin = scopeFor(["Finance"], "admin");
+    const fin = defaultScope(["Finance"], "admin");
     expect(fin.domains).toEqual(["Finance"]);
     const r11 = reportById.get("R11");
     if (!r11) throw new Error("R11 missing");
     expect(runReport(r11, emptyFacts(), f, ctx, names, ops).allowed).toBe(false);
   });
   it("AT-33: incompatible measures and groupings block preview", () => {
-    const s = scopeFor(["Super Admin"], "admin");
+    const s = defaultScope(["Super Admin"], "admin");
     const spec = { ...blankSpec("Scheduling"), measures: ["cancel"], dimensions: ["status"] };
     expect(specErrors(spec, s).join(" ")).toMatch(/can't be grouped by status/);
     expect(
@@ -344,7 +344,7 @@ describe("Module 09 roles, builder and exports", () => {
         { category: "Psychological Therapy", count: 2 },
         { category: "Physiotherapy", count: 2 },
       ],
-      scopeFor(["Operations Manager"], "admin"),
+      defaultScope(["Operations Manager"], "admin"),
     );
     expect(rows[0]?.count).toBeNull();
     expect(rows[1]?.count).toBe(2);
@@ -352,6 +352,6 @@ describe("Module 09 roles, builder and exports", () => {
   it("AT-28: exported CSV carries metadata and neutralises formula cells", () => {
     const csv = toCsv([{ key: "a", label: "A" }], [{ a: "=SUM(1)" }], [["Unit", "bookings"]]);
     expect(csv).toContain("# Unit");
-    expect(csv).toContain('"=SUM(1)"');
+    expect(csv).toContain("'=SUM(1)");
   });
 });

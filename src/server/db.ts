@@ -27,6 +27,8 @@ import type {
   PaymentDoc,
   StatementLineDoc,
   AdjustmentDoc,
+  PlatformDoc,
+  RoleDoc,
   TherapistDoc,
   UserDoc,
   OpsApprovalDoc,
@@ -62,6 +64,7 @@ async function prepare(client: MongoClient) {
   const db = client.db(DATABASE);
   await Promise.all([
     db.collection("users").createIndex({ email: 1 }, { unique: true }),
+    db.collection("roles").createIndex({ slug: 1 }, { unique: true }),
     db.collection("sessions").createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
     db.collection("therapists").createIndex({ slug: 1 }, { unique: true }),
     db.collection("therapists").createIndex({ discipline: 1, region: 1 }),
@@ -145,6 +148,8 @@ export async function collections() {
   return {
     db,
     users: db.collection<UserDoc>("users"),
+    roles: db.collection<RoleDoc>("roles"),
+    platform: db.collection<PlatformDoc>("platform"),
     sessions: db.collection<SessionDoc>("sessions"),
     therapists: db.collection<TherapistDoc>("therapists"),
     clients: db.collection<ClientDoc>("clients"),

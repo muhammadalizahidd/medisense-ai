@@ -1,4 +1,5 @@
 import "server-only";
+import { can } from "./permissions";
 import { randomUUID } from "node:crypto";
 import { ObjectId, type Db } from "mongodb";
 import { z } from "zod";
@@ -316,8 +317,8 @@ async function capacityOf(t: TherapistDoc) {
   };
 }
 
-const isClinical = (u: UserDoc) =>
-  Boolean(u.staffRoles?.some((r) => r === "Clinical Lead" || r === "Super Admin"));
+/** Verifies credentials and approves competencies: the staff.verify-credentials permission. */
+const isClinical = (u: UserDoc) => can(u, "staff.verify-credentials");
 
 async function loadStaff(id: ObjectId) {
   const { therapists, db } = await collections();

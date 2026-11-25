@@ -1,4 +1,5 @@
 import "server-only";
+import { can } from "./permissions";
 import { randomUUID } from "node:crypto";
 import { ObjectId } from "mongodb";
 import { generateJson } from "@/lib/ai/engine";
@@ -161,9 +162,8 @@ const legacyGoal = (s: GoalState): PlanDoc["goals"][number]["status"] =>
 
 /* ------------------------------------------------------------------ access */
 
-const has = (u: UserDoc, ...roles: string[]) =>
-  Boolean(u.staffRoles?.some((r) => roles.includes(r)));
-const isLead = (u: UserDoc) => u.role === "admin" && has(u, "Clinical Lead", "Super Admin");
+/** The lead view of treatment plans: the plans.oversight permission. */
+const isLead = (u: UserDoc) => u.role === "admin" && can(u, "plans.oversight");
 
 function viewOf(u: UserDoc, p: PlanDoc, discipline: string) {
   if (u.role === "therapist")

@@ -1,4 +1,5 @@
 import "server-only";
+import { can } from "./permissions";
 import { carryReferralPhoto } from "./photos";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { Binary, ObjectId } from "mongodb";
@@ -477,8 +478,8 @@ export async function listReferrals() {
   return rows.map(summary);
 }
 
-const isClinical = (user: UserDoc) =>
-  Boolean(user.staffRoles?.some((r) => r === "Clinical Lead" || r === "Super Admin"));
+/** Makes the clinical triage decision: the referrals.triage permission. */
+const isClinical = (user: UserDoc) => can(user, "referrals.triage");
 
 async function loadReferral(id: ObjectId) {
   const { referrals } = await collections();

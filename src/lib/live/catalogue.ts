@@ -186,6 +186,14 @@ export const staffRoles = [
 ] as const;
 export type StaffRole = (typeof staffRoles)[number];
 
+/**
+ * The roles User control can give out. Super Admin is not one of them: there is exactly one, held
+ * by the platform owner, and it only moves through a transfer.
+ */
+export const assignableStaffRoles = staffRoles.filter(
+  (r): r is Exclude<StaffRole, "Super Admin"> => r !== "Super Admin",
+);
+
 /** A document's review state (section 11): a replacement supersedes, never deletes. */
 export const documentStatuses = ["Pending review", "Accepted", "Rejected", "Superseded"] as const;
 export type DocumentStatus = (typeof documentStatuses)[number];

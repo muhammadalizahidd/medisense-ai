@@ -26,7 +26,7 @@ import { Sheet } from "@/components/ui/sheet";
 import { TabPanel, Tabs, useTab } from "@/components/ui/tabs";
 import { Tag } from "@/components/ui/tag";
 import { toast } from "@/components/ui/toast";
-import { api, useResource } from "@/lib/live/client";
+import { api, downloadFile, useResource } from "@/lib/live/client";
 import {
   aud,
   communicationNeeds,
@@ -948,17 +948,11 @@ function Loaded({
                 <Button
                   variant="secondary"
                   onClick={async () => {
-                    await act(
-                      a.id,
-                      { type: "download" },
-                      "Download recorded",
-                      "Use the browser's print to save a PDF.",
-                    );
-                    setTab("preview");
-                    setTimeout(() => window.print(), 300);
+                    await act(a.id, { type: "download" }, "Download recorded");
+                    downloadFile(`/api/care/funding/agreements/${a.id}/pdf`);
                   }}
                 >
-                  Download or print
+                  Download PDF
                 </Button>
                 {["Draft", "Internal Review", "Issued", "Viewed"].includes(a.status) &&
                   d.can.edit && (

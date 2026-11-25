@@ -31,10 +31,12 @@ import {
   type TaskInput,
   type Team,
 } from "@/lib/live/operations";
+import { isSuperAdmin } from "@/lib/permissions/can";
 import { collections } from "./db";
 import { nextRef } from "./finance";
 import { UserFacingError } from "./http";
 import { audit, notify, publish } from "./live";
+import { can as hasPermission } from "./permissions";
 import type { OpsApprovalDoc, OpsMessageDoc, OpsRunDoc, OpsTaskDoc, UserDoc } from "./models";
 
 /* ------------------------------------------------------------------ roles (section 2) */
@@ -57,14 +59,30 @@ export function teamsOf(u: Pick<UserDoc, "role" | "staffRoles">): Team[] {
   return [...out];
 }
 
+/**
+ * Which operational teams the signed-in person works in, from their team-queue permissions. This
+ * is the actor's view. Routing to other people still uses teamsOf, which reads their role names.
+ */
+export function teamsFor(u: UserDoc): Team[] {
+  if (u.role === "therapist") return ["Clinical"];
+  if (u.role !== "admin") return [];
+  const out: Team[] = [];
+  if (hasPermission(u, "operations.team.intake")) out.push("Intake");
+  if (hasPermission(u, "operations.team.scheduling")) out.push("Scheduling");
+  if (hasPermission(u, "operations.team.clinical")) out.push("Clinical");
+  if (hasPermission(u, "operations.team.finance")) out.push("Finance");
+  if (hasPermission(u, "operations.team.operations")) out.push("Operations");
+  return out;
+}
+
 export function opsCan(u: UserDoc): OpsCan {
   const admin = u.role === "admin";
   const superAdmin = admin && has(u, "Super Admin");
-  const manager = admin && has(u, "Super Admin", "Operations Manager");
-  const clinical = admin && has(u, "Super Admin", "Clinical Lead");
-  const intake = admin && (superAdmin || has(u, "Intake Officer"));
-  const scheduler = admin && (superAdmin || has(u, "Scheduler"));
-  const finance = admin && (superAdmin || has(u, "Finance", "Finance Manager"));
+  const manager = admin && hasPermission(u, "operations.manage");
+  const clinical = admin && hasPermission(u, "operations.clinical");
+  const intake = admin && hasPermission(u, "operations.team.intake");
+  const scheduler = admin && hasPermission(u, "operations.team.scheduling");
+  const finance = admin && hasPermission(u, "operations.team.finance");
   const roleLabel =
     u.role === "therapist"
       ? "Therapist"
@@ -95,7 +113,7 @@ export function opsCan(u: UserDoc): OpsCan {
     finance,
     recordings: clinical,
     roleLabel,
-    teams: teamsOf(u),
+    teams: teamsFor(u),
   };
 }
 
@@ -1137,22 +1155,25 @@ export async function requestApproval(
   return doc;
 }
 
-function canDecide(u: UserDoc, can: OpsCan, a: OpsApprovalDoc) {
+/** Whether this person may decide the approval: the approvals.decide.* permission for its workflow. */
+export function canDecide(u: UserDoc, a: OpsApprovalDoc) {
+  if (u.role !== "admin") return false;
   if (a.status !== "Pending" && a.status !== "Changes requested") return false;
-  if (a.initiator === u.name && !has(u, "Super Admin")) return false;
+  // Nobody approves their own request; only the Super Admin is exempt.
+  if (a.initiator === u.name && !isSuperAdmin(u.staffRoles)) return false;
   switch (a.workflow) {
     case "Clinical-risk referral":
     case "Therapist assignment exception":
     case "Telehealth recording review":
     case "Sensitive document distribution":
-      return can.clinical;
+      return hasPermission(u, "approvals.decide.clinical");
     case "Funding exception":
-      return can.finance;
+      return hasPermission(u, "approvals.decide.funding");
     case "Billing adjustment":
-      return u.role === "admin" && has(u, "Finance Manager", "Super Admin");
+      return hasPermission(u, "approvals.decide.billing-adjustment");
     case "Unusual travel / booking exception":
     case "Workflow rule activation":
-      return can.manager;
+      return hasPermission(u, "approvals.decide.manager");
   }
 }
 
@@ -1181,7 +1202,7 @@ export function approvalDto(a: OpsApprovalDoc, u: UserDoc, can: OpsCan): Approva
       note: restrictedHidden ? "" : d.note,
       at: d.at.toISOString(),
     })),
-    canDecide: canDecide(u, can, a),
+    canDecide: canDecide(u, a),
     restricted: a.restricted,
     createdAt: a.createdAt.toISOString(),
   };
@@ -1216,7 +1237,7 @@ export async function approvalAction(
     await opsChanged();
     return { ok: true };
   }
-  if (!canDecide(u, can, a)) {
+  if (!canDecide(u, a)) {
     throw new UserFacingError(
       a.initiator === u.name
         ? "You raised this request, so someone else must decide it."

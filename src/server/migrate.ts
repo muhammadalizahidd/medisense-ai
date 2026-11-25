@@ -17,6 +17,8 @@ import type {
   TherapistDoc,
   UserDoc,
 } from "./models";
+import { ensureBuiltInRoles } from "./roles-seed";
+import { ensureSingleSuperAdmin } from "./super-admin-seed";
 import { seedAdmins, staffPasswordHash } from "./seed";
 
 /** The support a discipline-only service request from before referrals most likely was. */
@@ -58,6 +60,7 @@ export function credentialsFor(
  * runs safely on each start.
  */
 export async function migrate(db: Db) {
+  await ensureBuiltInRoles(db);
   const users = db.collection<UserDoc>("users");
   for (const admin of seedAdmins) {
     await users.updateOne(
@@ -91,6 +94,9 @@ export async function migrate(db: Db) {
     });
     serverLog(`Added demo admin ${admin.name}.`);
   }
+
+  // One Super Admin for the whole platform, whatever earlier versions allowed.
+  await ensureSingleSuperAdmin(db);
 
   const clients = db.collection<ClientDoc>("clients");
   let changed = 0;

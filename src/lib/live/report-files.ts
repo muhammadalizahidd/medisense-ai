@@ -1,6 +1,6 @@
 import { toCsv } from "./report-catalogue";
 
-type Snapshot = {
+export type Snapshot = {
   ref: string;
   reportId: string;
   title: string;
@@ -16,7 +16,7 @@ type Snapshot = {
   metrics: { label: string; value: string; unit: string }[];
 };
 
-const brisbane = (d: Date) =>
+export const brisbane = (d: Date) =>
   new Intl.DateTimeFormat("en-AU", {
     timeZone: "Australia/Brisbane",
     dateStyle: "medium",
@@ -76,16 +76,5 @@ export function exportFile(e: Snapshot, format: string, viewer: string) {
     const body = `<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">${sheet("About", meta)}${metricRows.length ? sheet("Summary", [["Measure", "Value", "Unit"], ...metricRows.map((m) => [m.label, m.value, m.unit])]) : ""}${e.columns.length ? sheet("Rows", [e.columns.map((c) => c.label), ...e.rows.map((r) => e.columns.map((c) => r[c.key]))]) : ""}</Workbook>`;
     return { body, type: "application/vnd.ms-excel", name: `${base}.xls`, inline: false };
   }
-  const body = `<!DOCTYPE html><html lang="en-AU"><head><meta charset="utf-8"><title>${esc(e.title)}</title><style>body{font:13px system-ui,sans-serif;margin:32px;}h1{font-size:20px;margin:0 0 4px}table{border-collapse:collapse;width:100%;margin-top:16px}th,td{border-bottom:1px solid;padding:6px 8px;text-align:left}th{font-size:11px;text-transform:uppercase;letter-spacing:.06em}dl{display:grid;grid-template-columns:140px 1fr;gap:4px 12px;margin:12px 0}dt{font-weight:600}@media print{button{display:none}}</style></head><body><button onclick="print()">Save as PDF</button><h1>${esc(e.title)}</h1><p>Medisense · PDF summary</p><dl>${meta.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>${metricRows.length ? `<table><thead><tr><th>Measure</th><th>Value</th><th>Unit</th></tr></thead><tbody>${metricRows.map((m) => `<tr><td>${esc(m.label)}</td><td>${esc(m.value)}</td><td>${esc(m.unit)}</td></tr>`).join("")}</tbody></table>` : ""}${
-    e.columns.length
-      ? `<table><thead><tr>${e.columns.map((c) => `<th>${esc(c.label)}</th>`).join("")}</tr></thead><tbody>${e.rows
-          .slice(0, 500)
-          .map(
-            (r) =>
-              `<tr>${e.columns.map((c) => `<td>${esc(r[c.key] ?? (r._suppressed ? "Suppressed" : ""))}</td>`).join("")}</tr>`,
-          )
-          .join("")}</tbody></table>`
-      : ""
-  }</body></html>`;
-  return { body, type: "text/html; charset=utf-8", name: `${base}.html`, inline: true };
+  throw new Error(`${format} files are made by the PDF renderer, not here.`);
 }

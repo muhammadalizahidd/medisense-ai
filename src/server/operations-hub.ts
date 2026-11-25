@@ -31,6 +31,7 @@ import {
 import { ensureRules, lastScan, replayEvent, scanAll, simulateRule } from "./operations-engine";
 import { makePdf, reviewsFor } from "./operations-review";
 import { ensureVolume } from "./operations-volume";
+import { can as hasPermission, loadPermissions } from "./permissions";
 import { referralAction, submitReferral } from "./referrals";
 import { seedAdmins, staffPasswordHash } from "./seed";
 import { orgSettings } from "./settings";
@@ -337,7 +338,7 @@ async function matchingCases(): Promise<MatchCaseDto[]> {
 }
 
 export async function caseMatches(u: UserDoc, clientId: ObjectId, needId: string) {
-  if (!opsCan(u).scheduler && !opsCan(u).manager)
+  if (!hasPermission(u, "operations.matching"))
     throw new UserFacingError("Matching is for Scheduling.", 409);
   return { matches: await matchesFor(clientId, needId) };
 }
@@ -353,8 +354,7 @@ export const assignSchema = z.object({
 
 /** OP-024 to OP-026: a person approves the suggestion; auto mode runs only when every gate passes. */
 export async function assignFromQueue(u: UserDoc, input: z.infer<typeof assignSchema>) {
-  const can = opsCan(u);
-  if (!can.scheduler && !can.manager)
+  if (!hasPermission(u, "operations.matching"))
     throw new UserFacingError("Only Scheduling assigns therapists.", 409);
   const clientId = new ObjectId(input.clientId);
   const { opsRules } = await collections();
@@ -446,7 +446,7 @@ export async function opsHub(u: UserDoc): Promise<OpsHubDto> {
   ]);
   const [reviews, matching] = await Promise.all([
     u.role === "admin" ? reviewsFor(u) : Promise.resolve([]),
-    can.scheduler || can.manager ? matchingCases() : Promise.resolve([]),
+    hasPermission(u, "operations.matching") ? matchingCases() : Promise.resolve([]),
   ]);
   const visible = tasks.filter((t) => canSee(u, can, t));
   const stats = new Map<
@@ -516,7 +516,7 @@ export async function replay(u: UserDoc, taskId: ObjectId) {
 }
 
 export async function retryRun(u: UserDoc, id: ObjectId, skip: boolean) {
-  if (!opsCan(u).manager && u.role !== "admin")
+  if (u.role !== "admin" || !hasPermission(u, "operations.retry-runs"))
     throw new UserFacingError("Only admin staff handle run errors.", 409);
   const { opsRuns } = await collections();
   const r = await opsRuns.findOne({ _id: id });
@@ -698,6 +698,9 @@ async function seedScenarios() {
   const jo = await users.findOne({ email: "jo.marsh@medisense.test" });
   const neil = await users.findOne({ email: "neil.hensley@medisense.test" });
   if (!jo || !neil) return;
+  // These accounts act through the same checks as anyone, so load what their roles allow.
+  await loadPermissions(jo);
+  await loadPermissions(neil);
   const notes: string[] = [];
   const step = async (label: string, run: () => Promise<unknown>) => {
     try {

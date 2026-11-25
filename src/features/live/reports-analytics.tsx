@@ -45,6 +45,7 @@ import {
   type Ctx,
   type Drill,
 } from "./reports-bits";
+import { Charts, Measures } from "./reports-section";
 
 const compactAud = (v: number) =>
   new Intl.NumberFormat("en-AU", {
@@ -146,7 +147,7 @@ export function ReferralsTab({ c }: { c: Ctx }) {
         />
         <Kpi icon={Users} r={c.run("unassigned")} />
       </KpiGrid>
-      <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">
+      <Charts cols="xl:grid-cols-[2fr_1fr]">
         <Card
           title="Referrals and requested supports"
           sub={`By ${c.f.grain.toLowerCase()} · submitted date · one referral can ask for several supports`}
@@ -183,7 +184,7 @@ export function ReferralsTab({ c }: { c: Ctx }) {
             <NA>No referrals match the filters.</NA>
           )}
         </Card>
-      </div>
+      </Charts>
       <ReportTable c={c} id="R01" />
       <ReportTable c={c} id="R02" />
       <ReportTable
@@ -286,7 +287,7 @@ export function ParticipantsTab({ c }: { c: Ctx }) {
           </p>
         </article>
       </KpiGrid>
-      <div className="grid gap-4 xl:grid-cols-[1fr_2fr]">
+      <Charts cols="xl:grid-cols-[1fr_2fr]">
         <Card
           title="Service setting mix"
           sub="Current participants · settings overlap (a child on NDIS counts in both)"
@@ -321,7 +322,7 @@ export function ParticipantsTab({ c }: { c: Ctx }) {
             labelWidth={200}
           />
         </Card>
-      </div>
+      </Charts>
       <ReportTable c={c} id="R04" />
       <ReportTable c={c} id="R05" />
       {drill && <DrillSheet c={c} d={drill} onClose={() => setDrill(null)} />}
@@ -378,27 +379,29 @@ export function CapacityTab({ c }: { c: Ctx }) {
         <Kpi icon={Activity} r={c.run("utilisation")} />
         <Kpi icon={ClipboardList} r={c.run("overdue-notes")} />
       </KpiGrid>
-      <Card
-        title="Utilisation by clinician"
-        sub="Delivered direct-care hours ÷ eligible rostered hours · leave and 15% non-clinical time excluded · not a performance score"
-        icon={Activity}
-      >
-        {util.length ? (
-          <BarList
-            label="Utilisation"
-            data={util.map((u) => ({
-              id: u.id,
-              label: u.label,
-              value: u.value,
-              colour: u.value > 90 ? colour.over : u.value > 75 ? colour.watch : colour.series1,
-            }))}
-            format={(v) => `${v.toFixed(1)}%`}
-            labelWidth={160}
-          />
-        ) : (
-          <NA>No rostered capacity in the period, so utilisation is N/A.</NA>
-        )}
-      </Card>
+      <Charts cols="xl:grid-cols-1">
+        <Card
+          title="Utilisation by clinician"
+          sub="Delivered direct-care hours ÷ eligible rostered hours · leave and 15% non-clinical time excluded · not a performance score"
+          icon={Activity}
+        >
+          {util.length ? (
+            <BarList
+              label="Utilisation"
+              data={util.map((u) => ({
+                id: u.id,
+                label: u.label,
+                value: u.value,
+                colour: u.value > 90 ? colour.over : u.value > 75 ? colour.watch : colour.series1,
+              }))}
+              format={(v) => `${v.toFixed(1)}%`}
+              labelWidth={160}
+            />
+          ) : (
+            <NA>No rostered capacity in the period, so utilisation is N/A.</NA>
+          )}
+        </Card>
+      </Charts>
       <ReportTable c={c} id="R06" />
       {drill && <DrillSheet c={c} d={drill} onClose={() => setDrill(null)} />}
     </div>
@@ -475,7 +478,7 @@ export function AppointmentsTab({ c }: { c: Ctx }) {
           }
         />
       </KpiGrid>
-      <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">
+      <Charts cols="xl:grid-cols-[2fr_1fr]">
         <Card
           title="Visit outcomes"
           sub={`By ${c.f.grain.toLowerCase()} · scheduled date · moved visits keep their history`}
@@ -511,7 +514,7 @@ export function AppointmentsTab({ c }: { c: Ctx }) {
             <NA>No delivered sessions in the period.</NA>
           )}
         </Card>
-      </div>
+      </Charts>
       <ReportTable
         c={c}
         id="R07"
@@ -542,10 +545,12 @@ export function ClinicalTab({ c }: { c: Ctx }) {
   return (
     <div className="flex flex-col gap-4">
       {aggregateOnly && (
-        <NA>
-          Your role sees anonymised clinical throughput only. Record-level clinical detail is
-          limited to Clinical Leads within their supervisory scope.
-        </NA>
+        <Measures>
+          <NA>
+            Your role sees anonymised clinical throughput only. Record-level clinical detail is
+            limited to Clinical Leads within their supervisory scope.
+          </NA>
+        </Measures>
       )}
       <KpiGrid>
         <Kpi icon={ClipboardList} r={c.run("assessment-backlog")} />
@@ -553,7 +558,7 @@ export function ClinicalTab({ c }: { c: Ctx }) {
         <Kpi icon={FileInput} r={c.run("reports-due")} />
         <Kpi icon={Activity} r={c.run("assessment-turnaround")} />
       </KpiGrid>
-      <div className="grid gap-4 xl:grid-cols-2">
+      <Charts cols="xl:grid-cols-2">
         <Card
           title="Assessment stages"
           sub="All assessments · one assessment over several visits counts once"
@@ -600,7 +605,7 @@ export function ClinicalTab({ c }: { c: Ctx }) {
             </NA>
           )}
         </Card>
-      </div>
+      </Charts>
       <ReportTable c={c} id="R11" />
       <ReportTable c={c} id="R12" />
       <ReportTable c={c} id="R13" />
@@ -665,26 +670,28 @@ export function FinanceTab({ c }: { c: Ctx }) {
         <Kpi icon={ShieldAlert} r={c.run("overdue-receivables")} />
         <Kpi icon={ClipboardList} r={c.run("funding-exceptions")} />
       </KpiGrid>
-      <div className="grid gap-3 rounded-card border border-border bg-surface p-4 text-small sm:grid-cols-4">
-        {[
-          ["Gross invoiced", gross.reduce((s, i) => s + i.gross, 0)],
-          ["Credits", gross.reduce((s, i) => s + i.credits, 0)],
-          ["Net invoiced", gross.reduce((s, i) => s + i.gross - i.credits, 0)],
-          ["Paid on these invoices", gross.reduce((s, i) => s + i.paid, 0)],
-        ].map(([k, v]) => (
-          <div key={k as string}>
-            <p className="label-caps text-ink-500">{k}</p>
-            <p className="mt-1 text-section font-semibold text-ink-900">
-              {formatValue(v as number, "AUD")}
-            </p>
-          </div>
-        ))}
-        <p className="text-caption text-ink-500 sm:col-span-4">
-          Issued in the period, AUD. Issued revenue is accrual; payments received is cash on its
-          receipt date. They are never added together.
-        </p>
-      </div>
-      <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">
+      <Measures>
+        <div className="grid gap-3 rounded-card border border-border bg-surface p-4 text-small sm:grid-cols-4">
+          {[
+            ["Gross invoiced", gross.reduce((s, i) => s + i.gross, 0)],
+            ["Credits", gross.reduce((s, i) => s + i.credits, 0)],
+            ["Net invoiced", gross.reduce((s, i) => s + i.gross - i.credits, 0)],
+            ["Paid on these invoices", gross.reduce((s, i) => s + i.paid, 0)],
+          ].map(([k, v]) => (
+            <div key={k as string}>
+              <p className="label-caps text-ink-500">{k}</p>
+              <p className="mt-1 text-section font-semibold text-ink-900">
+                {formatValue(v as number, "AUD")}
+              </p>
+            </div>
+          ))}
+          <p className="text-caption text-ink-500 sm:col-span-4">
+            Issued in the period, AUD. Issued revenue is accrual; payments received is cash on its
+            receipt date. They are never added together.
+          </p>
+        </div>
+      </Measures>
+      <Charts cols="xl:grid-cols-[2fr_1fr]">
         <Card
           title="Issued revenue (net) and cash received"
           sub="By month · issue date vs receipt date"
@@ -732,24 +739,26 @@ export function FinanceTab({ c }: { c: Ctx }) {
             <NA>No invoices issued in the period.</NA>
           )}
         </Card>
-      </div>
-      <Card
-        title="Receivables ageing"
-        sub={`Open balances at ${end} · counted from the due date`}
-        icon={Clock}
-      >
-        <BarList
-          label="Ageing"
-          data={buckets.map((x, i) => ({
-            id: x.b,
-            label: x.b,
-            value: Math.round(x.v),
-            colour: i === 0 ? colour.series1 : i < 3 ? colour.watch : colour.over,
-          }))}
-          format={(v) => formatValue(v, "AUD")}
-          labelWidth={120}
-        />
-      </Card>
+      </Charts>
+      <Measures>
+        <Card
+          title="Receivables ageing"
+          sub={`Open balances at ${end} · counted from the due date`}
+          icon={Clock}
+        >
+          <BarList
+            label="Ageing"
+            data={buckets.map((x, i) => ({
+              id: x.b,
+              label: x.b,
+              value: Math.round(x.v),
+              colour: i === 0 ? colour.series1 : i < 3 ? colour.watch : colour.over,
+            }))}
+            format={(v) => formatValue(v, "AUD")}
+            labelWidth={120}
+          />
+        </Card>
+      </Measures>
       <ReportTable c={c} id="R14" />
       <ReportTable c={c} id="R15" />
       <ReportTable c={c} id="R16" />
@@ -771,11 +780,13 @@ export function TelehealthTab({ c }: { c: Ctx }) {
   const access = inR.reduce((s, t) => s + t.restrictedAccessEvents, 0);
   return (
     <div className="flex flex-col gap-4">
-      <NA>
-        Telehealth reports read session metadata only: attempts, connection events and consent
-        status. Recordings can&apos;t be played from Reports; playback needs separate clinical
-        authority.
-      </NA>
+      <Measures>
+        <NA>
+          Telehealth reports read session metadata only: attempts, connection events and consent
+          status. Recordings can&apos;t be played from Reports; playback needs separate clinical
+          authority.
+        </NA>
+      </Measures>
       <KpiGrid>
         <Kpi icon={Video} r={c.run("telehealth-adoption")} />
         <Kpi icon={ShieldAlert} r={c.run("tech-failure")} />
@@ -794,7 +805,7 @@ export function TelehealthTab({ c }: { c: Ctx }) {
           </p>
         </article>
       </KpiGrid>
-      <div className="grid gap-4 xl:grid-cols-2">
+      <Charts cols="xl:grid-cols-2">
         <Card title="Attempt outcomes" sub="Telehealth appointments in the period" icon={Video}>
           {attempts.length ? (
             <BarList
@@ -837,7 +848,7 @@ export function TelehealthTab({ c }: { c: Ctx }) {
             <NA>No joined sessions in the period.</NA>
           )}
         </Card>
-      </div>
+      </Charts>
       <ReportTable c={c} id="R10" />
     </div>
   );

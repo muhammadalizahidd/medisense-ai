@@ -38,6 +38,13 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   devIndicators: false,
   partialPrefetching: true,
+  // The PDF library renders on the server only, and the document font files are read from disk,
+  // so they must travel with the routes that make PDFs.
+  serverExternalPackages: ["@react-pdf/renderer"],
+  outputFileTracingIncludes: {
+    "/api/care/reports/exports/**": ["./src/assets/fonts/**"],
+    "/api/care/**": ["./src/assets/fonts/**"],
+  },
   experimental: {
     // The persistent dev cache went stale twice and put the browser in a reload loop
     // (every HMR connection reported the client entry as changed). Dev builds start clean.

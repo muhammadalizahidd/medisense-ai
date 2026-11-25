@@ -10,7 +10,7 @@ import { Select } from "@/components/ui/select";
 import { Sheet } from "@/components/ui/sheet";
 import { Tag } from "@/components/ui/tag";
 import { engagementStatuses } from "@/lib/live/staff";
-import { api, useResource } from "@/lib/live/client";
+import { api, useResource, useSession } from "@/lib/live/client";
 import { disciplines } from "@/lib/live/catalogue";
 import { shortDate } from "@/lib/live/time";
 import type { TherapistCardDto, TherapistDetailDto } from "@/lib/live/types";
@@ -313,6 +313,7 @@ export function TherapistProfilePage({ id }: { id: string }) {
     (e) => e.type === "care",
   );
   const staff = useStaff(id, reload);
+  const { user } = useSession();
   const s = staff.data?.staff;
   const tabs = [
     { id: "overview", label: "Overview" },
@@ -351,6 +352,11 @@ export function TherapistProfilePage({ id }: { id: string }) {
         actions={
           <div className="flex items-center gap-3">
             <LiveBadge />
+            {user?.permissions.includes("reports.therapist") && (
+              <ButtonLink href={`/care/reports/therapists/${t.id}`} variant="secondary" size="sm">
+                Reports
+              </ButtonLink>
+            )}
             <ResetPassword therapistId={t.id} name={t.name} />
           </div>
         }

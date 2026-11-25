@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ArrowRightLeft,
   ArrowUpRight,
   Briefcase,
   Check,
@@ -8,6 +9,7 @@ import {
   Copy,
   KeyRound,
   type LucideIcon,
+  Plus,
   Search,
   ShieldCheck,
   Stethoscope,
@@ -17,7 +19,7 @@ import {
   UserX,
 } from "lucide-react";
 import Link from "next/link";
-import { useState, type ReactNode } from "react";
+import { createContext, useContext, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { MetricBand } from "@/components/ui/metric-band";
 import { PageHeader } from "@/components/ui/page";
@@ -29,24 +31,20 @@ import { TabPanel, Tabs, useTab } from "@/components/ui/tabs";
 import { Tag, type TagTone } from "@/components/ui/tag";
 import { toast } from "@/components/ui/toast";
 import { cn } from "@/lib/cn";
-import { staffRoles, type StaffRole } from "@/lib/live/catalogue";
 import { api, useNow, useResource } from "@/lib/live/client";
+import { enforcedPermissions, permissionGroups, permissions } from "@/lib/permissions/catalogue";
+import type { RoleDto, RolesDto } from "@/lib/permissions/types";
+import { pageAccessFor } from "@/lib/permissions/pages";
 import { relativeTime, shortDate } from "@/lib/live/time";
 import type { UserAccountDto, UserControlDto, UserKind, UserStatus } from "@/lib/live/types";
 import { navigationFor } from "@/lib/navigation";
 import { AddTherapist } from "./add-therapist";
+import { RolesPermissions } from "./roles-permissions";
 import { EmptyNote, ErrorNote, LiveBadge, Skeleton } from "./bits";
 
-/** What each responsibility is for, in the words an office manager would use. */
-const ROLE_HELP: Record<StaffRole, string> = {
-  "Super Admin": "Everything, including User control and approvals.",
-  "Intake Officer": "Referrals, intake and getting new patients started.",
-  Scheduler: "The team calendar, bookings and patient change requests.",
-  Finance: "Funding, billing, claims and payments.",
-  "Finance Manager": "Finance approvals: credits, write-offs and refunds.",
-  "Operations Manager": "The operations hub, automation, coordination and reports.",
-  "Clinical Lead": "Clinical triage, oversight and co-signing.",
-};
+/** The roles an account can hold, for chips, pickers and the effective-permissions list. */
+const RolesContext = createContext<RoleDto[]>([]);
+const useRoles = () => useContext(RolesContext);
 
 const STATUS_TONE: Record<UserStatus, TagTone> = {
   Active: "healthy",
@@ -55,19 +53,64 @@ const STATUS_TONE: Record<UserStatus, TagTone> = {
   Deactivated: "over",
 };
 
-type TabId = "all" | "staff" | "therapists";
+type TabId = "all" | "staff" | "therapists" | "roles";
 const IN_TAB: Record<TabId, (k: UserKind) => boolean> = {
   all: () => true,
   staff: (k) => k === "Office staff",
   therapists: (k) => k === "Therapist",
+  roles: () => false,
 };
 
+/**
+ * User control. The Super Admin sees every account and every role. Someone with "Manage roles"
+ * sees the roles only, and switches only the apps they hold themselves.
+ */
+export function UserControl({
+  superAdmin = true,
+  heldApps = [],
+}: {
+  superAdmin?: boolean;
+  heldApps?: readonly string[];
+}) {
+  return superAdmin ? <AccountControl /> : <RoleManager heldApps={heldApps} />;
+}
+
+function RoleManager({ heldApps }: { heldApps: readonly string[] }) {
+  const rolesResource = useResource<RolesDto>("/api/care/roles", (e) => e.type === "care");
+  const roleList = rolesResource.data?.roles ?? [];
+  return (
+    <RolesContext.Provider value={roleList}>
+      <PageHeader
+        eyebrow="Administration"
+        title="Roles and apps"
+        description="Switch the apps you hold on or off for a role. Everything else about a role stays with the Super Admin."
+        actions={<LiveBadge />}
+      />
+      {rolesResource.error && !rolesResource.data ? (
+        <ErrorNote message={rolesResource.error} onRetry={rolesResource.reload} />
+      ) : (
+        <RolesPermissions
+          roles={roleList}
+          loading={rolesResource.loading && !rolesResource.data}
+          onChanged={rolesResource.reload}
+          creating={false}
+          onCreatingChange={() => undefined}
+          superAdmin={false}
+          heldApps={heldApps}
+        />
+      )}
+    </RolesContext.Provider>
+  );
+}
+
 /** Super Admin: every account in Medisense, who can get in, and what each person may do. */
-export function UserControl() {
+function AccountControl() {
   const { data, error, loading, reload } = useResource<UserControlDto>(
     "/api/care/users",
     (e) => e.type === "care",
   );
+  const rolesResource = useResource<RolesDto>("/api/care/roles", (e) => e.type === "care");
+  const roleList = rolesResource.data?.roles ?? [];
   const users = data?.users ?? [];
   const count = (f: (u: UserAccountDto) => boolean) => users.filter(f).length;
   const tabs = [
@@ -78,13 +121,16 @@ export function UserControl() {
       label: "Therapists",
       count: count((u) => IN_TAB.therapists(u.kind)),
     },
+    { id: "roles" as const, label: "Roles & permissions", count: roleList.length || undefined },
   ];
   const [tab, setTab] = useTab(tabs, "staff");
   const [creating, setCreating] = useState(false);
+  const [creatingRole, setCreatingRole] = useState(false);
+  const [transferring, setTransferring] = useState(false);
   const waiting = count((u) => u.status === "Must set password" || u.status === "Never signed in");
 
   return (
-    <>
+    <RolesContext.Provider value={roleList}>
       <PageHeader
         eyebrow="Administration"
         title="User control"
@@ -93,7 +139,21 @@ export function UserControl() {
           <div className="flex items-center gap-3">
             <LiveBadge />
             <AddTherapist secondary onAdded={reload} />
-            <Button variant="primary" onClick={() => setCreating(true)}>
+            <Button onClick={() => setTransferring(true)}>
+              <ArrowRightLeft className="size-4" aria-hidden="true" />
+              Transfer Super Admin
+            </Button>
+            {/* One primary action per area: on the roles tab that is the new role. */}
+            {tab === "roles" && (
+              <Button variant="primary" onClick={() => setCreatingRole(true)}>
+                <Plus className="size-4" aria-hidden="true" />
+                New role
+              </Button>
+            )}
+            <Button
+              variant={tab === "roles" ? undefined : "primary"}
+              onClick={() => setCreating(true)}
+            >
               <UserPlus className="size-4" aria-hidden="true" />
               Create user
             </Button>
@@ -125,9 +185,9 @@ export function UserControl() {
                 flagged: waiting > 0,
               },
               {
-                label: "Super Admins",
+                label: "Super Admin",
                 value: data?.superAdmins ?? 0,
-                caption: "At least one is always kept",
+                caption: "One for the whole platform",
               },
             ]}
           />
@@ -135,18 +195,36 @@ export function UserControl() {
             <Tabs label="Accounts" tabs={tabs} value={tab} onChange={setTab} />
             {tabs.map((t) => (
               <TabPanel key={t.id} id={t.id} value={tab}>
-                <AccountTable
-                  rows={users.filter((u) => IN_TAB[t.id](u.kind))}
-                  onChanged={reload}
-                  onCreate={() => setCreating(true)}
-                />
+                {t.id === "roles" ? (
+                  rolesResource.error && !rolesResource.data ? (
+                    <ErrorNote message={rolesResource.error} onRetry={rolesResource.reload} />
+                  ) : (
+                    <RolesPermissions
+                      roles={roleList}
+                      loading={rolesResource.loading && !rolesResource.data}
+                      creating={creatingRole}
+                      onCreatingChange={setCreatingRole}
+                      onChanged={() => {
+                        rolesResource.reload();
+                        reload();
+                      }}
+                    />
+                  )
+                ) : (
+                  <AccountTable
+                    rows={users.filter((u) => IN_TAB[t.id](u.kind))}
+                    onChanged={reload}
+                    onCreate={() => setCreating(true)}
+                  />
+                )}
               </TabPanel>
             ))}
           </div>
         </div>
       )}
       {creating && <CreateUserSheet onClose={() => setCreating(false)} onCreated={reload} />}
-    </>
+      {transferring && <TransferSheet users={users} onClose={() => setTransferring(false)} />}
+    </RolesContext.Provider>
   );
 }
 
@@ -161,7 +239,7 @@ const KIND_STYLE: Record<UserKind, { icon: LucideIcon; chip: string }> = {
   Therapist: { icon: Stethoscope, chip: "bg-series-3/10 text-series-3" },
 };
 
-const ROLE_CHIP: Record<StaffRole, string> = {
+const ROLE_CHIP: Record<string, string> = {
   "Super Admin": "bg-accent-fill text-on-accent",
   "Intake Officer": "bg-series-1/10 text-series-1",
   Scheduler: "bg-series-4/10 text-series-4",
@@ -188,16 +266,17 @@ function KindChip({ kind }: { kind: UserKind }) {
   );
 }
 
-function RoleChip({ role }: { role: StaffRole }) {
+function RoleChip({ role }: { role: string }) {
+  const name = useRoles().find((r) => r.key === role)?.name ?? role;
   return (
     <span
       className={cn(
         "inline-flex h-6 items-center gap-1 rounded-full px-2.5 text-caption font-semibold whitespace-nowrap",
-        ROLE_CHIP[role],
+        ROLE_CHIP[role] ?? "bg-sunken text-ink-700",
       )}
     >
       {role === "Super Admin" && <ShieldCheck className="size-3.5" aria-hidden="true" />}
-      {role}
+      {name}
     </span>
   );
 }
@@ -504,13 +583,13 @@ function UserSheet({
             <p className="label-caps text-ink-500">Responsibilities</p>
             <Responsibilities user={u} />
             <MenuPreview roles={u.staffRoles} title="What they can open" />
+            <EffectivePermissions user={u} />
           </section>
         )}
 
         {u.isSelf && (
           <p className="rounded-control bg-accent-tint px-3 py-2 text-small text-ink-700">
-            This is your own account. Change your password in My profile; another Super Admin can
-            reset it or change your access.
+            This is your own account. Change your password in My profile.
           </p>
         )}
 
@@ -576,8 +655,16 @@ function UserSheet({
 }
 
 /** The menu a set of responsibilities opens, worked out exactly as the real sidebar does. */
-function MenuPreview({ roles, title }: { roles: StaffRole[]; title: string }) {
-  const menu = roles.length ? navigationFor("Admin", roles, { liveOnly: true }) : [];
+function MenuPreview({ roles, title }: { roles: string[]; title: string }) {
+  const known = useRoles();
+  // The menu follows the permissions the chosen roles grant, as the real sidebar does.
+  const permissions = [
+    ...new Set(known.filter((r) => roles.includes(r.key)).flatMap((r) => r.permissions)),
+  ];
+  const staffRoles = roles.includes("Super Admin") ? ["Super Admin"] : [];
+  const menu = roles.length
+    ? navigationFor("Admin", pageAccessFor({ permissions, staffRoles }), { liveOnly: true })
+    : [];
   return (
     <section aria-label={title} className="rounded-card border border-border bg-sunken p-4">
       <p className="label-caps text-ink-500">{title}</p>
@@ -607,24 +694,20 @@ function MenuPreview({ roles, title }: { roles: StaffRole[]; title: string }) {
 }
 
 /** Tick cards for responsibilities, beside a live preview of the menu they open. */
-function RolePicker({
-  value,
-  onChange,
-}: {
-  value: StaffRole[];
-  onChange: (v: StaffRole[]) => void;
-}) {
-  const toggle = (r: StaffRole) =>
+function RolePicker({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) {
+  const roles = useRoles();
+  const toggle = (r: string) =>
     onChange(value.includes(r) ? value.filter((x) => x !== r) : [...value, r]);
   return (
     <div className="flex flex-col gap-4">
       <fieldset className="flex flex-col gap-2">
         <legend className="mb-2 text-caption font-semibold text-ink-700">Responsibilities</legend>
-        {staffRoles.map((r) => {
+        {roles.map((role) => {
+          const r = role.key;
           const on = value.includes(r);
           return (
             <label
-              key={r}
+              key={role.slug}
               className={cn(
                 "flex cursor-pointer items-start gap-3 rounded-control border px-3 py-2.5 transition-colors duration-140",
                 on ? "border-accent bg-accent-tint" : "border-border hover:border-border-strong",
@@ -637,8 +720,8 @@ function RolePicker({
                 className="mt-0.5 size-4 flex-none accent-accent-fill"
               />
               <span className="min-w-0">
-                <span className="block text-small font-semibold text-ink-900">{r}</span>
-                <span className="block text-caption text-ink-500">{ROLE_HELP[r]}</span>
+                <span className="block text-small font-semibold text-ink-900">{role.name}</span>
+                <span className="block text-caption text-ink-500">{role.description}</span>
               </span>
             </label>
           );
@@ -701,7 +784,7 @@ function CreateUserSheet({ onClose, onCreated }: { onClose: () => void; onCreate
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [roles, setRoles] = useState<StaffRole[]>([]);
+  const [roles, setRoles] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<{ email: string; temporaryPassword: string } | null>(null);
@@ -818,7 +901,8 @@ function AccessSheet({
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const [roles, setRoles] = useState<StaffRole[]>(user.staffRoles);
+  const [roles, setRoles] = useState<string[]>(user.staffRoles.filter((r) => r !== "Super Admin"));
+  const isOwner = user.staffRoles.includes("Super Admin");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -841,11 +925,19 @@ function AccessSheet({
   return (
     <Sheet
       title={`${user.name}'s responsibilities`}
-      description="These decide which menus and pages they get."
+      description={
+        isOwner
+          ? "Super Admin is always kept. These are their other responsibilities."
+          : "These decide which menus and pages they get."
+      }
       onClose={onClose}
       footer={
         <>
-          <Button variant="primary" disabled={busy || roles.length === 0} onClick={save}>
+          <Button
+            variant="primary"
+            disabled={busy || (!isOwner && roles.length === 0)}
+            onClick={save}
+          >
             {busy ? "Saving…" : "Save"}
           </Button>
           <Button onClick={onClose}>Cancel</Button>
@@ -1014,5 +1106,182 @@ function ActiveSheet({
         </p>
       )}
     </Sheet>
+  );
+}
+
+/** Hands the single Super Admin role to another active office-staff account. */
+function TransferSheet({ users, onClose }: { users: UserAccountDto[]; onClose: () => void }) {
+  const eligible = users.filter(
+    (u) => u.kind === "Office staff" && u.status === "Active" && !u.isSelf,
+  );
+  const me = users.find((u) => u.isSelf);
+  const keeps = (me?.staffRoles ?? []).filter((r) => r !== "Super Admin");
+  const [targetId, setTargetId] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmName, setConfirmName] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const target = eligible.find((u) => u.id === targetId);
+
+  async function submit() {
+    setError(null);
+    if (!target) return setError("Choose who becomes the Super Admin.");
+    if (!password) return setError("Enter your password.");
+    if (confirmName.trim().toLowerCase() !== target.name.toLowerCase()) {
+      return setError(`Type ${target.name} to confirm.`);
+    }
+    setBusy(true);
+    try {
+      await api("/api/care/super-admin/transfer", {
+        method: "POST",
+        body: { targetId, password, confirmName },
+      });
+      toast(`${target.name} is now the Super Admin`, {
+        detail: "Your own access now follows your other responsibilities.",
+      });
+      // Your access just changed. Reloading refreshes the menu and sends you to your own home.
+      window.location.reload();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Couldn't transfer.");
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Sheet
+      title="Transfer Super Admin"
+      description="There is one Super Admin for the whole platform. This hands it to someone else."
+      onClose={onClose}
+      footer={
+        <>
+          <Button variant="primary" disabled={busy || !target} onClick={submit}>
+            {busy ? "Transferring…" : "Transfer Super Admin"}
+          </Button>
+          <Button onClick={onClose}>Cancel</Button>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-4">
+        <p className="rounded-control border border-border bg-sunken p-3 text-small text-ink-700">
+          You lose Super Admin straight away.{" "}
+          {keeps.length
+            ? `You keep: ${keeps.join(", ")}.`
+            : "You keep no other responsibilities, so you will have no permissions until the new Super Admin gives you some."}
+        </p>
+        <fieldset className="flex flex-col gap-2">
+          <legend className="mb-2 text-caption font-semibold text-ink-700">New Super Admin</legend>
+          {eligible.length === 0 ? (
+            <p className="text-small text-ink-500">
+              No one can take it yet. They must be an active office-staff account that has signed in
+              and set their own password.
+            </p>
+          ) : (
+            <div role="radiogroup" className="flex max-h-64 flex-col gap-2 overflow-y-auto">
+              {eligible.map((u) => (
+                <label
+                  key={u.id}
+                  className={cn(
+                    "flex cursor-pointer items-start gap-3 rounded-control border px-3 py-2.5 transition-colors duration-140",
+                    targetId === u.id
+                      ? "border-accent bg-accent-tint"
+                      : "border-border hover:border-border-strong",
+                  )}
+                >
+                  <input
+                    type="radio"
+                    name="new-super-admin"
+                    checked={targetId === u.id}
+                    onChange={() => setTargetId(u.id)}
+                    className="mt-0.5 size-4 flex-none accent-accent-fill"
+                  />
+                  <span className="min-w-0">
+                    <span className="block text-small font-semibold text-ink-900">{u.name}</span>
+                    <span className="block text-caption text-ink-500">
+                      {u.staffRoles.length ? u.staffRoles.join(", ") : "No responsibilities yet"}
+                    </span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          )}
+        </fieldset>
+        <Field label="Your password" hint="To confirm it is you.">
+          <input
+            className={inputClass}
+            type="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </Field>
+        <Field
+          label={target ? `Type "${target.name}" to confirm` : "Type the new Super Admin's name"}
+        >
+          <input
+            className={inputClass}
+            value={confirmName}
+            onChange={(e) => setConfirmName(e.target.value)}
+            autoComplete="off"
+          />
+        </Field>
+        {error && (
+          <p role="alert" className="text-small font-medium text-over">
+            {error}
+          </p>
+        )}
+      </div>
+    </Sheet>
+  );
+}
+
+/** Every permission a person holds and which role grants it, so access is never a guess. */
+function EffectivePermissions({ user: u }: { user: UserAccountDto }) {
+  const roles = useRoles();
+  const owner = u.staffRoles.includes("Super Admin");
+  const held = roles.filter((r) => u.staffRoles.includes(r.key) || u.staffRoles.includes(r.slug));
+  const grantedBy = (id: string) =>
+    held.filter((r) => r.permissions.includes(id)).map((r) => r.name);
+  const total = owner
+    ? permissions.length
+    : permissions.filter((p) => grantedBy(p.id).length).length;
+  return (
+    <details className="rounded-card border border-border bg-surface">
+      <summary className="cursor-pointer px-4 py-3 text-small font-semibold text-ink-900">
+        What they can do ({total} of {permissions.length})
+      </summary>
+      <div className="flex flex-col gap-4 px-4 pb-4">
+        <p className="text-caption text-ink-500">
+          {owner
+            ? "The Super Admin holds every permission."
+            : "The union of everything their roles allow. A change to a role applies on their next request."}
+        </p>
+        {permissionGroups.map((group) => {
+          const rows = permissions.filter(
+            (p) => p.group === group && (owner || grantedBy(p.id).length),
+          );
+          if (rows.length === 0) return null;
+          return (
+            <section key={group}>
+              <p className="label-caps text-ink-500">{group}</p>
+              <ul className="mt-1 flex flex-col gap-1">
+                {rows.map((p) => (
+                  <li key={p.id} className="flex items-baseline justify-between gap-3 text-caption">
+                    <span className="text-ink-900">
+                      {p.label}
+                      {!enforcedPermissions.includes(p.id) && (
+                        <span className="ml-1.5 text-ink-500">· not enforced yet</span>
+                      )}
+                    </span>
+                    <span className="flex-none text-ink-500">
+                      {owner ? "Super Admin" : grantedBy(p.id).join(", ")}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          );
+        })}
+      </div>
+    </details>
   );
 }

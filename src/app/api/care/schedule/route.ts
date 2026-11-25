@@ -1,4 +1,5 @@
 import { requireUser } from "@/server/auth";
+import { mustCan } from "@/server/permissions";
 import { cached, cacheKey } from "@/server/cache";
 import { handle, readJson } from "@/server/http";
 import { forViewer, modeSchema, scheduleBoard, setAssignmentMode } from "@/server/scheduling";
@@ -25,6 +26,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   return handle(async () => {
     const admin = await requireUser("admin");
+    mustCan(admin, "schedule.manage");
     const { mode } = await readJson(request, modeSchema);
     await setAssignmentMode(admin, mode);
     return { mode };

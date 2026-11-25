@@ -3,6 +3,7 @@
 import { X } from "lucide-react";
 import { useEffect, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { useOverlayStack } from "./overlay";
 
 const FOCUSABLE = "button, input, select, textarea, a[href]";
 
@@ -16,15 +17,19 @@ export function Sheet({
   onClose,
   children,
   footer,
+  above = false,
 }: {
   title: string;
   description?: ReactNode;
   onClose: () => void;
   children: ReactNode;
   footer?: ReactNode;
+  /** Opens above a dialog or another sheet. */
+  above?: boolean;
 }) {
   const panel = useRef<HTMLDivElement>(null);
   const close = useRef(onClose);
+  const isTop = useOverlayStack();
 
   useEffect(() => {
     close.current = onClose;
@@ -37,6 +42,7 @@ export function Sheet({
     (items().find((el) => el.matches("input, select, textarea")) ?? items()[0])?.focus();
 
     const onKey = (event: KeyboardEvent) => {
+      if (!isTop()) return;
       if (event.key === "Escape") close.current();
       if (event.key !== "Tab") return;
       const list = items();
@@ -55,10 +61,13 @@ export function Sheet({
       window.removeEventListener("keydown", onKey);
       if (opener instanceof HTMLElement) opener.focus();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- set up once; isTop reads a stable stack
   }, []);
 
   return createPortal(
-    <div className="fixed inset-0 z-40 flex items-end justify-end sm:items-stretch">
+    <div
+      className={`fixed inset-0 flex items-end justify-end sm:items-stretch ${above ? "z-60" : "z-40"}`}
+    >
       <button
         type="button"
         aria-label="Close"

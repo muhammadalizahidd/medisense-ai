@@ -1,4 +1,5 @@
 import "server-only";
+import { can } from "./permissions";
 import { randomUUID } from "node:crypto";
 import { ObjectId } from "mongodb";
 import { generateJson } from "@/lib/ai/engine";
@@ -151,13 +152,16 @@ async function loadRecord(clientId: ObjectId) {
 
 /* ------------------------------------------------------------------ access (section 2, section 12) */
 
-const has = (u: UserDoc, ...roles: string[]) =>
-  Boolean(u.staffRoles?.some((r) => roles.includes(r)));
-export const isLead = (u: UserDoc) => u.role === "admin" && has(u, "Clinical Lead", "Super Admin");
+/** Opens the full clinical record (after recording a purpose): the records.view.clinical permission. */
+export const isLead = (u: UserDoc) => u.role === "admin" && can(u, "records.view.clinical");
+/** Grants record access and records an access purpose: the records.grant-access permission. */
+const canGrantAccess = (u: UserDoc) => u.role === "admin" && can(u, "records.grant-access");
+/** Reviews risks reported on a record: the records.review-risks permission. */
+const canReviewRisks = (u: UserDoc) => u.role === "admin" && can(u, "records.review-risks");
 
 type Access = { level: AccessLevel; note: string; disciplines: string[]; needsPurpose: boolean };
 
-async function accessFor(
+export async function accessFor(
   u: UserDoc,
   client: ClientDoc,
   rec: ClinicalRecordDoc | null,
@@ -202,16 +206,18 @@ async function accessFor(
       needsPurpose: !purpose,
     };
   }
-  if (has(u, "Intake Officer", "Operations Manager"))
+  // A person holding several views gets the widest. The views are nested (intake shows everything
+  // scheduling shows, which shows everything finance shows), so that is the union of them.
+  if (u.role === "admin" && can(u, "records.view.intake"))
     return { level: "intake", note: accessLabel.intake, disciplines: [], needsPurpose: false };
-  if (has(u, "Scheduler"))
+  if (u.role === "admin" && can(u, "records.view.scheduling"))
     return {
       level: "scheduler",
       note: accessLabel.scheduler,
       disciplines: [],
       needsPurpose: false,
     };
-  if (has(u, "Finance", "Finance Manager"))
+  if (u.role === "admin" && can(u, "records.view.finance"))
     return { level: "finance", note: accessLabel.finance, disciplines: [], needsPurpose: false };
   return { level: "none", note: "", disciplines: [], needsPurpose: false };
 }
@@ -832,7 +838,7 @@ export async function recordFor(u: UserDoc, clientId: ObjectId, log = true): Pro
     accessNote: a.note,
     needsPurpose: a.needsPurpose,
     accessRequests:
-      isLead(u) || a.level === "treating"
+      canGrantAccess(u) || a.level === "treating"
         ? rec.requests.map((r) => ({
             id: r.id,
             name: r.name,
@@ -842,7 +848,7 @@ export async function recordFor(u: UserDoc, clientId: ObjectId, log = true): Pro
             until: iso(r.until),
           }))
         : [],
-    canGrant: isLead(u),
+    canGrant: canGrantAccess(u),
     canWrite: clinical,
     canSign: a.level === "treating" || (a.level === "clinical-lead" && !a.needsPurpose),
     precautions: client.precautions ?? null,
@@ -1120,7 +1126,7 @@ export async function recordAction(u: UserDoc, clientId: ObjectId, action: Recor
     return { ok: true };
   }
   if (action.type === "grant") {
-    must(isLead(u), "Only a Clinical Lead grants record access.");
+    must(canGrantAccess(u), "Only a Clinical Lead grants record access.");
     const r = rec.requests.find((x) => x.id === action.requestId);
     must(Boolean(r && r.status === "Pending"), "That request is no longer pending.");
     const until = new Date(now.getTime() + 7 * 86_400_000);
@@ -1156,7 +1162,7 @@ export async function recordAction(u: UserDoc, clientId: ObjectId, action: Recor
     return { ok: true };
   }
   if (action.type === "open") {
-    must(isLead(u), "Only a Clinical Lead records an access purpose.");
+    must(canGrantAccess(u), "Only a Clinical Lead records an access purpose.");
     await col.updateOne(
       { _id: clientId },
       {
@@ -1310,7 +1316,7 @@ export async function recordAction(u: UserDoc, clientId: ObjectId, action: Recor
       break;
     }
     case "risk-review": {
-      must(isLead(u) || a.level === "treating", "Only a qualified clinician reviews risks.");
+      must(canReviewRisks(u) || a.level === "treating", "Only a qualified clinician reviews risks.");
       set.risks = rec.risks.map((x) =>
         x.id === action.id
           ? { ...x, review: action.state, reviewer: u.name, reviewNote: action.note }

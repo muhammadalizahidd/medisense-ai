@@ -17,7 +17,7 @@ import { addDays, isoWeekday, shortDate, slotLabel } from "@/lib/live/time";
 import { AuthError } from "./auth";
 import { collections } from "./db";
 import { nextRef } from "./finance";
-import { HR_ROLES, requireHr } from "./hr";
+import { hrUserIds, requireHr } from "./hr";
 import { UserFacingError } from "./http";
 import { adminIds, audit, notify, publish } from "./live";
 import { caseloadVisits } from "./matching";
@@ -374,17 +374,6 @@ export async function myLeave(user: UserDoc): Promise<MyLeaveDto> {
       return { ...dto, impact: { ...dto.impact, teamAway: [] } };
     }),
   };
-}
-
-async function hrUserIds() {
-  const { users } = await collections();
-  const rows = await users
-    .find(
-      { role: "admin", disabled: { $ne: true }, staffRoles: { $in: HR_ROLES } },
-      { projection: { _id: 1 } },
-    )
-    .toArray();
-  return rows.map((u) => u._id);
 }
 
 const rangeLabel = (from: string, to: string) =>

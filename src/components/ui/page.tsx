@@ -229,3 +229,31 @@ export function PhoneLoading() {
     </div>
   );
 }
+
+const blockPulse = "animate-blockPulse rounded-card bg-sunken motion-reduce:animate-none";
+
+/**
+ * A page-shaped placeholder (title, four figures, two chart cards, a list) shown while a
+ * screen streams in. It matches the dashboard layout so content replaces it without a jump.
+ */
+export function DashboardLoading() {
+  return (
+    <main className="w-full px-4 pt-6 pb-18 md:px-6 md:pt-8 xl:px-10" aria-busy="true">
+      <span className="sr-only">Loading…</span>
+      <div className="mb-8 space-y-3">
+        <div className={cn(blockPulse, "h-3 w-24")} />
+        <div className={cn(blockPulse, "h-9 w-80 max-w-full")} />
+      </div>
+      <div className="mb-6 grid grid-cols-2 gap-4 xl:grid-cols-4">
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className={cn(blockPulse, "h-28")} />
+        ))}
+      </div>
+      <div className="mb-6 grid gap-4 lg:grid-cols-2">
+        <div className={cn(blockPulse, "h-72")} />
+        <div className={cn(blockPulse, "h-72")} />
+      </div>
+      <div className={cn(blockPulse, "h-56")} />
+    </main>
+  );
+}

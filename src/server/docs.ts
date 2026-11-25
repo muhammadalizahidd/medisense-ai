@@ -1,4 +1,5 @@
 import "server-only";
+import { can } from "./permissions";
 import { randomUUID } from "node:crypto";
 import { ObjectId } from "mongodb";
 import { generateJson } from "@/lib/ai/engine";
@@ -99,9 +100,8 @@ export function blankSections(type: NoteType): DocSection[] {
 
 /* ------------------------------------------------------------------ access */
 
-const has = (u: UserDoc, ...roles: string[]) =>
-  Boolean(u.staffRoles?.some((r) => roles.includes(r)));
-const isLead = (u: UserDoc) => u.role === "admin" && has(u, "Clinical Lead", "Super Admin");
+/** The lead view of notes: the documentation.oversight permission. */
+const isLead = (u: UserDoc) => u.role === "admin" && can(u, "documentation.oversight");
 const SUPERVISOR = "Helen Brooks";
 
 function viewOf(u: UserDoc, d: ClinicalDocDoc): DocFull["view"] | "none" {

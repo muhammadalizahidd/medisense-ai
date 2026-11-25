@@ -25,7 +25,7 @@ import {
   presetRange,
   rangeError,
   runMetric,
-  scopeFor,
+  scopeFromPermissions,
   scoped,
   type DatePreset,
   type ReportFilters,
@@ -44,6 +44,9 @@ import type {
   UserDoc,
 } from "./models";
 import { insertTask } from "./operations";
+import { effectivePermissions } from "@/lib/permissions/can";
+import { can, loadPermissions } from "./permissions";
+import { loadRoles } from "./roles";
 import { loadFacts, reportScope, type LoadedFacts } from "./reports";
 import { computeInsights } from "./report-insights";
 
@@ -442,15 +445,12 @@ export async function openExport(u: UserDoc, id: ObjectId, format: string | null
 }
 
 export async function revokeExport(u: UserDoc, id: ObjectId, reason: string) {
-  const s = mustStaff(u);
+  mustStaff(u);
   const db = await collections();
   const e = await db.reportExports.findOne({ _id: id });
   if (!e) throw new UserFacingError("Export not found.", 404);
-  if (
-    !e.ownerId.equals(u._id) &&
-    !s.label.startsWith("Director") &&
-    s.label !== "Operations Manager"
-  )
+  // The owner, or someone with organisation-wide reporting authority, can revoke a link.
+  if (!e.ownerId.equals(u._id) && !can(u, "reports.share.organisation"))
     throw new UserFacingError("Only the owner or a manager can revoke this link.", 409);
   await db.reportExports.updateOne(
     { _id: id },
@@ -710,6 +710,8 @@ export async function runSchedule(id: ObjectId, by: UserDoc | "Scheduler", retry
   };
   if (!owner || owner.disabled || !def)
     return record("Failed", "The schedule owner no longer has an active account.", null, [], []);
+  // A scheduled run acts as the schedule's owner, so load what their roles allow first.
+  await loadPermissions(owner);
   const os = reportScope(owner);
   if (!(os.domains as string[]).includes(def.domain)) {
     return record(
@@ -723,8 +725,13 @@ export async function runSchedule(id: ObjectId, by: UserDoc | "Scheduler", retry
   const recipients = await resolveRecipients(sch.recipients, owner);
   const ok: UserDoc[] = [];
   const excluded: string[] = [];
+  const roles = await loadRoles();
   for (const r of recipients) {
-    const rs = scopeFor(r.staffRoles ?? [], r.role);
+    const rs = scopeFromPermissions(
+      effectivePermissions(r.staffRoles, roles),
+      r.role,
+      r.staffRoles ?? [],
+    );
     if (!(rs.domains as string[]).includes(def.domain))
       excluded.push(`${r.name}: no access to ${def.domain}`);
     else if (
@@ -1262,6 +1269,7 @@ export async function reportsHub(u: UserDoc): Promise<ReportsHubDto> {
     ]),
   );
   const loaded = await loadFacts(u);
+  const allRoles = await loadRoles();
   const ids = u.role === "therapist" ? [] : await syncInsights(loaded);
   const [[views, schedules, exports, people], insights] = await Promise.all([
     lists,
@@ -1292,7 +1300,11 @@ export async function reportsHub(u: UserDoc): Promise<ReportsHubDto> {
       .sort((a, b) => sev(b.severity) - sev(a.severity))
       .map((i) => insightDto(i, taskRefs)),
     people: people.map((p) => {
-      const ps = scopeFor(p.staffRoles ?? [], p.role);
+      const ps = scopeFromPermissions(
+        effectivePermissions(p.staffRoles, allRoles),
+        p.role,
+        p.staffRoles ?? [],
+      );
       return {
         id: p._id.toHexString(),
         name: p.name,

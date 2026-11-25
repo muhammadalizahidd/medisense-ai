@@ -5,8 +5,10 @@ import type { ObjectId } from "mongodb";
 import { cookies } from "next/headers";
 import { connection } from "next/server";
 import { cached, clearCache } from "./cache";
+import { AuthError } from "./auth-error";
 import { collections } from "./db";
 import type { UserDoc, UserRole } from "./models";
+import { loadPermissions } from "./permissions";
 
 export const SESSION_COOKIE = "medisense_session";
 export const SESSION_DAYS = 14;
@@ -73,15 +75,13 @@ export async function currentUser(): Promise<UserDoc | null> {
       ])
       .toArray();
     const user = row?.user[0] ?? null;
-    return user && !user.disabled ? user : null;
+    if (!user || user.disabled) return null;
+    // What this person may do is worked out once here and read by can() for the rest of the request.
+    return loadPermissions(user);
   });
 }
 
-export class AuthError extends Error {
-  constructor(readonly status: 401 | 403) {
-    super(status === 401 ? "Please sign in." : "You don't have access to this.");
-  }
-}
+export { AuthError };
 
 export async function requireUser(...roles: UserRole[]) {
   const user = await currentUser();

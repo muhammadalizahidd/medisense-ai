@@ -15,6 +15,9 @@ import {
 } from "./reports";
 
 export const exportFormats = ["CSV", "XLSX", "PDF summary"] as const;
+
+/** What people read. The stored name stays "PDF summary" so older exports keep opening. */
+export const formatLabel = (format: string) => (format === "PDF summary" ? "PDF" : format);
 export type ExportFormat = (typeof exportFormats)[number];
 export const exportContents = [
   "Summary only",
@@ -55,6 +58,7 @@ export const filtersSchema = z.object({
   mode: z.union([z.literal(""), z.enum(appointmentModes)]),
   region: z.string().max(60),
   therapist: z.string().max(120),
+  patient: z.string().max(40),
   management: z.union([z.literal(""), z.enum(managementModes)]),
   status: z.string().max(60),
   search: z.string().max(80),
@@ -270,4 +274,12 @@ export type ReportsHubDto = {
   exports: ExportDto[];
   insights: InsightDto[];
   people: PersonDto[];
+};
+
+/** One therapist's reports: the same facts and filters as the hub, cut to that therapist. */
+export type TherapistHubDto = {
+  hub: ReportsHubDto;
+  subject: { id: string; name: string; discipline: string; region: string };
+  /** True when a therapist is looking at their own reports. */
+  self: boolean;
 };

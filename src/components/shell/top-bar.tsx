@@ -2,23 +2,30 @@
 
 import { PageGuideButton } from "./page-guide";
 import { ArrowUpRight, Bell, ChevronRight, History } from "lucide-react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AiIcon } from "@/components/ai/provenance";
 import { cn } from "@/lib/cn";
-import { longDate } from "@/lib/clock";
 import { api, useResource, useSession } from "@/lib/live/client";
 import { relativeTime } from "@/lib/live/time";
 import type { NotificationDto } from "@/lib/live/types";
 import { isStandalone, routeMeta } from "@/lib/navigation";
 import { useUnreadMessages } from "@/features/live/conversations";
 import { useDemoStore } from "@/state/demo-store";
-import { AssistantPanel } from "./assistant-panel";
-import { AuditDrawer } from "./audit-drawer";
 import { QuickAdd } from "./quick-add";
+import { ShellDate } from "./shell-date";
 import { ThemeMenu } from "./theme-menu";
 import { WorkspaceMenu } from "./workspace-menu";
+
+/** Both open only on a click, so their code (the assistant alone is 500+ lines) loads then. */
+const AssistantPanel = dynamic(() => import("./assistant-panel").then((m) => m.AssistantPanel), {
+  ssr: false,
+});
+const AuditDrawer = dynamic(() => import("./audit-drawer").then((m) => m.AuditDrawer), {
+  ssr: false,
+});
 
 function Notifications() {
   const role = useDemoStore((s) => s.role);
@@ -166,7 +173,6 @@ export function TopBar() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
-  const dayOffset = useDemoStore((s) => s.story.dayOffset);
   const auditOpen = useDemoStore((s) => s.auditOpen);
   const setAuditOpen = useDemoStore((s) => s.setAuditOpen);
   const [assistant, setAssistant] = useState<{ open: boolean; question: string; key: number }>({
@@ -187,55 +193,57 @@ export function TopBar() {
   return (
     <>
       <header className="sticky top-0 z-20 flex min-h-(--topbar-h) items-center justify-between gap-4 border-b border-border bg-topbar px-4 py-2 md:px-6 xl:pr-6 xl:pl-10 print:hidden">
-        <nav
-          aria-label="Breadcrumb"
-          className="flex min-w-0 flex-1 items-center gap-1.5 text-small"
-        >
-          <span className="hidden truncate text-ink-500 sm:inline">{section}</span>
-          <ChevronRight
-            className="hidden size-3.5 flex-none text-ink-500 sm:block"
-            strokeWidth={1.5}
-            aria-hidden="true"
-          />
-          <span className="truncate font-medium text-ink-900" aria-current="page">
-            {page}
-          </span>
-        </nav>
-
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            openAssistant(draftQuestion);
-          }}
-          className="hidden h-9 w-full max-w-115 flex-[0_1_460px] items-center gap-2 rounded-control border border-border bg-surface pr-1.5 pl-3 text-ink-500 focus-within:border-accent focus-within:shadow-focus lg:flex"
-        >
-          <AiIcon className="size-4" />
-          <input
-            ref={askField}
-            type="text"
-            value={draftQuestion}
-            onChange={(e) => setDraftQuestion(e.target.value)}
-            aria-label="Ask Medisense"
-            aria-keyshortcuts="Control+K Meta+K"
-            placeholder="Ask Medisense about patients, referrals, visits…"
-            className="min-w-0 flex-1 border-0 bg-transparent text-small text-ink-900 outline-none placeholder:text-ink-500 focus-visible:shadow-none"
-          />
-          <kbd className="hidden rounded-tag border border-border px-1.5 font-mono text-label text-ink-500 xl:block">
-            ⌘K
-          </kbd>
-          <button
-            type="submit"
-            className="group inline-flex h-7 flex-none cursor-pointer items-center gap-1 rounded-tag bg-accent-fill px-2.5 text-caption font-semibold text-on-accent shadow-lift transition-all duration-(--duration-fast) hover:-translate-y-px hover:bg-accent-fill-hover active:scale-95"
+        <div className="flex min-w-0 flex-1 items-center gap-4">
+          <nav
+            aria-label="Breadcrumb"
+            className="flex max-w-[45%] min-w-0 shrink items-center gap-1.5 text-small lg:max-w-[40%]"
           >
-            Ask
-            <ArrowUpRight
-              className="size-3.5 transition-transform duration-(--duration-fast) group-hover:translate-x-px group-hover:-translate-y-px"
+            <span className="hidden truncate text-ink-500 sm:inline">{section}</span>
+            <ChevronRight
+              className="hidden size-3.5 flex-none text-ink-500 sm:block"
+              strokeWidth={1.5}
               aria-hidden="true"
             />
-          </button>
-        </form>
+            <span className="truncate font-medium text-ink-900" aria-current="page">
+              {page}
+            </span>
+          </nav>
 
-        <div className="flex flex-1 items-center justify-end gap-1">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              openAssistant(draftQuestion);
+            }}
+            className="hidden h-9 max-w-115 min-w-56 flex-1 items-center gap-2 rounded-control border border-border bg-surface pr-1.5 pl-3 text-ink-500 focus-within:border-accent focus-within:shadow-focus lg:flex"
+          >
+            <AiIcon className="size-4" />
+            <input
+              ref={askField}
+              type="text"
+              value={draftQuestion}
+              onChange={(e) => setDraftQuestion(e.target.value)}
+              aria-label="Ask Medisense"
+              aria-keyshortcuts="Control+K Meta+K"
+              placeholder="Ask Medisense about patients, referrals, visits…"
+              className="min-w-0 flex-1 border-0 bg-transparent text-small text-ink-900 outline-none placeholder:text-ink-500 focus-visible:shadow-none"
+            />
+            <kbd className="hidden rounded-tag border border-border px-1.5 font-mono text-label text-ink-500 xl:block">
+              ⌘K
+            </kbd>
+            <button
+              type="submit"
+              className="group inline-flex h-7 flex-none cursor-pointer items-center gap-1 rounded-tag bg-accent-fill px-2.5 text-caption font-semibold text-on-accent shadow-lift transition-all duration-(--duration-fast) hover:-translate-y-px hover:bg-accent-fill-hover active:scale-95"
+            >
+              Ask
+              <ArrowUpRight
+                className="size-3.5 transition-transform duration-(--duration-fast) group-hover:translate-x-px group-hover:-translate-y-px"
+                aria-hidden="true"
+              />
+            </button>
+          </form>
+        </div>
+
+        <div className="flex flex-none items-center justify-end gap-1">
           <PageGuideButton />
           <QuickAdd />
 
@@ -252,16 +260,14 @@ export function TopBar() {
 
           <ThemeMenu />
 
-          <span className="hidden text-small whitespace-nowrap text-ink-700">
-            {longDate(dayOffset)}
-          </span>
+          <ShellDate className="hidden text-small whitespace-nowrap text-ink-700" />
 
           <span aria-hidden="true" className="mx-1 hidden h-6 w-px bg-border sm:block" />
           <WorkspaceMenu />
         </div>
       </header>
 
-      <AuditDrawer open={auditOpen} onClose={() => setAuditOpen(false)} />
+      {auditOpen && <AuditDrawer open onClose={() => setAuditOpen(false)} />}
       {assistant.open && (
         <AssistantPanel
           key={assistant.key}

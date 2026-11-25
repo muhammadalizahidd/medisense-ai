@@ -632,6 +632,20 @@ export const guides: Record<string, PageGuide> = {
     ["Pick the report.", "Set filters.", "Save, schedule or export it."],
     "The figures you need, on demand or on a schedule.",
   ),
+  "/care/reports/therapists": g(
+    "Therapist reports",
+    "Choose a therapist to see their caseload, sessions, notes and progress.",
+    ["Search by name, discipline or region", "Open one therapist's reports"],
+    ["Find the therapist.", "Open their reports.", "Use the tabs as you would for your own."],
+    "The right therapist's figures, with every opening recorded.",
+  ),
+  "/care/reports/therapists/[id]": g(
+    "One therapist's reports",
+    "The same reports the therapist sees: caseload, sessions, clinical work and time.",
+    ["Read the overview", "Open any patient's summary", "Filter by period or patient"],
+    ["Start on Overview.", "Open a tab for detail.", "Open a patient for their summary."],
+    "A clear view of one therapist's work. Opening it is recorded.",
+  ),
   "/therapist/reports": g(
     "My reports",
     "Your own figures: visits, documentation timeliness and outcomes.",
@@ -957,8 +971,8 @@ export const guides: Record<string, PageGuide> = {
     "Patient-reported updates reviewed, with every AI output checked by you.",
   ),
   "/therapist/progress": g(
-    "My progress and reports",
-    "Your episodes, goal progress, reassessments and clinical reports in one place.",
+    "Progress and reports",
+    "Your caseload, sessions, notes and progress at a glance, with your clinical reports one tap away.",
     [
       "See which goals are improving and which reviews are due",
       "Open an episode to record outcomes or reassess",

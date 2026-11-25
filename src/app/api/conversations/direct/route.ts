@@ -1,4 +1,5 @@
 import { requireUser } from "@/server/auth";
+import { mustCan } from "@/server/permissions";
 import { startChatSchema, startDirectChat } from "@/server/chat";
 import { handle, parseId, readJson } from "@/server/http";
 
@@ -6,6 +7,7 @@ import { handle, parseId, readJson } from "@/server/http";
 export async function POST(request: Request) {
   return handle(async () => {
     const user = await requireUser("admin");
+    mustCan(user, "messages.use");
     const { userId } = await readJson(request, startChatSchema);
     return await startDirectChat(user, parseId(userId));
   });

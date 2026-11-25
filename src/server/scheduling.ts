@@ -1,4 +1,5 @@
 import "server-only";
+import { can } from "./permissions";
 import { createHash, randomBytes } from "node:crypto";
 import { ObjectId, type Db } from "mongodb";
 import { z } from "zod";
@@ -902,13 +903,12 @@ export async function schedulingAudit() {
 
 /** Finance-only staff see times, people and outcomes, not site, safety or clinical detail (AT-23). */
 export function forViewer(board: ScheduleBoardDto, viewer: UserDoc): ScheduleBoardDto {
-  const roles = viewer.staffRoles ?? [];
-  const scheduling = roles.some((r) =>
-    ["Super Admin", "Clinical Lead", "Intake Officer", "Scheduler", "Operations Manager"].includes(
-      r,
-    ),
-  );
-  if (scheduling || roles.length === 0) return board;
+  // Anyone with a clinical, intake or scheduling view of records sees the whole board.
+  const scheduling =
+    can(viewer, "records.view.clinical") ||
+    can(viewer, "records.view.intake") ||
+    can(viewer, "records.view.scheduling");
+  if (scheduling) return board;
   return {
     ...board,
     events: board.events.map((e) => ({

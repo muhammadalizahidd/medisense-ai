@@ -1,4 +1,5 @@
 import "server-only";
+import { can } from "./permissions";
 import { ObjectId } from "mongodb";
 import { generateJson } from "@/lib/ai/engine";
 import type {
@@ -265,7 +266,7 @@ async function options(u: UserDoc, a: Extract<BookingAction, { type: "options" }
   const c = await allowed(u, a.clientId);
   const { therapists } = await collections();
   if (a.task === "assign") {
-    if (u.role !== "admin")
+    if (u.role !== "admin" || !can(u, "schedule.assign"))
       throw new UserFacingError("Only the scheduling team assigns therapists.", 409);
     const need = needFor(c, "assign", a.needId);
     const ranked = (await matchesFor(c._id, need.id)).filter((m) => m.eligible).slice(0, 3);

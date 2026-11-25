@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { debouncedSessionStorage } from "./debounced-storage";
 import { demoActionTimes, initialAuditEntries } from "@/data/audit";
 import { automationRules, type AutomationRule } from "@/data/automations";
 import { expiryItems } from "@/data/admin-operations";
@@ -1561,7 +1562,7 @@ export const useDemoStore = create<DemoState & DemoActions>()(
         const role = (persisted as Partial<DemoState> | null)?.role;
         return { ...initialState, ...(role ? { role } : {}) } as DemoState & DemoActions;
       },
-      storage: createJSONStorage(() => sessionStorage),
+      storage: createJSONStorage(() => debouncedSessionStorage()),
       skipHydration: true,
       partialize: ({
         caseNotes,

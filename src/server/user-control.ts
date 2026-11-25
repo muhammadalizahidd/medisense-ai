@@ -2,23 +2,27 @@ import "server-only";
 import { randomInt } from "node:crypto";
 import { ObjectId } from "mongodb";
 import { z } from "zod";
-import { staffRoles, type StaffRole } from "@/lib/live/catalogue";
+import { type StaffRole } from "@/lib/live/catalogue";
 import type { UserAccountDto, UserControlDto, UserKind, UserStatus } from "@/lib/live/types";
 import { AuthError, hashPassword, SESSION_DAYS } from "./auth";
 import { collections } from "./db";
 import { UserFacingError } from "./http";
 import { adminIds, audit, publish } from "./live";
 import type { UserDoc } from "./models";
+import { assignableRoles } from "./roles";
 import { setTherapistActive } from "./therapists";
 
 /*
- * User control: a Super Admin creates office staff accounts, sets what each person is responsible
+ * User control: the Super Admin creates office staff accounts, sets what each person is responsible
  * for (which decides the menus and pages they get), resets passwords and deactivates people who
  * leave. Therapists are added through Add therapist, which also takes their credentials.
+ *
+ * There is exactly one Super Admin. It is never handed out as a responsibility: it only moves
+ * through a transfer (super-admin.ts), and the account that holds it cannot be deactivated.
  */
 
 const SUPER: StaffRole = "Super Admin";
-const isSuper = (u: UserDoc) => u.role === "admin" && (u.staffRoles ?? []).includes(SUPER);
+export const isSuper = (u: UserDoc) => u.role === "admin" && (u.staffRoles ?? []).includes(SUPER);
 
 /** Only a Super Admin manages accounts; the page is hidden from everyone else as well. */
 export function requireSuperAdmin(u: UserDoc) {
@@ -95,7 +99,9 @@ export const newUserSchema = z.object({
   name: z.string().trim().min(3, "Enter the full name").max(80),
   email: z.email("Enter a valid work email").transform((v) => v.toLowerCase()),
   phone: z.string().trim().max(30).default(""),
-  staffRoles: z.array(z.enum(staffRoles)).min(1, "Choose at least one responsibility"),
+  staffRoles: z
+    .array(z.string().trim().min(1).max(60))
+    .min(1, "Choose at least one responsibility"),
 });
 
 /** A new office staff account with a temporary password, shown once to the Super Admin. */
@@ -106,7 +112,8 @@ export async function createUser(me: UserDoc, input: z.infer<typeof newUserSchem
     throw new UserFacingError("An account already uses this email.", 409);
   }
   const temporary = temporaryPassword();
-  const roles = [...new Set(input.staffRoles)];
+  const chosen = await assignableRoles(input.staffRoles);
+  const roles = chosen.map((r) => r.key);
   const id = new ObjectId();
   await users.insertOne({
     _id: id,
@@ -124,7 +131,11 @@ export async function createUser(me: UserDoc, input: z.infer<typeof newUserSchem
     createdBy: me._id,
     createdAt: new Date(),
   });
-  await audit(me, `Created a user account for ${input.name} (${roles.join(", ")})`, null);
+  await audit(
+    me,
+    `Created a user account for ${input.name} (${chosen.map((r) => r.name).join(", ")})`,
+    null,
+  );
   await publish(await adminIds(), "care", {});
   return { id: id.toHexString(), email: input.email, temporaryPassword: temporary };
 }
@@ -136,25 +147,10 @@ async function target(id: ObjectId) {
   return u;
 }
 
-/** Stops the practice losing its last Super Admin, by mistake or on purpose. */
-async function keepOneSuperAdmin(u: UserDoc) {
-  if (!isSuper(u) || u.disabled) return;
-  const { users } = await collections();
-  const others = await users.countDocuments({
-    _id: { $ne: u._id },
-    role: "admin",
-    staffRoles: SUPER,
-    disabled: { $ne: true },
-  });
-  if (others === 0) {
-    throw new UserFacingError(
-      "Medisense needs at least one active Super Admin. Add another first.",
-    );
-  }
-}
-
 export const rolesSchema = z.object({
-  staffRoles: z.array(z.enum(staffRoles)).min(1, "Choose at least one responsibility"),
+  staffRoles: z
+    .array(z.string().trim().min(1).max(60))
+    .min(1, "Choose at least one responsibility"),
 });
 
 export async function updateRoles(me: UserDoc, id: ObjectId, input: z.infer<typeof rolesSchema>) {
@@ -163,16 +159,18 @@ export async function updateRoles(me: UserDoc, id: ObjectId, input: z.infer<type
   if (u.role !== "admin") {
     throw new UserFacingError("Responsibilities apply to office staff accounts only.");
   }
-  const roles = [...new Set(input.staffRoles)];
-  if (!roles.includes(SUPER)) {
-    if (u._id.equals(me._id))
-      throw new UserFacingError("You can't remove your own Super Admin access.");
-    await keepOneSuperAdmin(u);
-  }
+  // The Super Admin holds that role permanently: it can't be given or taken away here.
+  const chosen = await assignableRoles(input.staffRoles);
+  const roles = chosen.map((r) => r.key);
+  const stored = isSuper(u) ? [SUPER, ...roles] : roles;
   const { users } = await collections();
   // Menus and pages follow the new responsibilities on their next page load; no sign-out needed.
-  await users.updateOne({ _id: id }, { $set: { staffRoles: roles } });
-  await audit(me, `Changed ${u.name}'s responsibilities to ${roles.join(", ")}`, null);
+  await users.updateOne({ _id: id }, { $set: { staffRoles: stored } });
+  await audit(
+    me,
+    `Changed ${u.name}'s responsibilities to ${chosen.map((r) => r.name).join(", ")}`,
+    null,
+  );
   await publish(await adminIds(), "care", {});
 }
 
@@ -198,6 +196,11 @@ export async function resetUserPassword(me: UserDoc, id: ObjectId) {
 export async function setUserActive(me: UserDoc, id: ObjectId, active: boolean) {
   requireSuperAdmin(me);
   const u = await target(id);
+  if (isSuper(u)) {
+    throw new UserFacingError(
+      "The Super Admin can't be deactivated. Transfer the role to someone else first.",
+    );
+  }
   if (u._id.equals(me._id)) throw new UserFacingError("You can't deactivate your own account.");
   if (u.role === "client") {
     throw new UserFacingError("Patient access is managed from their patient record.");
@@ -207,7 +210,6 @@ export async function setUserActive(me: UserDoc, id: ObjectId, active: boolean) 
     await setTherapistActive(me, u.therapistId, active);
     return;
   }
-  if (!active) await keepOneSuperAdmin(u);
   const { users, sessions } = await collections();
   await users.updateOne({ _id: id }, { $set: { disabled: !active } });
   if (!active) await sessions.deleteMany({ userId: id });

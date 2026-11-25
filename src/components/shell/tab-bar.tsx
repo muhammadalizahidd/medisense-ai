@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Sheet } from "@/components/ui/sheet";
 import { cn } from "@/lib/cn";
 import { isActive, isStandalone, navigationFor } from "@/lib/navigation";
+import { pageAccessFor } from "@/lib/permissions/pages";
 import { useSession } from "@/lib/live/client";
 import { useDemoStore } from "@/state/demo-store";
 import { darkFocus } from "./sidebar";
@@ -18,7 +19,7 @@ export function TabBar() {
   const [more, setMore] = useState(false);
   const { user: account } = useSession();
   // The live sections come first, as in the sidebar, so the real workflow is one tap away.
-  const groups = navigationFor(role, account?.role === "admin" ? account.staffRoles : null, {
+  const groups = navigationFor(role, account?.role === "admin" ? pageAccessFor(account) : null, {
     liveOnly: Boolean(account),
   });
   const items = groups.flatMap((g) => g.items).slice(0, 4);

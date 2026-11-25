@@ -1,4 +1,5 @@
 import "server-only";
+import { can } from "./permissions";
 import { randomUUID } from "node:crypto";
 import { ObjectId } from "mongodb";
 import { z } from "zod";
@@ -31,8 +32,10 @@ import { partiesOf, visitFor } from "./visits";
 
 /* ------------------------------------------------------------- access */
 
-const isClinicalLead = (u: UserDoc) =>
-  Boolean(u.staffRoles?.some((r) => r === "Clinical Lead" || r === "Super Admin"));
+/** Reads the clinical record as a reviewer: the records.view.clinical permission. */
+const isClinicalLead = (u: UserDoc) => can(u, "records.view.clinical");
+/** Completes an assessment review: the assessments.review permission. */
+const canReview = (u: UserDoc) => can(u, "assessments.review");
 
 /** The therapist assigned to this service request, with the patient record. */
 async function myService(user: UserDoc, clientId: ObjectId, needId: string) {
@@ -1203,7 +1206,7 @@ export async function completeAssessmentReview(
 ) {
   const db = await collections();
   const { a, client } = await loadAssessment(user, id);
-  if (!isClinicalLead(user)) throw new UserFacingError("Only a Clinical Lead can review.", 409);
+  if (!canReview(user)) throw new UserFacingError("Only a Clinical Lead can review.", 409);
   if (a.status !== "Awaiting Review")
     throw new UserFacingError("Nothing is waiting for review.", 409);
   const reviews = [...(a.reviews ?? [])];

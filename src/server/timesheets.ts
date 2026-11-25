@@ -19,7 +19,7 @@ import { shortDate } from "@/lib/live/time";
 import { AuthError } from "./auth";
 import { collections } from "./db";
 import { nextRef } from "./finance";
-import { HR_ROLES, requireHr } from "./hr";
+import { hrUserIds, requireHr } from "./hr";
 import { UserFacingError } from "./http";
 import { adminIds, audit, notify, publish } from "./live";
 import type { AppointmentDoc, TherapistDoc, UserDoc } from "./models";
@@ -701,17 +701,6 @@ export async function adjustDay(user: UserDoc, input: TimesheetAdjustInput) {
   );
   await publish([user._id], "care", {});
   return { ok: true };
-}
-
-async function hrUserIds() {
-  const { users } = await collections();
-  const rows = await users
-    .find(
-      { role: "admin", disabled: { $ne: true }, staffRoles: { $in: HR_ROLES } },
-      { projection: { _id: 1 } },
-    )
-    .toArray();
-  return rows.map((u) => u._id);
 }
 
 export async function submitTimesheet(user: UserDoc, week: string, comment: string) {

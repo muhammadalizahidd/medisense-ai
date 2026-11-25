@@ -1,4 +1,5 @@
 import "server-only";
+import { can } from "./permissions";
 import { randomUUID } from "node:crypto";
 import { ObjectId } from "mongodb";
 import { generateJson } from "@/lib/ai/engine";
@@ -156,19 +157,24 @@ async function extFor(a: AppointmentDoc) {
 
 /* ------------------------------------------------------------------ access */
 
-const has = (u: UserDoc, ...roles: string[]) =>
-  Boolean(u.staffRoles?.some((r) => roles.includes(r)));
-const isLead = (u: UserDoc) => u.role === "admin" && has(u, "Clinical Lead", "Super Admin");
-const isFinance = (u: UserDoc) => u.role === "admin" && has(u, "Finance", "Finance Manager");
+/** The lead view of sessions: the sessions.oversight permission. */
+const isLead = (u: UserDoc) => u.role === "admin" && can(u, "sessions.oversight");
+/** Sees the finance view and verifies delivery for billing: the sessions.finance-verify permission. */
+const isFinance = (u: UserDoc) => u.role === "admin" && can(u, "sessions.finance-verify");
 
 type View = SessionFull["view"] | "none";
 
-function viewOf(u: UserDoc, a: AppointmentDoc): View {
+export function viewOf(u: UserDoc, a: AppointmentDoc): View {
   if (u.role === "therapist") return u.therapistId?.equals(a.therapistId) ? "edit" : "none";
   if (u.role !== "admin") return "none";
   // A Clinical Lead reviews clinical content, but no role gets blanket access to psychology or
   // trauma therapy sessions: those stay at status level (section 9).
-  if (isLead(u)) return restrictedDisciplines.includes(a.discipline) ? "status" : "lead";
+  // Someone holding both the lead and finance views gets both: a restricted session stays at the
+  // finance view rather than dropping to status, and verifying delivery is checked on its own.
+  if (isLead(u)) {
+    if (!restrictedDisciplines.includes(a.discipline)) return "lead";
+    return isFinance(u) ? "finance" : "status";
+  }
   if (isFinance(u)) return "finance";
   return "status";
 }
@@ -566,7 +572,7 @@ export async function sessionDetail(u: UserDoc, id: ObjectId): Promise<SessionFu
       }))
       .reverse(),
     canEdit: v === "edit",
-    canVerify: v === "finance",
+    canVerify: isFinance(u),
   };
 }
 
@@ -647,7 +653,7 @@ export async function sessionAction(u: UserDoc, id: ObjectId, action: SessionAct
   let reason = "";
 
   if (action.type === "verify") {
-    if (v !== "finance") throw new UserFacingError("Only Finance verifies service delivery.", 409);
+    if (!isFinance(u)) throw new UserFacingError("Only Finance verifies service delivery.", 409);
     if (["Scheduled", "Confirmed", "In Progress"].includes(attendanceOf(a, e)))
       throw new UserFacingError("Verify a session after it has happened.", 409);
     set.verification = { state: action.state, note: action.note, by: u.name, at: now };

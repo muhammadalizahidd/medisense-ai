@@ -1,4 +1,5 @@
 import { requireUser } from "@/server/auth";
+import { mustCan } from "@/server/permissions";
 import { handle, parseId, UserFacingError } from "@/server/http";
 import { replaceDocument } from "@/server/referrals";
 import { readMultipart } from "@/server/uploads";
@@ -9,6 +10,7 @@ type Params = { params: Promise<{ id: string }> };
 export async function POST(request: Request, { params }: Params) {
   return handle(async () => {
     const admin = await requireUser("admin");
+    mustCan(admin, "referrals.process");
     const { files, answer } = await readMultipart(request);
     const file = files[0];
     if (!file) throw new UserFacingError("Choose the new file.");

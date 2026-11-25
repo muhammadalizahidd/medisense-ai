@@ -1503,9 +1503,12 @@ export function toCsv(
   rows: Row[],
   meta: [string, string][],
 ) {
+  // Quoting alone does not stop a spreadsheet running a formula, so text that starts like one gets
+  // a leading apostrophe. Numbers can't be formulas, so a negative amount stays a number.
   const cell = (v: unknown) => {
-    const t = v === null || v === undefined ? "" : String(v);
-    return /[",\n\r]/.test(t) || /^[=+\-@]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
+    const raw = v === null || v === undefined ? "" : String(v);
+    const t = typeof v === "string" && /^[=+\-@\t\r]/.test(raw) ? `'${raw}` : raw;
+    return /[",\n\r]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
   };
   return [
     ...meta.map(([k, v]) => `${cell(`# ${k}`)},${cell(v)}`),
