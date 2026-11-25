@@ -4,7 +4,8 @@ import { X } from "lucide-react";
 import { useEffect, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/cn";
-import { useOverlayStack, useScrollLock } from "./overlay";
+import { OVERLAY_FRAME, OVERLAY_PANEL, useOverlayStack, useScrollLock } from "./overlay";
+import { OverlayCrumbs } from "./overlay-crumbs";
 
 const FOCUSABLE =
   'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, a[href], [tabindex]:not([tabindex="-1"])';
@@ -23,7 +24,6 @@ export function Dialog({
   toolbar,
   footer,
   onRequestClose,
-  size = "lg",
   above = false,
   children,
 }: {
@@ -37,14 +37,13 @@ export function Dialog({
   toolbar?: ReactNode;
   footer?: ReactNode;
   onRequestClose: () => void;
-  size?: "sm" | "lg";
   /** Opens above another dialog or sheet. */
   above?: boolean;
   children: ReactNode;
 }) {
   const panel = useRef<HTMLDivElement>(null);
   const request = useRef(onRequestClose);
-  const isTop = useOverlayStack();
+  const { isTop, below } = useOverlayStack(title, onRequestClose);
   useScrollLock();
 
   useEffect(() => {
@@ -57,7 +56,7 @@ export function Dialog({
     const items = () => Array.from(node?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? []);
     // Start on whatever asks for it, else the first field, else the first control that isn't the
     // close button.
-    const list = items();
+    const list = items().filter((el) => !el.closest("[data-crumbs]"));
     (
       list.find((el) => el.hasAttribute("data-autofocus")) ??
       list.find((el) => el.matches("input, textarea")) ??
@@ -93,12 +92,7 @@ export function Dialog({
   }, []);
 
   return createPortal(
-    <div
-      className={cn(
-        "fixed inset-0 flex items-stretch justify-center sm:items-center sm:p-6",
-        above ? "z-60" : "z-50",
-      )}
-    >
+    <div className={cn(OVERLAY_FRAME, above ? "z-60" : "z-50")}>
       <button
         type="button"
         aria-label="Close"
@@ -106,16 +100,8 @@ export function Dialog({
         onClick={() => request.current()}
         className="absolute inset-0 cursor-default bg-scrim"
       />
-      <div
-        ref={panel}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        className={cn(
-          "dialog-panel relative flex h-full w-full flex-col overflow-hidden bg-raised shadow-overlay sm:h-auto sm:max-h-[90dvh] sm:rounded-sheet",
-          size === "lg" ? "sm:max-w-295" : "sm:max-w-md",
-        )}
-      >
+      <div ref={panel} role="dialog" aria-modal="true" aria-label={title} className={OVERLAY_PANEL}>
+        <OverlayCrumbs title={title} below={below} onClose={onRequestClose} />
         <header className="relative flex flex-col gap-3 border-b border-border px-5 py-4 sm:flex-row sm:items-start sm:justify-between sm:gap-4 sm:px-6 sm:py-5">
           <div className="min-w-0 flex-1 pr-12 sm:pr-0">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">

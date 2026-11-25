@@ -91,8 +91,11 @@ describe("seeding the built-in roles", () => {
     for (const role of roles) delete role.legacyName;
     const plan = planRoleSeed(roles);
     expect(plan.legacyNames.map((l) => l.slug)).toEqual(builtInRoles.map((b) => b.slug));
-    expect(plan.legacyNames.find((l) => l.slug === "finance-manager")?.legacyName).toBe("Finance Manager");
-    for (const role of roles) role.legacyName = builtInRoles.find((b) => b.slug === role.slug)!.name;
+    expect(plan.legacyNames.find((l) => l.slug === "finance-manager")?.legacyName).toBe(
+      "Finance Manager",
+    );
+    for (const role of roles)
+      role.legacyName = builtInRoles.find((b) => b.slug === role.slug)!.name;
     expect(planRoleSeed(roles).legacyNames).toEqual([]);
   });
 });

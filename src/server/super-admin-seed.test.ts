@@ -95,10 +95,11 @@ describe("applying it to the database", () => {
     });
     const third = account("third@x.test", 2, { name: "Third", staffRoles: ["Super Admin"] });
     const jo = account("jo@x.test", 3, { name: "Jo", staffRoles: ["Scheduler"] });
-    users.docs.push(
-      ...([n, second, third, jo] as unknown as Doc[]),
-      { _id: new ObjectId(), role: "therapist", email: "t@x.test" },
-    );
+    users.docs.push(...([n, second, third, jo] as unknown as Doc[]), {
+      _id: new ObjectId(),
+      role: "therapist",
+      email: "t@x.test",
+    });
     return { db, users, n, second, third, jo };
   }
 

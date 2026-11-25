@@ -103,3 +103,9 @@ A therapist thinks about two different groups of people, so the report keeps the
 - **Both**: everyone in either group.
 
 The My patients tab opens with both counts side by side, plus the two gaps a clinician acts on: **on the caseload but not seen**, and **seen but not on the caseload**. A **Patients shown** switch (My caseload, Seen in the period, Both) controls the patient list and its charts, and each patient carries a plain tag saying how they relate to the therapist. Sessions, attendance and time are always about appointments.
+
+## 11. Patient report
+
+- **Patient view** (opens over the list): Overview with charts, Reports and Documents, with breadcrumbs and Back.
+- **Documents and report files** download one at a time; empty tabs say so.
+- **PDF summary** (`GET /api/care/records/[id]/report`): at most two pages with precautions and alerts, session figures and charts, goals, risks, allergies, conditions and medicines, services, latest notes and people. Built from the clinical record, so the same access rules and logging apply.

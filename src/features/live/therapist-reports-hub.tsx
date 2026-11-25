@@ -16,12 +16,13 @@ import { ProgressHub } from "./progress-hub";
 import { AreaDialog, AreaDownload, AreaPage, type AreaId } from "./reports-areas";
 import { FilterBar, useReportCtx, useReportFilters } from "./reports-bits";
 import {
-  PatientDialog,
+  PatientListDialog,
   THERAPIST_AREAS,
   TherapistOverview,
   TherapistProvider,
   therapistAreaById,
 } from "./therapist-areas";
+import { PatientDialog } from "./patient-view";
 
 const tabs = [
   { id: "overview", label: "Overview" },
@@ -35,6 +36,7 @@ type Open =
   | { kind: "areaDownload"; id: AreaId }
   | { kind: "filters" }
   | { kind: "documents" }
+  | { kind: "patients" }
   | null;
 
 const POPULATION_KEY = "ms-therapist-population";
@@ -118,7 +120,6 @@ function Hub({
         population,
         setPopulation,
         openPatient: setPatient,
-        recordHref: (id) => (self ? `/therapist/patients/${id}` : null),
         subject: subject.name,
       }}
     >
@@ -205,7 +206,9 @@ function Hub({
             <AreaPage
               c={c}
               area={a}
-              onOpen={() => setOpen({ kind: "area", id: a.id })}
+              onOpen={() =>
+                setOpen(a.id === "patients" ? { kind: "patients" } : { kind: "area", id: a.id })
+              }
               onDownload={() => setOpen({ kind: "areaDownload", id: a.id })}
             />
           </TabPanel>
@@ -232,7 +235,7 @@ function Hub({
       )}
       {open?.kind === "areaDownload" && area && <AreaDownload c={c} area={area} onClose={close} />}
       {open?.kind === "filters" && (
-        <Dialog title="Filters" size="sm" onRequestClose={close}>
+        <Dialog title="Filters" onRequestClose={close}>
           <FilterBar
             key={JSON.stringify(f)}
             hub={hub}
@@ -250,7 +253,16 @@ function Hub({
           <ProgressHub base="/therapist/progress" />
         </Dialog>
       )}
-      {patient && <PatientDialog c={c} id={patient} onClose={() => setPatient(null)} />}
+      {open?.kind === "patients" && <PatientListDialog c={c} onClose={close} />}
+      {patient && (
+        <PatientDialog
+          key={patient}
+          c={c}
+          id={patient}
+          reportsBase={self ? "/therapist/progress" : "/care/progress"}
+          onBack={() => setPatient(null)}
+        />
+      )}
     </TherapistProvider>
   );
 }

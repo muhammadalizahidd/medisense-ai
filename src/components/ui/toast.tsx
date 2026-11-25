@@ -55,7 +55,7 @@ export function Toaster() {
     <div
       role="status"
       aria-live="polite"
-      className="pointer-events-none fixed right-4 bottom-20 z-50 flex w-88 max-w-[calc(100vw-2rem)] flex-col gap-2 md:right-6 md:bottom-6"
+      className="pointer-events-none fixed right-4 bottom-20 z-70 flex w-88 max-w-[calc(100vw-2rem)] flex-col gap-2 md:right-6 md:bottom-6"
     >
       {items.map((t) => {
         const Icon = icons[t.tone];

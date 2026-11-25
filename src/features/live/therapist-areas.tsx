@@ -1,7 +1,6 @@
 "use client";
 
-import { Download, FileText } from "lucide-react";
-import Link from "next/link";
+import { Download } from "lucide-react";
 import { createContext, useContext, useMemo, useState } from "react";
 import { BarList } from "@/components/charts/bar-list";
 import { colour } from "@/components/charts/chart-kit";
@@ -15,7 +14,6 @@ import { toCsv, type Row } from "@/lib/live/report-catalogue";
 import { dayKey, formatValue, metricById } from "@/lib/live/reports";
 import {
   patientRows,
-  patientSummary,
   populationHint,
   populationLabel,
   populations,
@@ -25,7 +23,7 @@ import {
 } from "@/lib/live/therapist-reports";
 import { Activity, Tile, areaById, type Area, type AreaId } from "./reports-areas";
 import { Card, Kpi, KpiGrid, NA, td, th, type Ctx } from "./reports-bits";
-import { Charts, useSection } from "./reports-section";
+import { Charts } from "./reports-section";
 
 /*
  * The therapist's areas. Sessions, clinical work and time reuse the organisation's area pages,
@@ -41,8 +39,6 @@ type Therapist = {
   population: Population;
   setPopulation: (p: Population) => void;
   openPatient: (id: string) => void;
-  /** Where a patient's record lives, when the viewer may open it. */
-  recordHref: (id: string) => string | null;
   subject: string;
 };
 const TherapistContext = createContext<Therapist | null>(null);
@@ -91,7 +87,7 @@ const needsLook = (r: PatientRow, today: string) =>
 
 /* ------------------------------------------------------------------ choosing who to show */
 
-function PopulationPicker() {
+function PopulationPicker({ hint = true }: { hint?: boolean }) {
   const { population, setPopulation } = useTherapist();
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
@@ -101,7 +97,7 @@ function PopulationPicker() {
         onChange={setPopulation}
         options={populations.map((p) => ({ id: p, label: populationLabel[p] }))}
       />
-      <p className="text-caption text-ink-500">{populationHint[population]}</p>
+      {hint && <p className="text-caption text-ink-500">{populationHint[population]}</p>}
     </div>
   );
 }
@@ -122,15 +118,11 @@ function lastSeenBuckets(rows: PatientRow[], today: string) {
 }
 
 function PatientsTab({ c }: { c: Ctx }) {
-  const s = useSection();
   const t = useTherapist();
   const rows = useRows(c);
-  if (s.kind === "table")
-    return s.id === "patients-list" ? <PatientTable c={c} rows={rows} /> : null;
   const byDiscipline = new Map<string, number>();
   for (const r of rows)
     for (const d of r.disciplines) byDiscipline.set(d, (byDiscipline.get(d) ?? 0) + 1);
-  const check = rows.filter((r) => needsLook(r, c.hub.today)).slice(0, 5);
   return (
     <div className="flex flex-col gap-4">
       <PopulationPicker />
@@ -182,34 +174,6 @@ function PatientsTab({ c }: { c: Ctx }) {
           )}
         </Card>
       </Charts>
-      {s.kind === "summary" && (
-        <Card title="Patients to check" sub="Gone quiet, or notes waiting for a signature" flush>
-          {check.length ? (
-            <ul className="divide-y divide-border">
-              {check.map((r) => (
-                <li key={r.id}>
-                  <button
-                    type="button"
-                    onClick={() => t.openPatient(r.id)}
-                    className="flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left hover:bg-sunken"
-                  >
-                    <span className="min-w-0 flex-1 text-small font-semibold text-ink-900">
-                      {r.name}
-                    </span>
-                    <span className="text-caption text-ink-500">
-                      {r.notesToSign > 0
-                        ? `${r.notesToSign} ${r.notesToSign === 1 ? "note" : "notes"} to sign`
-                        : `Last seen ${dayLabel(r.lastSeen)}`}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="px-4 py-6 text-small text-ink-500">No patient needs a look right now.</p>
-          )}
-        </Card>
-      )}
     </div>
   );
 }
@@ -244,8 +208,83 @@ function csvOf(rows: PatientRow[], subject: string, c: Ctx) {
   ]);
 }
 
-function PatientTable({ c, rows }: { c: Ctx; rows: PatientRow[] }) {
+function PatientTable({ rows }: { rows: PatientRow[] }) {
   const t = useTherapist();
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-caption text-ink-500">{populationHint[t.population]}</p>
+      <Card
+        title={`${rows.length} ${rows.length === 1 ? "patient" : "patients"}`}
+        sub="Open Reports & Details for a patient's summary and documents"
+        flush
+      >
+        {rows.length ? (
+          <div className="overflow-auto">
+            <table className="w-full min-w-[900px] border-collapse">
+              <thead className="sticky top-0 bg-sunken">
+                <tr>
+                  <th className={th}>Patient</th>
+                  <th className={th}>Services</th>
+                  <th className={cn(th, "text-right")}>Sessions</th>
+                  <th className={cn(th, "text-right")}>Attendance</th>
+                  <th className={th}>Last seen</th>
+                  <th className={th}>Next visit</th>
+                  <th className={cn(th, "text-right")}>Notes to sign</th>
+                  <th className={th}>
+                    <span className="sr-only">Open</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r) => (
+                  <tr key={r.id} className="border-t border-border hover:bg-sunken">
+                    <td className={td}>
+                      <p className="font-semibold text-ink-900">{r.name}</p>
+                      <div className="mt-1">
+                        <Tag tone={RELATION_TONE[relation(r)] ?? "neutral"}>{relation(r)}</Tag>
+                      </div>
+                    </td>
+                    <td className={td}>{r.disciplines.join(", ") || "—"}</td>
+                    <td className={cn(td, "text-right tabular-nums")}>{r.sessions}</td>
+                    <td className={cn(td, "text-right tabular-nums")}>
+                      {r.attendance === null ? "—" : `${r.attendance.toFixed(0)}%`}
+                    </td>
+                    <td className={td}>{dayLabel(r.lastSeen)}</td>
+                    <td className={td}>{dayLabel(r.nextVisit)}</td>
+                    <td className={cn(td, "text-right tabular-nums")}>{r.notesToSign || "—"}</td>
+                    <td className={cn(td, "text-right")}>
+                      <Button
+                        size="sm"
+                        variant="primary"
+                        className="whitespace-nowrap"
+                        onClick={() => t.openPatient(r.id)}
+                        aria-label={`Reports & Details: ${r.name}`}
+                      >
+                        Reports &amp; Details
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="px-4 py-8 text-center text-small text-ink-700">
+            No patients match. Change who is rows, or clear the search.
+          </p>
+        )}
+      </Card>
+    </div>
+  );
+}
+
+/**
+ * The patient list on its own. Who is shown, search and download stay in the header, so changing
+ * the list never moves them.
+ */
+export function PatientListDialog({ c, onClose }: { c: Ctx; onClose: () => void }) {
+  const t = useTherapist();
+  const rows = useRows(c);
   const [q, setQ] = useState("");
   const shown = rows.filter(
     (r) => !q.trim() || r.name.toLowerCase().includes(q.trim().toLowerCase()),
@@ -263,209 +302,30 @@ function PatientTable({ c, rows }: { c: Ctx; rows: PatientRow[] }) {
     URL.revokeObjectURL(url);
   };
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-center gap-3">
-        <PopulationPicker />
-        <div className="ml-auto flex items-center gap-2">
-          <SearchField
-            label="Search patients"
-            placeholder="Search patients"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-          />
-          {!c.readOnly && (
-            <Button size="sm" onClick={download} disabled={!shown.length}>
-              <Download className="size-4" aria-hidden="true" />
-              Download CSV
-            </Button>
-          )}
-        </div>
-      </div>
-      <Card
-        title={`${shown.length} ${shown.length === 1 ? "patient" : "patients"}`}
-        sub="Select a patient to see their summary"
-        flush
-      >
-        {shown.length ? (
-          <div className="overflow-auto">
-            <table className="w-full min-w-[760px] border-collapse">
-              <thead className="sticky top-0 bg-sunken">
-                <tr>
-                  <th className={th}>Patient</th>
-                  <th className={th}>Services</th>
-                  <th className={cn(th, "text-right")}>Sessions</th>
-                  <th className={cn(th, "text-right")}>Attendance</th>
-                  <th className={th}>Last seen</th>
-                  <th className={th}>Next visit</th>
-                  <th className={cn(th, "text-right")}>Notes to sign</th>
-                </tr>
-              </thead>
-              <tbody>
-                {shown.map((r) => (
-                  <tr key={r.id} className="border-t border-border hover:bg-sunken">
-                    <td className={td}>
-                      <button
-                        type="button"
-                        onClick={() => t.openPatient(r.id)}
-                        className="cursor-pointer text-left font-semibold text-accent hover:underline"
-                      >
-                        {r.name}
-                      </button>
-                      <div className="mt-1">
-                        <Tag tone={RELATION_TONE[relation(r)] ?? "neutral"}>{relation(r)}</Tag>
-                      </div>
-                    </td>
-                    <td className={td}>{r.disciplines.join(", ") || "—"}</td>
-                    <td className={cn(td, "text-right tabular-nums")}>{r.sessions}</td>
-                    <td className={cn(td, "text-right tabular-nums")}>
-                      {r.attendance === null ? "—" : `${r.attendance.toFixed(0)}%`}
-                    </td>
-                    <td className={td}>{dayLabel(r.lastSeen)}</td>
-                    <td className={td}>{dayLabel(r.nextVisit)}</td>
-                    <td className={cn(td, "text-right tabular-nums")}>{r.notesToSign || "—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p className="px-4 py-8 text-center text-small text-ink-700">
-            No patients match. Change who is shown, or clear the search.
-          </p>
-        )}
-      </Card>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ one patient */
-
-/** One patient at a glance: the summary a therapist wants before a visit or a review. */
-export function PatientDialog({ c, id, onClose }: { c: Ctx; id: string; onClose: () => void }) {
-  const t = useTherapist();
-  const summary = patientSummary(
-    c.hub.facts,
-    id,
-    { from: c.f.from, to: c.f.to },
-    { today: c.hub.today, now: c.hub.now },
-  );
-  const href = t.recordHref(id);
-  if (!summary) {
-    return (
-      <Dialog title="Patient" size="sm" above onRequestClose={onClose}>
-        <NA>This patient isn&apos;t in the reports you can see.</NA>
-      </Dialog>
-    );
-  }
-  const r = summary.row;
-  const stat = (label: string, value: string) => (
-    <div className="rounded-card bg-sunken p-3">
-      <p className="text-caption text-ink-500">{label}</p>
-      <p className="mt-1 type-display text-h2 text-ink-900">{value}</p>
-    </div>
-  );
-  return (
     <Dialog
-      title={r.name}
-      description={r.disciplines.join(" · ") || undefined}
-      above
+      title="Patient list"
       onRequestClose={onClose}
-      meta={<Tag tone={RELATION_TONE[relation(r)] ?? "neutral"}>{relation(r)}</Tag>}
-      actions={
-        <>
-          <Button
-            size="sm"
-            onClick={() => {
-              c.setF({ patient: id });
-              onClose();
-            }}
-          >
-            Show only this patient
-          </Button>
-          {href && (
-            <Link
-              href={href}
-              className="inline-flex h-8 items-center gap-1.5 rounded-control border border-border-strong px-3 text-small font-semibold text-ink-900 hover:bg-sunken"
-            >
-              <FileText className="size-4" aria-hidden="true" />
-              Open record
-            </Link>
-          )}
-        </>
+      toolbar={
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <PopulationPicker hint={false} />
+          <div className="flex flex-none items-center gap-2">
+            <SearchField
+              label="Search patients"
+              placeholder="Search patients"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+            />
+            {!c.readOnly && (
+              <Button size="sm" onClick={download} disabled={!shown.length}>
+                <Download className="size-4" aria-hidden="true" />
+                Download CSV
+              </Button>
+            )}
+          </div>
+        </div>
       }
     >
-      <div className="flex flex-col gap-5">
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-          {stat("Sessions in the period", String(r.sessions))}
-          {stat("Attendance", r.attendance === null ? "N/A" : `${r.attendance.toFixed(0)}%`)}
-          {stat("Last seen", dayLabel(r.lastSeen))}
-          {stat("Next visit", dayLabel(r.nextVisit))}
-          {stat("Notes to sign", String(r.notesToSign))}
-        </div>
-        <Card title="Recent sessions" flush>
-          {summary.recent.length ? (
-            <ul className="divide-y divide-border">
-              {summary.recent.map((a) => (
-                <li key={a.id} className="flex items-center gap-3 px-4 py-2.5 text-small">
-                  <span className="w-24 flex-none text-ink-900">{dayLabel(a.start)}</span>
-                  <span className="min-w-0 flex-1 text-ink-700">
-                    {a.discipline} · {a.mode}
-                  </span>
-                  <span className="text-ink-500">{a.status.replace("-", " ")}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="px-4 py-6 text-small text-ink-500">No sessions yet.</p>
-          )}
-        </Card>
-        <div className="grid gap-5 md:grid-cols-2">
-          <Card title="Services" flush>
-            {summary.services.length ? (
-              <ul className="divide-y divide-border">
-                {summary.services.map((s) => (
-                  <li key={s.id} className="flex justify-between gap-3 px-4 py-2.5 text-small">
-                    <span className="text-ink-900">{s.support}</span>
-                    <span className="text-ink-500">{s.status.replace("-", " ")}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="px-4 py-6 text-small text-ink-500">No services on your caseload.</p>
-            )}
-          </Card>
-          <Card title="Goals and reviews" flush>
-            {summary.reviews.length ? (
-              <ul className="divide-y divide-border">
-                {summary.reviews.map((g) => (
-                  <li key={g.id} className="flex justify-between gap-3 px-4 py-2.5 text-small">
-                    <span className="text-ink-900">
-                      {g.goals} {g.goals === 1 ? "goal" : "goals"}
-                    </span>
-                    <span className="text-ink-500">Review due {dayLabel(g.reviewDue)}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="px-4 py-6 text-small text-ink-500">No goal reviews yet.</p>
-            )}
-          </Card>
-        </div>
-        {summary.assessments.length > 0 && (
-          <Card title="Assessments" flush>
-            <ul className="divide-y divide-border">
-              {summary.assessments.map((a) => (
-                <li key={a.id} className="flex justify-between gap-3 px-4 py-2.5 text-small">
-                  <span className="text-ink-900">{a.kind}</span>
-                  <span className="text-ink-500">
-                    {a.status} · due {dayLabel(a.dueAt)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </Card>
-        )}
-      </div>
+      <PatientTable rows={shown} />
     </Dialog>
   );
 }
@@ -486,7 +346,7 @@ export const THERAPIST_AREAS: Area[] = [
     title: "Patients and caseload",
     domains: ["Participants"],
     tables: [],
-    custom: [{ id: "patients-list", label: "Patient list" }],
+    openLabel: "View patient list",
     headline: ["caseload", "patients-seen"],
     Tab: PatientsTab,
   },

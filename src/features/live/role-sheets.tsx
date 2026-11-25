@@ -315,7 +315,6 @@ export function UnsavedPrompt({
     <Dialog
       title="Unsaved changes"
       description={`You have ${count} unsaved ${count === 1 ? "change" : "changes"} to ${roleName}.`}
-      size="sm"
       above
       onRequestClose={onKeep}
       footer={

@@ -71,6 +71,8 @@ export type Area = {
   tables: string[];
   /** Tables that are not catalogue reports, such as a therapist's patient list. */
   custom?: { id: string; label: string }[];
+  /** The tab's main button, when it opens something other than the full report. */
+  openLabel?: string;
   /** The headline number on Overview, then a smaller one beneath it. */
   headline: [string, string];
   Tab: (props: { c: Ctx }) => ReactNode;
@@ -246,7 +248,7 @@ export function AreaPage({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="primary" onClick={onOpen}>
-            Open the full report
+            {area.openLabel ?? "Open the full report"}
             <ChevronRight className="size-4" aria-hidden="true" />
           </Button>
           {!c.readOnly && area.tables.length > 0 && (

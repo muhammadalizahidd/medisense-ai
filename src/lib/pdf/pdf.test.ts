@@ -1,15 +1,21 @@
 import { readFileSync } from "node:fs";
 import { createElement } from "react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { extractText, getDocumentProxy } from "unpdf";
 import type { Snapshot } from "@/lib/live/report-files";
 import type { InvoiceDto07 } from "@/lib/live/finance";
 import type { AgreementDto } from "@/lib/live/funding";
+import type { RecordDto } from "@/lib/live/records";
+import { sessionStats } from "@/lib/live/patient-stats";
+import { PatientReportDocument } from "./documents/patient";
 import { AgreementDocument } from "./documents/agreement";
 import { InvoiceDocument } from "./documents/invoice";
 import { PDF_ROW_LIMIT, ReportDocument } from "./documents/report";
 import { renderPdf } from "./render";
 import { parity, pdfColour } from "./theme";
+
+// Rendering real PDFs is slow when the whole suite runs at once.
+vi.setConfig({ testTimeout: 60_000 });
 
 const snapshot = (over: Partial<Snapshot> = {}): Snapshot => ({
   ref: "EXP-1",
@@ -441,5 +447,91 @@ describe("PDF layout never overlaps", () => {
     });
     const bytes = await renderPdf(createElement(AgreementDocument, { a }));
     expect(await collisions(new Uint8Array(bytes))).toEqual([]);
+  });
+});
+
+describe("patient summary PDF", () => {
+  const long = "A long clinical observation with plenty of detail. ".repeat(40);
+  const many = <T>(make: (i: number) => T) => Array.from({ length: 40 }, (_, i) => make(i));
+  const record = {
+    name: "Emily Carter",
+    participantId: "MSP-0042",
+    dateOfBirth: "2018-03-02",
+    pronouns: "she/her",
+    suburb: "Chermside",
+    funding: "NDIS",
+    precautions: "Latex allergy",
+    alerts: [],
+    episodes: many((i) => ({ support: `Service ${i}`, status: "Active", clinician: "Emma" })),
+    risks: many((i) => ({ severity: "High", description: `Risk ${i} ${long}`, mitigation: long })),
+    allergies: many((i) => ({ substance: `Allergen ${i}`, reaction: long, severity: "Mild" })),
+    conditions: many((i) => ({ label: `Condition ${i}`, status: "Current" })),
+    medications: [],
+    goals: many((i) => ({
+      description: `Goal ${i} ${long}`,
+      current: long,
+      target: long,
+      status: "In progress",
+    })),
+    entries: many((i) => ({
+      title: `Note ${i}`,
+      text: long,
+      status: "Signed",
+      hidden: false,
+      createdAt: "2026-11-01T00:00:00.000Z",
+    })),
+    careTeam: {
+      contacts: many((i) => ({
+        name: `Contact ${i}`,
+        relationship: "Parent",
+        contactAllowed: true,
+      })),
+      clinicians: [],
+    },
+  } as unknown as RecordDto;
+  const stats = sessionStats(
+    [
+      { start: "2026-11-02T00:00:00.000Z", status: "completed" },
+      { start: "2026-10-02T00:00:00.000Z", status: "no-show" },
+    ],
+    "2026-11-14T00:00:00.000Z",
+  );
+  const render = async () =>
+    new Uint8Array(
+      await renderPdf(
+        createElement(PatientReportDocument, {
+          r: record,
+          stats,
+          preparedBy: "Emma Clarke",
+          preparedAt: "2026-11-14T02:00:00.000Z",
+        }),
+      ),
+    );
+
+  it("stays within two pages even for a very full record, safety first", async () => {
+    const pdf = await getDocumentProxy(await render());
+    expect(pdf.numPages).toBeLessThanOrEqual(2);
+    const { text } = await extractText(pdf, { mergePages: false });
+    expect(text[0]).toContain("Latex allergy");
+    const all = text.join(" ");
+    for (const part of [
+      "Emily Carter",
+      "Attendance",
+      "Goals",
+      "Risks",
+      "Latest notes",
+      "more in the record",
+    ]) {
+      expect(all).toContain(part);
+    }
+  });
+
+  it("never overlaps", async () => {
+    expect(await collisions(await render())).toEqual([]);
+  });
+
+  it("counts attendance the same way for the screen and the page", () => {
+    expect(stats).toMatchObject({ delivered: 1, missed: 1, attendance: 50 });
+    expect(stats.months.at(-1)).toMatchObject({ label: "Nov", value: 1 });
   });
 });

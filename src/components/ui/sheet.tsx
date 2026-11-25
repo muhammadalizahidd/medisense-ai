@@ -3,7 +3,8 @@
 import { X } from "lucide-react";
 import { useEffect, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { useOverlayStack } from "./overlay";
+import { OVERLAY_FRAME, OVERLAY_PANEL, useOverlayStack, useScrollLock } from "./overlay";
+import { OverlayCrumbs } from "./overlay-crumbs";
 
 const FOCUSABLE = "button, input, select, textarea, a[href]";
 
@@ -29,7 +30,8 @@ export function Sheet({
 }) {
   const panel = useRef<HTMLDivElement>(null);
   const close = useRef(onClose);
-  const isTop = useOverlayStack();
+  const { isTop, below } = useOverlayStack(title, onClose);
+  useScrollLock();
 
   useEffect(() => {
     close.current = onClose;
@@ -39,7 +41,8 @@ export function Sheet({
     const opener = document.activeElement;
     const node = panel.current;
     const items = () => Array.from(node?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? []);
-    (items().find((el) => el.matches("input, select, textarea")) ?? items()[0])?.focus();
+    const list = items().filter((el) => !el.closest("[data-crumbs]"));
+    (list.find((el) => el.matches("input, select, textarea")) ?? list[0])?.focus();
 
     const onKey = (event: KeyboardEvent) => {
       if (!isTop()) return;
@@ -65,9 +68,7 @@ export function Sheet({
   }, []);
 
   return createPortal(
-    <div
-      className={`fixed inset-0 flex items-end justify-end sm:items-stretch ${above ? "z-60" : "z-40"}`}
-    >
+    <div className={`${OVERLAY_FRAME} ${above ? "z-60" : "z-50"}`}>
       <button
         type="button"
         aria-label="Close"
@@ -75,13 +76,8 @@ export function Sheet({
         onClick={onClose}
         className="absolute inset-0 cursor-default bg-scrim"
       />
-      <div
-        ref={panel}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        className="relative flex max-h-[92dvh] w-full flex-col rounded-t-sheet bg-raised shadow-overlay sm:h-full sm:max-h-none sm:w-120 sm:max-w-full sm:rounded-t-none sm:rounded-l-sheet"
-      >
+      <div ref={panel} role="dialog" aria-modal="true" aria-label={title} className={OVERLAY_PANEL}>
+        <OverlayCrumbs title={title} below={below} onClose={onClose} />
         <header className="flex items-start justify-between gap-3 border-b border-border px-6 py-5">
           <div className="min-w-0">
             <h2 className="type-display text-h2">{title}</h2>
@@ -96,7 +92,10 @@ export function Sheet({
             <X className="size-4" strokeWidth={1.5} aria-hidden="true" />
           </button>
         </header>
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">{children}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto bg-canvas px-6 py-5">
+          {/* Forms keep a readable measure inside the common popup size. */}
+          <div className="mx-auto w-full max-w-3xl">{children}</div>
+        </div>
         {footer && (
           <footer className="flex flex-wrap items-center gap-2 border-t border-border bg-raised px-6 py-4">
             {footer}
