@@ -23,7 +23,14 @@ const DAY = 86_400_000;
 type Range = "today" | "week" | "past" | "upcoming" | "all";
 
 /** Module 14 screen: My Sessions (therapist) and Sessions (care team). */
-export function SessionList({ base }: { base: "/therapist/sessions" | "/care/sessions" }) {
+export function SessionList({
+  base,
+  embedded = false,
+}: {
+  base: "/therapist/sessions" | "/care/sessions";
+  /** Inside Sessions and notes, which brings its own title. */
+  embedded?: boolean;
+}) {
   const { data, error, loading, reload } = useResource<{ rows: SessionRow[] }>(
     "/api/care/sessions",
     (e) => e.type === "care",
@@ -78,12 +85,14 @@ export function SessionList({ base }: { base: "/therapist/sessions" | "/care/ses
   });
   return (
     <>
-      <PageHeader
-        eyebrow="Live care"
-        title={base === "/therapist/sessions" ? "My sessions" : "Sessions"}
-        description="Prepare, conduct, document and hand over every visit"
-        actions={<LiveBadge />}
-      />
+      {!embedded && (
+        <PageHeader
+          eyebrow="Live care"
+          title={base === "/therapist/sessions" ? "My sessions" : "Sessions"}
+          description="Prepare, conduct, document and hand over every visit"
+          actions={<LiveBadge />}
+        />
+      )}
       <KpiBand
         label="Session figures"
         items={[

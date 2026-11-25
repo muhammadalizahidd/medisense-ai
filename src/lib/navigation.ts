@@ -99,7 +99,12 @@ export const navigation: { group: string; items: NavItem[] }[] = [
       { href: "/care/records", label: "Clinical records", icon: FileText, roles: [L, A] },
       { href: "/care/assessments", label: "Assessments", icon: ClipboardList, roles: [L, A] },
       { href: "/care/plans", label: "Treatment plans", icon: Target, roles: [L, A] },
-      { href: "/care/sessions", label: "Sessions", icon: CalendarCheck, roles: [L, A] },
+      {
+        href: "/care/sessions",
+        label: "Sessions and notes",
+        icon: CalendarCheck,
+        roles: [L, A],
+      },
       { href: "/care/documentation", label: "Documentation", icon: FileSignature, roles: [L, A] },
       { href: "/care/progress", label: "Progress and reports", icon: TrendingUp, roles: [L, A] },
       { href: "/care/coordination", label: "Care coordination", icon: Workflow, roles: [L, A] },
@@ -269,13 +274,7 @@ const roleLayouts: Partial<Record<Role, Section[]>> = {
     {
       group: "Therapists",
       live: true,
-      hrefs: [
-        "/care/therapists",
-        "/care/sessions",
-        "/care/documentation",
-        "/care/coordination",
-        "/telehealth/recordings",
-      ],
+      hrefs: ["/care/therapists", "/care/sessions", "/care/coordination", "/telehealth/recordings"],
     },
     { group: "Scheduling", live: true, hrefs: ["/care/schedule"] },
     { group: "Finance", live: true, hrefs: ["/care/funding", "/care/billing"] },
@@ -474,11 +473,11 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
   },
   {
     prefix: "/care/documentation/",
-    meta: { section: "Documentation", page: "Clinical note", role: "Admin" },
+    meta: { section: "Sessions and notes", page: "Clinical note", role: "Admin" },
   },
   {
     prefix: "/care/documentation",
-    meta: { section: "Live care", page: "Documentation", role: "Admin" },
+    meta: { section: "Live care", page: "Sessions and notes", role: "Admin" },
   },
   {
     prefix: "/therapist/documentation/",
@@ -490,11 +489,11 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
   },
   {
     prefix: "/care/sessions/",
-    meta: { section: "Sessions", page: "Session", role: "Admin" },
+    meta: { section: "Sessions and notes", page: "Session", role: "Admin" },
   },
   {
     prefix: "/care/sessions",
-    meta: { section: "Live care", page: "Sessions", role: "Admin" },
+    meta: { section: "Live care", page: "Sessions and notes", role: "Admin" },
   },
   {
     prefix: "/therapist/sessions/",

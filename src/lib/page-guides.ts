@@ -847,12 +847,12 @@ export const guides: Record<string, PageGuide> = {
     "An active, measurable plan the participant understands.",
   ),
   "/care/sessions": g(
-    "Sessions",
-    "Every therapy session across the team, with attendance, note state and delivery verification.",
+    "Sessions and notes",
+    "Every therapy session across the team, and the clinical note that comes out of each one.",
     [
-      "Filter by date, attendance, mode and service",
-      "See notes to sign and unverified delivery",
-      "Open a session",
+      "Sessions: attendance, mode, service and delivery verification",
+      "Notes: what is late, drafted by AI, flagged or waiting for co-sign",
+      "Open a session or a note at your access level",
     ],
     [
       "Check in-progress and missed sessions.",

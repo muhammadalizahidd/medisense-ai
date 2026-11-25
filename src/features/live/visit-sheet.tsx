@@ -9,11 +9,12 @@ import {
   Target,
   TriangleAlert,
   WifiOff,
+  ListChecks,
 } from "lucide-react";
 import { AiIcon } from "@/components/ai/provenance";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
-import { Sheet } from "@/components/ui/sheet";
+import { RecordCard, RecordPopup } from "@/components/ui/record-popup";
 import { toast } from "@/components/ui/toast";
 import { api, useNow, useResource } from "@/lib/live/client";
 import { shortDate, slotLabel, timeOfDay } from "@/lib/live/time";
@@ -302,39 +303,63 @@ export function VisitSheet({
     );
 
   return (
-    <Sheet
+    <RecordPopup
       title={`Visit · ${visit.clientName}`}
       description={`${visit.discipline} · ${slotLabel(visit.start)}`}
       onClose={onClose}
       footer={footer}
+      aside={
+        <RecordCard title="Visit steps" icon={ListChecks} flush={false}>
+          <ol className="flex flex-col gap-2">
+            {[
+              {
+                id: "brief",
+                label: "Arrive",
+                hint: "Check in and read the summary",
+                done: checkedIn,
+              },
+              { id: "session", label: "Session", hint: "Record what you did", done: false },
+              { id: "out", label: "Check out", hint: "Close the visit", done: false },
+            ].map((step, i) => {
+              const current =
+                (stage === "brief" && i === 0) ||
+                (stage === "session" && i === 1) ||
+                (stage !== "brief" && stage !== "session" && i === 2);
+              return (
+                <li
+                  key={step.id}
+                  className={cn(
+                    "flex items-center gap-3 rounded-control border px-3 py-2.5",
+                    step.done
+                      ? "border-accent-fill bg-accent-tint"
+                      : current
+                        ? "border-ink-900 bg-surface"
+                        : "border-border text-ink-500",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "flex size-7 flex-none items-center justify-center rounded-full text-caption font-semibold",
+                      step.done
+                        ? "bg-accent-fill text-on-accent"
+                        : current
+                          ? "bg-ink-900 text-surface"
+                          : "bg-sunken text-ink-500",
+                    )}
+                  >
+                    {step.done ? <CircleCheck className="size-4" aria-hidden="true" /> : i + 1}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-small font-semibold">{step.label}</span>
+                    <span className="block text-caption text-ink-500">{step.hint}</span>
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+        </RecordCard>
+      }
     >
-      <ol className="mb-5 grid grid-cols-3 gap-1.5 text-caption font-semibold">
-        {[
-          { id: "brief", label: "Arrive", done: checkedIn },
-          { id: "session", label: "Session", done: false },
-          { id: "out", label: "Check out", done: false },
-        ].map((s, i) => (
-          <li
-            key={s.id}
-            className={cn(
-              "flex items-center gap-1.5 rounded-control border px-2 py-1.5",
-              s.done
-                ? "border-accent-fill bg-accent-tint"
-                : (stage === "brief" && i === 0) || (stage === "session" && i === 1)
-                  ? "border-ink-900"
-                  : "border-border text-ink-500",
-            )}
-          >
-            {s.done ? (
-              <CircleCheck className="size-3.5 text-accent" aria-hidden="true" />
-            ) : (
-              <span>{i + 1}</span>
-            )}
-            {s.label}
-          </li>
-        ))}
-      </ol>
-
       {!online && (
         <p
           role="status"
@@ -403,7 +428,7 @@ export function VisitSheet({
             <>
               <section
                 aria-label="Pre-visit summary"
-                className="rounded-card bg-canvas p-4 text-small"
+                className="rounded-card border border-border bg-surface p-4 text-small"
               >
                 <h3 className="mb-2 font-semibold">Pre-visit summary</h3>
                 <dl className="grid grid-cols-[110px_1fr] gap-x-3 gap-y-1.5">
@@ -604,7 +629,7 @@ export function VisitSheet({
           )}
         </div>
       )}
-    </Sheet>
+    </RecordPopup>
   );
 }
 

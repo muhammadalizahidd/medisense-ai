@@ -1,10 +1,19 @@
 "use client";
 
-import { ArrowUpRight, FileWarning, Plus, Scale, Settings2, Upload } from "lucide-react";
+import {
+  ArrowUpRight,
+  FileWarning,
+  History as HistoryIcon,
+  Plus,
+  Scale,
+  Settings2,
+  Upload,
+} from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { RuleMark } from "@/components/ai/provenance";
 import { Button } from "@/components/ui/button";
+import { RecordCard, RecordPopup } from "@/components/ui/record-popup";
 import { Select } from "@/components/ui/select";
 import { Sheet } from "@/components/ui/sheet";
 import { TableFrame } from "@/components/ui/table-frame";
@@ -234,15 +243,17 @@ function ClaimSheet({
     }
   };
   return (
-    <Sheet
+    <RecordPopup
       title={`${c.ref} · ${c.participant}`}
       description={`${aud(c.total)} · ${c.status}`}
       onClose={onClose}
+      meta={<Tag tone={claimTone[c.status]}>{c.status}</Tag>}
+      aside={<History items={c.history} />}
     >
       <div className="flex flex-col gap-4">
-        <ul className="divide-y divide-border rounded-control border border-border">
+        <ul className="divide-y divide-border overflow-hidden rounded-card border border-border bg-surface">
           {c.lines.map((l) => (
-            <li key={l.billableId} className="flex justify-between gap-3 px-3 py-2 text-small">
+            <li key={l.billableId} className="flex justify-between gap-3 px-4 py-3 text-small">
               <span>
                 <span className="font-mono">{l.ref}</span> · {l.support} · {dayLabel(l.date)}
                 <span className="block text-caption text-ink-500">
@@ -263,8 +274,9 @@ function ClaimSheet({
             ))}
           </div>
         )}
-        {hub.can.officer && (
-          <div className="flex flex-col gap-3 rounded-card border border-border p-4">
+        {hub.can.officer && c.status !== "Closed" && (
+          <div className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
+            <p className="text-small font-semibold text-ink-900">Next step</p>
             {c.status === "Ready" && (
               <Button variant="primary" onClick={() => act({ type: "prepare" }, "Claim prepared")}>
                 Prepare claim
@@ -336,49 +348,50 @@ function ClaimSheet({
                 {c.ref}.
               </p>
             )}
-            {c.status !== "Closed" && (
-              <Button
-                variant="soft-danger"
-                size="sm"
-                disabled={note.trim().length < 3}
-                onClick={() => act({ type: "close", note }, "Claim closed")}
-              >
-                Close claim (uses the note above)
-              </Button>
-            )}
+            <Button
+              variant="soft-danger"
+              size="sm"
+              disabled={note.trim().length < 3}
+              onClick={() => act({ type: "close", note }, "Claim closed")}
+            >
+              Close claim (uses the note above)
+            </Button>
           </div>
         )}
-        <History items={c.history} />
       </div>
-    </Sheet>
+    </RecordPopup>
   );
 }
 
 function History({ items }: { items: { at: string; by: string; action: string }[] }) {
   return (
-    <div>
-      <p className="mb-1.5 text-caption font-semibold text-ink-700">History</p>
-      <ol className="relative ml-1 border-l border-border pl-4">
-        {items.map((h, i) => (
-          <li key={`${h.at}-${i}`} className="relative pb-2">
-            <span
-              className="absolute top-1.5 -left-[21px] size-2 rounded-full bg-accent-fill"
-              aria-hidden="true"
-            />
-            <p className="text-caption text-ink-900">{h.action}</p>
-            <p className="text-label text-ink-500">
-              {h.by} ·{" "}
-              {new Date(h.at).toLocaleString("en-AU", {
-                day: "numeric",
-                month: "short",
-                hour: "numeric",
-                minute: "2-digit",
-              })}
-            </p>
-          </li>
-        ))}
-      </ol>
-    </div>
+    <RecordCard title="History" icon={HistoryIcon} flush={false}>
+      {items.length === 0 ? (
+        <p className="text-small text-ink-500">Nothing recorded yet.</p>
+      ) : (
+        <ol className="relative ml-2 border-l border-border pl-5">
+          {[...items].reverse().map((h, i) => (
+            <li key={`${h.at}-${i}`} className="relative pb-3 last:pb-0">
+              <span
+                className="absolute top-1.5 -left-[25px] size-2.5 rounded-full border-2 border-surface bg-accent-fill"
+                aria-hidden="true"
+              />
+              <p className="text-small text-ink-900">{h.action}</p>
+              <p className="text-caption text-ink-500">
+                {h.by},{" "}
+                {new Date(h.at).toLocaleString("en-AU", {
+                  timeZone: "Australia/Brisbane",
+                  day: "numeric",
+                  month: "short",
+                  hour: "numeric",
+                  minute: "2-digit",
+                })}
+              </p>
+            </li>
+          ))}
+        </ol>
+      )}
+    </RecordCard>
   );
 }
 
@@ -606,10 +619,12 @@ function AllocateSheet({
       .map((t) => t.id),
   );
   return (
-    <Sheet
+    <RecordPopup
       title={`${p.ref} · ${aud(p.amount)}`}
       description={`${p.payer} · ${p.reference} · ${aud(p.unapplied)} unapplied`}
       onClose={onClose}
+      meta={<Tag tone={paymentTone[p.status]}>{p.status}</Tag>}
+      aside={<History items={p.history} />}
     >
       <div className="flex flex-col gap-4">
         {p.duplicateRef && (
@@ -767,9 +782,8 @@ function AllocateSheet({
             </Button>
           </div>
         )}
-        <History items={p.history} />
       </div>
-    </Sheet>
+    </RecordPopup>
   );
 }
 
@@ -882,13 +896,13 @@ function ReconSheet({
   };
   const candidates = hub.payments.filter((p) => p.status !== "Reversed" && p.recon === "Unmatched");
   return (
-    <Sheet
+    <RecordPopup
       title={`Bank line ${aud(l.amount)}`}
       description={`${dayLabel(l.date)} · ${l.description}`}
       onClose={onClose}
+      meta={<Tag tone={reconTone[l.status]}>{l.status}</Tag>}
     >
       <div className="flex flex-col gap-4">
-        <Tag tone={reconTone[l.status]}>{l.status}</Tag>
         {hub.can.officer && (l.status === "Unmatched" || l.status === "Suggested") && (
           <>
             <div className="flex flex-col gap-2 rounded-card border border-border p-4">
@@ -975,7 +989,7 @@ function ReconSheet({
           </Button>
         )}
       </div>
-    </Sheet>
+    </RecordPopup>
   );
 }
 

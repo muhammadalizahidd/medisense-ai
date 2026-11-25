@@ -2,16 +2,16 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { PageContainer, PageLoading } from "@/components/ui/page";
 import { OfflinePage } from "@/features/live/offline-page";
-import { SessionList } from "@/features/live/session-list";
+import { SessionsHub } from "@/features/live/sessions-hub";
 import { requirePageUser } from "@/server/page-auth";
 
-export const metadata: Metadata = { title: "Treatment plans � Medisense" };
+export const metadata: Metadata = { title: "Sessions and notes · Medisense" };
 
 async function PageContent() {
   if (!(await requirePageUser("/care/sessions", "admin"))) return <OfflinePage />;
   return (
     <PageContainer>
-      <SessionList base="/care/sessions" />
+      <SessionsHub />
     </PageContainer>
   );
 }

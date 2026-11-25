@@ -27,7 +27,14 @@ const DAY = 86_400_000;
 type Range = "all" | "today" | "7" | "30";
 
 /** Module 15 screen 3.1: My Documentation Queue. */
-export function DocQueue({ base }: { base: "/therapist/documentation" | "/care/documentation" }) {
+export function DocQueue({
+  base,
+  embedded = false,
+}: {
+  base: "/therapist/documentation" | "/care/documentation";
+  /** Inside Sessions and notes, which brings its own title. */
+  embedded?: boolean;
+}) {
   const { data, error, loading, reload } = useResource<{ rows: DocRow[]; options: DocOption[] }>(
     "/api/care/documentation",
     (e) => e.type === "care",
@@ -64,21 +71,23 @@ export function DocQueue({ base }: { base: "/therapist/documentation" | "/care/d
   const open = all.filter((r) => !["Signed", "Addendum"].includes(r.status));
   return (
     <>
-      <PageHeader
-        eyebrow="Live care"
-        title={base === "/therapist/documentation" ? "My documentation" : "Documentation"}
-        description="Capture, draft with AI, verify and sign every clinical note"
-        actions={
-          <div className="flex items-center gap-2">
-            {base === "/therapist/documentation" && (
-              <Button variant="primary" onClick={() => setWizard(true)}>
-                <FilePlus2 className="size-4" aria-hidden="true" /> New note
-              </Button>
-            )}
-            <LiveBadge />
-          </div>
-        }
-      />
+      {!embedded && (
+        <PageHeader
+          eyebrow="Live care"
+          title={base === "/therapist/documentation" ? "My documentation" : "Documentation"}
+          description="Capture, draft with AI, verify and sign every clinical note"
+          actions={
+            <div className="flex items-center gap-2">
+              {base === "/therapist/documentation" && (
+                <Button variant="primary" onClick={() => setWizard(true)}>
+                  <FilePlus2 className="size-4" aria-hidden="true" /> New note
+                </Button>
+              )}
+              <LiveBadge />
+            </div>
+          }
+        />
+      )}
       <KpiBand
         label="Documentation figures"
         items={[

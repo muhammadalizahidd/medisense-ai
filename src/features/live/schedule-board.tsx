@@ -28,6 +28,7 @@ import { MetricBand } from "@/components/ui/metric-band";
 import { PageHeader } from "@/components/ui/page";
 import { Segmented } from "@/components/ui/segmented";
 import { Select } from "@/components/ui/select";
+import { Dialog } from "@/components/ui/dialog";
 import { Modal } from "@/components/ui/modal";
 import { Sheet } from "@/components/ui/sheet";
 import { TabPanel, Tabs, useTab } from "@/components/ui/tabs";
@@ -102,7 +103,7 @@ const statusTone: Record<
 /* ------------------------------------------------------------------ board */
 
 export function ScheduleBoard() {
-  const [view, setView] = useState<View>("week");
+  const [view, setView] = useState<View>("team");
   const [anchor, setAnchor] = useState(() => dayStart(Date.now()));
   const [clinician, setClinician] = useState("");
   const [discipline, setDiscipline] = useState("");
@@ -301,7 +302,8 @@ export function ScheduleBoard() {
             only.
           </p>
         )}
-        <div className="grid gap-6 2xl:grid-cols-[1fr_360px]">
+        {/* The calendar takes the full width; the booking queues sit in a row beneath it. */}
+        <div className="flex flex-col gap-6">
           <section className="min-w-0 rounded-card border border-border bg-surface shadow-lift">
             <div className="flex flex-col gap-3 border-b border-border p-3">
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -462,7 +464,7 @@ export function ScheduleBoard() {
             )}
           </section>
 
-          <aside className="flex flex-col gap-4">
+          <aside className="grid items-stretch gap-6 lg:grid-cols-3" aria-label="Booking queues">
             <RailCard title="To book" count={board?.unscheduled.length ?? 0} tone="over">
               {(board?.unscheduled ?? []).length === 0 ? (
                 <p className="px-4 py-6 text-center text-small text-ink-500">
@@ -630,7 +632,7 @@ function RailCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className="overflow-hidden rounded-card border border-border bg-surface shadow-lift">
+    <section className="flex h-full flex-col overflow-hidden rounded-card border border-border bg-surface shadow-lift">
       <header className="flex items-center justify-between border-b border-border px-4 py-3">
         <h3 className="text-small font-semibold text-ink-900">{title}</h3>
         <span
@@ -642,7 +644,7 @@ function RailCard({
           {count}
         </span>
       </header>
-      <div className="max-h-80 overflow-y-auto">{children}</div>
+      <div className="max-h-80 flex-1 overflow-y-auto">{children}</div>
     </section>
   );
 }
@@ -1099,13 +1101,12 @@ function AppointmentSheet({
   }
 
   return (
-    <Sheet
+    <Dialog
       title={`${e.ref} · ${e.patient}`}
       description={`${e.purpose} · ${e.support}`}
-      onClose={onClose}
-    >
-      <div className="flex flex-col gap-5">
-        <div className="flex flex-wrap items-center gap-2">
+      onRequestClose={onClose}
+      meta={
+        <span className="flex flex-wrap items-center gap-2">
           <Tag tone={statusTone[e.status]}>{e.status}</Tag>
           <Tag
             tone={
@@ -1123,395 +1124,344 @@ function AppointmentSheet({
               Visit {e.series.index} of {e.series.total}
             </Tag>
           )}
-        </div>
-
-        <dl className="grid gap-1 rounded-card border border-border">
-          {(
-            [
+        </span>
+      }
+    >
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="flex min-w-0 flex-col gap-5">
+          <dl className="grid overflow-hidden rounded-card border border-border bg-surface md:grid-cols-3">
+            {(
               [
-                Clock,
-                "When",
-                `${fmt(e.start, { weekday: "long", day: "numeric", month: "long" })}, ${time(e.start)}–${time(e.end)} (${TIMEZONE_LABEL})`,
-              ],
-              [UserRound, "Clinician", `${e.therapist} · ${e.discipline}`],
-              [
-                e.modality === "Telehealth" ? MonitorPlay : MapPin,
-                "Where",
-                e.modality === "Telehealth"
-                  ? "Telehealth: no travel; recording off by default"
-                  : [e.location, e.site?.siteName, e.site?.address].filter(Boolean).join(" · "),
-              ],
-            ] as const
-          ).map(([Icon, label, value]) => (
-            <div
-              key={label}
-              className="flex gap-3 border-b border-border px-4 py-2.5 last:border-0"
-            >
-              <Icon className="mt-0.5 size-4 flex-none text-ink-500" aria-hidden="true" />
-              <div className="min-w-0">
-                <dt className="text-label font-semibold tracking-[0.08em] text-ink-500 uppercase">
-                  {label}
-                </dt>
-                <dd className="text-small text-ink-900">{value}</dd>
+                [
+                  Clock,
+                  `When · ${TIMEZONE_LABEL}`,
+                  `${fmt(e.start, { weekday: "short", day: "numeric", month: "short" })}, ${time(e.start)}–${time(e.end)}`,
+                ],
+                [UserRound, "Clinician", `${e.therapist} · ${e.discipline}`],
+                [
+                  e.modality === "Telehealth" ? MonitorPlay : MapPin,
+                  "Where",
+                  e.modality === "Telehealth"
+                    ? "Telehealth: no travel; recording off by default"
+                    : [e.location, e.site?.siteName, e.site?.address].filter(Boolean).join(" · "),
+                ],
+              ] as const
+            ).map(([Icon, label, value]) => (
+              <div
+                key={label}
+                className="flex gap-3 border-b border-border px-4 py-3.5 last:border-0 md:border-r md:border-b-0"
+              >
+                <Icon className="mt-0.5 size-4 flex-none text-ink-500" aria-hidden="true" />
+                <div className="min-w-0">
+                  <dt className="text-label font-semibold tracking-[0.08em] text-ink-500 uppercase">
+                    {label}
+                  </dt>
+                  <dd className="text-small text-ink-900">{value}</dd>
+                </div>
               </div>
-            </div>
-          ))}
-        </dl>
+            ))}
+          </dl>
 
-        {e.modality === "Telehealth" && (
-          <div className="flex gap-3 rounded-control border border-accent/30 bg-accent-tint/40 px-4 py-3 text-small text-ink-700">
-            <MonitorPlay className="mt-0.5 size-4 flex-none text-accent" aria-hidden="true" />
-            <span>
-              <strong className="text-ink-900">Telehealth.</strong> The clinician confirms
-              suitability and sends the one-time joining link from the video room. The waiting room
-              checks who is joining; recording stays off until consent is documented, and the visit
-              goes ahead unrecorded if it&apos;s declined.{" "}
-              <Link href="/telehealth/recordings" className="font-semibold text-accent">
-                Recordings
-              </Link>
-            </span>
-          </div>
-        )}
-        {e.site &&
-          (e.site.accessNotes || e.site.siteContact || e.site.parking || e.site.supportPerson) && (
-            <div className="rounded-control bg-canvas px-4 py-3 text-small text-ink-700">
-              {e.site.accessNotes && (
-                <p>
-                  <strong className="text-ink-900">Access:</strong> {e.site.accessNotes}
-                </p>
-              )}
-              {e.site.parking && (
-                <p>
-                  <strong className="text-ink-900">Parking:</strong> {e.site.parking}
-                </p>
-              )}
-              {e.site.pets && (
-                <p>
-                  <strong className="text-ink-900">Pets/environment:</strong> {e.site.pets}
-                </p>
-              )}
-              {e.site.siteContact && (
-                <p>
-                  <strong className="text-ink-900">Site contact:</strong> {e.site.siteContact}{" "}
-                  {e.site.sitePhone}
-                </p>
-              )}
-              {e.site.supportPerson && (
-                <p>
-                  <strong className="text-ink-900">Support person:</strong> {e.site.supportPerson}
-                </p>
-              )}
+          {e.modality === "Telehealth" && (
+            <div className="flex gap-3 rounded-control border border-accent/30 bg-accent-tint/40 px-4 py-3 text-small text-ink-700">
+              <MonitorPlay className="mt-0.5 size-4 flex-none text-accent" aria-hidden="true" />
+              <span>
+                <strong className="text-ink-900">Telehealth.</strong> The clinician confirms
+                suitability and sends the one-time joining link from the video room. The waiting
+                room checks who is joining; recording stays off until consent is documented, and the
+                visit goes ahead unrecorded if it&apos;s declined.{" "}
+                <Link href="/telehealth/recordings" className="font-semibold text-accent">
+                  Recordings
+                </Link>
+              </span>
             </div>
           )}
-
-        {e.flags.length > 0 && (
-          <ul className="flex flex-col gap-1.5">
-            {e.flags.map((f, i) => (
-              <li
-                key={i}
-                className={cn(
-                  "flex items-start gap-2 rounded-control px-3 py-2 text-small",
-                  flagTone[f.kind] === "over"
-                    ? "bg-over-bg text-ink-900"
-                    : "bg-watch-bg text-ink-900",
+          {e.site &&
+            (e.site.accessNotes ||
+              e.site.siteContact ||
+              e.site.parking ||
+              e.site.supportPerson) && (
+              <div className="rounded-control bg-canvas px-4 py-3 text-small text-ink-700">
+                {e.site.accessNotes && (
+                  <p>
+                    <strong className="text-ink-900">Access:</strong> {e.site.accessNotes}
+                  </p>
                 )}
-              >
-                <ShieldAlert
-                  className={cn(
-                    "mt-0.5 size-4 flex-none",
-                    flagTone[f.kind] === "over" ? "text-over" : "text-watch",
-                  )}
-                  aria-hidden="true"
-                />
-                {f.label}
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {(upcoming || past) && (
-          <div className="flex flex-wrap gap-2">
-            {upcoming && (
-              <>
-                <Button
-                  size="sm"
-                  variant="soft"
-                  onClick={async () => {
-                    setPanel("move");
-                    setSlots(null);
-                    try {
-                      const r = await api<{ slots: string[] }>(`/api/visits/${e.id}/times`);
-                      setSlots(r.slots);
-                    } catch {
-                      setSlots([]);
-                    }
-                  }}
-                >
-                  <CalendarClock className="size-3.5" aria-hidden="true" /> Reschedule
-                </Button>
-                <Button size="sm" variant="soft-danger" onClick={() => setPanel("cancel")}>
-                  <X className="size-3.5" aria-hidden="true" /> Cancel
-                </Button>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  disabled={busy}
-                  onClick={() =>
-                    run(async () => {
-                      const r = await api<{ link?: string }>(`/api/care/schedule/${e.id}`, {
-                        body: { type: "patient-link" },
-                      });
-                      setLink(`${window.location.origin}${r.link}`);
-                    }, "Participant link created")
-                  }
-                >
-                  <Link2 className="size-3.5" aria-hidden="true" /> Participant link
-                </Button>
-              </>
-            )}
-            {past && (
-              <Button size="sm" variant="soft-danger" onClick={() => setPanel("noshow")}>
-                Record did not attend
-              </Button>
-            )}
-            <Link
-              href={`/care/${e.clientId}`}
-              className="inline-flex h-8 items-center rounded-control px-3 text-caption font-semibold text-accent hover:bg-accent-tint hover:no-underline"
-            >
-              Open patient →
-            </Link>
-          </div>
-        )}
-
-        {link && (
-          <div className="flex items-center gap-2 rounded-control border border-border bg-canvas p-2">
-            <code className="min-w-0 flex-1 truncate px-1 text-caption">{link}</code>
-            <Button
-              size="sm"
-              onClick={() => {
-                void navigator.clipboard?.writeText(link);
-                toast("Link copied", { tone: "success" });
-              }}
-            >
-              <Copy className="size-3.5" aria-hidden="true" /> Copy
-            </Button>
-          </div>
-        )}
-
-        {panel === "cancel" && (
-          <div className="bubble-in flex flex-col gap-3 rounded-card border border-over/30 bg-over-bg/40 p-4">
-            <p className="text-small font-semibold">Cancel {e.ref}</p>
-            <Select
-              aria-label="Reason"
-              value={reason}
-              onChange={(ev) => setReason(ev.target.value as typeof reason)}
-            >
-              {cancelReasons.map((r) => (
-                <option key={r}>{r}</option>
-              ))}
-            </Select>
-            <Select
-              aria-label="Who cancelled"
-              value={by}
-              onChange={(ev) => setBy(ev.target.value as typeof by)}
-            >
-              <option value="medisense">Medisense cancelled (never charged)</option>
-              <option value="client">The participant cancelled (notice rules apply)</option>
-            </Select>
-            <p className="text-caption text-ink-700">
-              It leaves the itinerary; the history stays on record.
-            </p>
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant="primary"
-                loading={busy}
-                onClick={() =>
-                  run(
-                    () => api(`/api/visits/${e.id}/cancel`, { body: { by, reason } }),
-                    "Appointment cancelled",
-                  )
-                }
-              >
-                Confirm cancellation
-              </Button>
-              <Button size="sm" variant="ghost" onClick={() => setPanel(null)}>
-                Keep it
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {panel === "move" && (
-          <div className="bubble-in flex flex-col gap-3 rounded-card border border-accent/30 bg-accent-tint/40 p-4">
-            <p className="text-small font-semibold">New time with {e.therapist}</p>
-            <Select
-              aria-label="Reason for the move"
-              value={moveReason}
-              onChange={(ev) => setMoveReason(ev.target.value)}
-            >
-              {moveReasons.map((r) => (
-                <option key={r}>{r}</option>
-              ))}
-            </Select>
-            {slots === null ? (
-              <Skeleton className="h-10" />
-            ) : slots.length === 0 ? (
-              <p className="text-small text-ink-700">
-                No free times in the next two weeks. Try another clinician from the patient record.
-              </p>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {slots.map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    disabled={busy}
-                    onClick={() =>
-                      run(
-                        () =>
-                          api(`/api/care/schedule/${e.id}`, {
-                            body: {
-                              type: "move",
-                              start: s,
-                              expectedStart: e.start,
-                              reason: moveReason || "Rescheduled by scheduling",
-                            },
-                          }),
-                        "Moved: the original is kept in history",
-                      )
-                    }
-                    className="h-9 cursor-pointer rounded-control border border-border-strong bg-surface px-3 text-caption font-semibold transition-all hover:-translate-y-px hover:border-accent hover:text-accent active:scale-95"
-                  >
-                    {fmt(s, {
-                      weekday: "short",
-                      day: "numeric",
-                      month: "short",
-                      hour: "numeric",
-                      minute: "2-digit",
-                    })}
-                  </button>
-                ))}
+                {e.site.parking && (
+                  <p>
+                    <strong className="text-ink-900">Parking:</strong> {e.site.parking}
+                  </p>
+                )}
+                {e.site.pets && (
+                  <p>
+                    <strong className="text-ink-900">Pets/environment:</strong> {e.site.pets}
+                  </p>
+                )}
+                {e.site.siteContact && (
+                  <p>
+                    <strong className="text-ink-900">Site contact:</strong> {e.site.siteContact}{" "}
+                    {e.site.sitePhone}
+                  </p>
+                )}
+                {e.site.supportPerson && (
+                  <p>
+                    <strong className="text-ink-900">Support person:</strong> {e.site.supportPerson}
+                  </p>
+                )}
               </div>
             )}
-            <p className="text-caption text-ink-700">
-              The old time is recorded as cancelled by Medisense (never charged) and the new visit
-              replaces it.
-            </p>
-          </div>
-        )}
 
-        {panel === "noshow" && (
-          <div className="bubble-in flex flex-col gap-3 rounded-card border border-over/30 bg-over-bg/40 p-4">
-            <TextArea
-              label="Attempts to reach them"
-              required
-              rows={2}
-              value={attempts}
-              onChange={setAttempts}
-              placeholder="Called twice at 9:10 and 9:25, SMS sent, booking contact called"
-            />
-            <Tick checked={concern} onChange={setConcern}>
-              There&apos;s a safety concern to follow up
-            </Tick>
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant="soft-danger"
-                loading={busy}
-                disabled={attempts.trim().length < 3}
-                onClick={() =>
-                  run(
-                    () =>
-                      api(`/api/care/schedule/${e.id}`, {
-                        body: { type: "no-show", attempts, concern },
-                      }),
-                    "Recorded as did not attend",
-                  )
-                }
-              >
-                Record did not attend
-              </Button>
-              <Button size="sm" variant="ghost" onClick={() => setPanel(null)}>
-                Back
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {e.changeRequests.some((r) => !r.resolved) && (
-          <section>
-            <h4 className="mb-2 text-label font-semibold tracking-[0.1em] text-ink-500 uppercase">
-              Change requests
-            </h4>
-            {e.changeRequests.map((r, i) =>
-              r.resolved ? null : (
-                <div
+          {e.flags.length > 0 && (
+            <ul className="flex flex-col gap-1.5">
+              {e.flags.map((f, i) => (
+                <li
                   key={i}
-                  className="mb-2 flex items-start justify-between gap-3 rounded-control bg-watch-bg px-3 py-2 text-small"
+                  className={cn(
+                    "flex items-start gap-2 rounded-control px-3 py-2 text-small",
+                    flagTone[f.kind] === "over"
+                      ? "bg-over-bg text-ink-900"
+                      : "bg-watch-bg text-ink-900",
+                  )}
                 >
-                  <span>
-                    {r.note}
-                    <span className="block text-caption text-ink-500">{relativeTime(r.at)}</span>
-                  </span>
+                  <ShieldAlert
+                    className={cn(
+                      "mt-0.5 size-4 flex-none",
+                      flagTone[f.kind] === "over" ? "text-over" : "text-watch",
+                    )}
+                    aria-hidden="true"
+                  />
+                  {f.label}
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {(upcoming || past) && (
+            <div className="flex flex-wrap gap-2">
+              {upcoming && (
+                <>
                   <Button
                     size="sm"
                     variant="soft"
+                    onClick={async () => {
+                      setPanel("move");
+                      setSlots(null);
+                      try {
+                        const r = await api<{ slots: string[] }>(`/api/visits/${e.id}/times`);
+                        setSlots(r.slots);
+                      } catch {
+                        setSlots([]);
+                      }
+                    }}
+                  >
+                    <CalendarClock className="size-3.5" aria-hidden="true" /> Reschedule
+                  </Button>
+                  <Button size="sm" variant="soft-danger" onClick={() => setPanel("cancel")}>
+                    <X className="size-3.5" aria-hidden="true" /> Cancel
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="secondary"
                     disabled={busy}
                     onClick={() =>
-                      run(
-                        () =>
-                          api(`/api/care/schedule/${e.id}`, {
-                            body: { type: "resolve-change", index: i },
-                          }),
-                        "Marked resolved",
-                      )
+                      run(async () => {
+                        const r = await api<{ link?: string }>(`/api/care/schedule/${e.id}`, {
+                          body: { type: "patient-link" },
+                        });
+                        setLink(`${window.location.origin}${r.link}`);
+                      }, "Participant link created")
                     }
                   >
-                    Resolve
+                    <Link2 className="size-3.5" aria-hidden="true" /> Participant link
                   </Button>
-                </div>
-              ),
-            )}
-          </section>
-        )}
+                </>
+              )}
+              {past && (
+                <Button size="sm" variant="soft-danger" onClick={() => setPanel("noshow")}>
+                  Record did not attend
+                </Button>
+              )}
+              <Link
+                href={`/care/${e.clientId}`}
+                className="inline-flex h-8 items-center rounded-control px-3 text-caption font-semibold text-accent hover:bg-accent-tint hover:no-underline"
+              >
+                Open patient →
+              </Link>
+            </div>
+          )}
 
-        {e.reminders.length > 0 && (
-          <section>
-            <h4 className="mb-2 flex items-center gap-1.5 text-label font-semibold tracking-[0.1em] text-ink-500 uppercase">
-              <BellRing className="size-3.5" aria-hidden="true" /> Reminders (simulated)
-            </h4>
-            <ul className="divide-y divide-border rounded-card border border-border">
-              {e.reminders.map((r) => (
-                <li key={r.trigger} className="flex items-center gap-3 px-3 py-2 text-small">
-                  <span className="min-w-0 flex-1">
-                    <span className="block font-medium text-ink-900">
-                      {r.trigger} · {r.channel}
-                    </span>
-                    <span className="block text-caption text-ink-500">
-                      {fmt(r.due, {
+          {link && (
+            <div className="flex items-center gap-2 rounded-control border border-border bg-canvas p-2">
+              <code className="min-w-0 flex-1 truncate px-1 text-caption">{link}</code>
+              <Button
+                size="sm"
+                onClick={() => {
+                  void navigator.clipboard?.writeText(link);
+                  toast("Link copied", { tone: "success" });
+                }}
+              >
+                <Copy className="size-3.5" aria-hidden="true" /> Copy
+              </Button>
+            </div>
+          )}
+
+          {panel === "cancel" && (
+            <div className="bubble-in flex flex-col gap-3 rounded-card border border-over/30 bg-over-bg/40 p-4">
+              <p className="text-small font-semibold">Cancel {e.ref}</p>
+              <Select
+                aria-label="Reason"
+                value={reason}
+                onChange={(ev) => setReason(ev.target.value as typeof reason)}
+              >
+                {cancelReasons.map((r) => (
+                  <option key={r}>{r}</option>
+                ))}
+              </Select>
+              <Select
+                aria-label="Who cancelled"
+                value={by}
+                onChange={(ev) => setBy(ev.target.value as typeof by)}
+              >
+                <option value="medisense">Medisense cancelled (never charged)</option>
+                <option value="client">The participant cancelled (notice rules apply)</option>
+              </Select>
+              <p className="text-caption text-ink-700">
+                It leaves the itinerary; the history stays on record.
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="primary"
+                  loading={busy}
+                  onClick={() =>
+                    run(
+                      () => api(`/api/visits/${e.id}/cancel`, { body: { by, reason } }),
+                      "Appointment cancelled",
+                    )
+                  }
+                >
+                  Confirm cancellation
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setPanel(null)}>
+                  Keep it
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {panel === "move" && (
+            <div className="bubble-in flex flex-col gap-3 rounded-card border border-accent/30 bg-accent-tint/40 p-4">
+              <p className="text-small font-semibold">New time with {e.therapist}</p>
+              <Select
+                aria-label="Reason for the move"
+                value={moveReason}
+                onChange={(ev) => setMoveReason(ev.target.value)}
+              >
+                {moveReasons.map((r) => (
+                  <option key={r}>{r}</option>
+                ))}
+              </Select>
+              {slots === null ? (
+                <Skeleton className="h-10" />
+              ) : slots.length === 0 ? (
+                <p className="text-small text-ink-700">
+                  No free times in the next two weeks. Try another clinician from the patient
+                  record.
+                </p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {slots.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      disabled={busy}
+                      onClick={() =>
+                        run(
+                          () =>
+                            api(`/api/care/schedule/${e.id}`, {
+                              body: {
+                                type: "move",
+                                start: s,
+                                expectedStart: e.start,
+                                reason: moveReason || "Rescheduled by scheduling",
+                              },
+                            }),
+                          "Moved: the original is kept in history",
+                        )
+                      }
+                      className="h-9 cursor-pointer rounded-control border border-border-strong bg-surface px-3 text-caption font-semibold transition-all hover:-translate-y-px hover:border-accent hover:text-accent active:scale-95"
+                    >
+                      {fmt(s, {
+                        weekday: "short",
                         day: "numeric",
                         month: "short",
                         hour: "numeric",
                         minute: "2-digit",
                       })}
-                      {r.note && ` · ${r.note}`}
-                    </span>
-                  </span>
-                  <Tag
-                    tone={
-                      r.status === "Failed"
-                        ? "over"
-                        : r.status === "Queued"
-                          ? "outline"
-                          : r.status === "Suppressed"
-                            ? "neutral"
-                            : "healthy"
-                    }
+                    </button>
+                  ))}
+                </div>
+              )}
+              <p className="text-caption text-ink-700">
+                The old time is recorded as cancelled by Medisense (never charged) and the new visit
+                replaces it.
+              </p>
+            </div>
+          )}
+
+          {panel === "noshow" && (
+            <div className="bubble-in flex flex-col gap-3 rounded-card border border-over/30 bg-over-bg/40 p-4">
+              <TextArea
+                label="Attempts to reach them"
+                required
+                rows={2}
+                value={attempts}
+                onChange={setAttempts}
+                placeholder="Called twice at 9:10 and 9:25, SMS sent, booking contact called"
+              />
+              <Tick checked={concern} onChange={setConcern}>
+                There&apos;s a safety concern to follow up
+              </Tick>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="soft-danger"
+                  loading={busy}
+                  disabled={attempts.trim().length < 3}
+                  onClick={() =>
+                    run(
+                      () =>
+                        api(`/api/care/schedule/${e.id}`, {
+                          body: { type: "no-show", attempts, concern },
+                        }),
+                      "Recorded as did not attend",
+                    )
+                  }
+                >
+                  Record did not attend
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setPanel(null)}>
+                  Back
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {e.changeRequests.some((r) => !r.resolved) && (
+            <section>
+              <h4 className="mb-2 text-label font-semibold tracking-[0.1em] text-ink-500 uppercase">
+                Change requests
+              </h4>
+              {e.changeRequests.map((r, i) =>
+                r.resolved ? null : (
+                  <div
+                    key={i}
+                    className="mb-2 flex items-start justify-between gap-3 rounded-control bg-watch-bg px-3 py-2 text-small"
                   >
-                    {r.status}
-                  </Tag>
-                  {r.status === "Failed" && (
+                    <span>
+                      {r.note}
+                      <span className="block text-caption text-ink-500">{relativeTime(r.at)}</span>
+                    </span>
                     <Button
                       size="sm"
                       variant="soft"
@@ -1520,48 +1470,110 @@ function AppointmentSheet({
                         run(
                           () =>
                             api(`/api/care/schedule/${e.id}`, {
-                              body: { type: "resend", trigger: r.trigger },
+                              body: { type: "resolve-change", index: i },
                             }),
-                          "Reminder resent",
+                          "Marked resolved",
                         )
                       }
                     >
-                      <Send className="size-3.5" aria-hidden="true" /> Resend
+                      Resolve
                     </Button>
-                  )}
+                  </div>
+                ),
+              )}
+            </section>
+          )}
+        </div>
+
+        <aside className="flex flex-col gap-5" aria-label="Reminders and history">
+          {e.reminders.length > 0 && (
+            <section className="overflow-hidden rounded-card border border-border bg-surface">
+              <h4 className="flex items-center gap-1.5 border-b border-border px-4 py-3 text-small font-semibold text-ink-900">
+                <BellRing className="size-4 text-ink-500" aria-hidden="true" /> Reminders
+                <span className="ml-auto text-caption font-normal text-ink-500">Simulated</span>
+              </h4>
+              <ul className="divide-y divide-border">
+                {e.reminders.map((r) => (
+                  <li key={r.trigger} className="flex items-center gap-3 px-4 py-2.5 text-small">
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-medium text-ink-900">
+                        {r.trigger} · {r.channel}
+                      </span>
+                      <span className="block text-caption text-ink-500">
+                        {fmt(r.due, {
+                          day: "numeric",
+                          month: "short",
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })}
+                        {r.note && ` · ${r.note}`}
+                      </span>
+                    </span>
+                    <Tag
+                      tone={
+                        r.status === "Failed"
+                          ? "over"
+                          : r.status === "Queued"
+                            ? "outline"
+                            : r.status === "Suppressed"
+                              ? "neutral"
+                              : "healthy"
+                      }
+                    >
+                      {r.status}
+                    </Tag>
+                    {r.status === "Failed" && (
+                      <Button
+                        size="sm"
+                        variant="soft"
+                        disabled={busy}
+                        onClick={() =>
+                          run(
+                            () =>
+                              api(`/api/care/schedule/${e.id}`, {
+                                body: { type: "resend", trigger: r.trigger },
+                              }),
+                            "Reminder resent",
+                          )
+                        }
+                      >
+                        <Send className="size-3.5" aria-hidden="true" /> Resend
+                      </Button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          <section className="overflow-hidden rounded-card border border-border bg-surface">
+            <h4 className="flex items-center gap-1.5 border-b border-border px-4 py-3 text-small font-semibold text-ink-900">
+              <History className="size-4 text-ink-500" aria-hidden="true" /> History
+            </h4>
+            <ol className="relative mx-4 my-4 ml-6 border-l border-border pl-5">
+              {e.history.map((h, i) => (
+                <li key={i} className="relative pb-3 last:pb-0">
+                  <span
+                    aria-hidden="true"
+                    className="absolute top-1.5 -left-[25px] size-2.5 rounded-full border-2 border-surface bg-accent-fill"
+                  />
+                  <p className="text-small text-ink-900">{h.label}</p>
+                  <p className="text-caption text-ink-500">
+                    {h.by} ·{" "}
+                    {fmt(h.at, {
+                      day: "numeric",
+                      month: "short",
+                      hour: "numeric",
+                      minute: "2-digit",
+                    })}
+                  </p>
                 </li>
               ))}
-            </ul>
+            </ol>
           </section>
-        )}
-
-        <section>
-          <h4 className="mb-2 flex items-center gap-1.5 text-label font-semibold tracking-[0.1em] text-ink-500 uppercase">
-            <History className="size-3.5" aria-hidden="true" /> History
-          </h4>
-          <ol className="relative ml-2 border-l border-border pl-5">
-            {e.history.map((h, i) => (
-              <li key={i} className="relative pb-3 last:pb-0">
-                <span
-                  aria-hidden="true"
-                  className="absolute top-1.5 -left-[25px] size-2.5 rounded-full border-2 border-surface bg-accent-fill"
-                />
-                <p className="text-small text-ink-900">{h.label}</p>
-                <p className="text-caption text-ink-500">
-                  {h.by} ·{" "}
-                  {fmt(h.at, {
-                    day: "numeric",
-                    month: "short",
-                    hour: "numeric",
-                    minute: "2-digit",
-                  })}
-                </p>
-              </li>
-            ))}
-          </ol>
-        </section>
+        </aside>
       </div>
-    </Sheet>
+    </Dialog>
   );
 }
 

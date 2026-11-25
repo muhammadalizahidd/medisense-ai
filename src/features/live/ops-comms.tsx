@@ -1,10 +1,10 @@
 "use client";
 
-import { ArrowUpRight, Inbox, Lock, Mail, MessageSquareText } from "lucide-react";
+import { ArrowUpRight, Inbox, Lock, Mail, MessageSquareText, History } from "lucide-react";
 import { useState } from "react";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
-import { Sheet } from "@/components/ui/sheet";
+import { RecordCard, RecordPopup } from "@/components/ui/record-popup";
 import { Tag } from "@/components/ui/tag";
 import {
   approvalWorkflows,
@@ -178,10 +178,16 @@ function ApprovalSheet({
     }
   };
   return (
-    <Sheet
+    <RecordPopup
       title={a.ref}
       description={a.title}
       onClose={onClose}
+      meta={
+        <>
+          <Tag tone={approvalTone[a.status]}>{a.status}</Tag>
+          <Tag tone="outline">{a.workflow}</Tag>
+        </>
+      }
       footer={
         a.canDecide ? (
           <>
@@ -216,10 +222,6 @@ function ApprovalSheet({
       }
     >
       <div className="flex flex-col gap-4 text-small">
-        <div className="flex flex-wrap gap-2">
-          <Tag tone={approvalTone[a.status]}>{a.status}</Tag>
-          <Tag tone="outline">{a.workflow}</Tag>
-        </div>
         <dl className="grid grid-cols-2 gap-3">
           <div>
             <dt className="text-caption font-semibold text-ink-500">Approver</dt>
@@ -305,7 +307,7 @@ function ApprovalSheet({
           </div>
         </div>
       </div>
-    </Sheet>
+    </RecordPopup>
   );
 }
 
@@ -520,10 +522,36 @@ function MessageSheet({
   };
   const editable = m.state === "Awaiting Approval" || m.state === "Draft";
   return (
-    <Sheet
+    <RecordPopup
       title={m.ref}
       description={`${m.category} · ${m.channel} · to ${m.recipient}`}
       onClose={onClose}
+      meta={
+        <>
+          <Tag tone={messageTone[m.state]}>{m.state}</Tag>
+          <Tag tone={m.authority === "Missing authority" ? "over" : "outline"}>{m.authority}</Tag>
+          <DemoNote>Simulated delivery</DemoNote>
+        </>
+      }
+      aside={
+        <RecordCard title="Delivery history" icon={History} flush={false}>
+          <ol className="relative ml-2 border-l border-border pl-5">
+            {[...m.history].reverse().map((h, i) => (
+              <li key={i} className="relative pb-3 last:pb-0">
+                <span
+                  className="absolute top-1.5 -left-[25px] size-2.5 rounded-full border-2 border-surface bg-accent-fill"
+                  aria-hidden="true"
+                />
+                <p className="text-small text-ink-900">
+                  {h.state}
+                  {h.note ? `: ${h.note}` : ""}
+                </p>
+                <p className="text-caption text-ink-500">{when(h.at)}</p>
+              </li>
+            ))}
+          </ol>
+        </RecordCard>
+      }
       footer={
         <>
           {editable && (
@@ -567,11 +595,6 @@ function MessageSheet({
       }
     >
       <div className="flex flex-col gap-4 text-small">
-        <div className="flex flex-wrap gap-2">
-          <Tag tone={messageTone[m.state]}>{m.state}</Tag>
-          <Tag tone={m.authority === "Missing authority" ? "over" : "outline"}>{m.authority}</Tag>
-          <DemoNote>Simulated delivery</DemoNote>
-        </div>
         {m.reason && (
           <p className="rounded-control bg-sunken px-3 py-2 text-caption text-ink-700">
             {m.reason}
@@ -607,22 +630,12 @@ function MessageSheet({
             />
           </label>
         )}
-        <div>
-          <p className="mb-1 text-caption font-semibold text-ink-500">Delivery history</p>
-          <ul className="flex flex-col gap-1 text-caption text-ink-700">
-            {m.history.map((h, i) => (
-              <li key={i}>
-                {when(h.at)} · <span className="font-semibold">{h.state}</span> · {h.note}
-              </li>
-            ))}
-          </ul>
-        </div>
         {m.taskId && (
           <ButtonLink size="sm" variant="ghost" href={`/care/operations/tasks/${m.taskId}`}>
             Open the linked task <ArrowUpRight className="size-3.5" aria-hidden="true" />
           </ButtonLink>
         )}
       </div>
-    </Sheet>
+    </RecordPopup>
   );
 }

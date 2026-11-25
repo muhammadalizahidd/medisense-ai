@@ -1,11 +1,11 @@
 "use client";
 
-import { AlertTriangle, CheckCircle2, Layers, Lock, ShieldAlert } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Layers, Lock, ShieldAlert, History } from "lucide-react";
 import { useState } from "react";
 import { AiChip, AiIcon, RuleMark } from "@/components/ai/provenance";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
-import { Sheet } from "@/components/ui/sheet";
+import { RecordCard, RecordPopup } from "@/components/ui/record-popup";
 import { TableFrame } from "@/components/ui/table-frame";
 import { Tag } from "@/components/ui/tag";
 import { toast } from "@/components/ui/toast";
@@ -472,10 +472,38 @@ export function LineSheet({
       (l.priceLimit !== null && l.rate > l.priceLimit && !l.override?.approvedBy));
 
   return (
-    <Sheet
+    <RecordPopup
       title={`${l.ref} · ${l.source}`}
       description={`${l.participant} · ${l.support} · ${dayLabel(l.start)}`}
       onClose={onClose}
+      meta={<Tag tone={lineTone[l.status]}>{l.status}</Tag>}
+      aside={
+        !mode ? (
+          <RecordCard title="History" icon={History} flush={false}>
+            <ol className="relative ml-2 border-l border-border pl-5">
+              {[...l.history].reverse().map((h, i) => (
+                <li key={`${h.at}-${i}`} className="relative pb-3 last:pb-0">
+                  <span
+                    className="absolute top-1.5 -left-[25px] size-2.5 rounded-full border-2 border-surface bg-accent-fill"
+                    aria-hidden="true"
+                  />
+                  <p className="text-small text-ink-900">{h.action}</p>
+                  <p className="text-caption text-ink-500">
+                    {h.by},{" "}
+                    {new Date(h.at).toLocaleString("en-AU", {
+                      timeZone: "Australia/Brisbane",
+                      day: "numeric",
+                      month: "short",
+                      hour: "numeric",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                </li>
+              ))}
+            </ol>
+          </RecordCard>
+        ) : undefined
+      }
       footer={
         mode ? (
           <>
@@ -500,7 +528,6 @@ export function LineSheet({
       {!mode ? (
         <div className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center gap-2">
-            <Tag tone={lineTone[l.status]}>{l.status}</Tag>
             <span
               className={cn("rounded-tag px-2 py-0.5 text-caption font-semibold", pathChip(l.path))}
             >
@@ -513,7 +540,7 @@ export function LineSheet({
               </span>
             )}
           </div>
-          <dl className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-control border border-border p-3 text-small">
+          <dl className="grid grid-cols-[160px_1fr] gap-x-4 gap-y-2 rounded-card border border-border bg-surface p-4 text-small">
             <dt className="text-ink-500">Delivered</dt>
             <dd>
               {l.deliveredMinutes} min · billable {l.billableMinutes} min · {l.location}
@@ -654,29 +681,6 @@ export function LineSheet({
                 Reject
               </Button>
             )}
-          </div>
-          <div>
-            <p className="mb-1.5 text-caption font-semibold text-ink-700">History</p>
-            <ol className="relative ml-1 border-l border-border pl-4">
-              {l.history.map((h, i) => (
-                <li key={`${h.at}-${i}`} className="relative pb-2">
-                  <span
-                    className="absolute top-1.5 -left-[21px] size-2 rounded-full bg-accent-fill"
-                    aria-hidden="true"
-                  />
-                  <p className="text-caption text-ink-900">{h.action}</p>
-                  <p className="text-label text-ink-500">
-                    {h.by} ·{" "}
-                    {new Date(h.at).toLocaleString("en-AU", {
-                      day: "numeric",
-                      month: "short",
-                      hour: "numeric",
-                      minute: "2-digit",
-                    })}
-                  </p>
-                </li>
-              ))}
-            </ol>
           </div>
         </div>
       ) : (
@@ -869,6 +873,6 @@ export function LineSheet({
           )}
         </div>
       )}
-    </Sheet>
+    </RecordPopup>
   );
 }

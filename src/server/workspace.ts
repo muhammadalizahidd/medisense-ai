@@ -32,6 +32,7 @@ import {
   type WsVisit,
 } from "@/lib/live/workspace";
 import { collections } from "./db";
+import { serverLog } from "./log";
 import { appointmentDto, nameMap, seriesLookup } from "./dto";
 import { UserFacingError } from "./http";
 import { audit, notify, publish } from "./live";
@@ -252,7 +253,11 @@ export async function ensureWorkspaceScenarios() {
     throw e;
   });
   await g.__m10Seed;
-  await rollScenarios();
+  try {
+    await rollScenarios();
+  } catch (error) {
+    serverLog(`Scenario visits could not be moved to today: ${String(error)}`);
+  }
 }
 
 async function seed() {
@@ -416,10 +421,21 @@ async function rollScenarios() {
     const start = atBrisbane(addDays(today, a.scenario.dayOffset), a.scenario.minutes);
     if (start.getTime() === a.start.getTime()) continue;
     const length = a.end.getTime() - a.start.getTime();
-    await appointments.updateOne(
-      { _id: a._id },
-      { $set: { start, end: new Date(start.getTime() + length) } },
-    );
+    // A real booking may already hold that time for this clinician (one visit per clinician per
+    // start). Then the scenario visit takes the next free half hour that day, or stays where it
+    // is; rolling the demo forward must never stop the workspace from loading.
+    for (let step = 0; step < 8; step++) {
+      const at = new Date(start.getTime() + step * 30 * 60_000);
+      try {
+        await appointments.updateOne(
+          { _id: a._id },
+          { $set: { start: at, end: new Date(at.getTime() + length) } },
+        );
+        break;
+      } catch (error) {
+        if ((error as { code?: number }).code !== 11000) throw error;
+      }
+    }
   }
 }
 
