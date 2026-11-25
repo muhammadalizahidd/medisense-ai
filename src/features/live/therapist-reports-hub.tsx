@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Filter, RefreshCw, Stethoscope } from "lucide-react";
+import { ArrowLeft, Filter, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -13,31 +13,31 @@ import { filterSummary } from "@/lib/live/reports";
 import { populations, type Population } from "@/lib/live/therapist-reports";
 import { ErrorNote, LiveBadge, Skeleton } from "./bits";
 import { ProgressHub } from "./progress-hub";
-import { AreaDialog, AreaDownload, AreaPage, type AreaId } from "./reports-areas";
+import { readParam, useNavParam } from "./report-nav";
+import { AreaPage, areaById, type AreaId } from "./reports-areas";
 import { FilterBar, useReportCtx, useReportFilters } from "./reports-bits";
+import { SectionProvider } from "./reports-section";
 import {
-  PatientListDialog,
+  PatientList,
   THERAPIST_AREAS,
   TherapistOverview,
   TherapistProvider,
-  therapistAreaById,
 } from "./therapist-areas";
-import { PatientDialog } from "./patient-view";
+import { PatientPanel } from "./patient-view";
 
 const tabs = [
   { id: "overview", label: "Overview" },
   ...THERAPIST_AREAS.map((a) => ({ id: a.id, label: a.label })),
-  { id: "documents", label: "Clinical reports" },
 ] as const;
 type Tab = (typeof tabs)[number]["id"];
 
-type Open =
-  | { kind: "area"; id: AreaId; pick?: string }
-  | { kind: "areaDownload"; id: AreaId }
-  | { kind: "filters" }
-  | { kind: "documents" }
-  | { kind: "patients" }
-  | null;
+/** Older links and tiles, and where that content lives now. */
+const legacy: Record<string, { tab: Tab; view: string }> = {
+  capacity: { tab: "visits", view: "time" },
+  documents: { tab: "clinical", view: "documents" },
+};
+
+type Open = { kind: "filters" } | null;
 
 const POPULATION_KEY = "ms-therapist-population";
 
@@ -85,7 +85,8 @@ function Hub({
   const [f, setF] = useReportFilters(hub.today, `ms-therapist-filters-${subject.id}`);
   const c = useReportCtx(hub, f, setF, reload, !self);
   const [open, setOpen] = useState<Open>(null);
-  const [patient, setPatient] = useState<string | null>(null);
+  const [view, setView] = useNavParam("view", "", !embedded);
+  const [patient, setPatient] = useNavParam("patient", "", !embedded);
   const [population, setPopulationState] = useState<Population>("caseload");
   useEffect(() => {
     const saved = sessionStorage.getItem(POPULATION_KEY);
@@ -97,15 +98,27 @@ function Hub({
     sessionStorage.setItem(POPULATION_KEY, p);
   };
   const close = () => setOpen(null);
+  useEffect(() => {
+    if (embedded) return;
+    const old = legacy[readParam("tab") ?? ""];
+    if (!old) return;
+    setTab(old.tab);
+    setView(old.view);
+  }, [embedded, setTab, setView]);
+  const go = (id: string, v = "") => {
+    const old = legacy[id];
+    setTab(old ? old.tab : (id as Tab));
+    setView(old ? old.view : v);
+    setPatient("");
+  };
 
   const patients = hub.facts.participants
     .map((p) => ({ id: p.id, name: p.label }))
     .sort((a, b) => a.name.localeCompare(b.name));
   const patientName = patients.find((p) => p.id === f.patient)?.name;
   const [period, ...rest] = filterSummary(f, patientName);
-  const visible = tabs.filter((t) => t.id !== "documents" || self);
-  const current: Tab = visible.some((t) => t.id === tab) ? tab : "overview";
-  const area = open && "id" in open ? therapistAreaById(open.id) : undefined;
+  const current: Tab = tabs.some((t) => t.id === tab) ? tab : "overview";
+  const capacity = areaById("capacity");
   const time = new Intl.DateTimeFormat("en-AU", {
     timeZone: "Australia/Brisbane",
     hour: "numeric",
@@ -119,15 +132,21 @@ function Hub({
       value={{
         population,
         setPopulation,
-        openPatient: setPatient,
+        openPatient: (id) => {
+          setTab("patients");
+          setPatient(id);
+        },
         subject: subject.name,
       }}
     >
       {embedded ? (
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-small text-ink-700">
-            {subject.discipline} · {subject.region}. Read-only. Opening these reports is recorded.
-          </p>
+          <div className="min-w-0">
+            <h2 className="type-display text-h2 text-ink-900">{subject.name}</h2>
+            <p className="text-small text-ink-700">
+              {subject.discipline} · {subject.region}. Read-only. Opening these reports is recorded.
+            </p>
+          </div>
           <div className="flex items-center gap-2">
             <Button onClick={() => setOpen({ kind: "filters" })}>
               <Filter className="size-4" aria-hidden="true" />
@@ -183,9 +202,9 @@ function Hub({
       <div className="mt-4">
         <Tabs
           label="Reports"
-          tabs={visible}
+          tabs={tabs}
           value={current}
-          onChange={(t: Tab) => setTab(t)}
+          onChange={(t: Tab) => go(t)}
           sticky={!embedded}
         />
       </div>
@@ -199,41 +218,58 @@ function Hub({
       </p>
       <div className="mt-5">
         <TabPanel id="overview" value={current}>
-          <TherapistOverview c={c} openArea={(id) => setTab(id as Tab)} />
+          <TherapistOverview c={c} openArea={(id: AreaId) => go(id)} />
         </TabPanel>
         {THERAPIST_AREAS.map((a) => (
           <TabPanel key={a.id} id={a.id} value={current}>
-            <AreaPage
-              c={c}
-              area={a}
-              onOpen={() =>
-                setOpen(a.id === "patients" ? { kind: "patients" } : { kind: "area", id: a.id })
-              }
-              onDownload={() => setOpen({ kind: "areaDownload", id: a.id })}
-            />
+            {a.id === "patients" && patient ? (
+              <PatientPanel
+                key={patient}
+                c={c}
+                id={patient}
+                reportsBase={self ? "/therapist/progress" : "/care/progress"}
+                onBack={() => setPatient("")}
+              />
+            ) : (
+              <AreaPage
+                c={c}
+                area={a}
+                view={view}
+                setView={setView}
+                lead={
+                  a.id === "patients"
+                    ? [{ id: "list", label: "Patient list", node: <PatientList c={c} /> }]
+                    : []
+                }
+                extra={
+                  a.id === "visits" && capacity
+                    ? [
+                        {
+                          id: "time",
+                          label: "Time and travel",
+                          node: (
+                            <SectionProvider value={{ kind: "measures" }}>
+                              <capacity.Tab c={c} />
+                            </SectionProvider>
+                          ),
+                        },
+                      ]
+                    : a.id === "clinical" && self
+                      ? [
+                          {
+                            id: "documents",
+                            label: "Clinical reports",
+                            node: <ProgressHub base="/therapist/progress" embedded />,
+                          },
+                        ]
+                      : []
+                }
+              />
+            )}
           </TabPanel>
         ))}
-        {self && (
-          <TabPanel id="documents" value={current}>
-            <section className="flex flex-col items-start gap-3 rounded-card border border-border bg-surface p-5">
-              <Stethoscope className="size-5 text-accent" aria-hidden="true" />
-              <h2 className="type-display text-h2 text-ink-900">Clinical reports</h2>
-              <p className="max-w-xl text-body text-ink-700">
-                Your episodes of care, the reports you are writing, and anything waiting for
-                approval.
-              </p>
-              <Button variant="primary" onClick={() => setOpen({ kind: "documents" })}>
-                Open clinical reports
-              </Button>
-            </section>
-          </TabPanel>
-        )}
       </div>
 
-      {open?.kind === "area" && area && (
-        <AreaDialog c={c} area={area} initial={open.pick} onClose={close} />
-      )}
-      {open?.kind === "areaDownload" && area && <AreaDownload c={c} area={area} onClose={close} />}
       {open?.kind === "filters" && (
         <Dialog title="Filters" onRequestClose={close}>
           <FilterBar
@@ -247,21 +283,6 @@ function Hub({
             }}
           />
         </Dialog>
-      )}
-      {open?.kind === "documents" && (
-        <Dialog title="Clinical reports" onRequestClose={close}>
-          <ProgressHub base="/therapist/progress" />
-        </Dialog>
-      )}
-      {open?.kind === "patients" && <PatientListDialog c={c} onClose={close} />}
-      {patient && (
-        <PatientDialog
-          key={patient}
-          c={c}
-          id={patient}
-          reportsBase={self ? "/therapist/progress" : "/care/progress"}
-          onBack={() => setPatient(null)}
-        />
       )}
     </TherapistProvider>
   );

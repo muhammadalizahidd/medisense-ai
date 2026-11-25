@@ -7,6 +7,21 @@ import { FONT, pdfColour as c, pdfSize as size } from "./theme";
  * lives here, so changing it means changing one component.
  */
 
+/**
+ * Inter kerns some digits into the punctuation after them, which made "$137.50" read as "$13750".
+ * Tabular figures keep every point and comma visible and line amounts up in columns. They also
+ * widen hyphens, so they go only on text that is a number, never on a reference like INV-2041.
+ */
+const TNUM = { fontFeatureSettings: { tnum: true } };
+const FIGURE = /^[\s$−+\-–]*[\d.,]+[\d.,\s%]*(hr|hrs|h|days)?$/;
+export const figure = (text: string) => (FIGURE.test(text.trim()) ? TNUM : {});
+
+/** Side padding inside table rows. */
+const ROW_PAD = 6;
+
+/** One spacing scale for every document, in points. */
+export const space = { xs: 4, sm: 8, md: 12, lg: 18, xl: 24 } as const;
+
 const s = StyleSheet.create({
   page: {
     fontFamily: FONT,
@@ -57,17 +72,17 @@ const s = StyleSheet.create({
   },
   title: { fontSize: size.title, fontWeight: 600, color: c.navy, lineHeight: 1.2 },
   subtitle: { marginTop: 4, fontSize: size.body, color: c.ink700, lineHeight: 1.4 },
-  titleBlock: { marginBottom: 18 },
-  section: { marginTop: 20 },
+  titleBlock: { marginBottom: space.lg },
+  section: { marginTop: space.xl },
   sectionHead: { flexDirection: "column", marginBottom: 8 },
   rule: { width: 22, height: 2, backgroundColor: c.accent, marginBottom: 5 },
   sectionTitle: { fontSize: size.section, fontWeight: 600, color: c.navy },
-  tiles: { flexDirection: "row", gap: 8 },
+  tiles: { flexDirection: "row", gap: 8, marginBottom: space.xs },
   tile: { flex: 1, minWidth: 0, backgroundColor: c.mintSoft, borderRadius: 4, padding: 10 },
   tileLabel: { fontSize: size.small, color: c.ink700, fontWeight: 500 },
   tileValue: { marginTop: 4, fontSize: size.value, fontWeight: 600, color: c.navy },
   tileNote: { marginTop: 2, fontSize: size.tiny, color: c.ink500 },
-  metaRow: { flexDirection: "row", gap: 24 },
+  metaRow: { flexDirection: "row", gap: space.xl },
   metaCol: { flex: 1 },
   metaItem: {
     flexDirection: "row",
@@ -75,19 +90,19 @@ const s = StyleSheet.create({
     borderBottomWidth: 0.5,
     borderBottomColor: c.border,
   },
-  metaKey: { width: 84, color: c.ink500, fontSize: size.small },
+  metaKey: { width: 112, paddingRight: space.sm, color: c.ink500, fontSize: size.small },
   metaValue: { flex: 1, minWidth: 0, fontWeight: 500, lineHeight: 1.4 },
   th: {
     flexDirection: "row",
     backgroundColor: c.navy,
     paddingVertical: 6,
-    paddingHorizontal: 6,
+    paddingHorizontal: ROW_PAD,
   },
   thText: { color: c.white, fontSize: size.small, fontWeight: 600 },
-  tr: { flexDirection: "row", paddingVertical: 5, paddingHorizontal: 6 },
+  tr: { flexDirection: "row", paddingVertical: 5, paddingHorizontal: ROW_PAD },
   trAlt: { backgroundColor: c.mintSoft },
   tdText: { fontSize: size.small },
-  callout: { padding: 10, borderLeftWidth: 3 },
+  callout: { padding: 10, borderLeftWidth: 3, marginBottom: space.md },
   calloutTitle: { fontSize: size.small, fontWeight: 600, marginBottom: 2 },
   calloutBody: { fontSize: size.small, color: c.ink700, lineHeight: 1.4 },
   empty: {
@@ -99,13 +114,27 @@ const s = StyleSheet.create({
     textAlign: "center",
     color: c.ink700,
   },
+  barRow: { flexDirection: "row", alignItems: "center", marginBottom: 4 },
+  barLabel: { fontSize: size.small, color: c.ink700, paddingRight: space.sm },
+  barTrack: { flex: 1, height: 7, backgroundColor: c.mintSoft, borderRadius: 2 },
+  bar: { height: 7, borderRadius: 2 },
+  barValue: { width: 52, textAlign: "right", fontSize: size.small, fontWeight: 600 },
   bullet: { flexDirection: "row", marginBottom: 3 },
   bulletDot: { width: 10, color: c.accent, fontWeight: 700 },
   bulletText: { flex: 1, lineHeight: 1.4 },
-  sign: { flexDirection: "row", gap: 24, marginTop: 8 },
-  signBox: { flex: 1, paddingTop: 28, borderTopWidth: 0.75, borderTopColor: c.ink500 },
+  sign: { flexDirection: "row", gap: space.xl, marginTop: space.xl },
+  // Room above the line for a hand signature.
+  signBox: { flex: 1, paddingTop: 36 },
+  signLine: { borderTopWidth: 0.75, borderTopColor: c.ink500, paddingTop: space.xs },
   signName: { fontWeight: 600 },
   signRole: { color: c.ink500, fontSize: size.small },
+  signDate: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: space.sm,
+    marginTop: space.lg,
+  },
+  signDateLine: { flex: 1, borderBottomWidth: 0.75, borderBottomColor: c.ink500, height: 10 },
 });
 
 /* ------------------------------------------------------------------ document and page */
@@ -181,7 +210,7 @@ export function TitleBlock({ title, subtitle }: { title: string; subtitle?: stri
 export function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <View style={s.section}>
-      <View style={s.sectionHead} minPresenceAhead={60}>
+      <View style={s.sectionHead} minPresenceAhead={110}>
         <View style={s.rule} />
         <Text style={s.sectionTitle}>{title}</Text>
       </View>
@@ -208,7 +237,13 @@ export function StatTiles({ tiles }: { tiles: Tile[] }) {
       {shown.map((t) => (
         <View key={t.label} style={s.tile}>
           <Text style={s.tileLabel}>{t.label}</Text>
-          <Text style={[s.tileValue, { fontSize: tileValueSize(t.value, shown.length) }]}>
+          <Text
+            style={[
+              s.tileValue,
+              figure(t.value),
+              { fontSize: tileValueSize(t.value, shown.length) },
+            ]}
+          >
             {t.value}
           </Text>
           {t.note ? <Text style={s.tileNote}>{t.note}</Text> : null}
@@ -226,7 +261,7 @@ export function MetaGrid({ items }: { items: [string, string][] }) {
       {list.map(([k, v]) => (
         <View key={k} style={s.metaItem} wrap={false}>
           <Text style={s.metaKey}>{k}</Text>
-          <Text style={s.metaValue}>{v}</Text>
+          <Text style={[s.metaValue, figure(v)]}>{v}</Text>
         </View>
       ))}
     </View>
@@ -302,7 +337,9 @@ export function columnWidths(
 
 /** A table whose header repeats on every page and whose rows never split across pages. */
 export function DataTable({ columns, rows }: { columns: TableColumn[]; rows: TableRow[] }) {
-  const widths = columnWidths(columns, rows);
+  // The rows have side padding, so the columns share the width inside it; otherwise the last
+  // column runs to the very edge of the page.
+  const widths = columnWidths(columns, rows, TABLE_WIDTH - ROW_PAD * 2);
   // Eight or more columns get slightly smaller type, so a wide report stays tidy.
   const dense = columns.length >= 8;
   const cell = (col: TableColumn) => ({
@@ -323,7 +360,15 @@ export function DataTable({ columns, rows }: { columns: TableColumn[]; rows: Tab
       {rows.map((row, i) => (
         <View key={i} style={[s.tr, i % 2 ? s.trAlt : {}]} wrap={false}>
           {columns.map((col) => (
-            <Text key={col.key} style={[s.tdText, dense ? { fontSize: size.tiny } : {}, cell(col)]}>
+            <Text
+              key={col.key}
+              style={[
+                s.tdText,
+                figure(row[col.key] ?? ""),
+                dense ? { fontSize: size.tiny } : {},
+                cell(col),
+              ]}
+            >
               {row[col.key] ?? "—"}
             </Text>
           ))}
@@ -373,9 +418,14 @@ export function SignatureBlock({ people }: { people: { name: string; role: strin
     <View style={s.sign} wrap={false}>
       {people.map((p) => (
         <View key={p.name + p.role} style={s.signBox}>
-          <Text style={s.signName}>{p.name}</Text>
-          <Text style={s.signRole}>{p.role}</Text>
-          <Text style={s.signRole}>Date</Text>
+          <View style={s.signLine}>
+            <Text style={s.signName}>{p.name}</Text>
+            <Text style={s.signRole}>{p.role}</Text>
+          </View>
+          <View style={s.signDate}>
+            <Text style={s.signRole}>Date</Text>
+            <View style={s.signDateLine} />
+          </View>
         </View>
       ))}
     </View>
@@ -390,6 +440,35 @@ export function BulletList({ items }: { items: string[] }) {
         <View key={t} style={s.bullet} wrap={false}>
           <Text style={s.bulletDot}>•</Text>
           <Text style={s.bulletText}>{t}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+export type Bar = { label: string; value: number; display?: string; colour?: string };
+
+/** A small horizontal bar chart: one labelled bar per row, the figure on the right. */
+export function BarChart({ data, labelWidth = 64 }: { data: Bar[]; labelWidth?: number }) {
+  const top = Math.max(1, ...data.map((d) => d.value));
+  return (
+    <View wrap={false}>
+      {data.map((d) => (
+        <View key={d.label} style={s.barRow}>
+          <Text style={[s.barLabel, { width: labelWidth }]}>{d.label}</Text>
+          <View style={s.barTrack}>
+            {d.value > 0 && (
+              <View
+                style={[
+                  s.bar,
+                  { width: `${(d.value / top) * 100}%`, backgroundColor: d.colour ?? c.accent },
+                ]}
+              />
+            )}
+          </View>
+          <Text style={[s.barValue, figure(d.display ?? String(d.value))]}>
+            {d.display ?? String(d.value)}
+          </Text>
         </View>
       ))}
     </View>

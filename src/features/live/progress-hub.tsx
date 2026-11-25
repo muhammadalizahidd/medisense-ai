@@ -4,6 +4,7 @@ import { Lock, Search, X } from "lucide-react";
 import { useState } from "react";
 import { PageHeader } from "@/components/ui/page";
 import { Select } from "@/components/ui/select";
+import { Segmented } from "@/components/ui/segmented";
 import { TabPanel, Tabs, useTab } from "@/components/ui/tabs";
 import { Tag } from "@/components/ui/tag";
 import { useNow, useResource } from "@/lib/live/client";
@@ -28,14 +29,23 @@ const tabs = [
 ] as const;
 
 /** Module 16 screen: Progress overview, Report centre and Clinical approval queue. */
-export function ProgressHub({ base }: { base: "/therapist/progress" | "/care/progress" }) {
+export function ProgressHub({
+  base,
+  embedded = false,
+}: {
+  base: "/therapist/progress" | "/care/progress";
+  /** Inside another reports page: no page header, and its sections don't touch the address. */
+  embedded?: boolean;
+}) {
   const { data, error, loading, reload } = useResource<{
     episodes: EpisodeRow[];
     reports: ReportRow[];
     lead: boolean;
   }>("/api/care/progress", (e) => e.type === "care");
   const clock = useNow();
-  const [tab, setTab] = useTab(tabs);
+  const [urlTab, setUrlTab] = useTab(tabs);
+  const [localTab, setLocalTab] = useState<(typeof tabs)[number]["id"]>("episodes");
+  const [tab, setTab] = embedded ? [localTab, setLocalTab] : [urlTab, setUrlTab];
   const [state, setState] = useState("");
   const [discipline, setDiscipline] = useState("");
   const [rstatus, setRstatus] = useState("");
@@ -94,12 +104,16 @@ export function ProgressHub({ base }: { base: "/therapist/progress" | "/care/pro
   );
   return (
     <>
-      <PageHeader
-        eyebrow="Live care"
-        title={base === "/therapist/progress" ? "My progress and reports" : "Progress and reports"}
-        description="Outcomes against goals, reassessments, clinician-signed reports and discharge"
-        actions={<LiveBadge />}
-      />
+      {!embedded && (
+        <PageHeader
+          eyebrow="Live care"
+          title={
+            base === "/therapist/progress" ? "My progress and reports" : "Progress and reports"
+          }
+          description="Outcomes against goals, reassessments, clinician-signed reports and discharge"
+          actions={<LiveBadge />}
+        />
+      )}
       <KpiBand
         label="Progress figures"
         items={[
@@ -154,15 +168,32 @@ export function ProgressHub({ base }: { base: "/therapist/progress" | "/care/pro
         ]}
       />
       <div className="mt-2">
-        <Tabs
-          label="Progress"
-          tabs={tabs.map((t) => ({
-            ...t,
-            count: t.id === "approvals" ? approvals.length || undefined : undefined,
-          }))}
-          value={tab}
-          onChange={setTab}
-        />
+        {embedded ? (
+          <div className="mb-4">
+            <Segmented
+              label="Clinical reports"
+              value={tab}
+              onChange={setTab}
+              options={tabs.map((t) => ({
+                id: t.id,
+                label:
+                  t.id === "approvals" && approvals.length
+                    ? `${t.label} · ${approvals.length}`
+                    : t.label,
+              }))}
+            />
+          </div>
+        ) : (
+          <Tabs
+            label="Progress"
+            tabs={tabs.map((t) => ({
+              ...t,
+              count: t.id === "approvals" ? approvals.length || undefined : undefined,
+            }))}
+            value={tab}
+            onChange={setTab}
+          />
+        )}
       </div>
 
       <TabPanel id="episodes" value={tab}>

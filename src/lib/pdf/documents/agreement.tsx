@@ -1,3 +1,4 @@
+import { View } from "@react-pdf/renderer";
 import type { AgreementDto } from "@/lib/live/funding";
 import {
   BulletList,
@@ -11,6 +12,7 @@ import {
   StatTiles,
   TitleBlock,
   type TableColumn,
+  space,
 } from "../components";
 
 const aud = (n: number) =>
@@ -77,16 +79,23 @@ export function AgreementDocument({ a }: { a: AgreementDto }) {
         <Section title="Cancellations">
           <Callout title="Cancellation terms">{a.cancellation}</Callout>
         </Section>
-        {a.rights.length > 0 && (
-          <Section title="Your rights">
-            <BulletList items={a.rights} />
-          </Section>
-        )}
-        <Section title="How we keep in touch">
-          <BulletList
-            items={[...a.communication, ...(a.communicationNote ? [a.communicationNote] : [])]}
-          />
-        </Section>
+        {/* Short sections side by side, so the agreement doesn't spill onto a near-empty page. */}
+        <View style={{ flexDirection: "row", gap: space.xl }} wrap={false}>
+          {a.rights.length > 0 && (
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Section title="Your rights">
+                <BulletList items={a.rights} />
+              </Section>
+            </View>
+          )}
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Section title="How we keep in touch">
+              <BulletList
+                items={[...a.communication, ...(a.communicationNote ? [a.communicationNote] : [])]}
+              />
+            </Section>
+          </View>
+        </View>
         {a.sharing ? (
           <Section title="Sharing information">
             <Callout title="Who sees your information">{a.sharing}</Callout>

@@ -1,27 +1,20 @@
 "use client";
 
-import { CalendarClock, ChevronRight, Download, Filter, Plus, RefreshCw } from "lucide-react";
-import { useState } from "react";
+import { ArrowLeft, ChevronRight, Download, Filter, Plus, RefreshCw } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { PageHeader } from "@/components/ui/page";
+import { Segmented } from "@/components/ui/segmented";
 import { TabPanel, Tabs, useTab } from "@/components/ui/tabs";
 import { useResource, useSession } from "@/lib/live/client";
 import type { ReportsHubDto, ViewDto } from "@/lib/live/report-dto";
 import { reportById } from "@/lib/live/report-catalogue";
 import { filterSummary } from "@/lib/live/reports";
 import { ErrorNote, LiveBadge, Skeleton } from "./bits";
+import { readParam, useNavParam } from "./report-nav";
 import { ExportsTab, Methodology, SchedulesTab } from "./reports-admin";
-import {
-  AREAS,
-  AreaDialog,
-  AreaDownload,
-  AreaPage,
-  Overview,
-  areaById,
-  areaVisible,
-  type AreaId,
-} from "./reports-areas";
+import { AREAS, AreaPage, Overview, areaVisible, type AreaId } from "./reports-areas";
 import { ExportSheet, FilterBar, useReportCtx, useReportFilters, type Ctx } from "./reports-bits";
 import { BuilderTab } from "./reports-builder";
 import { TherapistList } from "./therapist-picker";
@@ -30,22 +23,32 @@ import { TherapistReportsHub } from "./therapist-reports-hub";
 const tabs = [
   { id: "overview", label: "Overview" },
   ...AREAS.map((a) => ({ id: a.id, label: a.label })),
-  { id: "therapists", label: "Therapists" },
+  { id: "custom", label: "Custom reports" },
 ] as const;
 type Tab = (typeof tabs)[number]["id"];
 
-/** What is open over the page. The page itself never changes: deeper views are dialogs. */
-type Open =
-  | { kind: "area"; id: AreaId; pick?: string }
-  | { kind: "areaDownload"; id: AreaId }
-  | { kind: "create" }
-  | { kind: "schedules" }
-  | { kind: "downloads" }
-  | { kind: "download" }
-  | { kind: "filters" }
-  | { kind: "about" }
-  | { kind: "therapist"; id: string; name: string }
-  | null;
+const customViews = [
+  { id: "build", label: "Build a report" },
+  { id: "schedules", label: "Schedules" },
+  { id: "downloads", label: "Past downloads" },
+  { id: "about", label: "How the numbers work" },
+] as const;
+type CustomView = (typeof customViews)[number]["id"];
+
+/** Tabs that older links name, and where that content lives now. */
+const legacy: Record<string, { tab: Tab; view?: string }> = {
+  referrals: { tab: "intake" },
+  participants: { tab: "intake", view: "R04" },
+  capacity: { tab: "workforce" },
+  therapists: { tab: "workforce", view: "therapists" },
+  appointments: { tab: "visits" },
+  telehealth: { tab: "visits", view: "R10" },
+  exports: { tab: "custom", view: "downloads" },
+  schedules: { tab: "custom", view: "schedules" },
+};
+
+/** What still opens over the page: two quick choices, never a place to browse. */
+type Open = { kind: "download" } | { kind: "filters" } | null;
 
 /** Module 09: operational reports and analytics, scoped to the person's role. */
 export function ReportsHub() {
@@ -73,28 +76,36 @@ function Hub({
   const [f, setF] = useReportFilters(hub.today);
   const c = useReportCtx(hub, f, setF, reload);
   const [open, setOpen] = useState<Open>(null);
+  const [view, setView] = useNavParam("view", "", true);
+  const [therapist, setTherapist] = useNavParam("therapist", "", true);
   const { user } = useSession();
   const viewTherapists = Boolean(user?.permissions.includes("reports.therapist"));
   const [builderView, setBuilderView] = useState<ViewDto | null>(null);
   const close = () => setOpen(null);
 
+  useEffect(() => {
+    const old = legacy[readParam("tab") ?? ""];
+    if (!old) return;
+    setTab(old.tab);
+    if (old.view) setView(old.view);
+  }, [setTab, setView]);
+
   const visible = AREAS.filter((a) => areaVisible(a, c));
   const newInsights = hub.insights.filter((i) => i.status === "New").length;
-  const current: Tab =
-    tab === "therapists"
-      ? viewTherapists
-        ? tab
-        : "overview"
-      : visible.some((a) => a.id === tab)
-        ? tab
-        : "overview";
+  const current: Tab = tab === "custom" || visible.some((a) => a.id === tab) ? tab : "overview";
 
-  const openArea = (id: AreaId, pick?: string) => setOpen({ kind: "area", id, pick });
+  /** Switch tab and sub-tab together; a new tab starts on its first view. */
+  const go = (t: Tab, v = "") => {
+    setTab(t);
+    setView(v);
+    if (t !== "workforce" || v !== "therapists") setTherapist("");
+  };
+  const openArea = (id: AreaId, pick?: string) => go(id, pick ?? "");
   const openView = (v: ViewDto) => {
     setF(v.filters);
     if (v.spec) {
       setBuilderView(v);
-      setOpen({ kind: "create" });
+      go("custom", "build");
       return;
     }
     const area = AREAS.find((a) => v.reportId && a.tables.includes(v.reportId));
@@ -108,7 +119,33 @@ function Hub({
     day: "numeric",
     month: "short",
   }).format(new Date(hub.freshness));
-  const area = open && "id" in open ? areaById(open.id) : undefined;
+  const customView: CustomView = customViews.some((v) => v.id === view)
+    ? (view as CustomView)
+    : "build";
+
+  const therapistsView = viewTherapists
+    ? [
+        {
+          id: "therapists",
+          label: "Therapists",
+          node: therapist ? (
+            <div className="flex flex-col gap-4">
+              <button
+                type="button"
+                onClick={() => setTherapist("")}
+                className="inline-flex w-fit cursor-pointer items-center gap-1.5 text-small font-semibold text-accent hover:underline"
+              >
+                <ArrowLeft className="size-4" aria-hidden="true" />
+                All therapists
+              </button>
+              <TherapistReportsHub key={therapist} therapistId={therapist} embedded />
+            </div>
+          ) : (
+            <TherapistList onOpen={(t) => setTherapist(t.id)} />
+          ),
+        },
+      ]
+    : [];
 
   return (
     <>
@@ -130,15 +167,11 @@ function Hub({
               <Download className="size-4" aria-hidden="true" />
               Download
             </Button>
-            <Button onClick={() => setOpen({ kind: "schedules" })}>
-              <CalendarClock className="size-4" aria-hidden="true" />
-              Schedules
-            </Button>
             <Button
               variant="primary"
               onClick={() => {
                 setBuilderView(null);
-                setOpen({ kind: "create" });
+                go("custom", "build");
               }}
             >
               <Plus className="size-4" aria-hidden="true" />
@@ -161,10 +194,10 @@ function Hub({
               label: a.label,
               count: a.id === "automation" ? newInsights || undefined : undefined,
             })),
-            ...(viewTherapists ? [{ id: "therapists" as const, label: "Therapists" }] : []),
+            { id: "custom" as const, label: "Custom reports" },
           ]}
           value={current}
-          onChange={(t: Tab) => setTab(t)}
+          onChange={(t: Tab) => go(t)}
         />
       </div>
       <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-caption text-ink-500">
@@ -176,7 +209,7 @@ function Hub({
         <span>Brisbane time · data as of {time}</span>
         <button
           type="button"
-          onClick={() => setOpen({ kind: "about" })}
+          onClick={() => go("custom", "about")}
           className="cursor-pointer font-semibold text-accent hover:underline"
         >
           How these numbers work
@@ -186,37 +219,50 @@ function Hub({
         <TabPanel id="overview" value={current}>
           <Overview
             c={c}
-            openArea={(id) => setTab(id)}
-            openSchedules={() => setOpen({ kind: "schedules" })}
-            openDownloads={() => setOpen({ kind: "downloads" })}
+            openArea={(id) => openArea(id)}
+            openSchedules={() => go("custom", "schedules")}
+            openDownloads={() => go("custom", "downloads")}
           />
         </TabPanel>
-        {AREAS.map((a) => (
+        {visible.map((a) => (
           <TabPanel key={a.id} id={a.id} value={current}>
             <AreaPage
               c={c}
               area={a}
-              onOpen={() => openArea(a.id)}
-              onDownload={() => setOpen({ kind: "areaDownload", id: a.id })}
+              view={view}
+              setView={(v) => {
+                setView(v);
+                setTherapist("");
+              }}
+              extra={a.id === "workforce" ? therapistsView : []}
             />
           </TabPanel>
         ))}
-        {viewTherapists && (
-          <TabPanel id="therapists" value={current}>
-            <TherapistList onOpen={(t) => setOpen({ kind: "therapist", id: t.id, name: t.name })} />
-          </TabPanel>
-        )}
+        <TabPanel id="custom" value={current}>
+          <div className="flex flex-col gap-5">
+            <div className="max-w-full overflow-x-auto">
+              <Segmented
+                label="Custom reports"
+                value={customView}
+                onChange={(v) => setView(v)}
+                options={[...customViews]}
+              />
+            </div>
+            {customView === "build" && (
+              <BuilderTab
+                key={builderView?.id ?? "new"}
+                c={c}
+                initial={builderView}
+                openView={openView}
+              />
+            )}
+            {customView === "schedules" && <SchedulesTab c={c} />}
+            {customView === "downloads" && <ExportsTab c={c} />}
+            {customView === "about" && <Methodology c={c} />}
+          </div>
+        </TabPanel>
       </div>
 
-      {open?.kind === "therapist" && (
-        <Dialog title={open.name} onRequestClose={close}>
-          <TherapistReportsHub therapistId={open.id} embedded />
-        </Dialog>
-      )}
-      {open?.kind === "area" && area && (
-        <AreaDialog c={c} area={area} initial={open.pick} onClose={close} />
-      )}
-      {open?.kind === "areaDownload" && area && <AreaDownload c={c} area={area} onClose={close} />}
       {open?.kind === "filters" && (
         <Dialog title="Filters" onRequestClose={close}>
           <FilterBar
@@ -230,33 +276,15 @@ function Hub({
           />
         </Dialog>
       )}
-      {open?.kind === "create" && (
-        <Dialog title="Create a report" onRequestClose={close}>
-          <BuilderTab
-            key={builderView?.id ?? "new"}
-            c={c}
-            initial={builderView}
-            openView={openView}
-          />
-        </Dialog>
-      )}
-      {open?.kind === "schedules" && (
-        <Dialog title="Scheduled reports" onRequestClose={close}>
-          <SchedulesTab c={c} />
-        </Dialog>
-      )}
-      {open?.kind === "downloads" && (
-        <Dialog title="Past downloads" onRequestClose={close}>
-          <ExportsTab c={c} />
-        </Dialog>
-      )}
-      {open?.kind === "about" && (
-        <Dialog title="How these numbers work" onRequestClose={close}>
-          <Methodology c={c} />
-        </Dialog>
-      )}
       {open?.kind === "download" && (
-        <DownloadChooser c={c} onClose={close} onPast={() => setOpen({ kind: "downloads" })} />
+        <DownloadChooser
+          c={c}
+          onClose={close}
+          onPast={() => {
+            close();
+            go("custom", "downloads");
+          }}
+        />
       )}
     </>
   );
