@@ -4,7 +4,6 @@ import {
   ArrowDownRight,
   ArrowUpRight,
   CalendarClock,
-  ChevronRight,
   Download,
   FileClock,
   Minus,
@@ -13,7 +12,6 @@ import { useState, type ReactNode } from "react";
 import { colour } from "@/components/charts/chart-kit";
 import { TrendChart } from "@/components/charts/trend-chart";
 import { Button } from "@/components/ui/button";
-import { Dialog } from "@/components/ui/dialog";
 import { Segmented } from "@/components/ui/segmented";
 import { Tag, type TagTone } from "@/components/ui/tag";
 import { cn } from "@/lib/cn";
@@ -25,7 +23,6 @@ import {
   bucketsIn,
   dayKey,
   delta,
-  filterSummary,
   formatValue,
   inRange,
   isDelivered,
@@ -44,7 +41,7 @@ import {
   TelehealthTab,
 } from "./reports-analytics";
 import { ExportSheet, type Ctx } from "./reports-bits";
-import { SectionProvider, useSection, type Section } from "./reports-section";
+import { SectionProvider, useSection } from "./reports-section";
 
 /* ------------------------------------------------------------------ the areas */
 
@@ -53,6 +50,8 @@ const domainOf = (reportId: string): Domain => reportById.get(reportId)?.domain 
 
 export type AreaId =
   | "patients"
+  | "intake"
+  | "workforce"
   | "referrals"
   | "participants"
   | "capacity"
@@ -69,10 +68,6 @@ export type Area = {
   /** The area opens for anyone who can read at least one of these. */
   domains: Domain[];
   tables: string[];
-  /** Tables that are not catalogue reports, such as a therapist's patient list. */
-  custom?: { id: string; label: string }[];
-  /** The tab's main button, when it opens something other than the full report. */
-  openLabel?: string;
   /** The headline number on Overview, then a smaller one beneath it. */
   headline: [string, string];
   Tab: (props: { c: Ctx }) => ReactNode;
@@ -94,7 +89,8 @@ function VisitsTab({ c }: { c: Ctx }) {
   );
 }
 
-export const AREAS: Area[] = [
+/** Each report family on its own. The pages group some of them (see AREAS). */
+const BASE_AREAS: Area[] = [
   {
     id: "referrals",
     label: "Referrals",
@@ -161,13 +157,55 @@ export const AREAS: Area[] = [
   },
 ];
 
-export const areaById = (id: string) => AREAS.find((a) => a.id === id);
+/** Referrals and the patients they become, read as one flow. */
+function IntakeTab({ c }: { c: Ctx }) {
+  const has = (r: string) => c.hub.scope.domains.includes(domainOf(r));
+  return (
+    <>
+      {has("R01") && <ReferralsTab c={c} />}
+      {has("R04") && <ParticipantsTab c={c} />}
+    </>
+  );
+}
+
+const base = (id: AreaId) => {
+  const a = BASE_AREAS.find((x) => x.id === id);
+  if (!a) throw new Error(`Unknown area ${id}`);
+  return a;
+};
+
+/** The organisation's report tabs, in the order work flows: intake, visits, clinical, people, money. */
+export const AREAS: Area[] = [
+  {
+    id: "intake",
+    label: "Intake and patients",
+    title: "Referrals, intake and patients",
+    domains: [domainOf("R01"), domainOf("R04")],
+    tables: ["R01", "R02", "R03", "R04", "R05"],
+    headline: ["new-referrals", "missing-info"],
+    Tab: IntakeTab,
+  },
+  base("visits"),
+  { ...base("clinical"), label: "Clinical work" },
+  {
+    ...base("capacity"),
+    id: "workforce",
+    label: "Workforce",
+    title: "Workforce and capacity",
+  },
+  { ...base("finance"), label: "Billing and funding" },
+  base("automation"),
+];
+
+/** Any area by id, grouped or not; therapist pages reuse the single families. */
+export const areaById = (id: string) =>
+  AREAS.find((a) => a.id === id) ?? BASE_AREAS.find((a) => a.id === id);
 
 export const areaVisible = (a: Area, c: Pick<Ctx, "hub">) =>
   a.domains.some((d) => c.hub.scope.domains.includes(d));
 
 /** The reports in an area this person's role may open. */
-const areaTables = (a: Area, c: Ctx) =>
+export const areaTables = (a: Area, c: Ctx) =>
   a.tables.filter((id) => {
     const def = reportById.get(id);
     return def && c.hub.scope.domains.includes(def.domain);
@@ -206,6 +244,10 @@ function takeaway(id: AreaId, c: Ctx) {
   switch (id) {
     case "patients":
       return `${n("caseload")} patients on the caseload, and ${n("patients-seen")} seen in the period. On the caseload but not seen: ${n("caseload-not-seen")}.`;
+    case "intake":
+      return `${n("new-referrals")} new referrals${trend("new-referrals")}, ${n("missing-info")} waiting on information. ${n("active-participants")} patients are active.`;
+    case "workforce":
+      return `Clinicians are at ${n("utilisation")} utilisation, with ${n("delivered-hours")} hours of care delivered.`;
     case "referrals":
       return `${n("new-referrals")} new referrals${trend("new-referrals")}. ${n("missing-info")} are waiting on information.`;
     case "participants":
@@ -225,130 +267,102 @@ function takeaway(id: AreaId, c: Ctx) {
   }
 }
 
-/* ------------------------------------------------------------------ an area page: the summary */
+/* ------------------------------------------------------------------ an area page */
 
-/** An area's page: one sentence, a few tiles and one chart. Everything else opens in a dialog. */
+/** A view inside an area that isn't a catalogue report, such as a list of therapists. */
+export type AreaView = { id: string; label: string; node: ReactNode };
+
+/**
+ * An area on the page: one sentence, then sub-tabs. "Overview" holds every measure and chart; each
+ * report table has its own sub-tab. Nothing opens over the page.
+ */
 export function AreaPage({
   c,
   area,
-  onOpen,
-  onDownload,
+  view,
+  setView,
+  extra = [],
+  lead = [],
 }: {
   c: Ctx;
   area: Area;
-  onOpen: () => void;
-  onDownload: () => void;
+  view: string;
+  setView: (v: string) => void;
+  /** Views after the report tables. */
+  extra?: AreaView[];
+  /** Views before Overview, for an area whose main job is a list. */
+  lead?: AreaView[];
 }) {
+  const tables = areaTables(area, c);
+  // Telehealth's measures and its table read as one sub-tab when the area also holds scheduling.
+  const tele =
+    area.id === "visits" && c.hub.scope.domains.includes(domainOf("R07")) && tables.includes("R10");
+  const label = (id: string) =>
+    tele && id === "R10" ? "Telehealth" : (reportById.get(id)?.title ?? id);
+  const options = [
+    ...lead.map((v) => ({ id: v.id, label: v.label })),
+    { id: "overview", label: "Overview" },
+    ...tables.map((id) => ({ id, label: label(id) })),
+    ...extra.map((v) => ({ id: v.id, label: v.label })),
+  ];
+  const current = options.some((o) => o.id === view) ? view : (options[0]?.id ?? "overview");
+  const custom = [...lead, ...extra].find((v) => v.id === current);
+  const isTable = tables.includes(current);
+  // Someone else's reports are never exported from here: an export would use the viewer's scope.
+  const reportId = c.readOnly ? null : isTable ? current : null;
+  const [downloading, setDownloading] = useState(false);
+
+  const body = custom ? (
+    custom.node
+  ) : isTable ? (
+    <>
+      {tele && current === "R10" && (
+        <SectionProvider value={{ kind: "measures" }}>
+          <TelehealthTab c={c} />
+        </SectionProvider>
+      )}
+      <SectionProvider value={{ kind: "table", id: current }}>
+        <area.Tab c={c} />
+      </SectionProvider>
+    </>
+  ) : (
+    <SectionProvider value={{ kind: "measures" }}>
+      <area.Tab c={c} />
+    </SectionProvider>
+  );
+
   return (
     <div className="flex flex-col gap-5">
-      <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-        <div className="max-w-2xl min-w-0">
-          <h2 className="type-display text-h2 text-ink-900">{area.title}</h2>
-          <p className="mt-1 text-body text-ink-700">{takeaway(area.id, c)}</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button variant="primary" onClick={onOpen}>
-            {area.openLabel ?? "Open the full report"}
-            <ChevronRight className="size-4" aria-hidden="true" />
-          </Button>
-          {!c.readOnly && area.tables.length > 0 && (
-            <Button onClick={onDownload}>
+      <header className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
+          <div className="max-w-2xl min-w-0">
+            <h2 className="type-display text-h2 text-ink-900">{area.title}</h2>
+            <p className="mt-1 text-body text-ink-700">{takeaway(area.id, c)}</p>
+          </div>
+          {reportId && (
+            <Button onClick={() => setDownloading(true)}>
               <Download className="size-4" aria-hidden="true" />
-              Download
+              Download this report
             </Button>
           )}
         </div>
-      </header>
-      <SectionProvider value={{ kind: "summary" }}>
-        <area.Tab c={c} />
-      </SectionProvider>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ the full-report dialog */
-
-type Choice = "measures" | "telehealth" | string;
-
-/** The whole area in one dialog: every measure, then one report table at a time. */
-export function AreaDialog({
-  c,
-  area,
-  initial = "measures",
-  onClose,
-}: {
-  c: Ctx;
-  area: Area;
-  initial?: Choice;
-  onClose: () => void;
-}) {
-  const tables = areaTables(area, c);
-  const both =
-    area.id === "visits" &&
-    c.hub.scope.domains.includes(domainOf("R07")) &&
-    c.hub.scope.domains.includes(domainOf("R10"));
-  const custom = area.custom ?? [];
-  const options: { id: Choice; label: string }[] = [
-    { id: "measures", label: "Measures" },
-    ...(both ? [{ id: "telehealth", label: "Telehealth" }] : []),
-    ...custom,
-    ...tables.map((id) => ({ id, label: reportById.get(id)?.title ?? id })),
-  ];
-  const [pick, setPick] = useState<Choice>(
-    options.some((o) => o.id === initial) ? initial : "measures",
-  );
-  const [downloading, setDownloading] = useState(false);
-
-  const isCustom = custom.some((x) => x.id === pick);
-  const section: Section =
-    tables.includes(pick) || isCustom ? { kind: "table", id: pick } : { kind: "measures" };
-  // A custom table brings its own download, and someone else's reports are never exported from
-  // here: an export would use the viewer's own scope, not the therapist's.
-  const reportId =
-    c.readOnly || isCustom ? null : tables.includes(pick) ? pick : (tables[0] ?? null);
-  const body =
-    pick === "telehealth" ? (
-      <SectionProvider value={{ kind: "measures" }}>
-        <TelehealthTab c={c} />
-      </SectionProvider>
-    ) : (
-      <SectionProvider value={section}>
-        <area.Tab c={c} />
-      </SectionProvider>
-    );
-  return (
-    <>
-      <Dialog
-        title={area.title}
-        description={filterSummary(c.f)[0]}
-        onRequestClose={onClose}
-        actions={
-          reportId ? (
-            <Button size="sm" onClick={() => setDownloading(true)}>
-              <Download className="size-4" aria-hidden="true" />
-              Download
-            </Button>
-          ) : undefined
-        }
-        toolbar={
+        {options.length > 1 && (
           <div className="max-w-full overflow-x-auto">
-            <Segmented label="Section" value={pick} onChange={setPick} options={options} />
+            <Segmented
+              label={`${area.title} views`}
+              value={current}
+              onChange={setView}
+              options={options}
+            />
           </div>
-        }
-      >
-        {body}
-      </Dialog>
+        )}
+      </header>
+      <div className="flex flex-col gap-5">{body}</div>
       {downloading && reportId && (
         <ExportSheet c={c} reportId={reportId} onClose={() => setDownloading(false)} />
       )}
-    </>
+    </div>
   );
-}
-
-/** Download a report from the page: the area's first permitted report. */
-export function AreaDownload({ c, area, onClose }: { c: Ctx; area: Area; onClose: () => void }) {
-  const first = areaTables(area, c)[0];
-  return first ? <ExportSheet c={c} reportId={first} onClose={onClose} /> : null;
 }
 
 /* ------------------------------------------------------------------ overview */

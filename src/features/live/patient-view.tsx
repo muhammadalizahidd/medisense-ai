@@ -1,12 +1,11 @@
 "use client";
 
-import { Download, ExternalLink } from "lucide-react";
+import { ArrowLeft, Download, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { BarList } from "@/components/charts/bar-list";
 import { colour } from "@/components/charts/chart-kit";
 import { Button } from "@/components/ui/button";
-import { Dialog } from "@/components/ui/dialog";
 import { Segmented } from "@/components/ui/segmented";
 import { Tag } from "@/components/ui/tag";
 import { toast } from "@/components/ui/toast";
@@ -191,8 +190,8 @@ const tabs = [
   { id: "documents" as const, label: "Documents" },
 ];
 
-/** One patient, over whatever was open: their reports (with the summary) and their documents. */
-export function PatientDialog({
+/** One patient, in place of the list: their reports (with the summary) and their documents. */
+export function PatientPanel({
   c,
   id,
   reportsBase,
@@ -211,11 +210,22 @@ export function PatientDialog({
     { from: c.f.from, to: c.f.to },
     { today: c.hub.today, now: c.hub.now },
   );
+  const back = (
+    <button
+      type="button"
+      onClick={onBack}
+      className="inline-flex w-fit cursor-pointer items-center gap-1.5 text-small font-semibold text-accent hover:underline"
+    >
+      <ArrowLeft className="size-4" aria-hidden="true" />
+      All patients
+    </button>
+  );
   if (!summary) {
     return (
-      <Dialog title="Patient" above onRequestClose={onBack}>
+      <div className="flex flex-col gap-4">
+        {back}
         <NA>This patient isn&apos;t in the reports you can see.</NA>
-      </Dialog>
+      </div>
     );
   }
   const row = summary.row;
@@ -230,18 +240,18 @@ export function PatientDialog({
     </div>
   );
   return (
-    <Dialog
-      title={row.name}
-      description={row.disciplines.join(" · ") || undefined}
-      above
-      onRequestClose={onBack}
-      meta={<Tag tone={row.onCaseload ? "healthy" : "outline"}>{relation(row)}</Tag>}
-      toolbar={
-        <div className="flex flex-col gap-3">
-          <Segmented label="Patient sections" value={tab} onChange={setTab} options={tabs} />
+    <div className="flex flex-col gap-5">
+      {back}
+      <header className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <h2 className="type-display text-h2 text-ink-900">{row.name}</h2>
+          <Tag tone={row.onCaseload ? "healthy" : "outline"}>{relation(row)}</Tag>
         </div>
-      }
-    >
+        {row.disciplines.length > 0 && (
+          <p className="text-small text-ink-700">{row.disciplines.join(" · ")}</p>
+        )}
+        <Segmented label="Patient sections" value={tab} onChange={setTab} options={tabs} />
+      </header>
       {tab === "documents" && <Documents id={id} />}
       {tab === "reports" && (
         <div className="flex flex-col gap-4">
@@ -288,6 +298,6 @@ export function PatientDialog({
           <Reports id={id} base={reportsBase} />
         </div>
       )}
-    </Dialog>
+    </div>
   );
 }

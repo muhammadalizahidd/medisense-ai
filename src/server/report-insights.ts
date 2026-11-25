@@ -163,7 +163,7 @@ export function computeInsights(l: LoadedFacts): Found[] {
           threshold: `Above ${T.cancellationRate}% with at least ${T.cancellationMin} eligible visits`,
           rule: "Cancellation trend",
           suggestion: "Look at the reasons and times in R08 before changing anything.",
-          href: "/care/reports?tab=appointments",
+          href: "/care/reports?tab=visits",
           owner: "Scheduling team",
         });
     }
@@ -267,7 +267,7 @@ export function computeInsights(l: LoadedFacts): Found[] {
         rule: "Telehealth connection issue",
         suggestion:
           "Ask for a technical review of the affected sessions. Uses connection metadata only, never recordings.",
-        href: "/care/reports?tab=telehealth",
+        href: "/care/reports?tab=visits&view=R10",
         owner: "Operations Manager",
       });
   }
@@ -289,7 +289,7 @@ export function computeInsights(l: LoadedFacts): Found[] {
         rule: "Inconsistent metric definition",
         suggestion:
           "Delivered hours exclude these visits and show Data Incomplete. Ask clinicians to complete check-out so hours and utilisation are comparable.",
-        href: "/care/reports?tab=capacity",
+        href: "/care/reports?tab=workforce",
         owner: "Operations Manager",
       });
   }

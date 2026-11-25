@@ -5,7 +5,6 @@ import { createContext, useContext, useMemo, useState } from "react";
 import { BarList } from "@/components/charts/bar-list";
 import { colour } from "@/components/charts/chart-kit";
 import { Button } from "@/components/ui/button";
-import { Dialog } from "@/components/ui/dialog";
 import { SearchField } from "@/components/ui/search-field";
 import { Segmented } from "@/components/ui/segmented";
 import { Tag, type TagTone } from "@/components/ui/tag";
@@ -215,7 +214,7 @@ function PatientTable({ rows }: { rows: PatientRow[] }) {
       <p className="text-caption text-ink-500">{populationHint[t.population]}</p>
       <Card
         title={`${rows.length} ${rows.length === 1 ? "patient" : "patients"}`}
-        sub="Open Reports & Details for a patient's summary and documents"
+        sub="Open a patient for their summary, reports and documents"
         flush
       >
         {rows.length ? (
@@ -258,9 +257,9 @@ function PatientTable({ rows }: { rows: PatientRow[] }) {
                         variant="primary"
                         className="whitespace-nowrap"
                         onClick={() => t.openPatient(r.id)}
-                        aria-label={`Reports & Details: ${r.name}`}
+                        aria-label={`Open ${r.name}`}
                       >
-                        Reports &amp; Details
+                        Open patient
                       </Button>
                     </td>
                   </tr>
@@ -270,7 +269,7 @@ function PatientTable({ rows }: { rows: PatientRow[] }) {
           </div>
         ) : (
           <p className="px-4 py-8 text-center text-small text-ink-700">
-            No patients match. Change who is rows, or clear the search.
+            No patients match. Change who is shown, or clear the search.
           </p>
         )}
       </Card>
@@ -279,10 +278,10 @@ function PatientTable({ rows }: { rows: PatientRow[] }) {
 }
 
 /**
- * The patient list on its own. Who is shown, search and download stay in the header, so changing
- * the list never moves them.
+ * The patient list, on the page. Who is shown, search and download sit in one row above it, so
+ * changing the list never moves them.
  */
-export function PatientListDialog({ c, onClose }: { c: Ctx; onClose: () => void }) {
+export function PatientList({ c }: { c: Ctx }) {
   const t = useTherapist();
   const rows = useRows(c);
   const [q, setQ] = useState("");
@@ -302,31 +301,26 @@ export function PatientListDialog({ c, onClose }: { c: Ctx; onClose: () => void 
     URL.revokeObjectURL(url);
   };
   return (
-    <Dialog
-      title="Patient list"
-      onRequestClose={onClose}
-      toolbar={
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <PopulationPicker hint={false} />
-          <div className="flex flex-none items-center gap-2">
-            <SearchField
-              label="Search patients"
-              placeholder="Search patients"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-            />
-            {!c.readOnly && (
-              <Button size="sm" onClick={download} disabled={!shown.length}>
-                <Download className="size-4" aria-hidden="true" />
-                Download CSV
-              </Button>
-            )}
-          </div>
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-3 rounded-card border border-border bg-surface p-3 sm:flex-row sm:items-center sm:justify-between">
+        <PopulationPicker hint={false} />
+        <div className="flex flex-none items-center gap-2">
+          <SearchField
+            label="Search patients"
+            placeholder="Search patients"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+          {!c.readOnly && (
+            <Button size="sm" onClick={download} disabled={!shown.length}>
+              <Download className="size-4" aria-hidden="true" />
+              Download CSV
+            </Button>
+          )}
         </div>
-      }
-    >
+      </div>
       <PatientTable rows={shown} />
-    </Dialog>
+    </div>
   );
 }
 
@@ -338,7 +332,10 @@ function pick(id: AreaId, over: Partial<Area>): Area {
   return { ...base, ...over };
 }
 
-/** The therapist's tabs after Overview, in the order a working day goes. */
+/**
+ * The therapist's tabs after Overview, in the order a working day goes. Time and travel sits inside
+ * Sessions, and clinical reports inside Clinical work.
+ */
 export const THERAPIST_AREAS: Area[] = [
   {
     id: "patients",
@@ -346,7 +343,6 @@ export const THERAPIST_AREAS: Area[] = [
     title: "Patients and caseload",
     domains: ["Participants"],
     tables: [],
-    openLabel: "View patient list",
     headline: ["caseload", "patients-seen"],
     Tab: PatientsTab,
   },
@@ -360,11 +356,6 @@ export const THERAPIST_AREAS: Area[] = [
     title: "Notes, goals and assessments",
     headline: ["overdue-notes", "assessment-backlog"],
   }),
-  pick("capacity", {
-    label: "Time and travel",
-    title: "Time and capacity",
-    headline: ["utilisation", "delivered-hours"],
-  }),
 ];
 
 export const therapistAreaById = (id: string) => THERAPIST_AREAS.find((a) => a.id === id);
@@ -377,7 +368,7 @@ const TILES: { area: AreaId; label: string; headline: [string, string] }[] = [
   { area: "visits", label: "Sessions", headline: ["delivered", "cancellation-rate"] },
   { area: "visits", label: "Sessions", headline: ["attendance-rate", "no-show-rate"] },
   { area: "clinical", label: "Clinical work", headline: ["overdue-notes", "assessment-backlog"] },
-  { area: "capacity", label: "Time and travel", headline: ["utilisation", "delivered-hours"] },
+  { area: "capacity", label: "Sessions", headline: ["utilisation", "delivered-hours"] },
 ];
 
 /** The therapist's first page: how things stand, what to do first, and who to look at. */

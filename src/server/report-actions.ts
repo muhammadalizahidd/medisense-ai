@@ -780,7 +780,7 @@ export async function runSchedule(id: ObjectId, by: UserDoc | "Scheduler", retry
       {
         title: `Scheduled report ready: ${def.title}`,
         body: `${sch.name} · ${dayKey(new Date())}${sch.delivery === "Email link" ? " · secure link emailed (simulated)" : ""}`,
-        href: "/care/reports?tab=exports",
+        href: "/care/reports?tab=custom&view=downloads",
       },
     );
     await audit(
