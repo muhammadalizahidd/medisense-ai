@@ -1419,7 +1419,7 @@ export const metrics: MetricDef[] = [
     better: "down",
     definition: "Open assigned tasks whose due time is before now (business timestamp).",
     limit: "Completed and cancelled tasks are excluded.",
-    drill: { module: "Operations", href: "/care/operations?tab=queue" },
+    drill: { module: "Operations", href: "/care/operations?tab=work" },
     compute: (f, _from, _to, ctx) =>
       count(
         f.tasks.filter((t) => !["Completed", "Cancelled"].includes(t.status) && t.dueAt < ctx.now)

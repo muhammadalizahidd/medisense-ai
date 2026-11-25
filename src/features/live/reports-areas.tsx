@@ -115,7 +115,7 @@ export const AREAS: Area[] = [
   },
   {
     id: "capacity",
-    label: "Clinicians",
+    label: "Capacity",
     title: "Clinician capacity",
     domains: [domainOf("R06")],
     tables: ["R06"],
@@ -133,7 +133,7 @@ export const AREAS: Area[] = [
   },
   {
     id: "clinical",
-    label: "Clinical",
+    label: "Assessments",
     title: "Assessments and treatment",
     domains: [domainOf("R11")],
     tables: ["R11", "R12", "R13"],

@@ -480,7 +480,11 @@ function Builder({
       <PageHeader
         eyebrow="Live care"
         leading={
-          <ButtonLink size="sm" variant="ghost" href="/care/operations?tab=rules">
+          <ButtonLink
+            size="sm"
+            variant="ghost"
+            href="/care/operations?tab=automation&section=rules"
+          >
             <ArrowLeft className="size-3.5" aria-hidden="true" /> Rules
           </ButtonLink>
         }

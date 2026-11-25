@@ -58,7 +58,7 @@ type Detail = {
 
 export function TaskPage({
   id,
-  back = "/care/operations?tab=queue",
+  back = "/care/operations?tab=work",
 }: {
   id: string;
   back?: string;

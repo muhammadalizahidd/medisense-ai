@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { AiChip, AiDraft, RuleMark } from "@/components/ai/provenance";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
+import { Sheet } from "@/components/ui/sheet";
 import { Tag } from "@/components/ui/tag";
 import { api } from "@/lib/live/client";
 import type { FindingCategory, FindingDto, OpsHubDto, ReviewDto } from "@/lib/live/operations";
@@ -99,6 +100,61 @@ export function ReviewTab({ hub, onDone }: { hub: OpsHubDto; onDone: () => void 
         />
       </div>
     </div>
+  );
+}
+
+/** One referral's review, opened from the Needs you inbox. */
+export function ReviewSheet({
+  review,
+  hub,
+  onClose,
+  onDone,
+}: {
+  review: ReviewDto;
+  hub: OpsHubDto;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const [filter, setFilter] = useState("");
+  return (
+    <Sheet
+      title={review.participant}
+      description={`Referral review · ${review.reference}`}
+      onClose={onClose}
+    >
+      <div className="flex flex-col gap-6">
+        <ReviewDetail
+          review={review}
+          hub={hub}
+          onDone={onDone}
+          filter={filter}
+          setFilter={setFilter}
+        />
+      </div>
+    </Sheet>
+  );
+}
+
+/** One waiting service's therapist shortlist, opened from the Needs you inbox. */
+export function MatchSheet({
+  c,
+  hub,
+  onClose,
+  onDone,
+}: {
+  c: OpsHubDto["matching"][number];
+  hub: OpsHubDto;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  return (
+    <Sheet
+      title={c.participant}
+      description={`Therapist matching · ${c.support} · ${c.waitingDays} days waiting`}
+      onClose={onClose}
+    >
+      <MatchDetail c={c} hub={hub} onDone={onDone} />
+    </Sheet>
   );
 }
 
