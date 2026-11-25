@@ -6,7 +6,7 @@ import type { Role } from "./types";
  */
 export function homeFor(role: Role, staffRoles?: readonly string[] | null) {
   if (role === "admin") return staffRoles?.includes("Super Admin") ? "/" : "/care";
-  if (role === "therapist") return "/therapist";
+  if (role === "therapist") return "/therapist/today";
   return "/mobile/patient";
 }
 

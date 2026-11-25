@@ -324,12 +324,27 @@ export type NotificationDto = {
 
 export type ConversationDto = {
   id: string;
+  /** "care" links a patient and their therapist; "direct" is a chat an admin opened. */
+  kind: "care" | "direct";
+  /** Empty for a direct chat. */
   clientId: string;
+  /** Who the other person is, for filtering the list. */
+  group: "Office staff" | "Clinicians" | "Patients";
   title: string;
   subtitle: string;
   lastMessage: string | null;
   lastAt: string | null;
   unread: number;
+};
+
+/** Someone an admin can start a chat with. */
+export type ChatPersonDto = {
+  id: string;
+  name: string;
+  group: "Office staff" | "Clinicians" | "Patients";
+  role: string;
+  photoKind: "staff" | "patient";
+  conversationId: string | null;
 };
 
 /** A file sent in a conversation: a document, photo, video clip or voice note. */
@@ -528,4 +543,28 @@ export type ReferralDetailDto = ReferralSummaryDto & {
   activity: { id: string; action: string; actor: string; at: string }[];
   /** True when the viewer can make the clinical triage decision. */
   canTriage: boolean;
+  /** Intake to first visit: each accepted service, its therapist request and the welcome. */
+  firstVisit: FirstVisitDto | null;
+};
+
+export type FirstVisitDto = {
+  services: {
+    needId: string;
+    support: string;
+    discipline: Discipline;
+    status: NeedStatus;
+    therapistName: string | null;
+    request: "pending" | "accepted" | null;
+    firstVisit: string | null;
+  }[];
+  welcome: {
+    ref: string;
+    state: string;
+    channel: string;
+    recipient: string;
+    byName: string;
+    at: string;
+  } | null;
+  /** The welcome message as it will be sent now, built from the approved template. */
+  preview: { channel: string; recipient: string; subject: string; body: string };
 };

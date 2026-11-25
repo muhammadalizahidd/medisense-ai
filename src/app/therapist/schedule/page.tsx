@@ -12,8 +12,7 @@ async function MyScheduleContent() {
   if (!(await requirePageUser("/therapist/schedule", "therapist"))) return <OfflinePage />;
   return (
     <PageContainer>
-      <MySchedule />
-      <TherapistBilling />
+      <MySchedule after={<TherapistBilling />} />
     </PageContainer>
   );
 }

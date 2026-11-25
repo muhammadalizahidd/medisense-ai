@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Caption } from "./card";
+import { KpiLabel } from "./kpi-icon";
 
 /** A row of headline figures in one flat, hairline-divided band. */
 export function StatRow({
@@ -16,7 +17,7 @@ export function StatRow({
     >
       {stats.map((s) => (
         <div key={s.label} className="flex flex-col gap-1.5 bg-surface px-5 py-4">
-          <span className="label-caps">{s.label}</span>
+          <KpiLabel label={s.label} />
           <span className="type-display text-h1-compact leading-none">{s.value}</span>
           <Caption>{s.caption}</Caption>
         </div>

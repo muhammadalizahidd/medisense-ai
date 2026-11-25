@@ -32,7 +32,7 @@ function Notifications() {
   );
   const liveNotes = user ? (live.data?.notifications ?? []) : [];
   const liveUnread = liveNotes.filter((n) => !n.read).length;
-  const unreadMessages = useUnreadMessages(user?.role === "therapist");
+  const unreadMessages = useUnreadMessages(user?.role === "therapist" || user?.role === "admin");
   const unread = notices.filter((n) => !n.read).length + liveUnread + unreadMessages;
   const [open, setOpen] = useState(false);
   const button = useRef<HTMLButtonElement>(null);
@@ -94,7 +94,7 @@ function Notifications() {
           <h2 className="px-4 pt-3 pb-2 text-small font-semibold">Notifications</h2>
           {unreadMessages > 0 && (
             <Link
-              href="/messages"
+              href={user?.role === "admin" ? "/care/messages" : "/messages"}
               onClick={() => setOpen(false)}
               className="flex items-center gap-2 border-t border-border bg-accent-tint px-4 py-2.5 text-small font-semibold text-ink-900 hover:no-underline"
             >

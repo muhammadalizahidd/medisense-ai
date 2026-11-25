@@ -3,12 +3,12 @@
 import { ChevronDown, HeartPulse, Search, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, useSyncExternalStore, type CSSProperties } from "react";
+import { useEffect, useState, useSyncExternalStore, type CSSProperties } from "react";
 import { caseNotes } from "@/data/case-note";
 import { cn } from "@/lib/cn";
 import { isActive, isStandalone, navigationFor, roleUsers } from "@/lib/navigation";
 import { useUnreadMessages } from "@/features/live/conversations";
-import { useSession } from "@/lib/live/client";
+import { preload, useSession } from "@/lib/live/client";
 import { useDemoStore } from "@/state/demo-store";
 import { photoFor } from "@/lib/avatars";
 
@@ -40,6 +40,17 @@ function subscribeCollapsed(listener: () => void) {
  * Groups a person has folded away, remembered on this device. The server (and the first client
  * render) shows every group open, so hydration matches; the saved state applies right after.
  */
+/** What the therapist's seven everyday pages read first. */
+const THERAPIST_PAGES = [
+  "/api/care/workspace",
+  "/api/care/therapist",
+  "/api/care/schedule/mine",
+  "/api/visits",
+  "/api/care/documentation",
+  "/api/care/coordination",
+  "/api/care/progress",
+];
+
 function useCollapsed() {
   const raw = useSyncExternalStore(subscribeCollapsed, readCollapsed, () => "[]");
   let collapsed: string[] = [];
@@ -73,7 +84,17 @@ export function Sidebar() {
   const notes = useDemoStore((s) => s.caseNotes);
   const notesLeft = caseNotes.filter((c) => notes[c.id]?.mode !== "approved").length;
   const { user: account, loading: sessionLoading } = useSession();
-  const unreadMessages = useUnreadMessages(account?.role === "therapist");
+  // Once the page in front of them has loaded, the other everyday pages load quietly behind it, so
+  // each opens at once the first time too.
+  const therapist = account?.role === "therapist";
+  useEffect(() => {
+    if (!therapist) return undefined;
+    const t = setTimeout(() => preload(THERAPIST_PAGES), 2500);
+    return () => clearTimeout(t);
+  }, [therapist]);
+  const unreadMessages = useUnreadMessages(
+    account?.role === "therapist" || account?.role === "admin",
+  );
   const [collapsed, toggle] = useCollapsed();
   const router = useRouter();
   const [query, setQuery] = useState("");
@@ -174,11 +195,14 @@ export function Sidebar() {
       )}
 
       {!sessionLoading &&
-        groups.map(({ group, items, live }) => {
-          const folded = !q && !live && collapsed.includes(group);
+        groups.map(({ group, items, live, more }) => {
+          // "More" starts folded and opens on a click; sample groups start open and fold.
+          const open = more && items.some((i) => isActive(pathname, i.href));
+          const folded =
+            !q && !open && (more ? !collapsed.includes(group) : !live && collapsed.includes(group));
           return (
             <div key={group} className="flex flex-col gap-0.5">
-              {live ? (
+              {live && !more ? (
                 <div className="hidden items-center gap-1.5 px-2.5 pb-1 text-label font-semibold tracking-[0.08em] text-sidebar-muted uppercase xl:flex">
                   <i aria-hidden="true" className="size-1.5 rounded-full bg-live-dot" />
                   {group}
@@ -192,7 +216,7 @@ export function Sidebar() {
                 >
                   <span className="truncate">{group}</span>
                   <span className="flex items-center gap-1.5 font-medium tracking-normal normal-case">
-                    Sample
+                    {more ? `${items.length} pages` : "Sample"}
                     <ChevronDown
                       className={cn(
                         "size-3.5 transition-transform duration-(--duration-fast)",
@@ -206,7 +230,8 @@ export function Sidebar() {
               {items.map(({ href, label, icon: Icon, badge }) => {
                 const active = isActive(pathname, href);
                 const count = href.startsWith("/case-notes") ? notesLeft : badge;
-                const unread = href === "/messages" ? unreadMessages : 0;
+                const unread =
+                  href === "/messages" || href === "/care/messages" ? unreadMessages : 0;
                 return (
                   <Link
                     key={href}

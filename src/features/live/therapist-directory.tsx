@@ -75,7 +75,6 @@ export function TherapistDirectory() {
         actions={
           <div className="flex items-center gap-3">
             <LiveBadge />
-            {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- a CSV download, not a page */}
             <a
               href="/api/care/therapists/export"
               download

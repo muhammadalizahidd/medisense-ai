@@ -14,6 +14,7 @@ import {
   Sparkle,
   type LucideIcon,
 } from "lucide-react";
+import { KpiLabel } from "@/components/ui/kpi-icon";
 import Link from "next/link";
 import { useMemo, useState, type ReactNode } from "react";
 import { Tag } from "@/components/ui/tag";
@@ -232,9 +233,7 @@ export function PatientHistory({
             key={s.label}
             className="group bg-surface px-5 py-4 transition-colors duration-(--duration-fast) hover:bg-canvas"
           >
-            <p className="text-label font-semibold tracking-[0.1em] text-ink-500 uppercase">
-              {s.label}
-            </p>
+            <KpiLabel label={s.label} />
             <p className="mt-1.5 type-display text-[26px] leading-8 text-ink-900">{s.value}</p>
             <p className="mt-0.5 truncate text-caption text-ink-500">{s.hint}</p>
           </div>

@@ -11,6 +11,7 @@ import {
   TrendingUp,
   Workflow,
 } from "lucide-react";
+import { KpiLabel } from "@/components/ui/kpi-icon";
 import { useState } from "react";
 import { BarList } from "@/components/charts/bar-list";
 import { colour } from "@/components/charts/chart-kit";
@@ -885,9 +886,7 @@ function Reports({ hub }: { hub: OpsHubDto }) {
       >
         {metrics.map((m) => (
           <div key={m.label} className="flex flex-col gap-1 bg-surface px-5 py-4">
-            <span className="text-label font-semibold tracking-[0.08em] text-ink-500 uppercase">
-              {m.label}
-            </span>
+            <KpiLabel label={m.label} />
             <span className="type-display text-h2 leading-tight text-ink-900">{m.value}</span>
             <span className="text-caption text-ink-500">{m.def}</span>
           </div>

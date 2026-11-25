@@ -2,16 +2,16 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { PageContainer, PageLoading } from "@/components/ui/page";
 import { OfflinePage } from "@/features/live/offline-page";
-import { CoordHub } from "@/features/live/coord-hub";
+import { TasksPage } from "@/features/live/tasks-page";
 import { requirePageUser } from "@/server/page-auth";
 
-export const metadata: Metadata = { title: "Treatment plans � Medisense" };
+export const metadata: Metadata = { title: "Tasks · Medisense" };
 
 async function PageContent() {
   if (!(await requirePageUser("/therapist/coordination", "therapist"))) return <OfflinePage />;
   return (
     <PageContainer>
-      <CoordHub base="/therapist/coordination" />
+      <TasksPage />
     </PageContainer>
   );
 }

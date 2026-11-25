@@ -26,9 +26,9 @@ describe("page access", () => {
   });
 
   it("keeps therapists out of admin and leadership screens", () => {
-    expect(to("/care/billing", "therapist")).toBe("/therapist");
-    expect(to("/team-capacity", "therapist")).toBe("/therapist");
-    expect(to("/admin-queue", "therapist")).toBe("/therapist");
+    expect(to("/care/billing", "therapist")).toBe("/therapist/today");
+    expect(to("/team-capacity", "therapist")).toBe("/therapist/today");
+    expect(to("/admin-queue", "therapist")).toBe("/therapist/today");
     expect(to("/therapist/patients/x", "therapist")).toBe("allow");
     expect(to("/my-day", "therapist")).toBe("allow");
     expect(to("/patients/emily-carter", "therapist")).toBe("allow");

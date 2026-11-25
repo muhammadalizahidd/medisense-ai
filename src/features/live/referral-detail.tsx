@@ -36,6 +36,7 @@ import type { ReferralDetailDto } from "@/lib/live/types";
 import { cn } from "@/lib/cn";
 import { ErrorNote, LiveBadge, Panel, Skeleton } from "./bits";
 import { Choice, TextArea, Tick } from "./form-bits";
+import { FirstVisitFlow } from "./first-visit-flow";
 import { ReferralStatusTag } from "./referral-queue";
 
 const stages = [
@@ -43,7 +44,7 @@ const stages = [
   { label: "Intake review", statuses: ["Under Admin Review", "Needs Information"] },
   { label: "Clinical triage", statuses: ["Clinical Triage"] },
   { label: "Funding and consent", statuses: ["Funding Review"] },
-  { label: "Ready for matching", statuses: ["Accepted", "Closed"] },
+  { label: "First visit", statuses: ["Accepted", "Closed"] },
 ];
 
 type Invite = { mrn?: string; clientId?: string };
@@ -104,6 +105,10 @@ export function ReferralDetail({ id }: { id: string }) {
   const at = stages.findIndex((s) => s.statuses.includes(r.status));
   const open = !["Accepted", "Declined", "Withdrawn", "Closed"].includes(r.status);
   const mine = session.user?.name === r.owner;
+  const fv = r.firstVisit;
+  const arranged = Boolean(
+    fv?.welcome && fv.services.every((x) => x.request || x.status === "assigned"),
+  );
 
   return (
     <>
@@ -158,8 +163,11 @@ export function ReferralDetail({ id }: { id: string }) {
           className="no-scrollbar mb-6 flex items-center overflow-x-auto rounded-card border border-border bg-surface px-5 py-4"
         >
           {stages.map((s, i) => {
-            const done = i < at || r.status === "Accepted";
-            const now = i === at && r.status !== "Accepted";
+            const done =
+              i < at ||
+              r.status === "Closed" ||
+              (r.status === "Accepted" && (i < stages.length - 1 || arranged));
+            const now = i === at && !done;
             return (
               <li
                 key={s.label}
@@ -214,7 +222,7 @@ export function ReferralDetail({ id }: { id: string }) {
 
       <Tabs label="Referral" tabs={tabs} value={tab} onChange={setTab} />
       <TabPanel id="next" value={tab}>
-        <NextStep r={r} busy={busy} act={act} invite={invite} />
+        <NextStep r={r} busy={busy} act={act} invite={invite} onChanged={reload} />
       </TabPanel>
       <TabPanel id="referral" value={tab}>
         <ReferralContent r={r} />
@@ -308,11 +316,13 @@ function NextStep({
   busy,
   act,
   invite,
+  onChanged,
 }: {
   r: ReferralDetailDto;
   busy: boolean;
   act: Act;
   invite: Invite | null;
+  onChanged: () => void;
 }) {
   switch (r.status) {
     case "Submitted":
@@ -353,6 +363,25 @@ function NextStep({
         </Panel>
       );
     case "Accepted":
+      if (r.firstVisit && r.clientId) {
+        return (
+          <FirstVisitFlow
+            flow={r.firstVisit}
+            mrn={invite?.mrn ?? r.mrn}
+            clientId={r.clientId}
+            busy={busy}
+            onSend={() => void act({ type: "welcome" })}
+            onChanged={onChanged}
+            waitlisted={
+              r.services.some((x) => x.decision !== "Accepted") ? (
+                <Panel title="Services not started">
+                  <ServiceOutcomes r={r} busy={busy} act={act} />
+                </Panel>
+              ) : undefined
+            }
+          />
+        );
+      }
       return (
         <Panel title="Accepted: ready for matching">
           {(invite?.mrn ?? r.mrn) && (

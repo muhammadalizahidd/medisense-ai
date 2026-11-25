@@ -1,9 +1,12 @@
 "use client";
 
+import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
+import { KpiLabel } from "@/components/ui/kpi-icon";
 import { toast } from "@/components/ui/toast";
 import type { TagTone } from "@/components/ui/tag";
 import { Tag } from "@/components/ui/tag";
+import { cn } from "@/lib/cn";
 import { api } from "@/lib/live/client";
 import type {
   ApprovalStatus,
@@ -128,6 +131,13 @@ export async function ops<T = Record<string, unknown>>(
   }
 }
 
+/** Columns per figure count, so a short band fills the row instead of leaving a gap. */
+const columns: Record<number, string> = {
+  3: "sm:grid-cols-3",
+  4: "xl:grid-cols-4",
+  5: "sm:grid-cols-3 xl:grid-cols-5",
+};
+
 /** A KPI tile row: the same band as the finance overview, figures clickable into a filtered view. */
 export function KpiBand({
   items,
@@ -139,13 +149,17 @@ export function KpiBand({
     sub: ReactNode;
     tone?: "over" | "watch";
     onClick?: () => void;
+    icon?: LucideIcon;
   }[];
   label: string;
 }) {
   return (
     <section
       aria-label={label}
-      className="grid gap-px overflow-hidden rounded-card border border-border bg-border shadow-lift sm:grid-cols-3 xl:grid-cols-6"
+      className={cn(
+        "grid grid-cols-2 gap-px overflow-hidden rounded-card border border-border bg-border shadow-lift",
+        columns[items.length] ?? "sm:grid-cols-3 xl:grid-cols-6",
+      )}
     >
       {items.map((k) => (
         <button
@@ -155,9 +169,7 @@ export function KpiBand({
           disabled={!k.onClick}
           className="group flex cursor-pointer flex-col gap-1 bg-surface px-5 py-4 text-left transition-colors hover:bg-canvas disabled:cursor-default disabled:hover:bg-surface"
         >
-          <span className="text-label font-semibold tracking-[0.08em] text-ink-500 uppercase">
-            {k.label}
-          </span>
+          <KpiLabel label={k.label} icon={k.icon} tone={k.tone} />
           <span
             className={
               k.tone === "over"

@@ -30,8 +30,14 @@ import {
   type ReferralInput,
   type ReferralStatus,
 } from "@/lib/live/referral";
-import type { PublicReferralDto, ReferralDetailDto, ReferralSummaryDto } from "@/lib/live/types";
-import { brisbaneDay } from "@/lib/live/time";
+import { renderTemplate, templates } from "@/lib/live/operations";
+import type {
+  FirstVisitDto,
+  PublicReferralDto,
+  ReferralDetailDto,
+  ReferralSummaryDto,
+} from "@/lib/live/types";
+import { brisbaneDay, shortDate, timeOfDay } from "@/lib/live/time";
 import { collections } from "./db";
 import { mrnAccess, mrnHash, nextMrn } from "./mrn";
 import { UserFacingError } from "./http";
@@ -529,7 +535,142 @@ export async function referralDetail(id: ObjectId, viewer: UserDoc): Promise<Ref
       at: a.at.toISOString(),
     })),
     canTriage: isClinical(viewer),
+    firstVisit: await firstVisitFor(r),
   };
+}
+
+/**
+ * Intake to first visit, after acceptance: where each accepted service stands with its therapist
+ * request, and the welcome message (sent, or as it would be sent now).
+ */
+async function firstVisitFor(r: ReferralDoc): Promise<FirstVisitDto | null> {
+  if (r.status !== "Accepted" || !r.clientId) return null;
+  const db = await collections();
+  const client = await db.clients.findOne({ _id: r.clientId });
+  if (!client) return null;
+  const needIds = new Set(
+    (r.services ?? []).flatMap((x) => (x.decision === "Accepted" && x.needId ? [x.needId] : [])),
+  );
+  const needs = client.needs.filter((n) => needIds.has(n.id));
+  const assignments = await db.assignments
+    .find({
+      clientId: client._id,
+      needId: { $in: needs.map((n) => n.id) },
+      status: { $in: ["pending", "accepted"] },
+    })
+    .toArray();
+  const [therapists, visits] = await Promise.all([
+    db.therapists
+      .find({ _id: { $in: assignments.map((a) => a.therapistId) } }, { projection: { name: 1 } })
+      .toArray(),
+    db.appointments
+      .find({
+        _id: { $in: assignments.flatMap((a) => (a.appointmentId ? [a.appointmentId] : [])) },
+      })
+      .toArray(),
+  ]);
+  const nameOf = new Map(therapists.map((t) => [t._id.toHexString(), t.name]));
+  const startOf = new Map(visits.map((v) => [v._id.toHexString(), v.start]));
+  const services = needs.map((n) => {
+    const a = assignments.find((x) => x.needId === n.id);
+    const start = a?.appointmentId ? startOf.get(a.appointmentId.toHexString()) : undefined;
+    return {
+      needId: n.id,
+      support: n.support,
+      discipline: n.discipline,
+      status: n.status,
+      therapistName: a ? (nameOf.get(a.therapistId.toHexString()) ?? null) : null,
+      request: a ? (a.status as "pending" | "accepted") : null,
+      firstVisit: start?.toISOString() ?? null,
+    };
+  });
+  const preferred = client.profile?.preferredName || client.name.split(" ")[0] || client.name;
+  const vars = {
+    preferred_name: preferred,
+    mrn: client.mrn ?? r.mrn ?? "",
+    first_visit: firstVisitLine(services),
+  };
+  const tpl = templates.find((t) => t.id === WELCOME);
+  if (!tpl) return null;
+  return {
+    services,
+    welcome: r.welcome ? { ...r.welcome, at: r.welcome.at.toISOString() } : null,
+    preview: {
+      channel: tpl.channel,
+      recipient: `${client.name} · ${client.email}`,
+      subject: renderTemplate(tpl.subject, vars).text,
+      body: renderTemplate(tpl.body, vars).text,
+    },
+  };
+}
+
+const WELCOME = "TPL-WELCOME";
+
+/** The sentence about the first visit: confirmed, waiting on the therapist, or still to book. */
+function firstVisitLine(services: FirstVisitDto["services"]) {
+  const first = services
+    .flatMap((s) =>
+      s.firstVisit && s.therapistName ? [{ ...s, at: s.firstVisit, who: s.therapistName }] : [],
+    )
+    .sort((a, b) => a.at.localeCompare(b.at))[0];
+  if (!first) {
+    return "We'll be in touch shortly to book your first visit.";
+  }
+  const when = `${shortDate(first.at)} at ${timeOfDay(first.at)}`;
+  return first.request === "accepted"
+    ? `Your first visit is on ${when} with ${first.who} (${first.discipline}).`
+    : `We've asked ${first.who} (${first.discipline}) to see you, with your first visit planned for ${when}. We'll confirm it shortly.`;
+}
+
+/** Sends the welcome through the message queue, so consent and authority checks still apply. */
+async function sendWelcome(admin: UserDoc, r: ReferralDoc) {
+  if (r.status !== "Accepted" || !r.clientId) {
+    throw new UserFacingError("Accept the referral before sending the welcome.", 409);
+  }
+  if (r.welcome) throw new UserFacingError("The welcome message has already been sent.", 409);
+  const draft = await firstVisitFor(r);
+  if (!draft) throw new UserFacingError("The patient record isn't ready yet.", 409);
+  const { queueMessage } = await import("./operations");
+  const client = await (await collections()).clients.findOne({ _id: r.clientId });
+  const msg = await queueMessage({
+    key: `welcome:${r._id.toHexString()}`,
+    template: WELCOME,
+    recipientType: "Patient",
+    clientId: r.clientId,
+    referralId: r._id,
+    vars: {
+      mrn: client?.mrn ?? r.mrn ?? "",
+      first_visit: firstVisitLine(draft.services),
+    },
+    related: { label: `Referral ${r.reference}`, href: `/care/referrals/${r._id.toHexString()}` },
+    taskId: null,
+    by: admin.name,
+    mode: "Execute Allowed Actions",
+  });
+  const { referrals } = await collections();
+  await referrals.updateOne(
+    { _id: r._id },
+    {
+      $set: {
+        welcome: {
+          messageId: msg._id,
+          ref: msg.ref,
+          state: msg.state,
+          channel: msg.channel,
+          recipient: msg.recipient,
+          byName: admin.name,
+          at: new Date(),
+        },
+        updatedAt: new Date(),
+      },
+    },
+  );
+  await log(
+    admin.name,
+    admin._id,
+    `Sent the welcome message ${msg.ref} (${msg.channel}): ${msg.state}${msg.reason ? `, ${msg.reason}` : ""}`,
+    r,
+  );
 }
 
 const gapSchema = z.object({ field: z.string().max(80), label: z.string().max(200) });
@@ -590,6 +731,7 @@ export const referralActionSchema = z.discriminatedUnion("type", [
     reason: z.string().trim().min(1, "Give a reason").max(500),
   }),
   z.object({ type: z.literal("resume") }),
+  z.object({ type: z.literal("welcome") }),
   z.object({
     type: z.literal("decline"),
     reason: z.string().trim().min(1, "Give a reason").max(1000),
@@ -830,6 +972,10 @@ export async function referralAction(admin: UserDoc, id: ObjectId, action: Refer
     case "waitlist": {
       r = await setStatus(r, "Waitlisted", admin.name, action.reason);
       await log(admin.name, admin._id, `Waitlisted: ${action.reason}`, r);
+      break;
+    }
+    case "welcome": {
+      await sendWelcome(admin, r);
       break;
     }
     case "resume": {

@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import type { LiveEvent, SessionUser } from "./types";
 
 export class ApiError extends Error {
@@ -114,9 +121,32 @@ const inFlight = new Map<string, Promise<unknown>>();
 function shared<T>(url: string): Promise<T> {
   const pending = inFlight.get(url);
   if (pending) return pending as Promise<T>;
-  const p = api<T>(url).finally(() => inFlight.delete(url));
+  const p = api<T>(url)
+    .then((data) => {
+      lastGood.set(url, data);
+      return data;
+    })
+    .finally(() => inFlight.delete(url));
   inFlight.set(url, p);
   return p;
+}
+
+/*
+ * The last answer for each address, kept in this browser tab only. Going back to a page shows it
+ * at once while a fresh copy loads, instead of a skeleton every time. It is written only by
+ * fetches, which run in the browser, so the server never holds anyone's data here; signing in or
+ * out empties it.
+ */
+const lastGood = new Map<string, unknown>();
+
+/**
+ * Loads the main pages' data in the background, so the first visit to each is already warm.
+ * Reads only; anything already loaded or on its way is left alone.
+ */
+export function preload(urls: string[]) {
+  for (const url of urls) {
+    if (!lastGood.has(url) && !inFlight.has(url)) shared(url).catch(() => undefined);
+  }
 }
 
 export type Resource<T> = {
@@ -139,6 +169,14 @@ export function useResource<T>(
     error: null,
     loading: url !== null,
   });
+  // A page already seen shows its last answer before the browser paints, so there's no skeleton
+  // flash. It runs after hydration, never during it, so the server's HTML always matches.
+  useLayoutEffect(() => {
+    if (url === null || !lastGood.has(url)) return;
+    const known = lastGood.get(url) as T;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- show the remembered answer once
+    setState((s) => (s.data === null ? { data: known, error: null, loading: false } : s));
+  }, [url]);
   const [version, setVersion] = useState(0);
   const reload = useCallback(() => setVersion((v) => v + 1), []);
 
@@ -184,6 +222,8 @@ export function useResource<T>(
 const sessionListeners = new Set<() => void>();
 
 export function sessionChanged() {
+  // Another person's answers must never show, even for a moment.
+  lastGood.clear();
   sessionListeners.forEach((listener) => listener());
 }
 

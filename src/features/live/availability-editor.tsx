@@ -1,10 +1,10 @@
 "use client";
 
-import { CalendarOff, Plus, Trash2 } from "lucide-react";
+import { CalendarOff, CalendarPlus } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { inputClass } from "@/components/ui/sheet";
 import { CLOSE_MINUTES, OPEN_MINUTES } from "@/lib/live/catalogue";
 import { api, useToday } from "@/lib/live/client";
 import { shortDate } from "@/lib/live/time";
@@ -17,7 +17,6 @@ const TIMES = Array.from(
   { length: (CLOSE_MINUTES - OPEN_MINUTES) / 30 + 1 },
   (_, i) => OPEN_MINUTES + i * 30,
 );
-const timeOffReasons = ["Annual leave", "Sick leave", "Training", "Public holiday", "Other"];
 
 function label(minutes: number) {
   const h = Math.floor(minutes / 60);
@@ -30,10 +29,10 @@ type Saved = {
   clashes: { id: string; when: string; patient: string }[];
 };
 
-/** The therapist sets their working days, hours and time off. Admins see it when matching. */
+/** The therapist sets their working days and hours. Leave goes through a request (My profile, Leave). */
 export function AvailabilityEditor({
   weekly: initialWeekly,
-  timeOff: initialTimeOff,
+  timeOff,
   onSaved,
 }: {
   weekly: WeeklyHoursDto[];
@@ -41,12 +40,6 @@ export function AvailabilityEditor({
   onSaved: () => void;
 }) {
   const [weekly, setWeekly] = useState(initialWeekly);
-  const [timeOff, setTimeOff] = useState(initialTimeOff);
-  const [draft, setDraft] = useState({
-    from: "",
-    to: "",
-    reason: timeOffReasons[0] ?? "",
-  });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState<Saved | null>(null);
@@ -67,37 +60,13 @@ export function AvailabilityEditor({
     });
   }
 
-  function addTimeOff() {
-    const from = draft.from || today;
-    const to = draft.to || from;
-    if (!from) return;
-    setSaved(null);
-    setTimeOff((list) => [
-      ...list,
-      {
-        id: `new-${list.length}-${from}`,
-        reason: draft.reason,
-        from,
-        to: to < from ? from : to,
-      },
-    ]);
-  }
-
   async function save() {
     setBusy(true);
     setError(null);
     try {
       const result = await api<Saved>("/api/me/availability", {
         method: "PUT",
-        body: {
-          weekly,
-          timeOff: timeOff.map((o) => ({
-            ...(o.id.startsWith("new-") ? {} : { id: o.id }),
-            from: o.from,
-            to: o.to,
-            reason: o.reason,
-          })),
-        },
+        body: { weekly },
       });
       setSaved(result);
       onSaved();
@@ -171,9 +140,9 @@ export function AvailabilityEditor({
         })}
       </ul>
 
-      <h3 className="mt-6 mb-2 text-small font-semibold">Time off</h3>
+      <h3 className="mt-6 mb-2 text-small font-semibold">Approved leave</h3>
       {timeOff.filter((o) => o.to >= today).length === 0 ? (
-        <p className="mb-3 text-small text-ink-500">No time off booked.</p>
+        <p className="mb-3 text-small text-ink-500">No leave coming up.</p>
       ) : (
         <ul className="mb-3 flex flex-col gap-1.5">
           {timeOff
@@ -189,59 +158,18 @@ export function AvailabilityEditor({
                   {shortDate(`${o.from}T00:00:00+10:00`)}
                   {o.to !== o.from && ` – ${shortDate(`${o.to}T00:00:00+10:00`)}`} · {o.reason}
                 </span>
-                <button
-                  type="button"
-                  aria-label={`Remove ${o.reason}`}
-                  onClick={() => {
-                    setSaved(null);
-                    setTimeOff((list) => list.filter((x) => x.id !== o.id));
-                  }}
-                  className="flex size-7 cursor-pointer items-center justify-center rounded-control text-ink-700 hover:bg-surface"
-                >
-                  <Trash2 className="size-4" aria-hidden="true" />
-                </button>
               </li>
             ))}
         </ul>
       )}
-      <div className="flex flex-wrap items-end gap-2">
-        <label className="flex flex-col gap-1 text-caption font-semibold text-ink-700">
-          From
-          <input
-            type="date"
-            min={today}
-            value={draft.from || today}
-            onChange={(e) => setDraft({ ...draft, from: e.target.value })}
-            className={`${inputClass} w-40`}
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-caption font-semibold text-ink-700">
-          To
-          <input
-            type="date"
-            min={draft.from || today}
-            value={draft.to || draft.from || today}
-            onChange={(e) => setDraft({ ...draft, to: e.target.value })}
-            className={`${inputClass} w-40`}
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-caption font-semibold text-ink-700">
-          Reason
-          <Select
-            value={draft.reason}
-            onChange={(e) => setDraft({ ...draft, reason: e.target.value })}
-            className="w-40"
-          >
-            {timeOffReasons.map((r) => (
-              <option key={r}>{r}</option>
-            ))}
-          </Select>
-        </label>
-        <Button onClick={addTimeOff}>
-          <Plus className="size-4" aria-hidden="true" />
-          Add time off
-        </Button>
-      </div>
+      <Link
+        href="/profile?tab=leave"
+        className="inline-flex h-9 items-center gap-2 rounded-control border border-border-strong px-3 text-small font-semibold text-ink-900 hover:bg-sunken hover:no-underline"
+      >
+        <CalendarPlus className="size-4" aria-hidden="true" />
+        Request leave
+      </Link>
+      <span className="ml-3 text-caption text-ink-500">Leave is approved by HR first.</span>
 
       {error && (
         <p role="alert" className="mt-4 rounded-control bg-over-bg px-3 py-2 text-small text-over">

@@ -1,9 +1,7 @@
 "use client";
 
-import { Check, IdCard, PieChart, X } from "lucide-react";
+import { Check, IdCard, X } from "lucide-react";
 import { useState } from "react";
-import { BarList } from "@/components/charts/bar-list";
-import { colour } from "@/components/charts/chart-kit";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page";
 import { Field, Sheet, inputClass } from "@/components/ui/sheet";
@@ -74,12 +72,6 @@ export function PatientRequests() {
     if (ok) res.reload();
     return ok;
   };
-  const byKind = ["Identity", "Medical record"].map((k, i) => ({
-    id: k,
-    label: k === "Identity" ? "Name or date of birth" : "Health information",
-    value: all.filter((r) => r.kind === k).length,
-    colour: i ? colour.series2 : colour.series1,
-  }));
   const rows = all.filter((r) => r.status === tab);
   return (
     <>
@@ -238,9 +230,6 @@ export function PatientRequests() {
           ))}
         </div>
         <div className="flex flex-col gap-6 xl:col-span-4 [&>*:last-child]:flex-1">
-          <FCard icon={PieChart} title="By type" sub="All requests received">
-            <BarList data={byKind} label="Requests by type" />
-          </FCard>
           <FCard icon={IdCard} title="How it works" sub="Rules, not AI">
             <ul className="flex flex-col gap-2 text-small text-ink-700">
               <li>Patients change their preferred name, pronouns and preferences directly.</li>

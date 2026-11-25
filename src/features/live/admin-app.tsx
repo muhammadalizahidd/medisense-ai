@@ -13,7 +13,9 @@ import {
   ListChecks,
   LogOut,
   type LucideIcon,
+  MessageCircle,
   MessageCircleQuestion,
+  MessageSquarePlus,
   Search,
   Send,
   ShieldCheck,
@@ -29,6 +31,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { resolveQuestion } from "@/components/shell/assistant-panel";
 import { Button } from "@/components/ui/button";
 import { Avatar, Ring } from "@/components/ui/premium";
+import { Segmented } from "@/components/ui/segmented";
 import { Tag, type TagTone } from "@/components/ui/tag";
 import {
   AppCard,
@@ -48,11 +51,14 @@ import { signOut, useNow, useResource, useSession } from "@/lib/live/client";
 import type { TaskDto } from "@/lib/live/operations";
 import type { ScheduleBoardDto, ScheduleEventDto } from "@/lib/live/scheduling";
 import { timeOfDay } from "@/lib/live/time";
-import type { LiveOverviewDto, SessionUser } from "@/lib/live/types";
+import type { ConversationDto, LiveOverviewDto, SessionUser } from "@/lib/live/types";
 import { navigationFor } from "@/lib/navigation";
 import { AgentAnswer, agentCall } from "./agent-ui";
 import { Skeleton } from "./bits";
 import { BookingAgent } from "./booking-agent";
+import { ChatOverlay } from "./chat-overlay";
+import { ConversationList, useConversations, useUnreadMessages } from "./conversations";
+import { PeoplePicker } from "./new-chat";
 import { BookVisitPanel } from "./quick-book";
 import { SignInForm } from "./sign-in-form";
 
@@ -60,6 +66,7 @@ const tabs = [
   { id: "home", label: "Home", icon: House },
   { id: "schedule", label: "Schedule", icon: CalendarDays },
   { id: "ask", label: "Ask AI", icon: Bot },
+  { id: "messages", label: "Chat", icon: MessageCircle },
   { id: "work", label: "Work", icon: LayoutGrid },
   { id: "me", label: "Me", icon: CircleUserRound },
 ];
@@ -73,6 +80,7 @@ const frame = {
     "Every clinician's visits, day by day",
     "Book someone new from a name and phone",
     "Ask Medisense, the operations agent and the booking agent",
+    "Message anyone in the practice: staff, clinicians or patients",
     "Every portal section your role can open",
   ],
 };
@@ -90,6 +98,7 @@ type Ctx = {
   web: (title: string, href: string) => void;
   onTab: (id: string) => void;
   setAskMode: (m: AskMode) => void;
+  chat: (conversationId: string) => void;
 };
 
 type AskMode = "ask" | "ops" | "booking";
@@ -101,7 +110,10 @@ export function AdminApp() {
   const [tab, setTab] = useState("home");
   const [sheet, setSheet] = useState<ReactNode>(null);
   const [askMode, setAskMode] = useState<AskMode>("ask");
+  const [chat, setChat] = useState<string | null>(null);
   const signedIn = user?.role === "admin";
+  const unread = useUnreadMessages(signedIn);
+  const withBadges = tabs.map((t) => (t.id === "messages" ? { ...t, badge: unread } : t));
 
   if (loading) {
     return (
@@ -143,14 +155,32 @@ export function AdminApp() {
       setAskMode(m);
       setTab("ask");
     },
+    chat: (id) => {
+      setSheet(null);
+      setChat(id);
+    },
   };
 
   return (
-    <PhoneFrame {...frame} tabs={tabs} active={tab} onTab={setTab} overlay={sheet ?? undefined}>
+    <PhoneFrame
+      {...frame}
+      tabs={withBadges}
+      active={tab}
+      onTab={setTab}
+      overlay={
+        chat ? (
+          <ChatOverlay conversationId={chat} myId={user.id} onBack={() => setChat(null)} />
+        ) : (
+          (sheet ?? undefined)
+        )
+      }
+    >
       {tab === "schedule" ? (
         <ScheduleTab ctx={ctx} />
       ) : tab === "ask" ? (
         <AskTab mode={askMode} onMode={setAskMode} ctx={ctx} />
+      ) : tab === "messages" ? (
+        <MessagesTab ctx={ctx} />
       ) : tab === "work" ? (
         <WorkTab ctx={ctx} />
       ) : tab === "me" ? (
@@ -1147,6 +1177,80 @@ const sectionIcon: Record<string, LucideIcon> = {
   Apps: LayoutGrid,
   Account: CircleUserRound,
 };
+
+/* ------------------------------------------------------------------ messages */
+
+type Who = "all" | ConversationDto["group"];
+
+function MessagesTab({ ctx }: { ctx: Ctx }) {
+  const chats = useConversations();
+  const [who, setWho] = useState<Who>("all");
+  const all = chats.data?.conversations;
+  const shown = all?.filter((c) => who === "all" || c.group === who);
+  const unread = (all ?? []).reduce((s, c) => s + c.unread, 0);
+  const newMessage = () =>
+    ctx.open(
+      <AppSheet title="New message" onClose={ctx.close}>
+        <PeoplePicker
+          onOpen={(id) => {
+            chats.reload();
+            ctx.chat(id);
+          }}
+        />
+      </AppSheet>,
+    );
+  return (
+    <>
+      <AppHeader
+        eyebrow="Messages"
+        title="Your team and patients"
+        aside={
+          <button
+            type="button"
+            aria-label="New message"
+            onClick={newMessage}
+            className="flex size-11 cursor-pointer items-center justify-center rounded-full bg-accent-fill text-on-accent active:scale-[0.98]"
+          >
+            <MessageSquarePlus className="size-5" aria-hidden="true" />
+          </button>
+        }
+      >
+        <p className="mt-2 text-small text-ink-500">
+          {all ? `${all.length} conversation${all.length === 1 ? "" : "s"}` : "Loading…"}
+          {unread > 0 && <span className="font-semibold text-over"> · {unread} unread</span>}
+        </p>
+      </AppHeader>
+      <div className="flex flex-col gap-3 px-4 pb-6">
+        <Segmented
+          label="Who"
+          value={who}
+          onChange={setWho}
+          options={[
+            { id: "all", label: "All" },
+            { id: "Office staff", label: "Staff" },
+            { id: "Clinicians", label: "Clinicians" },
+            { id: "Patients", label: "Patients" },
+          ]}
+        />
+        <AppCard className="overflow-hidden p-0!">
+          <ConversationList
+            conversations={shown}
+            error={chats.error}
+            loading={chats.loading}
+            onRetry={chats.reload}
+            selected={null}
+            onSelect={ctx.chat}
+            emptyText={
+              who === "all"
+                ? "Tap the new message button to chat with anyone in the practice."
+                : "No chats with this group yet."
+            }
+          />
+        </AppCard>
+      </div>
+    </>
+  );
+}
 
 function WorkTab({ ctx }: { ctx: Ctx }) {
   const [query, setQuery] = useState("");

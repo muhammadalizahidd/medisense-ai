@@ -1,8 +1,9 @@
 "use client";
 
-import { ArrowLeft, MessageSquareText, Search, X } from "lucide-react";
+import { ArrowLeft, MessageSquarePlus, MessageSquareText, Search, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/premium";
 import { Segmented } from "@/components/ui/segmented";
 import { api, useNow } from "@/lib/live/client";
@@ -12,6 +13,7 @@ import { cn } from "@/lib/cn";
 import { EmptyNote, ErrorNote, LiveBadge, Skeleton } from "./bits";
 import { ChatThread } from "./chat-thread";
 import { useConversations } from "./conversations";
+import { NewChatSheet } from "./new-chat";
 
 type GroupBy = "recent" | "name";
 type Hit = { id: string; conversationId: string; mine: boolean; body: string; createdAt: string };
@@ -65,15 +67,32 @@ function Mark({ text, q }: { text: string; q: string }) {
   );
 }
 
-export function MessagesPage({ myId }: { myId: string }) {
+type Who = "all" | ConversationDto["group"];
+
+/**
+ * A therapist's chats with their patients at /messages; an admin's at /care/messages, where they
+ * can also start a chat with anyone: office staff, clinicians or patients.
+ */
+export function MessagesPage({
+  myId,
+  base = "/messages",
+  canStart = false,
+}: {
+  myId: string;
+  base?: string;
+  canStart?: boolean;
+}) {
   const router = useRouter();
   const params = useSearchParams();
   const now = useNow() ?? 0;
   const { data, error, loading, reload } = useConversations();
   const conversations = useMemo(() => data?.conversations ?? [], [data]);
-  const selected = params.get("c") ?? conversations[0]?.id ?? null;
+  // With nothing chosen, open the chat at the top of the list as it's shown: unread first.
+  const selected = params.get("c") ?? grouped(conversations, "recent", now)[0]?.[1][0]?.id ?? null;
   const current = conversations.find((c) => c.id === selected);
-  const open = (id: string) => router.replace(`/messages?c=${id}`, { scroll: false });
+  const open = (id: string) => router.replace(`${base}?c=${id}`, { scroll: false });
+  const [picking, setPicking] = useState(false);
+  const [who, setWho] = useState<Who>("all");
   const [query, setQuery] = useState("");
   const [by, setBy] = useState<GroupBy>("recent");
   const [unreadOnly, setUnreadOnly] = useState(false);
@@ -94,6 +113,7 @@ export function MessagesPage({ myId }: { myId: string }) {
 
   const shown = conversations
     .filter((c) => !unreadOnly || c.unread > 0)
+    .filter((c) => who === "all" || c.group === who)
     .filter(
       (c) =>
         !q ||
@@ -117,8 +137,26 @@ export function MessagesPage({ myId }: { myId: string }) {
             </p>
           </div>
         </div>
-        <LiveBadge />
+        <div className="flex items-center gap-3">
+          <LiveBadge />
+          {canStart && (
+            <Button variant="primary" onClick={() => setPicking(true)}>
+              <MessageSquarePlus className="size-4" aria-hidden="true" />
+              New message
+            </Button>
+          )}
+        </div>
       </header>
+      {picking && (
+        <NewChatSheet
+          onClose={() => setPicking(false)}
+          onOpen={(id) => {
+            setPicking(false);
+            reload();
+            open(id);
+          }}
+        />
+      )}
 
       <div className="grid min-h-0 flex-1 overflow-hidden rounded-card border border-border bg-surface md:grid-cols-[340px_1fr]">
         <aside
@@ -173,6 +211,19 @@ export function MessagesPage({ myId }: { myId: string }) {
                 Unread{unread > 0 ? ` (${unread})` : ""}
               </button>
             </div>
+            {canStart && (
+              <Segmented
+                label="Who"
+                value={who}
+                onChange={setWho}
+                options={[
+                  { id: "all", label: "All" },
+                  { id: "Office staff", label: "Staff" },
+                  { id: "Clinicians", label: "Clinicians" },
+                  { id: "Patients", label: "Patients" },
+                ]}
+              />
+            )}
           </div>
 
           <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto">
@@ -189,7 +240,9 @@ export function MessagesPage({ myId }: { myId: string }) {
             ) : conversations.length === 0 ? (
               <div className="p-3">
                 <EmptyNote title="No conversations yet.">
-                  A conversation opens when you accept a new patient.
+                  {canStart
+                    ? "Start one with New message: anyone in the practice can be messaged."
+                    : "A conversation opens when you accept a new patient."}
                 </EmptyNote>
               </div>
             ) : (
@@ -211,7 +264,11 @@ export function MessagesPage({ myId }: { myId: string }) {
                               selected === c.id && "bg-accent-tint",
                             )}
                           >
-                            <Avatar name={c.title} size={38} />
+                            <Avatar
+                              name={c.title}
+                              size={38}
+                              kind={c.group === "Patients" ? "patient" : "staff"}
+                            />
                             <span className="min-w-0 flex-1">
                               <span className="flex items-baseline justify-between gap-2">
                                 <span className="truncate text-small font-semibold">
@@ -293,12 +350,16 @@ export function MessagesPage({ myId }: { myId: string }) {
                 <button
                   type="button"
                   aria-label="Back to conversations"
-                  onClick={() => router.replace("/messages")}
+                  onClick={() => router.replace(base)}
                   className="flex size-8 cursor-pointer items-center justify-center rounded-control hover:bg-canvas md:hidden"
                 >
                   <ArrowLeft className="size-4" aria-hidden="true" />
                 </button>
-                <Avatar name={current.title} size={36} />
+                <Avatar
+                  name={current.title}
+                  size={36}
+                  kind={current.group === "Patients" ? "patient" : "staff"}
+                />
                 <div>
                   <h2 className="text-small font-semibold">{current.title}</h2>
                   <p className="text-caption text-ink-500">{current.subtitle}</p>

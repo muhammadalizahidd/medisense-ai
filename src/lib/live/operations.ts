@@ -335,6 +335,15 @@ export const templates: TemplateDef[] = [
     approved: true,
   },
   {
+    id: "TPL-WELCOME",
+    category: "Welcome",
+    version: 1,
+    channel: "Email",
+    subject: "Welcome to Medisense",
+    body: "Hi {{preferred_name}}, welcome to Medisense. Your referral has been accepted. Your medical record number is {{mrn}}; use it to sign in to the Medisense patient app. {{first_visit}} If anything changes, reply through the secure link or call us.",
+    approved: true,
+  },
+  {
     id: "TPL-MISSING-INFO",
     category: "Missing Information",
     version: 2,

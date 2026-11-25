@@ -469,6 +469,70 @@ export const guides: Record<string, PageGuide> = {
     ["Check credentials first.", "Update availability.", "Save; changes are audited."],
     "An accurate clinician profile for matching and scheduling.",
   ),
+  "/care/hr": g(
+    "Credentials and compliance",
+    "Every clinician's registrations, worker screening, insurance and training, with expired and expiring ones first.",
+    [
+      "See who is fully compliant",
+      "Act on expired and expiring credentials",
+      "Request a renewal from the clinician",
+      "Search the full credential register",
+    ],
+    [
+      "Start with Needs action: expired and required items are at the top.",
+      "Request the renewal; the clinician uploads it from My profile.",
+      "Verify the new evidence on their staff record.",
+    ],
+    "No clinician is booked on an expired credential, and renewals are chased before they lapse.",
+  ),
+  "/care/hr/leave": g(
+    "Leave and absence",
+    "Leave requests from clinicians with what each one means for patients and the team, who's away, and every balance.",
+    [
+      "Approve or decline leave requests",
+      "See booked visits, team cover, notice and balance for each request",
+      "See who's away over the next three weeks",
+      "Check annual and personal leave balances",
+    ],
+    [
+      "Open Requests: each card shows the rule checks next to the dates.",
+      "Approve, or decline with a reason the clinician sees.",
+      "Approved leave stops new bookings; booked visits are flagged on the schedule to move.",
+    ],
+    "Leave is decided quickly, with patients' visits and team cover in view.",
+  ),
+  "/care/hr/timesheets": g(
+    "Timesheets",
+    "Each clinician's week, filled in from their roster, visits and approved leave, for approval and payroll.",
+    [
+      "Approve or send back submitted timesheets",
+      "See hours worked, overtime, leave and time with patients for the team",
+      "Remind clinicians whose timesheet is missing",
+      "Download the payroll file of approved hours",
+    ],
+    [
+      "Open To approve: each sheet shows what the rules flagged next to the hours.",
+      "Approve, or send it back with what needs fixing.",
+      "Once the week is approved, download the payroll file from Payroll.",
+    ],
+    "Hours are approved from what actually happened, with nothing typed in twice.",
+  ),
+  "/care/messages": g(
+    "Messages",
+    "Chat with anyone in the practice: office staff, clinicians and patients.",
+    [
+      "Start a chat with any colleague, clinician or patient",
+      "Filter chats by staff, clinicians or patients",
+      "Search names and the text of every message",
+      "See when your message has been read",
+    ],
+    [
+      "Choose New message, pick a person and write.",
+      "They see it straight away in their own Messages, on the web or in their app.",
+      "Unread chats are counted in the sidebar and the bell.",
+    ],
+    "Everyone is one message away, without leaving the system.",
+  ),
   "/care/schedule": g(
     "Scheduling",
     "Book, reschedule and confirm visits across the team.",
@@ -574,6 +638,36 @@ export const guides: Record<string, PageGuide> = {
     ["See your trends", "Filter by period"],
     ["Pick the period.", "Read each chart."],
     "A clear view of your own practice.",
+  ),
+  "/therapist/patients": g(
+    "Patients",
+    "Everyone on your caseload, ordered by when you next see them.",
+    [
+      "See who you're seeing this week and who has no visit booked",
+      "Spot patients with a note, task or assessment still open",
+      "Open a patient to see everything about their care in one place",
+    ],
+    [
+      "Use the filters to find who needs something.",
+      "Open a patient from their row.",
+      "Message them straight from the list.",
+    ],
+    "Every patient seen on time, with nothing left open.",
+  ),
+  "/therapist/today": g(
+    "Today",
+    "Where your day starts: the next visit, today's visits and one list of what needs doing.",
+    [
+      "Start or join your next visit in one click",
+      "See all of today's visits",
+      "Work through notes, tasks and alerts, most urgent first",
+    ],
+    [
+      "Start the next visit from the Up next card.",
+      "After each visit, finish its note from the To do list.",
+      "Clear the rest of the list, top to bottom.",
+    ],
+    "Your day done with nothing left on the list.",
   ),
   "/therapist/workspace": g(
     "My workspace",
@@ -815,12 +909,12 @@ export const guides: Record<string, PageGuide> = {
     "A co-signed note, or a clear correction task for the author.",
   ),
   "/therapist/documentation": g(
-    "My documentation",
+    "Notes",
     "Your notes from capture to signature, with AI help that you verify.",
     [
+      "See which notes are late and which are waiting to be finished",
       "Start a new note from a visit",
-      "Filter by status, type and priority",
-      "Open a draft to finish it",
+      "Open a note to check the AI draft, finish it and sign",
     ],
     [
       "Start a note from the visit you just finished.",
@@ -949,7 +1043,7 @@ export const guides: Record<string, PageGuide> = {
     "A governed report, ready to release.",
   ),
   "/therapist/coordination": g(
-    "Tasks and care coordination",
+    "Tasks",
     "Every follow-up, handover, referral, supervision request and booking request you own, with a due date and an owner.",
     [
       "See your tasks, team tasks, overdue and waiting work",

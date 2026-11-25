@@ -2,16 +2,16 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { PageContainer, PageLoading } from "@/components/ui/page";
 import { OfflinePage } from "@/features/live/offline-page";
-import { DocQueue } from "@/features/live/doc-queue";
+import { NotesPage } from "@/features/live/notes-page";
 import { requirePageUser } from "@/server/page-auth";
 
-export const metadata: Metadata = { title: "Treatment plans � Medisense" };
+export const metadata: Metadata = { title: "Notes · Medisense" };
 
 async function PageContent() {
   if (!(await requirePageUser("/therapist/documentation", "therapist"))) return <OfflinePage />;
   return (
     <PageContainer>
-      <DocQueue base="/therapist/documentation" />
+      <NotesPage />
     </PageContainer>
   );
 }

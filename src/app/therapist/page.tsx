@@ -1,26 +1,6 @@
-import { Suspense } from "react";
-import type { Metadata } from "next";
-import { PageContainer, PageLoading } from "@/components/ui/page";
-import { OfflinePage } from "@/features/live/offline-page";
-import { TherapistHome } from "@/features/live/therapist-home";
-import { requirePageUser } from "@/server/page-auth";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = { title: "My new patients · Medisense" };
-
-async function TherapistPageContent() {
-  if (!(await requirePageUser("/therapist", "therapist"))) return <OfflinePage />;
-  return (
-    <PageContainer>
-      <TherapistHome />
-    </PageContainer>
-  );
-}
-
-/** The session is checked inside Suspense, so the page frame shows straight away. */
+/** New patient requests now sit at the top of Patients, so the old address opens there. */
 export default function TherapistPage() {
-  return (
-    <Suspense fallback={<PageLoading />}>
-      <TherapistPageContent />
-    </Suspense>
-  );
+  redirect("/therapist/patients");
 }

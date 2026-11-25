@@ -49,7 +49,9 @@ export const availabilitySchema = z
         }),
       )
       .max(30)
-      .refine((list) => list.every((o) => o.from <= o.to), "Time off must end after it starts"),
+      .refine((list) => list.every((o) => o.from <= o.to), "Time off must end after it starts")
+      // Ignored when saving: leave is requested and approved in People and HR.
+      .optional(),
   })
   .strict();
 
@@ -77,13 +79,13 @@ export async function saveAvailability(user: UserDoc, input: z.infer<typeof avai
   const next: TherapistDoc = {
     ...current,
     weekly: [...input.weekly].sort((a, b) => a.weekday - b.weekday),
-    timeOff: input.timeOff.map((o) => ({ ...o, id: o.id ?? randomUUID() })),
+    timeOff: current.timeOff ?? [],
   };
   await therapists.updateOne(
     { _id: current._id },
-    { $set: { weekly: next.weekly, timeOff: next.timeOff, availabilityUpdatedAt: new Date() } },
+    { $set: { weekly: next.weekly, availabilityUpdatedAt: new Date() } },
   );
-  await audit(user, "Updated working hours and time off", null);
+  await audit(user, "Updated working hours", null);
   await publish([...(await adminIds()), user._id], "care", {});
 
   const upcoming = await appointments

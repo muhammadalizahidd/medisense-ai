@@ -1,18 +1,6 @@
 "use client";
 
-import {
-  Briefcase,
-  ChevronDown,
-  ClipboardList,
-  LayoutGrid,
-  LogIn,
-  LogOut,
-  Palette,
-  Stethoscope,
-  UserCheck,
-  UserRound,
-  type LucideIcon,
-} from "lucide-react";
+import { ChevronDown, LayoutGrid, LogIn, LogOut, Palette, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -20,16 +8,9 @@ import { Avatar } from "@/components/ui/premium";
 import { cn } from "@/lib/cn";
 import { signOut, useSession } from "@/lib/live/client";
 import { homeFor } from "@/lib/live/routes";
-import { roleHome, roleUsers, type Role } from "@/lib/navigation";
+import { roleUsers, type Role } from "@/lib/navigation";
 import { useDemoStore } from "@/state/demo-store";
 import { photoFor } from "@/lib/avatars";
-
-const workspaces: { id: Role; label: string; detail: string; icon: LucideIcon }[] = [
-  { id: "Leadership", label: "Director", detail: "Organisation overview", icon: Briefcase },
-  { id: "Clinician", label: "Therapist", detail: "Caseload, visits and notes", icon: Stethoscope },
-  { id: "Admin", label: "Admin", detail: "Intake and operations", icon: ClipboardList },
-  { id: "Supervisor", label: "Supervisor", detail: "Team and supervision", icon: UserCheck },
-];
 
 /** A row in the menu: icon, label, optional hint. */
 const rowClass =
@@ -203,71 +184,6 @@ export function WorkspaceMenu() {
               </Link>
             </div>
           )}
-
-          {/* <div className="border-t border-border bg-canvas/60 p-1.5">
-            <div className="flex items-center justify-between gap-2 px-2.5 pt-2 pb-1.5">
-              <h2 className="text-label font-semibold tracking-[0.1em] text-ink-500 uppercase">
-                Preview workspaces
-              </h2>
-              <span className="rounded-tag border border-border-strong px-1.5 py-0.5 text-label font-medium text-ink-500">
-                Sample data
-              </span>
-            </div>
-            <div role="radiogroup" aria-label="Preview workspace" className="flex flex-col gap-0.5">
-              {workspaces.map((w) => {
-                const on = role === w.id;
-                const Icon = w.icon;
-                return (
-                  <button
-                    key={w.id}
-                    type="button"
-                    role="radio"
-                    aria-checked={on}
-                    title={`Sample screens as ${roleUsers[w.id].name}`}
-                    onClick={() => {
-                      setRole(w.id);
-                      setOpen(false);
-                      router.push(roleHome[w.id]);
-                    }}
-                    className={cn(
-                      "flex h-12 cursor-pointer items-center gap-3 rounded-control px-2.5 text-left transition-colors duration-(--duration-fast)",
-                      on ? "bg-surface shadow-lift ring-1 ring-border" : "hover:bg-surface",
-                    )}
-                  >
-                    <span
-                      aria-hidden="true"
-                      className={cn(
-                        "flex size-8 flex-none items-center justify-center rounded-control",
-                        on
-                          ? "bg-accent-fill text-on-accent"
-                          : "bg-surface text-ink-700 ring-1 ring-border",
-                      )}
-                    >
-                      <Icon className="size-4" strokeWidth={1.75} />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-small font-semibold text-ink-900">{w.label}</span>
-                      <span className="block truncate text-caption text-ink-500">{w.detail}</span>
-                    </span>
-                    <span
-                      aria-hidden="true"
-                      className={cn(
-                        "flex size-4 flex-none items-center justify-center rounded-full border",
-                        on ? "border-accent-fill" : "border-border-strong",
-                      )}
-                    >
-                      {on && <i className="size-2 rounded-full bg-accent-fill" />}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-            {account && (
-              <p className="px-2.5 pt-2 pb-1.5 text-caption text-ink-500">
-                Previews show sample screens. You stay signed in as {account.name.split(" ")[0]}.
-              </p>
-            )}
-          </div> */}
 
           {account && (
             <div className="border-t border-border p-1.5">

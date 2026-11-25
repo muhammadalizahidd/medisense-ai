@@ -1,6 +1,9 @@
 import {
   ChartColumn,
   UserCog,
+  IdCard,
+  CalendarOff,
+  Timer,
   CircleUserRound,
   Landmark,
   Stethoscope,
@@ -42,6 +45,7 @@ import {
   Workflow,
   type LucideIcon,
   BotMessageSquare,
+  Sun,
 } from "lucide-react";
 
 import type { StaffRole } from "@/lib/live/catalogue";
@@ -89,6 +93,9 @@ export const navigation: { group: string; items: NavItem[] }[] = [
       { href: "/care/schedule", label: "Scheduling", icon: CalendarRange, roles: [L, A] },
       { href: "/care/funding", label: "Funding and agreements", icon: Landmark, roles: [L, A] },
       { href: "/care/billing", label: "Billing and finance", icon: Receipt, roles: [L, A] },
+      { href: "/care/hr", label: "Credentials and compliance", icon: IdCard, roles: [L, A] },
+      { href: "/care/hr/leave", label: "Leave and absence", icon: CalendarOff, roles: [L, A] },
+      { href: "/care/hr/timesheets", label: "Timesheets", icon: Timer, roles: [L, A] },
       { href: "/care/operations", label: "Operations", icon: Workflow, roles: [L, A] },
       { href: "/care/records", label: "Clinical records", icon: FileText, roles: [L, A] },
       { href: "/care/assessments", label: "Assessments", icon: ClipboardList, roles: [L, A] },
@@ -125,12 +132,15 @@ export const navigation: { group: string; items: NavItem[] }[] = [
       { href: "/care/ai-agent", label: "Operations agent", icon: BotMessageSquare, roles: [L, A] },
       { href: "/care/ai-oversight", label: "AI oversight", icon: BotMessageSquare, roles: [L, A] },
       { href: "/care/users", label: "User control", icon: UserCog, roles: [A] },
+      { href: "/therapist/today", label: "Today", icon: Sun, roles: [C] },
+      { href: "/therapist/patients", label: "Patients", icon: Contact, roles: [C] },
       { href: "/therapist/workspace", label: "My workspace", icon: Briefcase, roles: [C] },
       { href: "/therapist/tasks", label: "My tasks", icon: ListChecks, roles: [C] },
       { href: "/therapist/reports", label: "My reports", icon: ChartColumn, roles: [C] },
       { href: "/therapist/schedule", label: "My schedule", icon: CalendarRange, roles: [C] },
       { href: "/therapist", label: "My new patients", icon: BellRing, roles: [C] },
       { href: "/messages", label: "Messages", icon: MessagesSquare, roles: [C] },
+      { href: "/care/messages", label: "Messages", icon: MessagesSquare, roles: [L, A] },
       { href: "/telehealth/recordings", label: "Recordings", icon: Video, roles: [L, A, C] },
       { href: "/profile", label: "My profile", icon: CircleUserRound, roles: [L, A, S, C] },
     ],
@@ -195,41 +205,45 @@ export const navigation: { group: string; items: NavItem[] }[] = [
   },
 ];
 
-type Section = { group: string; hrefs: string[]; live?: boolean };
+/** An entry can rename a page for one role's menu, e.g. "Patients" for the clinical records. */
+type Entry = string | { href: string; label: string; icon?: LucideIcon };
+type Section = {
+  group: string;
+  hrefs: Entry[];
+  live?: boolean;
+  /** Folded until opened: the pages that are still there but not part of the everyday work. */
+  more?: boolean;
+};
 
 const roleLayouts: Partial<Record<Role, Section[]>> = {
   Clinician: [
+    // Seven everyday places. Everything else stays one click away under More.
     {
-      group: "My day",
+      group: "My work",
       live: true,
       hrefs: [
-        "/therapist/workspace",
-        "/therapist/schedule",
-        "/therapist/sessions",
-        "/therapist/tasks",
-        "/therapist/coordination",
+        "/therapist/today",
+        { href: "/therapist/schedule", label: "Schedule" },
+        "/therapist/patients",
+        { href: "/therapist/documentation", label: "Notes", icon: FileText },
+        { href: "/therapist/coordination", label: "Tasks", icon: ListChecks },
         "/messages",
+        { href: "/therapist/progress", label: "Reports", icon: ChartColumn },
       ],
     },
     {
-      group: "My patients",
+      group: "More",
       live: true,
+      more: true,
       hrefs: [
-        "/therapist",
-        "/therapist/records",
         "/therapist/assessments",
         "/therapist/plans",
-        "/therapist/progress",
-        "/therapist/documentation",
+        "/therapist/ai",
+        "/telehealth/recordings",
+        "/mobile/therapist",
+        "/mobile/patient",
       ],
     },
-    {
-      group: "AI and reports",
-      live: true,
-      hrefs: ["/therapist/ai", "/therapist/reports", "/telehealth/recordings"],
-    },
-    { group: "Apps", live: true, hrefs: ["/mobile/therapist", "/mobile/patient"] },
-    { group: "Account", live: true, hrefs: ["/profile"] },
     { group: "My work", hrefs: ["/my-day", "/sessions/oliver-grant"] },
     { group: "AI workspace", hrefs: ["/case-notes/mia-robinson", "/reports"] },
     { group: "Clinical", hrefs: ["/patients", "/schedule", "/telehealth"] },
@@ -239,6 +253,7 @@ const roleLayouts: Partial<Record<Role, Section[]>> = {
   Admin: [
     // The organisation dashboard, first in the menu: only a Super Admin opens it (see pageAccess).
     { group: "Dashboard", live: true, hrefs: ["/"] },
+    { group: "Messages", live: true, hrefs: ["/care/messages"] },
     {
       group: "Patients",
       live: true,
@@ -266,6 +281,11 @@ const roleLayouts: Partial<Record<Role, Section[]>> = {
     { group: "Scheduling", live: true, hrefs: ["/care/schedule"] },
     { group: "Finance", live: true, hrefs: ["/care/funding", "/care/billing"] },
     {
+      group: "People and HR",
+      live: true,
+      hrefs: ["/care/hr", "/care/hr/leave", "/care/hr/timesheets"],
+    },
+    {
       group: "Operations and AI",
       live: true,
       hrefs: ["/care/operations", "/care/reports", "/care/ai-oversight"],
@@ -276,7 +296,6 @@ const roleLayouts: Partial<Record<Role, Section[]>> = {
       live: true,
       hrefs: ["/mobile/staff", "/mobile/therapist", "/mobile/patient"],
     },
-    { group: "Account", live: true, hrefs: ["/profile"] },
     { group: "Admin", hrefs: ["/intake", "/forms"] },
     { group: "Clinical", hrefs: ["/patients-requiring-attention", "/patients", "/schedule"] },
     { group: "AI workspace", hrefs: ["/reports"] },
@@ -329,6 +348,9 @@ export const pageAccess: Record<string, StaffRole[]> = {
   "/care/schedule": [SCHED, OPS],
   "/care/funding": [INTAKE, FIN, FINM],
   "/care/billing": [FIN, FINM],
+  "/care/hr": [LEAD, OPS],
+  "/care/hr/leave": [LEAD, OPS],
+  "/care/hr/timesheets": [LEAD, OPS],
   "/care/operations": [INTAKE, SCHED, FINM, LEAD, OPS],
   "/care/reports": [INTAKE, SCHED, FINM, LEAD, OPS],
   "/care/ai-agent": [INTAKE, SCHED, OPS],
@@ -363,12 +385,19 @@ export function navigationFor(
 ) {
   const layout = roleLayouts[role];
   const items = navigation.flatMap((g) => g.items);
-  const sections: { group: string; items: NavItem[]; live: boolean }[] = layout
-    ? layout.map(({ group, hrefs, live }) => ({
+  const sections: { group: string; items: NavItem[]; live: boolean; more?: boolean }[] = layout
+    ? layout.map(({ group, hrefs, live, more }) => ({
         group,
         live: Boolean(live),
+        more: Boolean(more),
         items: hrefs
-          .map((href) => items.find((i) => i.href === href))
+          .map((entry) => {
+            const href = typeof entry === "string" ? entry : entry.href;
+            const item = items.find((i) => i.href === href);
+            return item && typeof entry !== "string"
+              ? { ...item, label: entry.label, icon: entry.icon ?? item.icon }
+              : item;
+          })
           .filter((i): i is NavItem => i !== undefined),
       }))
     : navigation
@@ -436,6 +465,18 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
     meta: { section: "Live care", page: "Operations agent", role: "Admin" },
   },
   {
+    prefix: "/care/hr/timesheets",
+    meta: { section: "People and HR", page: "Timesheets", role: "Admin" },
+  },
+  {
+    prefix: "/care/hr/leave",
+    meta: { section: "People and HR", page: "Leave and absence", role: "Admin" },
+  },
+  {
+    prefix: "/care/hr",
+    meta: { section: "People and HR", page: "Credentials and compliance", role: "Admin" },
+  },
+  {
     prefix: "/care/users",
     meta: { section: "Administration", page: "User control", role: "Admin" },
   },
@@ -453,11 +494,11 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
   },
   {
     prefix: "/therapist/coordination/",
-    meta: { section: "Tasks and coordination", page: "Task", role: "Clinician" },
+    meta: { section: "Tasks", page: "Task", role: "Clinician" },
   },
   {
     prefix: "/therapist/coordination",
-    meta: { section: "Live care", page: "Tasks and coordination", role: "Clinician" },
+    meta: { section: "My work", page: "Tasks", role: "Clinician" },
   },
   {
     prefix: "/care/progress/reports/",
@@ -501,7 +542,7 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
   },
   {
     prefix: "/therapist/documentation",
-    meta: { section: "Live care", page: "My documentation", role: "Clinician" },
+    meta: { section: "My work", page: "Notes", role: "Clinician" },
   },
   {
     prefix: "/care/sessions/",
@@ -592,8 +633,12 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
     meta: { section: "Live care", page: "Assessments", role: "Clinician" },
   },
   {
+    prefix: "/therapist/patients/",
+    meta: { section: "Patients", page: "Patient", role: "Clinician" },
+  },
+  {
     prefix: "/therapist/patients",
-    meta: { section: "My new patients", page: "Patient", role: "Clinician" },
+    meta: { section: "My work", page: "Patients", role: "Clinician" },
   },
   {
     prefix: "/therapist/schedule",
@@ -621,8 +666,10 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
     prefix: "/care/referrals",
     meta: { section: "Live care", page: "Referrals and intake", role: "Admin" },
   },
+  { prefix: "/care/messages", meta: { section: "Live care", page: "Messages", role: "Admin" } },
   { prefix: "/care/", meta: { section: "Patients", page: "Patient", role: "Admin" } },
   { prefix: "/care", meta: { section: "Live care", page: "Patients", role: "Admin" } },
+  { prefix: "/therapist/today", meta: { section: "My work", page: "Today", role: "Clinician" } },
   {
     prefix: "/therapist",
     meta: { section: "Live care", page: "My new patients", role: "Clinician" },

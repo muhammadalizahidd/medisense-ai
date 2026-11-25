@@ -1,10 +1,7 @@
 "use client";
 
-import { CalendarRange, Lock, PieChart, Search, X } from "lucide-react";
+import { Lock, Search, X } from "lucide-react";
 import { useState } from "react";
-import { colour } from "@/components/charts/chart-kit";
-import { DonutChart } from "@/components/charts/donut-chart";
-import { StackedColumns } from "@/components/charts/stacked-columns";
 import { PageHeader } from "@/components/ui/page";
 import { Segmented } from "@/components/ui/segmented";
 import { Select } from "@/components/ui/select";
@@ -19,23 +16,11 @@ import {
 } from "@/lib/live/sessions";
 import { cn } from "@/lib/cn";
 import { ErrorNote, LiveBadge, Skeleton } from "./bits";
-import { FCard, td, th } from "./funding-bits";
+import { td, th } from "./funding-bits";
 import { KpiBand, tableBox, tableHead, when } from "./ops-bits";
 
 const DAY = 86_400_000;
 type Range = "today" | "week" | "past" | "upcoming" | "all";
-
-const attColour: Record<string, string> = {
-  Scheduled: colour.stone,
-  Confirmed: colour.series2,
-  Arrived: colour.series3,
-  "In Progress": colour.series3,
-  Completed: colour.healthy,
-  "Partially Completed": colour.watch,
-  Cancelled: colour.sand,
-  "No Show": colour.over,
-  "Safety Stop": colour.over,
-};
 
 /** Module 14 screen: My Sessions (therapist) and Sessions (care team). */
 export function SessionList({ base }: { base: "/therapist/sessions" | "/care/sessions" }) {
@@ -90,29 +75,6 @@ export function SessionList({ base }: { base: "/therapist/sessions" | "/care/ses
   const today = all.filter((r) => {
     const s = new Date(r.start).getTime();
     return s >= dayStart && s < dayStart + DAY;
-  });
-  const slices = attendanceStates
-    .map((s) => ({
-      id: s,
-      label: s,
-      value: all.filter((r) => r.attendance === s).length,
-      colour: attColour[s] ?? colour.stone,
-    }))
-    .filter((s) => s.value);
-  const days = Array.from({ length: 14 }, (_, i) => dayStart + (i - 9) * DAY);
-  const week = days.map((d) => {
-    const on = all.filter((r) => {
-      const s = new Date(r.start).getTime();
-      return s >= d && s < d + DAY;
-    });
-    return {
-      day: new Date(d).toLocaleDateString("en-AU", { weekday: "short", day: "numeric" }),
-      Completed: on.filter(happened).length,
-      Upcoming: on.filter((r) =>
-        ["Scheduled", "Confirmed", "In Progress", "Arrived"].includes(r.attendance),
-      ).length,
-      Missed: on.filter((r) => ["No Show", "Cancelled"].includes(r.attendance)).length,
-    };
   });
   return (
     <>
@@ -174,45 +136,6 @@ export function SessionList({ base }: { base: "/therapist/sessions" | "/care/ses
           },
         ]}
       />
-      <div className="grid items-stretch gap-6 xl:grid-cols-12">
-        <FCard
-          icon={PieChart}
-          title="Sessions by attendance"
-          sub="Click a slice to filter"
-          className="xl:col-span-5"
-        >
-          <DonutChart
-            label="Sessions by attendance"
-            stacked
-            size={150}
-            slices={slices}
-            centre={all.length}
-            centreCaption="sessions"
-            selected={att || null}
-            onSelect={(id) => setAtt(id ?? "")}
-          />
-        </FCard>
-        <FCard
-          icon={CalendarRange}
-          title="Fourteen days at a glance"
-          sub="Delivered, upcoming and missed sessions by day"
-          className="xl:col-span-7"
-        >
-          <div className="flex h-full min-h-72 flex-col">
-            <StackedColumns
-              label="Sessions by day"
-              data={week}
-              xKey="day"
-              height="fill"
-              series={[
-                { key: "Completed", label: "Delivered", colour: colour.healthy },
-                { key: "Upcoming", label: "Upcoming", colour: colour.series2 },
-                { key: "Missed", label: "Missed or cancelled", colour: colour.over },
-              ]}
-            />
-          </div>
-        </FCard>
-      </div>
       <div className="flex flex-wrap items-center gap-2 rounded-card border border-border bg-surface p-3 shadow-lift">
         <Segmented<Range>
           label="Date range"

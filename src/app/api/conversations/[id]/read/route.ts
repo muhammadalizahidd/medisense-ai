@@ -4,7 +4,7 @@ import { handle, parseId } from "@/server/http";
 
 export async function POST(_: Request, { params }: { params: Promise<{ id: string }> }) {
   return handle(async () => {
-    await markRead(await requireUser("therapist", "client"), parseId((await params).id));
+    await markRead(await requireUser("therapist", "client", "admin"), parseId((await params).id));
     return { ok: true };
   });
 }

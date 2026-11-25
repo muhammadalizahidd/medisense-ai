@@ -1,4 +1,6 @@
+import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
+import { KpiLabel } from "./kpi-icon";
 import { cn } from "@/lib/cn";
 
 export type Metric = {
@@ -7,6 +9,8 @@ export type Metric = {
   caption?: ReactNode;
   tone?: "over" | "watch" | "monitor";
   flagged?: boolean;
+  /** Chosen from the label when not given. */
+  icon?: LucideIcon;
 };
 
 const captionTone = { over: "text-over", watch: "text-watch", monitor: "text-watch" };
@@ -44,7 +48,13 @@ export function MetricBand({
             metric.flagged && "shadow-flag",
           )}
         >
-          <span className="label-caps">{metric.label}</span>
+          <KpiLabel
+            label={typeof metric.label === "string" ? metric.label : ""}
+            icon={metric.icon}
+            tone={metric.tone}
+          >
+            {metric.label}
+          </KpiLabel>
           <span
             className={cn(
               "type-display leading-none",

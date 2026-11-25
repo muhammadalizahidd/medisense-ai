@@ -212,6 +212,8 @@ export interface StaffDoc {
     reviewedBy: string | null;
     reviewedAt: Date | null;
     note: string;
+    /** HR asked the clinician for the renewed credential (People and HR alerts). */
+    renewal?: { requestedAt: Date; byName: string } | null;
   })[];
   competencies: {
     support: string;
@@ -481,6 +483,17 @@ export interface ConversationDoc {
   createdAt: Date;
 }
 
+/** A one-to-one chat an admin opens with anyone in the system: staff, clinicians or patients. */
+export interface DirectChatDoc {
+  _id: ObjectId;
+  memberIds: ObjectId[];
+  /** Both member ids, sorted and joined, so a pair only ever has one chat. */
+  pairKey: string;
+  startedBy: ObjectId;
+  lastMessage: { body: string; senderId: ObjectId; at: Date } | null;
+  createdAt: Date;
+}
+
 export interface MessageDoc {
   _id: ObjectId;
   conversationId: ObjectId;
@@ -549,6 +562,16 @@ export interface ReferralDoc {
   data: ReferralInput;
   /** Intake's decision for each requested support, by its position in data.supports. */
   services?: ServiceRecord[];
+  /** The welcome message sent once the first visit is arranged (one per referral). */
+  welcome?: {
+    messageId: ObjectId;
+    ref: string;
+    state: string;
+    channel: string;
+    recipient: string;
+    byName: string;
+    at: Date;
+  } | null;
   /** Set during intake review; used for matching. */
   region: Region | null;
   /** From the automated completeness check, as last run. */

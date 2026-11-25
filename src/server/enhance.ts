@@ -493,12 +493,14 @@ async function goalsOf(c: ClientDoc) {
 export async function therapistEnhance(u: UserDoc, clientId: string): Promise<TherapistEnhanceDto> {
   const c = await forTherapist(u, clientId);
   await autoSendCheckins(c);
-  const docs = await (await col()).find({ clientId: c._id }).sort({ at: -1 }).toArray();
+  // The database is far away, so the independent reads go together rather than one after another.
+  const [docs, goals, prefs, reps] = await Promise.all([
+    col().then((d) => d.find({ clientId: c._id }).sort({ at: -1 }).toArray()),
+    goalsOf(c),
+    prefsOf(c._id),
+    clientUser(c).then(async (pu) => (pu ? (await portalView(pu)).representatives : [])),
+  ]);
   const of = (k: string) => docs.filter((d) => d.kind === k);
-  const goals = await goalsOf(c);
-  const prefs = await prefsOf(c._id);
-  const patientUser = await clientUser(c);
-  const reps = patientUser ? (await portalView(patientUser)).representatives : [];
   const { appointments } = await collections();
   const [visits, amended, versions] = await Promise.all([
     appointments

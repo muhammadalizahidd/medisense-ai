@@ -6,7 +6,7 @@ type Context = { params: Promise<{ id: string }> };
 
 export async function GET(request: Request, { params }: Context) {
   return handle(async () => {
-    const user = await requireUser("therapist", "client");
+    const user = await requireUser("therapist", "client", "admin");
     const before = new URL(request.url).searchParams.get("before");
     const date = before ? new Date(before) : undefined;
     return {
@@ -21,7 +21,7 @@ export async function GET(request: Request, { params }: Context) {
 
 export async function POST(request: Request, { params }: Context) {
   return handle(async () => {
-    const user = await requireUser("therapist", "client");
+    const user = await requireUser("therapist", "client", "admin");
     const { body } = await readJson(request, messageSchema);
     return { message: await sendMessage(user, parseId((await params).id), body) };
   });

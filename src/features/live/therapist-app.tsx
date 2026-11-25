@@ -1576,7 +1576,7 @@ function MeTab({
           )}
           {avail.data && avail.data.timeOff.length > 0 && (
             <div className="mt-3 border-t border-border pt-3">
-              <p className="text-caption font-semibold text-ink-700">Time off</p>
+              <p className="text-caption font-semibold text-ink-700">Approved leave</p>
               <ul className="mt-1 flex flex-col gap-1 text-small">
                 {avail.data.timeOff.slice(0, 3).map((o) => (
                   <li key={o.id} className="text-ink-900">
@@ -1587,9 +1587,11 @@ function MeTab({
               </ul>
             </div>
           )}
-          <a href="/profile?tab=availability" className="mt-3 block text-small font-semibold">
-            Change hours or add time off
-          </a>
+          <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-small font-semibold">
+            <a href="/profile?tab=availability">Change hours</a>
+            <a href="/profile?tab=leave">Request leave</a>
+            <a href="/profile?tab=timesheet">My timesheet</a>
+          </p>
         </section>
         <Button
           className="w-full"

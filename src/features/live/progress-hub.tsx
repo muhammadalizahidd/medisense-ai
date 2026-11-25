@@ -1,10 +1,7 @@
 "use client";
 
-import { BarChart3, Lock, PieChart, Search, X } from "lucide-react";
+import { Lock, Search, X } from "lucide-react";
 import { useState } from "react";
-import { BarList } from "@/components/charts/bar-list";
-import { colour } from "@/components/charts/chart-kit";
-import { DonutChart } from "@/components/charts/donut-chart";
 import { PageHeader } from "@/components/ui/page";
 import { Select } from "@/components/ui/select";
 import { TabPanel, Tabs, useTab } from "@/components/ui/tabs";
@@ -21,7 +18,7 @@ import {
 } from "@/lib/live/progress";
 import { cn } from "@/lib/cn";
 import { ErrorNote, LiveBadge, Skeleton } from "./bits";
-import { FCard, td, th } from "./funding-bits";
+import { td, th } from "./funding-bits";
 import { KpiBand, dayOnly, tableBox, tableHead } from "./ops-bits";
 
 const tabs = [
@@ -29,16 +26,6 @@ const tabs = [
   { id: "reports", label: "Report centre" },
   { id: "approvals", label: "Approval queue" },
 ] as const;
-
-const stateColour: Record<string, string> = {
-  "Assessment Only": colour.series3,
-  "Active Treatment": colour.series1,
-  Paused: colour.sand,
-  "Under Review": colour.watch,
-  "Transfer Pending": colour.series4,
-  Discharged: colour.stone,
-  Closed: colour.slate,
-};
 
 /** Module 16 screen: Progress overview, Report centre and Clinical approval queue. */
 export function ProgressHub({ base }: { base: "/therapist/progress" | "/care/progress" }) {
@@ -81,27 +68,6 @@ export function ProgressHub({ base }: { base: "/therapist/progress" | "/care/pro
   const open = reports.filter(
     (r) => !["Signed", "Released", "Superseded", "Withdrawn"].includes(r.status),
   );
-  const slices = episodeStates
-    .map((s) => ({
-      id: s,
-      label: s,
-      value: episodes.filter((e) => e.state === s).length,
-      colour: stateColour[s] ?? colour.stone,
-    }))
-    .filter((s) => s.value);
-  const byStatus = reportStates
-    .map((s) => ({
-      id: s,
-      label: s,
-      value: reports.filter((r) => r.status === s).length,
-      colour:
-        s === "Released" || s === "Signed"
-          ? colour.healthy
-          : s === "Changes Requested"
-            ? colour.over
-            : colour.series1,
-    }))
-    .filter((s) => s.value);
   const goals = episodes.reduce((n, e) => n + e.goals, 0);
   const improving = episodes.reduce((n, e) => n + e.improving, 0);
   const search = (
@@ -187,45 +153,6 @@ export function ProgressHub({ base }: { base: "/therapist/progress" | "/care/pro
           },
         ]}
       />
-      <div className="grid items-stretch gap-6 xl:grid-cols-12">
-        <FCard
-          icon={PieChart}
-          title="Episodes by state"
-          sub="Click a slice to filter"
-          className="xl:col-span-5"
-        >
-          <DonutChart
-            label="Episodes by state"
-            stacked
-            size={150}
-            slices={slices}
-            centre={episodes.length}
-            centreCaption="episodes"
-            selected={state || null}
-            onSelect={(id) => {
-              setTab("episodes");
-              setState(id ?? "");
-            }}
-          />
-        </FCard>
-        <FCard
-          icon={BarChart3}
-          title="Reports by status"
-          sub="Click a bar to open the report centre"
-          className="xl:col-span-7"
-        >
-          <BarList
-            label="Reports by status"
-            data={byStatus}
-            labelWidth={170}
-            selected={rstatus || null}
-            onSelect={(id) => {
-              setTab("reports");
-              setRstatus(id ?? "");
-            }}
-          />
-        </FCard>
-      </div>
       <div className="mt-2">
         <Tabs
           label="Progress"

@@ -1,4 +1,5 @@
 import type { Kpi } from "@/data/organisation";
+import { KpiLabel } from "@/components/ui/kpi-icon";
 import { Changed } from "@/components/ai/marks";
 import { cn } from "@/lib/cn";
 
@@ -16,7 +17,7 @@ export function KpiGrid({ kpis, label }: { kpis: Kpi[]; label: string }) {
             kpi.flagged && "shadow-flag",
           )}
         >
-          <div className="label-caps">{kpi.label}</div>
+          <KpiLabel label={kpi.label} tone={kpi.flagged ? "watch" : undefined} />
           <div className="type-display text-h1 font-normal">
             <Changed value={kpi.value} was={kpi.was} />
           </div>

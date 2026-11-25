@@ -34,6 +34,8 @@ import type { SessionUser, TherapistDetailDto } from "@/lib/live/types";
 import { cn } from "@/lib/cn";
 import { AvailabilityEditor } from "./availability-editor";
 import { ErrorNote, LiveBadge, Skeleton } from "./bits";
+import { MyLeave } from "./my-leave";
+import { MyTimesheet } from "./my-timesheet";
 import { TherapistRecord } from "./therapist-record";
 import { MyCredentials, engagementTone } from "./staff-profile";
 
@@ -46,12 +48,22 @@ const allTabs = [
   { id: "overview", label: "Overview" },
   { id: "details", label: "Personal details" },
   { id: "availability", label: "Availability" },
+  { id: "leave", label: "Leave" },
+  { id: "timesheet", label: "Timesheet" },
   { id: "credentials", label: "Credentials" },
   { id: "security", label: "Security" },
   { id: "appearance", label: "Appearance" },
 ] as const;
 
-type TabId = "overview" | "details" | "availability" | "credentials" | "security" | "appearance";
+type TabId =
+  | "overview"
+  | "details"
+  | "availability"
+  | "leave"
+  | "timesheet"
+  | "credentials"
+  | "security"
+  | "appearance";
 
 const roleLabel = { admin: "Administration", therapist: "Therapist", client: "Patient" } as const;
 
@@ -74,6 +86,8 @@ export function ProfilePage() {
         { id: "overview", label: "Overview" },
         { id: "details", label: "Personal details" },
         { id: "availability", label: "Availability" },
+        { id: "leave", label: "Leave" },
+        { id: "timesheet", label: "Timesheet" },
         { id: "credentials", label: "Credentials", count: pendingCreds || undefined, alert: true },
         { id: "security", label: "Security" },
         { id: "appearance", label: "Appearance" },
@@ -120,6 +134,18 @@ export function ProfilePage() {
             timeOff={therapist.timeOff}
             onSaved={reload}
           />
+        </TabPanel>
+      )}
+
+      {therapist && (
+        <TabPanel id="leave" value={current}>
+          <MyLeave />
+        </TabPanel>
+      )}
+
+      {therapist && (
+        <TabPanel id="timesheet" value={current}>
+          <MyTimesheet />
         </TabPanel>
       )}
 

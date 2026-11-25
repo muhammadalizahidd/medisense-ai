@@ -21,7 +21,7 @@ import { photoUrl } from "./photos";
 import { caseloadVisits, isAway } from "./matching";
 import type { StaffDoc, TherapistDoc, UserDoc } from "./models";
 
-const today = () => new Date(Date.now() + 10 * 3_600_000).toISOString().slice(0, 10);
+export const today = () => new Date(Date.now() + 10 * 3_600_000).toISOString().slice(0, 10);
 const DAY_MS = 86_400_000;
 
 /** Supports a discipline delivers, from the referral form's catalogue. */
@@ -177,7 +177,7 @@ export async function ensureStaff(db: Db, t: TherapistDoc, isNew = false): Promi
   return fresh ?? { ...t, staff };
 }
 
-const credentialState = (c: StaffDoc["credentials"][number], on: string) =>
+export const credentialState = (c: StaffDoc["credentials"][number], on: string) =>
   c.status === "Verified" && c.expiry && c.expiry < on ? ("Expired" as const) : c.status;
 
 /**

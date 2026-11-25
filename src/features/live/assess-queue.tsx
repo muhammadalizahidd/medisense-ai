@@ -2,9 +2,6 @@
 
 import { Lock, Search, X } from "lucide-react";
 import { useState } from "react";
-import { BarList } from "@/components/charts/bar-list";
-import { colour } from "@/components/charts/chart-kit";
-import { DonutChart } from "@/components/charts/donut-chart";
 import { PageHeader } from "@/components/ui/page";
 import { Select } from "@/components/ui/select";
 import { Tag } from "@/components/ui/tag";
@@ -12,20 +9,8 @@ import { useNow, useResource } from "@/lib/live/client";
 import { modes, statuses, statusTone, type AssessRow } from "@/lib/live/assess";
 import { cn } from "@/lib/cn";
 import { ErrorNote, LiveBadge, Skeleton } from "./bits";
-import { FCard, th, td } from "./funding-bits";
+import { th, td } from "./funding-bits";
 import { KpiBand, dayOnly, tableBox, tableHead } from "./ops-bits";
-
-const statusColour: Record<string, string> = {
-  Requested: colour.stone,
-  Ready: colour.series4,
-  "In Progress": colour.series1,
-  Paused: colour.watch,
-  "Pending Review": colour.series2,
-  "Pending Signature": colour.series3,
-  Finalised: colour.healthy,
-  Amended: colour.healthy,
-  Cancelled: colour.sand,
-};
 
 /** Module 12: the assessment queue. Therapists see their own; leads and admin see status. */
 export function AssessQueue({ base }: { base: "/therapist/assessments" | "/care/assessments" }) {
@@ -67,20 +52,6 @@ export function AssessQueue({ base }: { base: "/therapist/assessments" | "/care/
           : a.progress - b.progress,
     );
   const open = all.filter((r) => !["Finalised", "Amended", "Cancelled"].includes(r.status));
-  const counts = statuses
-    .map((s) => ({
-      id: s,
-      label: s,
-      value: all.filter((r) => r.status === s).length,
-      colour: statusColour[s] ?? colour.stone,
-    }))
-    .filter((s) => s.value);
-  const byDiscipline = disciplines.map((d) => ({
-    id: d,
-    label: d,
-    value: open.filter((r) => r.discipline === d).length,
-    colour: colour.series1,
-  }));
   return (
     <>
       <PageHeader
@@ -133,39 +104,6 @@ export function AssessQueue({ base }: { base: "/therapist/assessments" | "/care/
           },
         ]}
       />
-      <div className="grid items-stretch gap-6 xl:grid-cols-12">
-        <FCard
-          icon={Search}
-          title="Status mix"
-          sub="All assessments you can see"
-          className="xl:col-span-5"
-        >
-          <DonutChart
-            label="Assessments by status"
-            stacked
-            size={150}
-            slices={counts}
-            centre={all.length}
-            centreCaption="assessments"
-            selected={status || null}
-            onSelect={(id) => setStatus(id ?? "")}
-          />
-        </FCard>
-        <FCard
-          icon={Search}
-          title="Open by discipline"
-          sub="Click a bar to filter"
-          className="xl:col-span-7"
-        >
-          <BarList
-            label="Open assessments by discipline"
-            data={byDiscipline}
-            labelWidth={170}
-            selected={discipline || null}
-            onSelect={(id) => setDiscipline(id ?? "")}
-          />
-        </FCard>
-      </div>
       <div className="flex flex-wrap items-center gap-2 rounded-card border border-border bg-surface p-3 shadow-lift">
         <div className="w-48">
           <Select

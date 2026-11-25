@@ -12,8 +12,9 @@ import {
   PlayCircle,
   ShieldAlert,
 } from "lucide-react";
+import { KpiLabel } from "@/components/ui/kpi-icon";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page";
 import { Segmented } from "@/components/ui/segmented";
@@ -37,8 +38,11 @@ const dayKey = (v: string | number) =>
   new Date(new Date(v).getTime() + 36e6).toISOString().slice(0, 10);
 const BUFFER = 15;
 
-/** S05-06: the clinician's own agenda, travel between visits, and what each visit needs. */
-export function MySchedule() {
+/**
+ * S05-06: the clinician's own agenda, travel between visits, and what each visit needs. `after`
+ * shows below it once the agenda has loaded, so nothing else appears first on an empty page.
+ */
+export function MySchedule({ after }: { after?: ReactNode }) {
   const schedule = useResource<{ events: ScheduleEventDto[]; pending: number }>(
     "/api/care/schedule/mine",
     (e) => e.type === "care",
@@ -56,7 +60,7 @@ export function MySchedule() {
 
   if (schedule.error && !schedule.data)
     return <ErrorNote message={schedule.error} onRetry={schedule.reload} />;
-  if (!schedule.data) return <Skeleton className="h-[600px]" />;
+  if (!schedule.data) return <ScheduleSkeleton />;
 
   const today = dayKey(now);
   const horizon = dayKey(now + (range === "today" ? 0 : 6) * 86_400_000);
@@ -126,9 +130,7 @@ export function MySchedule() {
       <section className="mb-4 grid gap-px overflow-hidden rounded-card border border-border bg-border shadow-lift sm:grid-cols-2 xl:grid-cols-4">
         {tiles.map((t) => (
           <div key={t.label} className="bg-surface px-5 py-4 transition-colors hover:bg-canvas">
-            <p className="text-label font-semibold tracking-[0.1em] text-ink-500 uppercase">
-              {t.label}
-            </p>
+            <KpiLabel label={t.label} />
             <p className="mt-1 type-display text-h2 text-ink-900">{t.value}</p>
             <p className="truncate text-caption text-ink-500">{t.sub}</p>
           </div>
@@ -400,7 +402,49 @@ export function MySchedule() {
           }}
         />
       )}
+      {after}
     </>
+  );
+}
+
+/** The schedule's own shape while it loads: title, four figures, the day's visits and the side panels. */
+function ScheduleSkeleton() {
+  return (
+    <div aria-busy="true" className="flex flex-col gap-4">
+      <span className="sr-only">Loading your schedule</span>
+      <div className="flex items-center justify-between gap-4">
+        <Skeleton className="h-9 w-56" />
+        <Skeleton className="h-10 w-52" />
+      </div>
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-card border border-border bg-border xl:grid-cols-4">
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className="flex flex-col gap-3 bg-surface px-5 py-4">
+            <Skeleton className="h-4 w-28" />
+            <Skeleton className="h-7 w-16" />
+            <Skeleton className="h-3 w-36" />
+          </div>
+        ))}
+      </div>
+      <div className="grid gap-6 xl:grid-cols-[1fr_340px]">
+        <div className="flex flex-col gap-3 rounded-card border border-border bg-surface p-5">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="flex gap-4 rounded-card border border-border p-4">
+              <Skeleton className="h-10 w-16" />
+              <div className="flex flex-1 flex-col gap-2">
+                <Skeleton className="h-4 w-48" />
+                <Skeleton className="h-3 w-64" />
+                <Skeleton className="h-3 w-40" />
+              </div>
+              <Skeleton className="h-9 w-28" />
+            </div>
+          ))}
+        </div>
+        <div className="flex flex-col gap-6">
+          <Skeleton className="h-28" />
+          <Skeleton className="h-64" />
+        </div>
+      </div>
+    </div>
   );
 }
 

@@ -1,11 +1,8 @@
 "use client";
 
-import { BarChart3, FilePlus2, Lock, PieChart, Search, X } from "lucide-react";
+import { FilePlus2, Lock, Search, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { BarList } from "@/components/charts/bar-list";
-import { colour } from "@/components/charts/chart-kit";
-import { DonutChart } from "@/components/charts/donut-chart";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page";
 import { Segmented } from "@/components/ui/segmented";
@@ -23,20 +20,11 @@ import {
 } from "@/lib/live/docs";
 import { cn } from "@/lib/cn";
 import { ErrorNote, LiveBadge, Skeleton } from "./bits";
-import { FCard, td, th } from "./funding-bits";
+import { td, th } from "./funding-bits";
 import { KpiBand, ops, tableBox, tableHead, when } from "./ops-bits";
 
 const DAY = 86_400_000;
 type Range = "all" | "today" | "7" | "30";
-const statusColour: Record<string, string> = {
-  Capturing: colour.stone,
-  "AI Draft": colour.series4,
-  Editing: colour.series2,
-  "Needs Review": colour.watch,
-  "Awaiting Co-sign": colour.series3,
-  Signed: colour.healthy,
-  Addendum: colour.sage,
-};
 
 /** Module 15 screen 3.1: My Documentation Queue. */
 export function DocQueue({ base }: { base: "/therapist/documentation" | "/care/documentation" }) {
@@ -74,31 +62,6 @@ export function DocQueue({ base }: { base: "/therapist/documentation" | "/care/d
         `${r.ref} ${r.participant} ${r.participantId} ${r.noteType}`.toLowerCase().includes(query),
     );
   const open = all.filter((r) => !["Signed", "Addendum"].includes(r.status));
-  const slices = docStatuses
-    .map((s) => ({
-      id: s,
-      label: s,
-      value: all.filter((r) => r.status === s).length,
-      colour: statusColour[s] ?? colour.stone,
-    }))
-    .filter((s) => s.value);
-  // One discipline (a single therapist) reads better by note type, so the chart is never one bar.
-  const byType = disciplines.length < 2;
-  const bars = byType
-    ? noteTypes
-        .map((t) => ({
-          id: t,
-          label: t,
-          value: all.filter((r) => r.noteType === t).length,
-          colour: colour.series1,
-        }))
-        .filter((b) => b.value)
-    : disciplines.map((d) => ({
-        id: d,
-        label: d,
-        value: open.filter((r) => r.discipline === d).length,
-        colour: colour.series1,
-      }));
   return (
     <>
       <PageHeader
@@ -159,59 +122,6 @@ export function DocQueue({ base }: { base: "/therapist/documentation" | "/care/d
           },
         ]}
       />
-      <div className="grid items-stretch gap-6 xl:grid-cols-12">
-        <FCard
-          icon={PieChart}
-          title="Notes by status"
-          sub="Click a slice to filter"
-          className="xl:col-span-5"
-        >
-          <DonutChart
-            label="Notes by status"
-            stacked
-            size={150}
-            slices={slices}
-            centre={all.length}
-            centreCaption="notes"
-            selected={status || null}
-            onSelect={(id) => setStatus(id ?? "")}
-          />
-        </FCard>
-        <FCard
-          icon={BarChart3}
-          title={byType ? "Notes by type" : "Open notes by discipline"}
-          sub="Click a bar to filter · capture methods below"
-          className="xl:col-span-7"
-        >
-          <div className="flex h-full flex-col gap-5">
-            <BarList
-              label={byType ? "Notes by type" : "Open notes by discipline"}
-              data={bars}
-              labelWidth={190}
-              selected={(byType ? type : discipline) || null}
-              onSelect={(id) => (byType ? setType(id ?? "") : setDiscipline(id ?? ""))}
-            />
-            <div className="mt-auto grid grid-cols-2 gap-3 border-t border-border pt-4 sm:grid-cols-4">
-              {captureMethods.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setSource(source === c ? "" : c)}
-                  className={cn(
-                    "cursor-pointer rounded-control border p-3 text-left transition-colors duration-140",
-                    source === c ? "border-accent bg-accent-tint" : "border-border hover:bg-canvas",
-                  )}
-                >
-                  <span className="block type-display text-h2 text-ink-900">
-                    {all.filter((r) => r.capture === c).length}
-                  </span>
-                  <span className="text-caption text-ink-500">{c}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </FCard>
-      </div>
       <div className="flex flex-wrap items-center gap-2 rounded-card border border-border bg-surface p-3 shadow-lift">
         <Segmented<Range>
           label="Date range"
@@ -247,6 +157,34 @@ export function DocQueue({ base }: { base: "/therapist/documentation" | "/care/d
             <option value="">Any document type</option>
             {noteTypes.map((s) => (
               <option key={s}>{s}</option>
+            ))}
+          </Select>
+        </div>
+        {disciplines.length > 1 && (
+          <div className="w-48">
+            <Select
+              aria-label="Discipline"
+              className="h-9"
+              value={discipline}
+              onChange={(e) => setDiscipline(e.target.value)}
+            >
+              <option value="">Any discipline</option>
+              {disciplines.map((d) => (
+                <option key={d}>{d}</option>
+              ))}
+            </Select>
+          </div>
+        )}
+        <div className="w-44">
+          <Select
+            aria-label="Capture method"
+            className="h-9"
+            value={source}
+            onChange={(e) => setSource(e.target.value)}
+          >
+            <option value="">Any capture method</option>
+            {captureMethods.map((c) => (
+              <option key={c}>{c}</option>
             ))}
           </Select>
         </div>
@@ -378,7 +316,7 @@ export function DocQueue({ base }: { base: "/therapist/documentation" | "/care/d
 }
 
 /** Screen 3.2: New Note Wizard. Choosing the visit pre-fills the participant, mode and date. */
-function NewNote({
+export function NewNote({
   options,
   onClose,
   onCreated,

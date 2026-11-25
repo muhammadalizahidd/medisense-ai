@@ -1,18 +1,15 @@
 "use client";
 
-import { BarChart3, Check, ListPlus, Lock, PieChart, Search, Users, X } from "lucide-react";
+import { Check, ListPlus, Lock, Search, Users, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { AiDraft } from "@/components/ai/provenance";
-import { BarList } from "@/components/charts/bar-list";
-import { colour } from "@/components/charts/chart-kit";
-import { DonutChart } from "@/components/charts/donut-chart";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page";
 import { Segmented } from "@/components/ui/segmented";
 import { Select } from "@/components/ui/select";
 import { Field, Sheet, inputClass } from "@/components/ui/sheet";
-import { TabPanel, Tabs, useTab } from "@/components/ui/tabs";
+import { TabPanel, useTab } from "@/components/ui/tabs";
 import { Tag } from "@/components/ui/tag";
 import { useNow, useResource } from "@/lib/live/client";
 import {
@@ -37,7 +34,7 @@ const tabs = [
   { id: "supervision", label: "Supervision" },
 ] as const;
 type Scope = "mine" | "team" | "overdue" | "waiting";
-type Options = {
+export type Options = {
   participants: { clientId: string; name: string; needs: { id: string; discipline: string }[] }[];
   staff: { id: string; name: string; role: string }[];
 };
@@ -89,28 +86,6 @@ export function CoordHub({ base }: { base: "/therapist/coordination" | "/care/co
         (a.dueAt ?? "9").localeCompare(b.dueAt ?? "9"),
     );
   const today = new Date(clock).toISOString().slice(0, 10);
-  const slices = statuses
-    .map((s) => ({
-      id: s,
-      label: s,
-      value: open.filter((r) => r.status === s).length,
-      colour: s.startsWith("Waiting")
-        ? colour.watch
-        : s === "Pending Review"
-          ? colour.series3
-          : s === "Draft"
-            ? colour.stone
-            : colour.series1,
-    }))
-    .filter((s) => s.value);
-  const byCat = categories
-    .map((c) => ({
-      id: c,
-      label: c,
-      value: open.filter((r) => r.category === c).length,
-      colour: colour.series1,
-    }))
-    .filter((c) => c.value);
   const review = all.filter((r) => r.status === "Pending Review");
   return (
     <>
@@ -181,61 +156,6 @@ export function CoordHub({ base }: { base: "/therapist/coordination" | "/care/co
           },
         ]}
       />
-      <div className="grid items-stretch gap-6 xl:grid-cols-12">
-        <FCard
-          icon={PieChart}
-          title="Open tasks by status"
-          sub="Click a slice to filter"
-          className="xl:col-span-5"
-        >
-          <DonutChart
-            label="Open tasks by status"
-            stacked
-            size={150}
-            slices={slices}
-            centre={open.length}
-            centreCaption="open"
-            selected={status || null}
-            onSelect={(id) => {
-              setTab("work");
-              setStatus(id ?? "");
-            }}
-          />
-        </FCard>
-        <FCard
-          icon={BarChart3}
-          title="Open tasks by category"
-          sub="Click a bar to filter"
-          className="xl:col-span-7"
-        >
-          <BarList
-            label="Open tasks by category"
-            data={byCat}
-            labelWidth={180}
-            selected={category || null}
-            onSelect={(id) => {
-              setTab("work");
-              setCategory(id ?? "");
-            }}
-          />
-        </FCard>
-      </div>
-      <div className="mt-2">
-        <Tabs
-          label="Coordination"
-          tabs={tabs.map((t) => ({
-            ...t,
-            count:
-              t.id === "suggestions"
-                ? suggestions.length || undefined
-                : t.id === "supervision"
-                  ? review.length || undefined
-                  : undefined,
-          }))}
-          value={tab}
-          onChange={setTab}
-        />
-      </div>
 
       <TabPanel id="work" value={tab}>
         <div className="flex flex-col gap-4">
@@ -480,7 +400,7 @@ export function CoordHub({ base }: { base: "/therapist/coordination" | "/care/co
   );
 }
 
-function Suggestions({ rows, reload }: { rows: TaskRow[]; reload: () => void }) {
+export function Suggestions({ rows, reload }: { rows: TaskRow[]; reload: () => void }) {
   const seen = new Map<string, number>();
   return (
     <div className="grid items-stretch gap-6 md:grid-cols-2 xl:grid-cols-3">
@@ -548,7 +468,7 @@ function Suggestions({ rows, reload }: { rows: TaskRow[]; reload: () => void }) 
   );
 }
 
-function NewTask({
+export function NewTask({
   options,
   onClose,
   onCreated,

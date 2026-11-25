@@ -14,6 +14,7 @@ import {
   Search,
   X,
 } from "lucide-react";
+import { KpiLabel } from "@/components/ui/kpi-icon";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page";
@@ -471,8 +472,11 @@ function Overview({
             onClick={k.onClick}
             className="group flex cursor-pointer flex-col gap-1 bg-surface px-5 py-4 text-left transition-colors hover:bg-canvas"
           >
-            <span className="flex items-center justify-between text-label font-semibold tracking-[0.08em] text-ink-500 uppercase">
-              {k.label}
+            <span className="flex items-center justify-between gap-2">
+              <KpiLabel
+                label={k.label}
+                tone={"tone" in k && (k.tone === "over" || k.tone === "watch") ? k.tone : undefined}
+              />
               <ArrowUpRight
                 className="size-3.5 opacity-0 transition-opacity group-hover:opacity-100"
                 aria-hidden="true"
@@ -912,8 +916,8 @@ function Reports({ hub, f }: { hub: FinanceHubDto; f: Filters }) {
           ["Unbilled", aud(totals.unbilled)],
         ].map(([k, v]) => (
           <div key={k} className="bg-surface px-5 py-4">
-            <p className="text-label font-semibold tracking-[0.08em] text-ink-500 uppercase">{k}</p>
-            <p className="type-display text-h2 text-ink-900">{v}</p>
+            <KpiLabel label={String(k)} />
+            <p className="mt-1 type-display text-h2 text-ink-900">{v}</p>
           </div>
         ))}
       </div>

@@ -20,7 +20,7 @@ export type TestAccount = { name: string; role: string; email: string };
 
 /** Stock photograph from Unsplash (free licence). */
 const PHOTO =
-  "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=1600&q=80";
+  "https://images.unsplash.com/photo-1723433892471-62f113c8c9a0?auto=format&fit=crop&w=1600&q=80";
 
 const promises = [
   { icon: House, title: "Care at home", text: "Therapists come to you, anywhere in Brisbane." },
@@ -141,11 +141,11 @@ export function SignInScreen({
           </div>
           {testAccounts && !choosing && (
             <details className="mt-6 rounded-control border border-dashed border-border-strong bg-surface px-4 py-3">
-              <summary className="cursor-pointer text-small font-semibold">Demo accounts</summary>
+              <summary className="cursor-pointer text-small font-semibold">Quick sign-in</summary>
               <p className="mt-2 mb-3 text-caption text-ink-500">
                 {oneClick
-                  ? "Choose an account to sign in straight away."
-                  : "Choose an account to fill in its email, then enter the demo password your Medisense contact gave you."}
+                  ? "Medisense portal accounts, set up for quick access. Choose one to sign in straight away."
+                  : "Medisense portal accounts, set up for quick access. Choose one to fill in its email, then enter the password your Medisense admin gave you."}
               </p>
               <ul className="grid gap-1.5 sm:grid-cols-2">
                 {testAccounts.map((a) => (
