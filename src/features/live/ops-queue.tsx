@@ -577,7 +577,7 @@ function BulkRun({
   );
 }
 
-function Preview({ task: t, onClose }: { task: TaskDto; onClose: () => void }) {
+export function TaskPreview({ task: t, onClose }: { task: TaskDto; onClose: () => void }) {
   const done = t.checklist.filter((c) => c.done).length;
   return (
     <RecordPopup
