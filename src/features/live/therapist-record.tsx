@@ -20,8 +20,10 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
+import { Modal } from "@/components/ui/modal";
 import { Avatar } from "@/components/ui/premium";
+import { Segmented } from "@/components/ui/segmented";
 import { Tag } from "@/components/ui/tag";
 import { relativeTime, shortDate } from "@/lib/live/time";
 import type { TherapistDetailDto } from "@/lib/live/types";
@@ -297,25 +299,11 @@ export function TherapistRecord({
                   </ul>
                 </div>
                 <ul className="divide-y divide-border">
-                  {t.feedback.map((f) => (
-                    <li
-                      key={`${f.visit}-${f.at}`}
-                      className="flex gap-3 px-5 py-3.5 transition-colors hover:bg-canvas"
-                    >
-                      <Avatar name={f.patient} size={32} kind="patient" />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <span className="text-small font-semibold text-ink-900">{f.patient}</span>
-                          <Stars value={f.rating} />
-                        </div>
-                        {f.comment && (
-                          <p className="mt-0.5 text-small text-ink-700">“{f.comment}”</p>
-                        )}
-                        <p className="text-caption text-ink-500">Visit on {shortDate(f.visit)}</p>
-                      </div>
-                    </li>
+                  {t.feedback.slice(0, FEEDBACK_SHOWN).map((f) => (
+                    <FeedbackRow key={`${f.visit}-${f.at}`} f={f} />
                   ))}
                 </ul>
+                {t.feedback.length > FEEDBACK_SHOWN && <AllFeedback feedback={t.feedback} />}
               </>
             )}
           </Card>
@@ -470,5 +458,80 @@ export function TherapistRecord({
         </div>
       </div>
     </div>
+  );
+}
+
+/** The newest few ratings show on the page; the rest open in a window, so the page keeps its shape. */
+const FEEDBACK_SHOWN = 3;
+
+type Feedback = TherapistDetailDto["feedback"][number];
+
+function FeedbackRow({ f }: { f: Feedback }) {
+  return (
+    <li className="flex gap-3 px-5 py-3.5 transition-colors hover:bg-canvas">
+      <Avatar name={f.patient} size={32} kind="patient" />
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="text-small font-semibold text-ink-900">{f.patient}</span>
+          <Stars value={f.rating} />
+        </div>
+        {f.comment && <p className="mt-0.5 text-small text-ink-700">“{f.comment}”</p>}
+        <p className="text-caption text-ink-500">Visit on {shortDate(f.visit)}</p>
+      </div>
+    </li>
+  );
+}
+
+type StarFilter = "all" | "5" | "4" | "low";
+
+function AllFeedback({ feedback }: { feedback: Feedback[] }) {
+  const [open, setOpen] = useState(false);
+  const [stars, setStars] = useState<StarFilter>("all");
+  const shown = feedback.filter((f) =>
+    stars === "all" ? true : stars === "low" ? f.rating <= 3 : f.rating === Number(stars),
+  );
+  const count = (k: StarFilter) =>
+    feedback.filter((f) => (k === "low" ? f.rating <= 3 : f.rating === Number(k))).length;
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="flex w-full cursor-pointer items-center justify-between border-t border-border px-5 py-3 text-small font-semibold text-accent hover:bg-canvas"
+      >
+        View all {feedback.length} ratings
+        <ChevronRight className="size-4" aria-hidden="true" />
+      </button>
+      {open && (
+        <Modal
+          title="What patients say"
+          description={`${feedback.length} ratings, newest first.`}
+          onClose={() => setOpen(false)}
+          toolbar={
+            <Segmented<StarFilter>
+              label="Rating"
+              value={stars}
+              onChange={setStars}
+              options={[
+                { id: "all", label: `All (${feedback.length})` },
+                { id: "5", label: `5 stars (${count("5")})` },
+                { id: "4", label: `4 stars (${count("4")})` },
+                { id: "low", label: `3 or less (${count("low")})` },
+              ]}
+            />
+          }
+        >
+          {shown.length === 0 ? (
+            <p className="px-6 py-12 text-center text-small text-ink-500">No ratings here.</p>
+          ) : (
+            <ul className="divide-y divide-border">
+              {shown.map((f) => (
+                <FeedbackRow key={`${f.visit}-${f.at}`} f={f} />
+              ))}
+            </ul>
+          )}
+        </Modal>
+      )}
+    </>
   );
 }

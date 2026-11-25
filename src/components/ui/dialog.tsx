@@ -25,6 +25,8 @@ export function Dialog({
   onRequestClose,
   size = "lg",
   above = false,
+  plain = false,
+  flush = false,
   children,
 }: {
   title: string;
@@ -37,7 +39,12 @@ export function Dialog({
   toolbar?: ReactNode;
   footer?: ReactNode;
   onRequestClose: () => void;
-  size?: "sm" | "lg";
+  /** sm 448px for a question; md 672px for a form; wide 768px for a list; lg for a workspace. */
+  size?: "sm" | "md" | "wide" | "lg";
+  /** A white body, for forms and cards that were built on one. */
+  plain?: boolean;
+  /** No padding around the body, for lists that run edge to edge. */
+  flush?: boolean;
   /** Opens above another dialog or sheet. */
   above?: boolean;
   children: ReactNode;
@@ -113,7 +120,12 @@ export function Dialog({
         aria-label={title}
         className={cn(
           "dialog-panel relative flex h-full w-full flex-col overflow-hidden bg-raised shadow-overlay sm:h-auto sm:max-h-[90dvh] sm:rounded-sheet",
-          size === "lg" ? "sm:max-w-295" : "sm:max-w-md",
+          {
+            sm: "sm:max-w-md",
+            md: "sm:max-w-2xl",
+            wide: "sm:max-w-3xl",
+            lg: "sm:max-w-295",
+          }[size],
         )}
       >
         <header className="relative flex flex-col gap-3 border-b border-border px-5 py-4 sm:flex-row sm:items-start sm:justify-between sm:gap-4 sm:px-6 sm:py-5">
@@ -139,7 +151,15 @@ export function Dialog({
         {toolbar && (
           <div className="border-b border-border bg-surface px-5 py-3 sm:px-6">{toolbar}</div>
         )}
-        <div className="min-h-0 flex-1 overflow-y-auto bg-canvas px-5 py-5 sm:px-6">{children}</div>
+        <div
+          className={cn(
+            "min-h-0 flex-1 overflow-y-auto",
+            plain ? "bg-raised" : "bg-canvas",
+            !flush && "px-5 py-5 sm:px-6",
+          )}
+        >
+          {children}
+        </div>
         {footer && (
           <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-border bg-raised px-5 py-3.5 sm:px-6">
             {footer}

@@ -27,6 +27,7 @@ import { MetricBand } from "@/components/ui/metric-band";
 import { PageHeader } from "@/components/ui/page";
 import { Segmented } from "@/components/ui/segmented";
 import { Select } from "@/components/ui/select";
+import { Modal } from "@/components/ui/modal";
 import { Sheet } from "@/components/ui/sheet";
 import { TabPanel, Tabs, useTab } from "@/components/ui/tabs";
 import { Tag } from "@/components/ui/tag";
@@ -69,7 +70,7 @@ const time = (iso: string) => fmt(iso, { hour: "numeric", minute: "2-digit" });
 
 const START_HOUR = 8;
 const END_HOUR = 18;
-const ROW = 52;
+const ROW = 64;
 
 type View = "day" | "week" | "month";
 
@@ -653,6 +654,7 @@ function EventCard({
     <button
       type="button"
       onClick={() => onOpen(e)}
+      data-no-photo
       draggable={movable}
       onDragStart={(ev) => {
         ev.dataTransfer.setData("text/plain", e.id);
@@ -661,27 +663,28 @@ function EventCard({
       title={`${e.ref} · ${e.patient} · ${e.support} · ${e.status}${movable ? " · drag to move" : ""}`}
       className={cn(
         movable && "active:cursor-grabbing",
-        "group h-full w-full cursor-pointer overflow-hidden rounded-[8px] border-l-[3px] px-2 py-1 text-left shadow-hairline transition-all duration-(--duration-fast) hover:z-10 hover:-translate-y-px hover:shadow-lift focus-visible:z-10",
+        "group flex h-full w-full cursor-pointer flex-col justify-start overflow-hidden rounded-control border-l-[3px] px-2.5 py-1.5 text-left transition-all duration-(--duration-fast) hover:z-10 hover:-translate-y-px hover:shadow-lift focus-visible:z-10",
         statusStyle[e.status],
       )}
     >
-      <span className="flex items-center gap-1 text-label font-semibold">
-        {e.modality === "Telehealth" && (
-          <MonitorPlay className="size-3 flex-none" aria-hidden="true" />
-        )}
-        <span className="truncate">
-          {time(e.start)} · {e.patient}
+      <span className="flex items-center gap-1.5">
+        <span className="flex-none text-caption font-semibold text-ink-700 tabular-nums">
+          {time(e.start)}
         </span>
+        {e.modality === "Telehealth" && (
+          <MonitorPlay className="size-3.5 flex-none text-ink-500" aria-label="Telehealth" />
+        )}
         {warn && (
           <CircleAlert
-            className="ml-auto size-3 flex-none text-over"
+            className="ml-auto size-3.5 flex-none text-over"
             aria-label="Has an exception"
           />
         )}
       </span>
+      <span className="truncate text-small leading-tight font-semibold">{e.patient}</span>
       {!compact && (
-        <span className="block truncate text-label opacity-80">
-          {e.support} · {e.therapist}
+        <span className="truncate text-caption leading-tight text-ink-500">
+          {e.therapist.split(" ")[0]} · {e.support}
         </span>
       )}
     </button>
@@ -706,6 +709,9 @@ function TimeGrid({
   onMove: (e: ScheduleEventDto, start: string) => void;
 }) {
   const [over, setOver] = useState<string | null>(null);
+  const [more, setMore] = useState<{ title: string; sub: string; list: ScheduleEventDto[] } | null>(
+    null,
+  );
   const now = useNow() ?? 0;
   const hours = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i);
   // Day view: one column per clinician working that day (resource view).
@@ -814,40 +820,146 @@ function TimeGrid({
                 <span className="absolute -top-1 -left-1 size-2.5 rounded-full bg-over-dot" />
               </div>
             )}
-            {c.list.map((e) => {
-              const s = minutesOf(e.start);
-              const en = minutesOf(e.end);
-              const top = ((Math.max(s, START_HOUR * 60) - START_HOUR * 60) / 60) * ROW;
-              const height = Math.max(
-                26,
-                ((Math.min(en, END_HOUR * 60) - Math.max(s, START_HOUR * 60)) / 60) * ROW - 3,
-              );
-              const overlap = c.list.filter((o) => o.start < e.end && e.start < o.end);
-              const idx = overlap.indexOf(e);
-              const width = 100 / overlap.length;
-              return (
-                <div
-                  key={e.id}
-                  className="absolute px-1"
-                  style={{ top: top + 1, height, left: `${idx * width}%`, width: `${width}%` }}
+            {laneLayout(c.list).flatMap((cluster) => {
+              const max = view === "day" ? 3 : MAX_LANES;
+              const shownLanes = Math.min(cluster.lanes, max);
+              const hidden = cluster.items.filter((x) => x.lane >= shownLanes);
+              const strip = hidden.length ? 30 : 0;
+              const placeOf = (e: ScheduleEventDto) => {
+                const s = minutesOf(e.start);
+                const en = minutesOf(e.end);
+                const top = ((Math.max(s, START_HOUR * 60) - START_HOUR * 60) / 60) * ROW;
+                const height = Math.max(
+                  30,
+                  ((Math.min(en, END_HOUR * 60) - Math.max(s, START_HOUR * 60)) / 60) * ROW - 4,
+                );
+                return { top, height };
+              };
+              const laneWidth = `((100% - ${strip}px) / ${shownLanes})`;
+              const cards = cluster.items
+                .filter((x) => x.lane < shownLanes)
+                .map(({ e, lane }) => {
+                  const { top, height } = placeOf(e);
+                  return (
+                    <div
+                      key={e.id}
+                      className="absolute px-0.5"
+                      style={{
+                        top: top + 2,
+                        height,
+                        left: `calc(${lane} * ${laneWidth})`,
+                        width: `calc(${laneWidth})`,
+                      }}
+                    >
+                      <EventCard
+                        e={e}
+                        onOpen={onOpen}
+                        compact={height < 50}
+                        movable={
+                          (e.rawStatus === "booked" || e.rawStatus === "tentative") &&
+                          new Date(e.start).getTime() > now
+                        }
+                      />
+                    </div>
+                  );
+                });
+              if (hidden.length === 0) return cards;
+              const spans = cluster.items.map((x) => placeOf(x.e));
+              const top = Math.min(...spans.map((x) => x.top));
+              const bottom = Math.max(...spans.map((x) => x.top + x.height));
+              return [
+                ...cards,
+                <button
+                  key={`more-${cluster.items[0]!.e.id}`}
+                  type="button"
+                  aria-label={`${hidden.length} more visits at this time`}
+                  title={`${hidden.length} more at this time`}
+                  onClick={() =>
+                    setMore({ title: c.label, sub: c.sub, list: cluster.items.map((x) => x.e) })
+                  }
+                  className="absolute right-0.5 z-10 flex cursor-pointer flex-col items-center justify-center gap-0.5 rounded-control border border-dashed border-accent bg-accent-tint text-accent transition-colors duration-(--duration-fast) hover:bg-accent-fill hover:text-on-accent"
+                  style={{ top: top + 2, height: bottom - top, width: strip - 4 }}
                 >
-                  <EventCard
-                    e={e}
-                    onOpen={onOpen}
-                    compact={height < 44}
-                    movable={
-                      (e.rawStatus === "booked" || e.rawStatus === "tentative") &&
-                      new Date(e.start).getTime() > now
-                    }
-                  />
-                </div>
-              );
+                  <span className="text-caption font-semibold">+{hidden.length}</span>
+                </button>,
+              ];
             })}
           </div>
         ))}
       </div>
+      {more && (
+        <Modal
+          title={`${more.list.length} visits at the same time`}
+          description={`${more.title} ${more.sub}, ${time(more.list[0]!.start)} to ${time(
+            more.list.reduce((m, e) => (e.end > m ? e.end : m), more.list[0]!.end),
+          )}`}
+          onClose={() => setMore(null)}
+        >
+          <ul className="divide-y divide-border">
+            {[...more.list]
+              .sort((a, b) => a.start.localeCompare(b.start))
+              .map((e) => (
+                <li key={e.id}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMore(null);
+                      onOpen(e);
+                    }}
+                    className="flex w-full cursor-pointer items-center gap-4 px-6 py-3 text-left hover:bg-canvas"
+                  >
+                    <span className="w-20 flex-none text-small font-semibold text-ink-900 tabular-nums">
+                      {time(e.start)}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-small font-semibold text-ink-900">
+                        {e.patient}
+                      </span>
+                      <span className="block truncate text-caption text-ink-500">
+                        {e.support} with {e.therapist}
+                        {e.modality === "Telehealth" ? ", video" : ""}
+                      </span>
+                    </span>
+                    <Tag tone={statusTone[e.status]}>{e.status}</Tag>
+                  </button>
+                </li>
+              ))}
+          </ul>
+        </Modal>
+      )}
     </div>
   );
+}
+
+/** At most this many visits side by side in a week column; the rest open from "+N more". */
+const MAX_LANES = 2;
+
+/**
+ * Groups a column's visits into runs that overlap and gives each visit a lane, so every visit in
+ * a run gets the same width and nothing is squeezed into a sliver.
+ */
+function laneLayout(list: ScheduleEventDto[]) {
+  const sorted = [...list].sort(
+    (a, b) => a.start.localeCompare(b.start) || b.end.localeCompare(a.end),
+  );
+  const clusters: {
+    end: string;
+    laneEnds: string[];
+    items: { e: ScheduleEventDto; lane: number }[];
+  }[] = [];
+  for (const e of sorted) {
+    let cluster = clusters.at(-1);
+    if (!cluster || e.start >= cluster.end) {
+      cluster = { end: e.end, laneEnds: [], items: [] };
+      clusters.push(cluster);
+    }
+    let lane = cluster.laneEnds.findIndex((end) => end <= e.start);
+    if (lane === -1) lane = cluster.laneEnds.length;
+    cluster.laneEnds[lane] = e.end;
+    if (e.end > cluster.end) cluster.end = e.end;
+    cluster.items.push({ e, lane });
+  }
+  return clusters.map((c) => ({ lanes: c.laneEnds.length, items: c.items }));
 }
 
 function MonthGrid({
