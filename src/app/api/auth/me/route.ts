@@ -1,4 +1,6 @@
-import { appsForRole, landingPath } from "@/lib/permissions/apps";
+import { appsForRole } from "@/lib/permissions/apps";
+import { landingFor } from "@/lib/permissions/landing";
+import { pageAccessFor } from "@/lib/permissions/pages";
 import { currentUser } from "@/server/auth";
 import { handle } from "@/server/http";
 import { heldPermissions } from "@/server/permissions";
@@ -12,7 +14,15 @@ export async function GET() {
     return {
       user: await sessionUser(user),
       apps,
-      home: landingPath(user.role, user.staffRoles, apps),
+      home: landingFor(
+        user.role,
+        user.staffRoles,
+        apps,
+        pageAccessFor({
+          permissions: [...heldPermissions(user)],
+          staffRoles: user.staffRoles ?? [],
+        }),
+      ),
     };
   });
 }
