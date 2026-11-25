@@ -705,21 +705,7 @@ export function routeMeta(pathname: string): RouteMeta {
 }
 
 /** Screens that stand alone, without the staff sidebar and top bar. */
-export function isStandalone(pathname: string) {
-  return (
-    pathname.startsWith("/family") ||
-    pathname.startsWith("/mobile") ||
-    pathname === "/login" ||
-    pathname === "/refer" ||
-    pathname.startsWith("/refer/") ||
-    pathname.startsWith("/join/") ||
-    pathname.startsWith("/checkin/") ||
-    pathname.startsWith("/appointment/") ||
-    pathname.startsWith("/agreement/") ||
-    pathname.startsWith("/upload/") ||
-    pathname.startsWith("/contact/")
-  );
-}
+export { isStandalone } from "./standalone";
 
 /** Detail pages that belong to a differently named sidebar entry. */
 const activeAliases: Record<string, string[]> = { "/reports": ["/progress-reports"] };

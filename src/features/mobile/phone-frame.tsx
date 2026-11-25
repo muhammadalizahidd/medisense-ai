@@ -8,14 +8,165 @@ import {
   HeartPulse,
   LockKeyhole,
   Signal,
+  Smartphone,
+  Tablet,
   Wifi,
   X,
   type LucideIcon,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { createContext, useContext, useState, useSyncExternalStore, type ReactNode } from "react";
 import { ButtonLink } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import { useNow } from "@/lib/live/client";
+
+/*
+ * Which device the apps are drawn in on a large screen: a phone, or a tablet in landscape. The
+ * choice is shared by every app and remembered in this browser. On a real phone it is always the
+ * phone, because the app fills the screen.
+ */
+export type Device = "phone" | "tablet";
+
+const DEVICE_KEY = "medisense-device";
+const LARGE_SCREEN = "(min-width: 48rem)";
+const listeners = new Set<() => void>();
+let chosen: Device | null = null;
+
+function readDevice(): Device {
+  try {
+    if (!window.matchMedia(LARGE_SCREEN).matches) return "phone";
+    const stored = chosen ?? localStorage.getItem(DEVICE_KEY);
+    return stored === "tablet" ? "tablet" : "phone";
+  } catch {
+    return chosen ?? "phone";
+  }
+}
+
+function subscribeDevice(onChange: () => void) {
+  listeners.add(onChange);
+  const media = window.matchMedia(LARGE_SCREEN);
+  media.addEventListener("change", onChange);
+  window.addEventListener("storage", onChange);
+  return () => {
+    listeners.delete(onChange);
+    media.removeEventListener("change", onChange);
+    window.removeEventListener("storage", onChange);
+  };
+}
+
+function chooseDevice(device: Device) {
+  chosen = device;
+  try {
+    localStorage.setItem(DEVICE_KEY, device);
+  } catch {
+    // Private windows can refuse storage; the choice still holds until the page is closed.
+  }
+  listeners.forEach((l) => l());
+}
+
+export function useDevice(): Device {
+  return useSyncExternalStore(subscribeDevice, readDevice, () => "phone");
+}
+
+/** The device the current app is drawn in, for parts that lay out differently on a tablet. */
+const DeviceContext = createContext<Device>("phone");
+export const useFrameDevice = () => useContext(DeviceContext);
+
+const devices: { id: Device; label: string; icon: LucideIcon }[] = [
+  { id: "phone", label: "Phone", icon: Smartphone },
+  { id: "tablet", label: "Tablet", icon: Tablet },
+];
+
+function DeviceSwitch({ value }: { value: Device }) {
+  return (
+    // Drawn in the device's own dark finish, with a light thumb that slides to the chosen one.
+    <div
+      role="group"
+      aria-label="Show the app on"
+      className="relative grid grid-cols-2 rounded-full bg-ink-900 p-1 shadow-overlay"
+    >
+      <span
+        aria-hidden="true"
+        className={cn(
+          "absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-full bg-page transition-transform duration-300 ease-out motion-reduce:transition-none",
+          value === "tablet" && "translate-x-full",
+        )}
+      />
+      {devices.map(({ id, label, icon: Icon }) => (
+        <button
+          key={id}
+          type="button"
+          aria-pressed={value === id}
+          onClick={() => chooseDevice(id)}
+          className={cn(
+            "relative z-10 flex h-9 cursor-pointer items-center justify-center gap-2 rounded-full px-5 text-small font-semibold whitespace-nowrap transition-colors duration-300 active:scale-[0.98]",
+            value === id ? "text-ink-900" : "text-page/65 hover:text-page",
+          )}
+        >
+          <Icon className="size-4" strokeWidth={value === id ? 2 : 1.75} aria-hidden="true" />
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** One section button: along the bottom on a phone, down the side rail on a tablet. */
+function SectionButton({
+  label,
+  icon: Icon,
+  badge,
+  current,
+  onClick,
+  className,
+}: {
+  label: string;
+  icon: LucideIcon;
+  badge?: number;
+  current: boolean;
+  onClick: () => void;
+  className: string;
+}) {
+  return (
+    <button
+      type="button"
+      aria-current={current ? "page" : undefined}
+      onClick={onClick}
+      className={cn(
+        "group flex cursor-pointer flex-col items-center justify-center gap-1 transition-transform duration-150 active:scale-95",
+        className,
+      )}
+    >
+      <span
+        className={cn(
+          "relative flex h-8 w-15 items-center justify-center rounded-full transition-colors duration-200",
+          current
+            ? "bg-accent-tint text-accent"
+            : "text-ink-500 group-hover:bg-canvas group-hover:text-ink-900",
+        )}
+      >
+        <Icon
+          className="size-5.5 flex-none"
+          strokeWidth={current ? 2.25 : 1.75}
+          aria-hidden="true"
+        />
+        {badge ? (
+          <span className="absolute -top-1 right-2 flex h-4.5 min-w-4.5 items-center justify-center rounded-full border-2 border-surface bg-over-dot px-1 text-label leading-none font-bold text-white">
+            {badge > 9 ? "9+" : badge}
+            <span className="sr-only"> unread</span>
+          </span>
+        ) : null}
+      </span>
+      <span
+        className={cn(
+          "max-w-full truncate text-label",
+          current ? "font-bold text-accent" : "font-medium text-ink-500",
+        )}
+      >
+        {label}
+      </span>
+    </button>
+  );
+}
 
 /** The device's status bar, shown only when the app is drawn inside a phone on a large screen. */
 function StatusBar() {
@@ -63,111 +214,120 @@ export function PhoneFrame({
   overlay?: ReactNode;
   children: ReactNode;
 }) {
+  const device = useDevice();
+  const tablet = device === "tablet";
+  const sections = tabs.map(({ id, label, icon, badge }) => ({
+    id,
+    label,
+    icon,
+    badge,
+    current: active === id,
+    onClick: () => onTab(id),
+  }));
   return (
-    <div className="flex min-h-dvh items-center justify-center gap-16 bg-canvas md:py-8 lg:px-10">
-      <div className="fixed top-4 left-4 z-10 hidden md:block">
-        <ButtonLink href="/">
-          <ArrowLeft className="size-4" strokeWidth={1.5} aria-hidden="true" />
-          Back to Medisense
-        </ButtonLink>
-      </div>
+    <DeviceContext value={device}>
+      <div
+        className={cn(
+          "flex min-h-dvh items-center justify-center gap-16 bg-canvas md:pt-20 md:pb-6 lg:px-10",
+          tablet && "md:px-6",
+        )}
+      >
+        <div className="fixed top-4 left-4 z-10 hidden md:block">
+          <ButtonLink href="/">
+            <ArrowLeft className="size-4" strokeWidth={1.5} aria-hidden="true" />
+            Back to Medisense
+          </ButtonLink>
+        </div>
+        <div className="fixed top-4 left-1/2 z-10 hidden -translate-x-1/2 md:block">
+          <DeviceSwitch value={device} />
+        </div>
 
-      <div className="hidden max-w-96 lg:block">
-        <p className="flex items-center gap-2.5 text-label font-semibold tracking-[0.12em] text-ink-500 uppercase">
-          <span
-            aria-hidden="true"
-            className="flex size-7 items-center justify-center rounded-control bg-ink-900 text-page"
-          >
-            <HeartPulse className="size-3.5" strokeWidth={2} />
-          </span>
-          Medisense
-        </p>
-        <h1 className="mt-6 type-display text-[52px] leading-[1.02] tracking-tight">{name}</h1>
-        <p className="mt-4 text-body leading-relaxed text-ink-700">{description}</p>
-        <ul className="mt-8 flex flex-col divide-y divide-border border-y border-border">
-          {features.map((f) => (
-            <li key={f} className="flex items-center gap-3 py-3 text-small text-ink-900">
+        <div className={cn("hidden max-w-96", !tablet && "lg:block")}>
+          <p className="flex items-center gap-2.5 text-label font-semibold tracking-[0.12em] text-ink-500 uppercase">
+            <span
+              aria-hidden="true"
+              className="flex size-7 items-center justify-center rounded-control bg-ink-900 text-page"
+            >
+              <HeartPulse className="size-3.5" strokeWidth={2} />
+            </span>
+            Medisense
+          </p>
+          <h1 className="mt-6 type-display text-[52px] leading-[1.02] tracking-tight">{name}</h1>
+          <p className="mt-4 text-body leading-relaxed text-ink-700">{description}</p>
+          <ul className="mt-8 flex flex-col divide-y divide-border border-y border-border">
+            {features.map((f) => (
+              <li key={f} className="flex items-center gap-3 py-3 text-small text-ink-900">
+                <span
+                  aria-hidden="true"
+                  className="flex size-6 flex-none items-center justify-center rounded-full bg-accent-tint text-accent"
+                >
+                  <Check className="size-3.5" strokeWidth={2.5} />
+                </span>
+                {f}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-6 flex items-center gap-2 text-caption text-ink-500">
+            <LockKeyhole className="size-3.5" aria-hidden="true" />
+            Private to you and your care team. Clinical notes stay with your clinicians.
+          </p>
+        </div>
+
+        {tablet ? (
+          <div className="relative flex h-[min(52rem,calc(100dvh-7rem))] w-[min(80rem,100%)] overflow-hidden rounded-[40px] border-[14px] border-ink-900 bg-page shadow-overlay ring-1 ring-border-strong">
+            <span
+              aria-hidden="true"
+              className="absolute top-1/2 -left-[9px] z-30 size-1.5 -translate-y-1/2 rounded-full bg-ink-700"
+            />
+            <StatusBar />
+            <nav
+              aria-label="App sections"
+              className="no-scrollbar flex w-24 flex-none flex-col items-center gap-1 overflow-y-auto border-r border-border bg-surface pt-14 pb-4"
+            >
+              {sections.map(({ id, ...section }) => (
+                <SectionButton key={id} {...section} className="h-17 w-full flex-none" />
+              ))}
+            </nav>
+            <div className="relative flex min-w-0 flex-1 flex-col">
+              <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain pb-10">
+                <div className="@container mx-auto w-full max-w-5xl px-2">{children}</div>
+              </div>
+              {overlay}
+            </div>
+          </div>
+        ) : (
+          <div className="relative flex h-dvh w-full flex-col overflow-hidden bg-page md:h-197 md:max-h-[calc(100dvh-7rem)] md:w-95 md:rounded-[48px] md:border-[11px] md:border-ink-900 md:shadow-overlay md:ring-1 md:ring-border-strong">
+            <span
+              aria-hidden="true"
+              className="absolute top-2.5 left-1/2 z-30 hidden h-6 w-24 -translate-x-1/2 rounded-full bg-ink-900 md:block"
+            />
+            <StatusBar />
+            <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain pb-28">
+              {children}
+            </div>
+            <nav
+              aria-label="App sections"
+              className="absolute inset-x-0 bottom-0 z-10 border-t border-border bg-surface/90 backdrop-blur-xl"
+            >
+              <div className="flex px-1.5 pt-1.5 pb-1">
+                {sections.map(({ id, ...section }) => (
+                  <SectionButton key={id} {...section} className="h-15 min-w-0 flex-1" />
+                ))}
+              </div>
               <span
                 aria-hidden="true"
-                className="flex size-6 flex-none items-center justify-center rounded-full bg-accent-tint text-accent"
-              >
-                <Check className="size-3.5" strokeWidth={2.5} />
-              </span>
-              {f}
-            </li>
-          ))}
-        </ul>
-        <p className="mt-6 flex items-center gap-2 text-caption text-ink-500">
-          <LockKeyhole className="size-3.5" aria-hidden="true" />
-          Private to you and your care team. Clinical notes stay with your clinicians.
-        </p>
-      </div>
-
-      <div className="relative flex h-dvh w-full flex-col overflow-hidden bg-page md:h-197 md:max-h-[calc(100dvh-4rem)] md:w-95 md:rounded-[48px] md:border-[11px] md:border-ink-900 md:shadow-overlay md:ring-1 md:ring-border-strong">
-        <span
-          aria-hidden="true"
-          className="absolute top-2.5 left-1/2 z-30 hidden h-6 w-24 -translate-x-1/2 rounded-full bg-ink-900 md:block"
-        />
-        <StatusBar />
-        <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain pb-28">
-          {children}
-        </div>
-        <nav
-          aria-label="App sections"
-          className="absolute inset-x-0 bottom-0 z-10 border-t border-border bg-surface/90 backdrop-blur-xl"
-        >
-          <div className="flex px-1.5 pt-1.5 pb-1">
-            {tabs.map(({ id, label, icon: Icon, badge }) => {
-              const current = active === id;
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  aria-current={current ? "page" : undefined}
-                  onClick={() => onTab(id)}
-                  className="group flex h-15 min-w-0 flex-1 cursor-pointer flex-col items-center justify-center gap-1 transition-transform duration-150 active:scale-95"
-                >
-                  <span
-                    className={cn(
-                      "relative flex h-8 w-15 items-center justify-center rounded-full transition-colors duration-200",
-                      current
-                        ? "bg-accent-tint text-accent"
-                        : "text-ink-500 group-hover:bg-canvas group-hover:text-ink-900",
-                    )}
-                  >
-                    <Icon
-                      className="size-5.5 flex-none"
-                      strokeWidth={current ? 2.25 : 1.75}
-                      aria-hidden="true"
-                    />
-                    {badge ? (
-                      <span className="absolute -top-1 right-2 flex h-4.5 min-w-4.5 items-center justify-center rounded-full border-2 border-surface bg-over-dot px-1 text-label leading-none font-bold text-white">
-                        {badge > 9 ? "9+" : badge}
-                        <span className="sr-only"> unread</span>
-                      </span>
-                    ) : null}
-                  </span>
-                  <span
-                    className={cn(
-                      "max-w-full truncate text-label",
-                      current ? "font-bold text-accent" : "font-medium text-ink-500",
-                    )}
-                  >
-                    {label}
-                  </span>
-                </button>
-              );
-            })}
+                className="mx-auto mb-2 hidden h-1.5 w-32 rounded-full bg-ink-900 md:block"
+              />
+              <span
+                aria-hidden="true"
+                className="block h-[env(safe-area-inset-bottom)] md:hidden"
+              />
+            </nav>
+            {overlay}
           </div>
-          <span
-            aria-hidden="true"
-            className="mx-auto mb-2 hidden h-1.5 w-32 rounded-full bg-ink-900 md:block"
-          />
-          <span aria-hidden="true" className="block h-[env(safe-area-inset-bottom)] md:hidden" />
-        </nav>
-        {overlay}
+        )}
       </div>
-    </div>
+    </DeviceContext>
   );
 }
 
@@ -286,8 +446,14 @@ export function AppSheet({
   children: ReactNode;
   footer?: ReactNode;
 }) {
+  const tablet = useFrameDevice() === "tablet";
   return (
-    <div className="absolute inset-0 z-30 flex flex-col justify-end">
+    <div
+      className={cn(
+        "absolute inset-0 z-30 flex flex-col",
+        tablet ? "items-center justify-center p-8" : "justify-end",
+      )}
+    >
       <button
         type="button"
         aria-label="Close"
@@ -299,7 +465,12 @@ export function AppSheet({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="relative flex max-h-[88%] flex-col rounded-t-[28px] bg-raised"
+        className={cn(
+          "relative flex flex-col bg-raised",
+          tablet
+            ? "max-h-[85%] w-full max-w-xl rounded-[28px] shadow-overlay"
+            : "max-h-[88%] rounded-t-[28px]",
+        )}
       >
         <header className="flex items-center justify-between gap-3 px-5 pt-5 pb-3">
           <h3 className="text-section font-semibold text-ink-900">{title}</h3>
@@ -359,7 +530,7 @@ export function AppWebView({
         )}
         <iframe
           title={title}
-          src={href}
+          src={`${href}${href.includes("?") ? "&" : "?"}embed=1`}
           onLoad={() => setLoaded(true)}
           allow="camera; microphone; display-capture; autoplay"
           className="absolute inset-0 size-full border-0 bg-transparent"

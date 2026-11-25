@@ -318,7 +318,7 @@ function HomeTab({ ctx }: { ctx: Ctx }) {
           {!agent.data ? (
             <div className="mt-4 h-36 animate-pulse rounded-card bg-page/10" />
           ) : (
-            <div className="mt-4 grid grid-cols-2 gap-2">
+            <div className="mt-4 grid grid-cols-2 gap-2 @3xl:grid-cols-3">
               {briefing.map((b) => (
                 <button
                   key={b.label}
@@ -352,7 +352,7 @@ function HomeTab({ ctx }: { ctx: Ctx }) {
             </span>
             <ArrowRight className="size-5 opacity-80" aria-hidden="true" />
           </button>
-          <div className="grid grid-cols-3 gap-2.5">
+          <div className="grid grid-cols-3 gap-2.5 @3xl:grid-cols-6">
             {shortcuts.map((a) => (
               <button
                 key={a.label}

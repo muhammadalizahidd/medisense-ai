@@ -1289,6 +1289,23 @@
   font-size: 112.5%;
 } /* 14px body → ~16px */
 
+/*
+ * On a computer the whole app is drawn at 90%, like browser zoom at 90%: sizes are in rem, so
+ * text, spacing, sidebar and controls all scale together. Media queries still use the browser's
+ * 16px, so breakpoints don't move. Phones and tablets keep full size for touch.
+ */
+@media (min-width: 64rem) {
+  :root {
+    font-size: 90%;
+  }
+  :root[data-text="large"] {
+    font-size: 95.625%;
+  }
+  :root[data-text="larger"] {
+    font-size: 101.25%;
+  }
+}
+
 /* ==========================================================================
    Base
    ========================================================================== */

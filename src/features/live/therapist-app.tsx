@@ -2684,7 +2684,7 @@ function ClinicalTab({
         {hub.map((g) => (
           <section key={g.group} aria-label={g.group}>
             <AppSection title={g.group} />
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-2 gap-2.5 @3xl:grid-cols-3">
               {g.items.map((it) => {
                 const n = counts[it.title];
                 return (
