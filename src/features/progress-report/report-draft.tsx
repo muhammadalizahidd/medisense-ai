@@ -128,14 +128,16 @@ export function ReportSources() {
           </label>
         ))}
       </div>
-      <Button className="mt-4 w-full" onClick={regenerate}>
+      <Button data-ai-only className="mt-4 w-full" onClick={regenerate}>
         <PenNib />
         Generate draft report
       </Button>
-      <Caption className="mt-2.5">
-        Draft generated from {emilyReport.sources.length} sources. Regenerating replaces unedited
-        sections only.
-      </Caption>
+      <div data-ai-only>
+        <Caption className="mt-2.5">
+          Draft generated from {emilyReport.sources.length} sources. Regenerating replaces unedited
+          sections only.
+        </Caption>
+      </div>
     </Card>
   );
 }
@@ -147,7 +149,13 @@ export function ReportDraft() {
 
   return (
     <div className="flex flex-col gap-4">
+      {!approved && (
+        <p className="hidden rounded-card border border-dashed border-border-strong bg-surface px-6 py-10 text-center text-small text-ink-700 ai-off:block">
+          No report has been written yet. The approved sources are listed here to write it from.
+        </p>
+      )}
       <article
+        data-ai-only={!approved || undefined}
         aria-label="Draft progress report"
         className={cn(draftSurface(approved), "px-10 pt-6 pb-7")}
       >

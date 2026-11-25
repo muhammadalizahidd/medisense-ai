@@ -1,10 +1,13 @@
 "use client";
 
+import type { ReactNode } from "react";
+import { useAiEnabled } from "@/components/ai/ai-switch";
 import { AlertTriangle, ArrowUpRight, FileSearch, Lock, ShieldAlert, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AiChip, AiDraft, RuleMark } from "@/components/ai/provenance";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
+import { Sheet } from "@/components/ui/sheet";
 import { Tag } from "@/components/ui/tag";
 import { api } from "@/lib/live/client";
 import type { FindingCategory, FindingDto, OpsHubDto, ReviewDto } from "@/lib/live/operations";
@@ -100,6 +103,61 @@ export function ReviewTab({ hub, onDone }: { hub: OpsHubDto; onDone: () => void 
   );
 }
 
+/** One referral's review, opened from the Needs you inbox. */
+export function ReviewSheet({
+  review,
+  hub,
+  onClose,
+  onDone,
+}: {
+  review: ReviewDto;
+  hub: OpsHubDto;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const [filter, setFilter] = useState("");
+  return (
+    <Sheet
+      title={review.participant}
+      description={`Referral review · ${review.reference}`}
+      onClose={onClose}
+    >
+      <div className="flex flex-col gap-6">
+        <ReviewDetail
+          review={review}
+          hub={hub}
+          onDone={onDone}
+          filter={filter}
+          setFilter={setFilter}
+        />
+      </div>
+    </Sheet>
+  );
+}
+
+/** One waiting service's therapist shortlist, opened from the Needs you inbox. */
+export function MatchSheet({
+  c,
+  hub,
+  onClose,
+  onDone,
+}: {
+  c: OpsHubDto["matching"][number];
+  hub: OpsHubDto;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  return (
+    <Sheet
+      title={c.participant}
+      description={`Therapist matching · ${c.support} · ${c.waitingDays} days waiting`}
+      onClose={onClose}
+    >
+      <MatchDetail c={c} hub={hub} onDone={onDone} />
+    </Sheet>
+  );
+}
+
 function ReviewDetail({
   review: r,
   hub,
@@ -113,6 +171,7 @@ function ReviewDetail({
   filter: string;
   setFilter: (f: string) => void;
 }) {
+  const ai = useAiEnabled();
   const [busy, setBusy] = useState<"" | "validate" | "ai">("");
   const url = `/api/care/operations/reviews/${r.referralId}`;
   const shown = groups.filter((g) => !filter || g.id === filter);
@@ -151,7 +210,7 @@ function ReviewDetail({
               Re-run check
             </Button>
           </li>
-          <li className="rounded-control p-3 surface-draft">
+          <li data-ai-only className="rounded-control p-3 surface-draft">
             <div className="flex items-center justify-between">
               <span className="text-caption font-semibold text-ink-900">2. AI cross-check</span>
               <AiChip>AI · suggestions</AiChip>
@@ -184,7 +243,9 @@ function ReviewDetail({
             </Button>
           </li>
           <li className="rounded-control border border-border p-3">
-            <span className="text-caption font-semibold text-ink-900">3. Ready for triage</span>
+            <span className="text-caption font-semibold text-ink-900">
+              {ai ? 3 : 2}. Ready for triage
+            </span>
             {r.ready ? (
               <p className="mt-1 text-caption text-healthy">
                 Operational checks pass. The referral can move to clinical triage or assignment.
@@ -648,11 +709,7 @@ function MatchDetail({
       {error && <p className="text-small text-over">{error}</p>}
       {!matches && !error && <Skeleton className="h-64" />}
       {matches && (
-        <AiDraft
-          label="Ranked shortlist"
-          suggestionsOnly
-          meta="Nothing is assigned until you approve"
-        >
+        <Shortlist>
           {eligible.length === 0 && (
             <p className="text-small text-ink-700">
               No eligible clinician. Widen the search in Scheduling or waitlist the service.
@@ -771,7 +828,7 @@ function MatchDetail({
               </div>
             </div>
           )}
-        </AiDraft>
+        </Shortlist>
       )}
       {blocked.length > 0 && (
         <FCard
@@ -799,5 +856,25 @@ function MatchDetail({
         </FCard>
       )}
     </div>
+  );
+}
+
+/** Matching suggestions while the switch is on; a plain ranked list of eligible people without it. */
+function Shortlist({ children }: { children: ReactNode }) {
+  const ai = useAiEnabled();
+  const meta = "Nothing is assigned until you approve";
+  if (ai) {
+    return (
+      <AiDraft label="Ranked shortlist" suggestionsOnly meta={meta}>
+        {children}
+      </AiDraft>
+    );
+  }
+  return (
+    <section className="rounded-card border border-border bg-surface p-4">
+      <h3 className="text-section font-semibold text-ink-900">Ranked shortlist</h3>
+      <p className="mb-3 text-caption text-ink-500">{meta}</p>
+      {children}
+    </section>
   );
 }

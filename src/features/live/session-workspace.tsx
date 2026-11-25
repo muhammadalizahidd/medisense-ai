@@ -1,5 +1,6 @@
 "use client";
 
+import { useAiEnabled } from "@/components/ai/ai-switch";
 import {
   Activity,
   ArrowLeft,
@@ -251,6 +252,7 @@ const mins = (n: number | null) => (n === null ? "Not recorded" : `${n} minutes`
 /* ------------------------------------------------------------------ overview */
 
 function Overview({ p, post }: { p: SessionFull; post: Post }) {
+  const ai = useAiEnabled();
   const [busy, setBusy] = useState(false);
   const [v, setV] = useState({ state: p.verification as string, note: p.verificationNote });
   const facts: [string, string][] = [
@@ -339,13 +341,13 @@ function Overview({ p, post }: { p: SessionFull; post: Post }) {
           icon={ClipboardList}
           title="Session"
           sub="Booking, times and place"
-          className="xl:col-span-5"
+          className={ai ? "xl:col-span-5" : "xl:col-span-12"}
           flush
         >
           <Facts rows={facts} />
         </FCard>
         {/* The AI surface fills the cell so it ends level with the Session card. */}
-        <div className="xl:col-span-7 [&>*]:h-full">
+        <div data-ai-only className="xl:col-span-7 [&>*]:h-full">
           {busy ? (
             <AiDraft label="Preparing your brief" suggestionsOnly generating />
           ) : (

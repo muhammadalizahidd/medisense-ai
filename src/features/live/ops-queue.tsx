@@ -99,6 +99,7 @@ export function QueueTabView({
   const [creating, setCreating] = useState(false);
   const [bulk, setBulk] = useState<BulkAction | "">("");
   const [views, setViews] = useState<View[]>([]);
+  const [more, setMore] = useState(false);
   const storeKey = `medisense.ops.views.${hub.me.id}`;
   useEffect(() => {
     try {
@@ -141,6 +142,17 @@ export function QueueTabView({
     f.from ||
     f.to,
   );
+  const hidden = [
+    f.category,
+    f.priority,
+    f.assignee,
+    f.service,
+    f.discipline,
+    f.location,
+    f.source,
+    f.from,
+    f.to,
+  ].filter(Boolean).length;
   const pickedRows = rows.filter((r) => picked.has(r.id));
   const excluded = pickedRows.filter(
     (r) => bulkExcludedCategories.includes(r.category) || r.visibility === "Clinical Restricted",
@@ -170,42 +182,54 @@ export function QueueTabView({
 
   return (
     <>
-      <div
-        className="flex flex-wrap items-center gap-1 rounded-card border border-border bg-surface p-1.5 shadow-lift"
-        role="tablist"
-        aria-label="Queue views"
-      >
-        {queueTabs.map((q) => (
-          <button
-            key={q}
-            type="button"
-            role="tab"
-            aria-selected={tab === q}
-            onClick={() => {
-              setTab(q);
-              setPicked(new Set());
-            }}
-            className={cn(
-              "flex h-8 cursor-pointer items-center gap-1.5 rounded-control px-3 text-small transition-colors",
-              tab === q
-                ? "bg-accent-tint font-semibold text-accent"
-                : "text-ink-700 hover:bg-canvas",
-            )}
-          >
-            {q}
-            <span
-              className={cn(
-                "rounded-full px-1.5 text-caption",
-                (q === "Overdue" || q === "Escalated") && tabCounts[q]
-                  ? "bg-over-bg font-semibold text-over"
-                  : "bg-sunken text-ink-700",
-              )}
+      <div className="flex flex-col gap-2 rounded-card border border-border bg-surface p-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="w-52 flex-none">
+            <Select
+              aria-label="View"
+              className="h-9"
+              value={tab}
+              onChange={(e) => {
+                setTab(e.target.value as QueueTab);
+                setPicked(new Set());
+              }}
             >
-              {tabCounts[q]}
-            </span>
-          </button>
-        ))}
-        <span className="ml-auto pr-2">
+              {queueTabs.map((q) => (
+                <option key={q} value={q}>
+                  {q === "All" ? "All open" : q} · {tabCounts[q]}
+                </option>
+              ))}
+            </Select>
+          </div>
+          {sel("Team", "team", teams, "All teams", "w-36")}
+          {sel("Status", "status", taskStatuses, "All statuses")}
+          <label className="flex h-9 min-w-56 flex-1 items-center gap-2 rounded-control border border-border-strong bg-surface px-3 focus-within:shadow-focus">
+            <Search className="size-4 text-ink-500" aria-hidden="true" />
+            <input
+              value={f.search}
+              onChange={(e) => setF({ search: e.target.value })}
+              aria-label="Search tasks"
+              placeholder="Task, referral or appointment number, participant"
+              className="min-w-0 flex-1 bg-transparent text-small outline-none placeholder:text-ink-500"
+            />
+          </label>
+          <Button size="sm" variant="ghost" aria-expanded={more} onClick={() => setMore(!more)}>
+            <Filter className="size-3.5" aria-hidden="true" /> More filters
+            {hidden > 0 && (
+              <span className="rounded-full bg-accent-tint px-1.5 text-caption text-accent">
+                {hidden}
+              </span>
+            )}
+          </Button>
+          {active && (
+            <button
+              type="button"
+              onClick={() => setF({ ...blank(hub.me.id, tab) })}
+              className="inline-flex h-9 cursor-pointer items-center gap-1 px-2 text-small font-semibold text-accent"
+            >
+              <X className="size-3.5" aria-hidden="true" /> Clear
+            </button>
+          )}
           <Button
             size="sm"
             variant="primary"
@@ -220,116 +244,96 @@ export function QueueTabView({
           >
             <Plus className="size-3.5" aria-hidden="true" /> New task
           </Button>
-        </span>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2 rounded-card border border-border bg-surface p-3 shadow-lift">
-        <Filter className="ml-1 size-4 text-ink-500" aria-hidden="true" />
-        {sel("Category", "category", taskCategories, "All categories", "w-44")}
-        {sel("Status", "status", taskStatuses, "All statuses")}
-        {sel("Priority", "priority", priorities, "All priorities", "w-36")}
-        {sel("Team", "team", teams, "All teams", "w-36")}
-        {sel("Assigned user", "assignee", options.assignee, "Anyone", "w-44")}
-        {sel("Service", "service", options.service, "All services", "w-48")}
-        {sel("Discipline", "discipline", options.discipline, "All disciplines", "w-44")}
-        {sel("Location type", "location", options.location, "Any location", "w-36")}
-        {sel("Automation source", "source", automationSources, "Any source", "w-36")}
-        <input
-          type="date"
-          aria-label="Due from"
-          value={f.from}
-          onChange={(e) => setF({ from: e.target.value })}
-          className="h-9 rounded-control border border-border-strong px-2 text-small"
-        />
-        <input
-          type="date"
-          aria-label="Due to"
-          value={f.to}
-          onChange={(e) => setF({ to: e.target.value })}
-          className="h-9 rounded-control border border-border-strong px-2 text-small"
-        />
-        <label className="flex h-9 min-w-56 flex-1 items-center gap-2 rounded-control border border-border-strong bg-surface px-3 focus-within:shadow-focus">
-          <Search className="size-4 text-ink-500" aria-hidden="true" />
-          <input
-            value={f.search}
-            onChange={(e) => setF({ search: e.target.value })}
-            aria-label="Search tasks"
-            placeholder="Task, referral or appointment number, participant"
-            className="min-w-0 flex-1 bg-transparent text-small outline-none placeholder:text-ink-500"
-          />
-        </label>
-        {active && (
-          <button
-            type="button"
-            onClick={() => setF({ ...blank(hub.me.id, tab) })}
-            className="inline-flex h-9 cursor-pointer items-center gap-1 px-2 text-small font-semibold text-accent"
-          >
-            <X className="size-3.5" aria-hidden="true" /> Clear
-          </button>
-        )}
-        <div className="flex w-full flex-wrap items-center gap-2 border-t border-border pt-2">
-          <span className="text-caption text-ink-500">Sort</span>
-          <div className="w-48">
-            <Select
-              aria-label="Sort"
-              className="h-8"
-              value={sort}
-              onChange={(e) => setSort(e.target.value as QueueSort)}
-            >
-              {sorts.map((s) => (
-                <option key={s}>{s}</option>
-              ))}
-            </Select>
-          </div>
-          <span className="ml-2 text-caption text-ink-500">Saved views</span>
-          {views.map((v) => (
-            <span
-              key={v.name}
-              className="inline-flex items-center rounded-tag border border-border-strong"
-            >
-              <button
-                type="button"
-                className="cursor-pointer px-2 py-0.5 text-caption font-semibold text-ink-700 hover:text-accent"
-                onClick={() => {
-                  setFState({ ...v.f, me: hub.me.id });
-                  setTab(v.f.tab);
-                  setSort(v.sort);
-                }}
-              >
-                {v.name}
-              </button>
-              <button
-                type="button"
-                aria-label={`Delete view ${v.name}`}
-                className="cursor-pointer px-1 text-ink-500 hover:text-over"
-                onClick={() => {
-                  const next = views.filter((x) => x.name !== v.name);
-                  setViews(next);
-                  localStorage.setItem(storeKey, JSON.stringify(next));
-                }}
-              >
-                <X className="size-3" aria-hidden="true" />
-              </button>
-            </span>
-          ))}
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => {
-              const name = `${tab}${f.team ? ` · ${f.team}` : ""}${f.category ? ` · ${f.category}` : ""}${f.priority ? ` · ${f.priority}` : ""}`;
-              const { me, ...rest } = current;
-              void me;
-              const next = [...views.filter((x) => x.name !== name), { name, f: rest, sort }];
-              setViews(next);
-              localStorage.setItem(storeKey, JSON.stringify(next));
-            }}
-          >
-            <Bookmark className="size-3.5" aria-hidden="true" /> Save this view
-          </Button>
-          <span className="ml-auto text-caption text-ink-500">
-            {rows.length} task{rows.length === 1 ? "" : "s"} shown · counts follow the filters
-          </span>
         </div>
+        {views.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-caption text-ink-500">Saved views</span>
+            {views.map((v) => (
+              <span
+                key={v.name}
+                className="inline-flex items-center rounded-tag border border-border-strong"
+              >
+                <button
+                  type="button"
+                  className="cursor-pointer px-2 py-0.5 text-caption font-semibold text-ink-700 hover:text-accent"
+                  onClick={() => {
+                    setFState({ ...v.f, me: hub.me.id });
+                    setTab(v.f.tab);
+                    setSort(v.sort);
+                  }}
+                >
+                  {v.name}
+                </button>
+                <button
+                  type="button"
+                  aria-label={`Delete view ${v.name}`}
+                  className="cursor-pointer px-1 text-ink-500 hover:text-over"
+                  onClick={() => {
+                    const next = views.filter((x) => x.name !== v.name);
+                    setViews(next);
+                    localStorage.setItem(storeKey, JSON.stringify(next));
+                  }}
+                >
+                  <X className="size-3" aria-hidden="true" />
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+        {more && (
+          <div className="flex flex-wrap items-center gap-2 border-t border-border pt-2">
+            {sel("Category", "category", taskCategories, "All categories", "w-44")}
+            {sel("Priority", "priority", priorities, "All priorities", "w-36")}
+            {sel("Assigned user", "assignee", options.assignee, "Anyone", "w-44")}
+            {sel("Service", "service", options.service, "All services", "w-48")}
+            {sel("Discipline", "discipline", options.discipline, "All disciplines", "w-44")}
+            {sel("Location type", "location", options.location, "Any location", "w-36")}
+            {sel("Automation source", "source", automationSources, "Any source", "w-36")}
+            <input
+              type="date"
+              aria-label="Due from"
+              value={f.from}
+              onChange={(e) => setF({ from: e.target.value })}
+              className="h-9 rounded-control border border-border-strong px-2 text-small"
+            />
+            <input
+              type="date"
+              aria-label="Due to"
+              value={f.to}
+              onChange={(e) => setF({ to: e.target.value })}
+              className="h-9 rounded-control border border-border-strong px-2 text-small"
+            />
+            <div className="w-48">
+              <Select
+                aria-label="Sort"
+                className="h-9"
+                value={sort}
+                onChange={(e) => setSort(e.target.value as QueueSort)}
+              >
+                {sorts.map((s) => (
+                  <option key={s}>{s}</option>
+                ))}
+              </Select>
+            </div>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                const name = `${tab}${f.team ? ` · ${f.team}` : ""}${f.category ? ` · ${f.category}` : ""}${f.priority ? ` · ${f.priority}` : ""}`;
+                const { me, ...rest } = current;
+                void me;
+                const next = [...views.filter((x) => x.name !== name), { name, f: rest, sort }];
+                setViews(next);
+                localStorage.setItem(storeKey, JSON.stringify(next));
+              }}
+            >
+              <Bookmark className="size-3.5" aria-hidden="true" /> Save this view
+            </Button>
+          </div>
+        )}
+        <p className="text-caption text-ink-500">
+          {rows.length} task{rows.length === 1 ? "" : "s"} shown · click a task to preview it
+        </p>
       </div>
 
       {picked.size > 0 && (
@@ -489,7 +493,7 @@ export function QueueTabView({
         </div>
       )}
       {rows.length > 0 && <TableFoot shown={rows.length} total={hub.tasks.length} noun="tasks" />}
-      {preview && <Preview task={preview} onClose={() => setPreview(null)} />}
+      {preview && <TaskPreview task={preview} onClose={() => setPreview(null)} />}
       {creating && <NewTask hub={hub} onClose={() => setCreating(false)} onDone={onDone} />}
     </>
   );

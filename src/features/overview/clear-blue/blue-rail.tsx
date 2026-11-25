@@ -221,6 +221,7 @@ export function AssistantCard({ className }: { className?: string }) {
 
   return (
     <section
+      data-ai-only
       aria-label="Ask Medisense AI"
       className={cn("flex flex-col rounded-card border border-border bg-surface p-5", className)}
     >

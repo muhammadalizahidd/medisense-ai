@@ -2,7 +2,7 @@ import "server-only";
 import { can } from "./permissions";
 import { ObjectId } from "mongodb";
 import { generateJson } from "@/lib/ai/engine";
-import { AiError } from "@/lib/ai/types";
+import { AiError, rethrowDisabled } from "@/lib/ai/types";
 import {
   needsClinicalApproval,
   needsOutcome,
@@ -809,6 +809,7 @@ async function aiSummary(client: ClientDoc, needId: string, discipline: string) 
     const p = JSON.parse(out.text) as { summary: string; sources: string[] };
     return { text: p.summary, sources: p.sources.slice(0, 8) };
   } catch (error) {
+    rethrowDisabled(error);
     if (error instanceof AiError)
       throw new UserFacingError(`AI isn't available right now: ${error.message}`, 409);
     throw new UserFacingError("The AI answer couldn't be read. Try again.", 409);

@@ -923,7 +923,9 @@ const features: Feature[] = [
       return {
         answer: `Auto assignment (AUT-07) is ${s(rule?.status) || "not configured"} in ${s(rule?.runMode) || "unknown"} mode. It assigns only when every hard gate passes; clinical exceptions stay with people.`,
         facts: recent.map((r) => `[${s(r.ruleCode)}] ${day(date(r.at))} · ${s(r.outcome)}`),
-        records: [{ label: "Operations rules", href: "/care/operations?tab=rules" }],
+        records: [
+          { label: "Operations rules", href: "/care/operations?tab=automation&section=rules" },
+        ],
         proposals: [],
         sources: ["SRC-ALLOC"],
       };
@@ -1507,7 +1509,9 @@ const features: Feature[] = [
         facts: list.map(
           (m) => `[${s(m.ref)}] ${s(m.category)} → ${s(m.recipient)} · ${s(m.state)}`,
         ),
-        records: [{ label: "Notifications", href: "/care/operations?tab=notifications" }],
+        records: [
+          { label: "Notifications", href: "/care/operations?tab=automation&section=messages" },
+        ],
         proposals: [],
         sources: ["SRC-COMMS"],
       };
@@ -1525,7 +1529,9 @@ const features: Feature[] = [
         answer:
           "Recent rule runs. Each event creates a task once (idempotency key); a repeated event doesn't duplicate it.",
         facts: list.map((r) => `[${s(r.ruleCode)}] ${day(date(r.at))} · ${s(r.outcome)}`),
-        records: [{ label: "Rules and run log", href: "/care/operations?tab=runs" }],
+        records: [
+          { label: "Rules and run log", href: "/care/operations?tab=automation&section=log" },
+        ],
         proposals: [],
         sources: ["SRC-OPS"],
       };
@@ -1552,7 +1558,7 @@ const features: Feature[] = [
         facts: list.map(
           (t) => `[${s(t.ref)}] ${s(t.title)} · due ${day(date(t.dueAt))} · ${s(t.status)}`,
         ),
-        records: [{ label: "Work queue", href: "/care/operations?tab=queue" }],
+        records: [{ label: "Work queue", href: "/care/operations?tab=work" }],
         proposals: list[0]
           ? [
               task(
@@ -1563,7 +1569,7 @@ const features: Feature[] = [
                   kind: "Rule",
                   ref: s(list[0].ref),
                   label: s(list[0].ref),
-                  href: "/care/operations?tab=queue",
+                  href: "/care/operations?tab=work",
                 },
                 `A26:${s(list[0].ref)}`,
               ),
@@ -1829,7 +1835,7 @@ async function briefing() {
     {
       label: "Patients waiting for a therapist",
       value: waitingTher,
-      href: "/care/operations?tab=matching",
+      href: "/care/operations?tab=needs&type=matching",
       tone: waitingTher ? "watch" : "neutral",
     },
     {
@@ -1847,7 +1853,7 @@ async function briefing() {
     {
       label: "Overdue tasks",
       value: overdue,
-      href: "/care/operations?tab=queue",
+      href: "/care/operations?tab=work",
       tone: overdue ? "over" : "neutral",
     },
     { label: "Services ready to invoice", value: ready, href: "/care/billing", tone: "neutral" },

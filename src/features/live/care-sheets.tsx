@@ -199,6 +199,7 @@ export function NoteSheet({
         ) : (
           <>
             <section
+              data-ai-only
               aria-label="Draft with AI"
               className="rounded-card border border-accent/30 bg-accent-tint p-4"
             >
@@ -231,13 +232,16 @@ export function NoteSheet({
               </Button>
             </section>
             {aiDrafted && (
-              <p className="flex flex-wrap items-center gap-2 text-caption text-ink-700">
+              <p
+                data-ai-only
+                className="flex flex-wrap items-center gap-2 text-caption text-ink-700"
+              >
                 <Tag tone="live">AI draft</Tag>
                 Check every line before signing. Nothing is final until you sign.
               </p>
             )}
             {missing.length > 0 && (
-              <div className="rounded-control bg-watch-bg px-3 py-2 text-small">
+              <div data-ai-only className="rounded-control bg-watch-bg px-3 py-2 text-small">
                 <p className="font-semibold">AI found these missing from your notes:</p>
                 <ul className="mt-1 list-disc pl-5">
                   {missing.map((m) => (

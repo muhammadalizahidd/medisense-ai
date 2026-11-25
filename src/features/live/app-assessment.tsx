@@ -1,5 +1,6 @@
 "use client";
 
+import { AiText, useAiEnabled } from "@/components/ai/ai-switch";
 import {
   CheckCircle2,
   ClipboardCheck,
@@ -292,18 +293,26 @@ function Visits({ a, busy, post }: { a: AssessDto; busy: string | null; post: Po
 
 function Report({ a, busy, post }: { a: AssessDto; busy: string | null; post: Post }) {
   const [edit, setEdit] = useState<string | null>(null);
+  const ai = useAiEnabled();
   const editable = a.canEdit && !a.signed;
   const rep = a.report;
   return (
     <div className="flex flex-col gap-3">
       {!rep ? (
         <p className="rounded-card border border-dashed border-border-strong p-4 text-center text-small text-ink-500">
-          No report yet. AI drafts it from the documented findings only, citing each one.
+          <AiText
+            on="No report yet. AI drafts it from the documented findings only, citing each one."
+            off="No report yet. Write it from the documented findings."
+          />
         </p>
       ) : edit !== null ? (
         <Area label="Your final narrative" value={edit} onChange={setEdit} rows={12} />
       ) : (
-        <div className="flex flex-col gap-3 rounded-card p-3.5 surface-draft">
+        <div
+          // An unreviewed draft goes with the switch; a reviewed one is the clinician's.
+          data-ai-only={!rep.reviewedBy || undefined}
+          className="flex flex-col gap-3 rounded-card p-3.5 surface-draft"
+        >
           <div className="flex flex-wrap items-center justify-between gap-2">
             {rep.reviewedBy ? (
               <Tag tone="healthy">Reviewed by {rep.reviewedBy}</Tag>
@@ -361,14 +370,19 @@ function Report({ a, busy, post }: { a: AssessDto; busy: string | null; post: Po
           ) : (
             <>
               <Button
+                data-ai-only
                 loading={busy === "ai-report"}
                 onClick={() => post({ type: "ai-report" }, "Draft ready", "Check every citation")}
               >
                 <AiIcon className="size-4" />
                 {rep ? "Redraft" : "Draft with AI"}
               </Button>
-              <Button variant="primary" disabled={!rep} onClick={() => rep && setEdit(rep.text)}>
-                Review and edit
+              <Button
+                variant="primary"
+                disabled={ai && !rep}
+                onClick={() => setEdit(rep?.text ?? "")}
+              >
+                {rep ? "Review and edit" : ai ? "Review and edit" : "Write report"}
               </Button>
             </>
           )}

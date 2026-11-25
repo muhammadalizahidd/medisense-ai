@@ -755,7 +755,7 @@ export const productTopics: ProductTopic[] = [
         label: "Work queue",
         detail:
           "Tabs All, Mine, Unassigned, Due Today, Overdue, Awaiting Patient, Escalated, Completed; ten filters, search, sorting, saved views and safe bulk actions (clinical and restricted tasks are always skipped).",
-        href: "/care/operations?tab=queue",
+        href: "/care/operations?tab=work",
       },
       {
         label: "Task",
@@ -766,19 +766,19 @@ export const productTopics: ProductTopic[] = [
         label: "AI referral review",
         detail:
           "The completeness check runs first; AI then cross-checks the form against attached documents with quoted evidence and a confidence. Accept, correct, reject, request information, route to the Clinical Lead or defer. The submitted value is never overwritten.",
-        href: "/care/operations?tab=review",
+        href: "/care/operations?tab=needs&type=review",
       },
       {
         label: "Therapist matching",
         detail:
           "Hard eligibility gates, then a ranked shortlist with reasons. Nothing is assigned until a scheduler approves; auto assignment stops at any risk or precaution.",
-        href: "/care/operations?tab=matching",
+        href: "/care/operations?tab=needs&type=matching",
       },
       {
         label: "Rules and run log",
         detail:
           "The AUT-01 to AUT-17 catalogue with versions, run mode and approval. New rules start in Suggest Only, must be simulated before activation and are approved by someone else. Every run is logged; a repeated event is skipped as a duplicate.",
-        href: "/care/operations?tab=rules",
+        href: "/care/operations?tab=automation&section=rules",
       },
     ],
     rules: [

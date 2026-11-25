@@ -1,5 +1,6 @@
 "use client";
 
+import { AiOnly } from "@/components/ai/ai-switch";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -511,7 +512,10 @@ function Loaded({
 
           <TabPanel id="comms" value={tab}>
             {aiDraft && (
-              <section className="bubble-in rounded-card border border-dashed border-draft-rule bg-draft p-4">
+              <section
+                data-ai-only
+                className="bubble-in rounded-card border border-dashed border-draft-rule bg-draft p-4"
+              >
                 <div className="mb-2 flex items-center justify-between">
                   <AiChip>AI draft for you to edit</AiChip>
                   <button
@@ -749,26 +753,28 @@ function Loaded({
             </FCard>
           )}
           {d.can.officer && inv.status !== "Draft" && (
-            <FCard icon={Mail} title="Payer messages">
-              <div className="flex flex-col gap-2">
-                {(["explanation", "reminder", "dispute"] as const).map((p) => (
-                  <Button
-                    key={p}
-                    variant="soft"
-                    size="sm"
-                    disabled={busy}
-                    onClick={() => draftMessage(p)}
-                  >
-                    <AiIcon className="size-3.5" /> Draft{" "}
-                    {p === "explanation"
-                      ? "an invoice explanation"
-                      : p === "reminder"
-                        ? "a payment reminder"
-                        : "a dispute response"}
-                  </Button>
-                ))}
-              </div>
-            </FCard>
+            <AiOnly>
+              <FCard icon={Mail} title="Payer messages">
+                <div className="flex flex-col gap-2">
+                  {(["explanation", "reminder", "dispute"] as const).map((p) => (
+                    <Button
+                      key={p}
+                      variant="soft"
+                      size="sm"
+                      disabled={busy}
+                      onClick={() => draftMessage(p)}
+                    >
+                      <AiIcon className="size-3.5" /> Draft{" "}
+                      {p === "explanation"
+                        ? "an invoice explanation"
+                        : p === "reminder"
+                          ? "a payment reminder"
+                          : "a dispute response"}
+                    </Button>
+                  ))}
+                </div>
+              </FCard>
+            </AiOnly>
           )}
         </aside>
       </div>

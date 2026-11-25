@@ -233,16 +233,22 @@ export function AiBox({
   label = "AI draft",
   ai = true,
   offLabel = "From approved records · AI unavailable",
+  keep = false,
   children,
 }: {
   label?: string;
   ai?: boolean;
+  /** A person has approved it, so it stays when the switch is off. */
+  keep?: boolean;
   /** What to say when no AI was used, e.g. a rule chose not to call it. */
   offLabel?: string;
   children: ReactNode;
 }) {
   return (
-    <div className="rounded-card border border-dashed border-draft-rule bg-draft p-3">
+    <div
+      data-ai-only={(ai && !keep) || undefined}
+      className="rounded-card border border-dashed border-draft-rule bg-draft p-3"
+    >
       <div className="mb-2">
         {ai ? (
           <AiChip>{label}</AiChip>

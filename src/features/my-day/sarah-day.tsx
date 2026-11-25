@@ -1,5 +1,6 @@
 "use client";
 
+import { AiOnly, AiText } from "@/components/ai/ai-switch";
 import {
   Baby,
   Car,
@@ -181,11 +182,13 @@ function VisitRow({
           {highlight && (
             <ButtonLink href={SESSION} variant="primary">
               <PenNib className="size-4" />
-              Write note with AI
+              <AiText on="Write note with AI" off="Write note" />
             </ButtonLink>
           )}
           {current && approved && (
-            <ButtonLink href={`${SESSION}/prepared`}>See what AI prepared</ButtonLink>
+            <AiOnly>
+              <ButtonLink href={`${SESSION}/prepared`}>See what AI prepared</ButtonLink>
+            </AiOnly>
           )}
           {tele && visit.state === "later" && !nextDay && (
             <ButtonLink href="/telehealth" size="sm" variant="primary">
@@ -250,7 +253,7 @@ export function SarahDay() {
         display
         title="Good morning, Sarah."
         description={
-          <span>
+          <span data-ai-only>
             <span className="mr-1.5 inline-flex items-center gap-1 align-text-bottom text-caption font-semibold text-ink-700">
               <PenNib className="size-3.5 text-ink-700" />
               AI day summary

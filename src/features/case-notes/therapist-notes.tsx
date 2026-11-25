@@ -1,5 +1,6 @@
 "use client";
 
+import { useAiText } from "@/components/ai/ai-switch";
 import { Mic, Square } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PenNib } from "@/components/ai/provenance";
@@ -22,6 +23,7 @@ function toLines(text: string) {
 const idle = { mode: "empty", changes: 0, rawNotes: "", generation: null } as const;
 
 export function TherapistNotes({ sample }: { sample: CaseNoteSample }) {
+  const label = useAiText();
   const { mode, changes, rawNotes, generation } = useDemoStore(
     (s) => s.caseNotes[sample.id] ?? idle,
   );
@@ -206,17 +208,19 @@ ${text}`
           {generating
             ? "Drafting…"
             : mode === "empty"
-              ? "Generate structured summary"
-              : "Generate again"}
+              ? label("Generate structured summary", "Write the summary")
+              : label("Generate again", "Start again from the notes")}
         </Button>
         {mode !== "empty" && !generating && (
           <Button variant="ghost" onClick={() => setEditing(!editing)}>
             {editing ? "Done editing" : "Edit note"}
           </Button>
         )}
-        <Caption>
-          {generating ? `Structuring ${lines.length} lines…` : "Takes a few seconds"}
-        </Caption>
+        <div data-ai-only>
+          <Caption>
+            {generating ? `Structuring ${lines.length} lines…` : "Takes a few seconds"}
+          </Caption>
+        </div>
       </div>
     </Card>
   );

@@ -728,7 +728,7 @@ export const reports: ReportDef[] = [
     basis: "Run time",
     unit: "runs",
     detail: false,
-    drill: "/care/operations?tab=rules",
+    drill: "/care/operations?tab=automation&section=rules",
     columns: [
       { key: "rule", label: "Rule", kind: "text" },
       { key: "status", label: "Status", kind: "text" },
@@ -742,7 +742,7 @@ export const reports: ReportDef[] = [
     rows: (f) =>
       f.rules
         .map((r) => ({
-          _href: "/care/operations?tab=rules",
+          _href: "/care/operations?tab=automation&section=rules",
           rule: `${r.code} ${r.name}`,
           status: r.status,
           triggered: r.triggered,

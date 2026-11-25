@@ -132,10 +132,10 @@ export function BeforeAfter() {
     <>
       <header className="mb-8 max-w-200">
         <h1 className="type-display text-display">Before and after</h1>
-        <div className="mt-3">
+        <div data-ai-only className="mt-3">
           <AiMark source="Figures come from rules and the audit trail">AI summary</AiMark>
         </div>
-        <p className="mt-1 text-h2 leading-7 font-normal text-ink-700">
+        <p data-ai-only className="mt-1 text-h2 leading-7 font-normal text-ink-700">
           {summary.data ?? "AI is summarising what changed…"}
         </p>
       </header>

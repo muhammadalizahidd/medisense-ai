@@ -341,7 +341,7 @@ export function ReportsLibrary() {
             </div>
             <div className="mt-1 flex flex-wrap gap-2 border-t border-border pt-3">
               {selected.current === "Not started" && (
-                <Button variant="primary" onClick={() => draftReport(selected.id)}>
+                <Button data-ai-only variant="primary" onClick={() => draftReport(selected.id)}>
                   <AiIcon className="size-4" />
                   Generate AI draft
                 </Button>

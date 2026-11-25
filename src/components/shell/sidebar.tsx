@@ -4,6 +4,7 @@ import { ChevronDown, HeartPulse, Search, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore, type CSSProperties } from "react";
+import { useMenu } from "@/components/ai/use-menu";
 import { caseNotes } from "@/data/case-note";
 import { cn } from "@/lib/cn";
 import { isActive, isStandalone, navigationFor, roleUsers } from "@/lib/navigation";
@@ -99,12 +100,14 @@ export function Sidebar() {
   const [collapsed, toggle] = useCollapsed();
   const router = useRouter();
   const [query, setQuery] = useState("");
+  const all = useMenu(
+    navigationFor(role, account?.role === "admin" ? pageAccessFor(account) : null, {
+      liveOnly: Boolean(account),
+    }),
+  );
 
   if (isStandalone(pathname)) return null;
 
-  const all = navigationFor(role, account?.role === "admin" ? pageAccessFor(account) : null, {
-    liveOnly: Boolean(account),
-  });
   // Search matches a page's own name or its section's, so "finance" lists the whole section.
   const q = query.trim().toLowerCase();
   const groups = q

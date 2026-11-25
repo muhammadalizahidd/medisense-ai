@@ -420,7 +420,10 @@ export function ScheduleWorkspace() {
       </section>
 
       <div className="mt-6 grid items-stretch gap-6 lg:grid-cols-12">
-        <div className={cn(draftSurface(false), "flex flex-col gap-3 px-5 py-5 lg:col-span-5")}>
+        <div
+          data-ai-only
+          className={cn(draftSurface(false), "flex flex-col gap-3 px-5 py-5 lg:col-span-5")}
+        >
           <DraftLabel meta="From cancellations, follow-ups and routes">
             AI schedule suggestions — a person decides
           </DraftLabel>
@@ -472,7 +475,10 @@ export function ScheduleWorkspace() {
           </ul>
         </div>
 
-        <Card aria-labelledby="by-day" className="flex flex-col px-6 pt-5 pb-4 lg:col-span-4">
+        <Card
+          aria-labelledby="by-day"
+          className="flex flex-col px-6 pt-5 pb-4 lg:col-span-4 ai-off:lg:col-span-7"
+        >
           <CardTitle
             id="by-day"
             title="Sessions by day"
@@ -493,7 +499,10 @@ export function ScheduleWorkspace() {
           </div>
         </Card>
 
-        <Card aria-labelledby="driving" className="flex flex-col px-6 pt-5 pb-4 lg:col-span-3">
+        <Card
+          aria-labelledby="driving"
+          className="flex flex-col px-6 pt-5 pb-4 lg:col-span-3 ai-off:lg:col-span-5"
+        >
           <CardTitle id="driving" title="Driving this week" description="Hours per clinician" />
           <div className="mt-3">
             <BarList

@@ -1,5 +1,6 @@
 "use client";
 
+import { useAiEnabled } from "@/components/ai/ai-switch";
 import { pageAccessFor } from "@/lib/permissions/pages";
 import {
   ArrowRight,
@@ -108,17 +109,19 @@ type AskMode = "ask" | "ops" | "booking";
 
 export function AdminApp() {
   const { user, loading, reload } = useSession();
+  const ai = useAiEnabled();
   const [tab, setTab] = useState("home");
   const [sheet, setSheet] = useState<ReactNode>(null);
   const [askMode, setAskMode] = useState<AskMode>("ask");
   const [chat, setChat] = useState<string | null>(null);
   const signedIn = user?.role === "admin";
   const unread = useUnreadMessages(signedIn);
-  const withBadges = tabs.map((t) => (t.id === "messages" ? { ...t, badge: unread } : t));
+  const named = tabs.map((t) => (!ai && t.id === "ask" ? { ...t, label: "Booking" } : t));
+  const withBadges = named.map((t) => (t.id === "messages" ? { ...t, badge: unread } : t));
 
   if (loading) {
     return (
-      <PhoneFrame {...frame} tabs={tabs} active={tab} onTab={setTab}>
+      <PhoneFrame {...frame} tabs={named} active={tab} onTab={setTab}>
         <div className="p-4 pt-14">
           <Skeleton className="h-40" />
         </div>
@@ -236,7 +239,8 @@ function HomeTab({ ctx }: { ctx: Ctx }) {
   const briefing = agent.data?.briefing.slice(0, 6) ?? [];
   const needs = briefing.filter((b) => b.tone !== "neutral" && b.value > 0).length;
   const capacity = o ? Math.round((o.team.activeClients / Math.max(1, o.team.capacity)) * 100) : 0;
-  const shortcuts: Shortcut[] = [
+  const ai = useAiEnabled();
+  const everyShortcut: Shortcut[] = [
     {
       label: "Booking agent",
       detail: "Assign and book",
@@ -259,6 +263,9 @@ function HomeTab({ ctx }: { ctx: Ctx }) {
       go: () => ctx.setAskMode("ops"),
     },
   ];
+  const shortcuts = everyShortcut.filter(
+    (s) => ai || !["Ask Medisense", "Operations agent"].includes(s.label),
+  );
   const headline = !agent.data
     ? "Reading today's records…"
     : needs === 0
@@ -830,11 +837,23 @@ const OPS_SUGGESTIONS = [
   "Which invoices are overdue?",
 ];
 
-function AskTab({ mode, onMode, ctx }: { mode: AskMode; onMode: (m: AskMode) => void; ctx: Ctx }) {
+function AskTab({
+  mode: picked,
+  onMode,
+  ctx,
+}: {
+  mode: AskMode;
+  onMode: (m: AskMode) => void;
+  ctx: Ctx;
+}) {
+  const ai = useAiEnabled();
+  // Booking is guided steps and stays; the two question modes go with the switch.
+  const mode = ai ? picked : "booking";
   return (
     <>
-      <AppHeader eyebrow="Medisense AI" title="Ask AI">
+      <AppHeader eyebrow={ai ? "Medisense AI" : "Medisense"} title={ai ? "Ask AI" : "Booking"}>
         <div
+          data-ai-only
           role="tablist"
           aria-label="Assistant"
           className="mt-4 grid grid-cols-3 gap-1 rounded-card border border-border bg-surface p-1 shadow-lift"

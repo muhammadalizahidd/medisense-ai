@@ -1,3 +1,5 @@
+import { AiRouteGuard } from "@/components/ai/ai-route-guard";
+import { AiSwitchSync } from "@/components/ai/ai-switch-sync";
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import { Suspense, type ReactNode } from "react";
@@ -50,6 +52,9 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
       </head>
       <body suppressHydrationWarning>
         <DemoStoreHydrator />
+        <Suspense fallback={null}>
+          <AiSwitchSync />
+        </Suspense>
         <Toaster />
         <AppearanceSync />
         <NoteAssistEverywhere />
@@ -74,7 +79,9 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
             </div>
             <div className="min-w-0 flex-1">
               <Suspense fallback={<DashboardLoading />}>
-                <Today>{children}</Today>
+                <Today>
+                  <AiRouteGuard>{children}</AiRouteGuard>
+                </Today>
               </Suspense>
             </div>
             <div data-chrome className="contents">

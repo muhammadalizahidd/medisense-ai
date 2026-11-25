@@ -643,7 +643,7 @@ function AiBriefing({ visitId }: { visitId: string }) {
   const [fail, setFail] = useState<string | null>(null);
   if (!data) {
     return (
-      <div>
+      <div data-ai-only>
         <Button
           size="sm"
           disabled={busy}
@@ -668,6 +668,7 @@ function AiBriefing({ visitId }: { visitId: string }) {
   }
   return (
     <section
+      data-ai-only
       aria-label="AI briefing"
       className="rounded-card border border-accent/30 bg-accent-tint p-4 text-small"
     >

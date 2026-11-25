@@ -1,5 +1,6 @@
 "use client";
 
+import { useAiEnabled } from "@/components/ai/ai-switch";
 import {
   ArrowLeft,
   Check,
@@ -315,6 +316,7 @@ function SectionEditor({
 function Compose({ r, post, go }: { r: ReportFull; post: Post; go: (t: T) => void }) {
   const [busy, setBusy] = useState(false);
   const pending = r.sections.filter((s) => s.origin === "ai" && s.state === "pending").length;
+  const ai = useAiEnabled();
   return (
     <div className="grid items-stretch gap-6 xl:grid-cols-12">
       <FCard
@@ -344,6 +346,11 @@ function Compose({ r, post, go }: { r: ReportFull; post: Post; go: (t: T) => voi
         </ul>
       </FCard>
       <div className="flex flex-col gap-4 xl:col-span-8">
+        {!ai && r.canEdit && r.sections.some((s) => s.text) && !pending && (
+          <Button size="sm" variant="primary" className="w-fit" onClick={() => go("sign")}>
+            Continue to checks and sign
+          </Button>
+        )}
         {busy ? (
           <AiDraft label="Drafting from verified evidence" suggestionsOnly generating />
         ) : (

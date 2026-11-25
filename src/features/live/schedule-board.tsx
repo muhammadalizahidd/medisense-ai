@@ -1,5 +1,6 @@
 "use client";
 
+import { useAiEnabled } from "@/components/ai/ai-switch";
 import {
   AlertTriangle,
   BellRing,
@@ -223,10 +224,12 @@ export function ScheduleBoard() {
                   label="Assignment mode"
                   value={board.mode}
                   onChange={changeMode}
-                  options={assignmentModes.map((m) => ({
-                    id: m,
-                    label: m === "Rules-Based Auto" ? "Auto" : m,
-                  }))}
+                  options={assignmentModes
+                    .filter((m) => ai || m !== "AI Assisted")
+                    .map((m) => ({
+                      id: m,
+                      label: m === "Rules-Based Auto" ? "Auto" : m,
+                    }))}
                 />
               </div>
             )}
@@ -608,7 +611,7 @@ export function ScheduleBoard() {
       {booking && (
         <BookingWizard
           item={booking}
-          mode={board?.mode ?? "AI Assisted"}
+          mode={board?.mode ?? (ai ? "AI Assisted" : "Manual")}
           onClose={() => setBooking(null)}
           onBooked={() => {
             setBooking(null);
@@ -736,19 +739,19 @@ function TimeGrid({
   const columns =
     view === "day"
       ? [...new Set(dayEvents.map((e) => e.therapistId))].map((id) => ({
-          key: id,
-          label: therapists.find((t) => t.id === id)?.name ?? "Clinician",
-          sub: therapists.find((t) => t.id === id)?.discipline ?? "",
-          today: false,
-          list: dayEvents.filter((e) => e.therapistId === id),
-        }))
+        key: id,
+        label: therapists.find((t) => t.id === id)?.name ?? "Clinician",
+        sub: therapists.find((t) => t.id === id)?.discipline ?? "",
+        today: false,
+        list: dayEvents.filter((e) => e.therapistId === id),
+      }))
       : days.map((d) => ({
-          key: String(d),
-          label: fmt(d, { weekday: "short" }),
-          sub: fmt(d, { day: "numeric", month: "short" }),
-          today: keyOf(d) === keyOf(now),
-          list: events.filter((e) => keyOf(new Date(e.start).getTime()) === keyOf(d)),
-        }));
+        key: String(d),
+        label: fmt(d, { weekday: "short" }),
+        sub: fmt(d, { day: "numeric", month: "short" }),
+        today: keyOf(d) === keyOf(now),
+        list: events.filter((e) => keyOf(new Date(e.start).getTime()) === keyOf(d)),
+      }));
   const nowMin = minutesOf(new Date().toISOString());
   if (view === "day" && columns.length === 0) {
     return (

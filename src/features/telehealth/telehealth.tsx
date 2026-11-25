@@ -1,5 +1,6 @@
 "use client";
 
+import { useAiText } from "@/components/ai/ai-switch";
 import {
   Camera,
   CameraOff,
@@ -32,6 +33,8 @@ import { cn } from "@/lib/cn";
 import { noteSectionTitles, type SessionNote } from "@/lib/story/types";
 import { useDemoStore } from "@/state/demo-store";
 import { callStory } from "@/state/use-story-ai";
+import { manualNote } from "@/lib/story/manual-note";
+import { aiEnabledNow } from "@/state/ai-switch";
 
 const clinicianName = (id: string) => clinicians.find((c) => c.id === id)?.name ?? "";
 
@@ -77,6 +80,7 @@ function NotePanel({ visit, ended }: { visit: ScheduleItem; ended: boolean }) {
   const completeTask = useDemoStore((s) => s.completeTask);
   const setOp = useDemoStore((s) => s.setOp);
   const approved = useDemoStore((s) => s.ops[`telehealth:${visit.id}`] === "approved");
+  const label = useAiText();
   const [text, setText] = useState("");
   const [note, setNote] = useState<SessionNote | null>(null);
   const [busy, setBusy] = useState(false);
@@ -91,14 +95,19 @@ function NotePanel({ visit, ended }: { visit: ScheduleItem; ended: boolean }) {
       setError("Add what happened on the visit first.");
       return;
     }
-    setBusy(true);
     setError(null);
+    if (!aiEnabledNow()) {
+      setNote(manualNote(lines));
+      return;
+    }
+    setBusy(true);
     const result = await callStory<SessionNote>({
       kind: "note",
       lines,
       context: `${visit.title}, telehealth visit with ${clinicianName(visit.clinicianId)}.`,
     });
     setBusy(false);
+    if (!aiEnabledNow()) return;
     if ("error" in result) {
       setError(`The note couldn't be written: ${result.error}. Your text is still here.`);
       return;
@@ -119,7 +128,7 @@ function NotePanel({ visit, ended }: { visit: ScheduleItem; ended: boolean }) {
       <div className="flex flex-col gap-3">
         <AiMark>AI draft, needs your approval</AiMark>
         {noteSectionTitles.map(({ id, title }) =>
-          note.sections[id].length ? (
+          note.sections[id].some((s) => s.text) ? (
             <div key={id}>
               <h4 className="text-section font-semibold">{title}</h4>
               <ul className="mt-1 flex flex-col gap-1 text-small">
@@ -137,7 +146,10 @@ function NotePanel({ visit, ended }: { visit: ScheduleItem; ended: boolean }) {
               setOp(
                 `telehealth:${visit.id}`,
                 "approved",
-                "Approved AI session note for telehealth visit",
+                label(
+                  "Approved AI session note for telehealth visit",
+                  "Approved session note for telehealth visit",
+                ),
                 visit.title,
               );
               completeTask(`t-note-${visit.id}`);
@@ -168,7 +180,7 @@ function NotePanel({ visit, ended }: { visit: ScheduleItem; ended: boolean }) {
         </p>
       )}
       <Button variant="primary" disabled={busy} onClick={() => void write()}>
-        {busy ? "AI is writing the note…" : "Write note with AI"}
+        {busy ? "AI is writing the note…" : label("Write note with AI", "Write note")}
       </Button>
       {!ended && (
         <Caption>You can take notes during the visit, or write them when it ends.</Caption>

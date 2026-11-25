@@ -5,6 +5,7 @@ import {
   type SummariseResponse,
 } from "@/lib/ai/case-note-contract";
 import { aiLog } from "@/lib/ai/log";
+import { AiDisabled } from "@/lib/ai/types";
 import { NO_KEY, SummariseError, summariseNote } from "@/lib/ai/summarise-note";
 
 function preparedNote(sample: CaseNoteSample): StructuredNote {
@@ -54,6 +55,8 @@ export async function POST(request: Request) {
     const { note, model, latencyMs } = await summariseNote(lines, sample.context);
     return respond({ ok: true, source: "live", model, latencyMs, note, notice: null });
   } catch (error) {
+    // Switched off is not a failure: no prepared draft stands in.
+    if (error instanceof AiDisabled) return respond({ ok: false, error: error.message }, 423);
     const reason = error instanceof SummariseError ? error.message : "Unexpected error";
     if (!(error instanceof SummariseError)) {
       aiLog.error(

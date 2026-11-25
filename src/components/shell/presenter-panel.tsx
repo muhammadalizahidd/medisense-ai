@@ -3,7 +3,12 @@
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Switch } from "@/components/ui/switch";
+import { toast } from "@/components/ui/toast";
 import type { KeyStatus } from "@/lib/ai/engine";
+import type { AiFeaturesDto } from "@/lib/ai/features";
+import { api } from "@/lib/live/client";
+import { setAiSwitch, useAiSwitch } from "@/state/ai-switch";
 import { cn } from "@/lib/cn";
 import { longDate, nextWorkingDayGap } from "@/lib/clock";
 import { roleHome, roleUsers, type Role } from "@/lib/navigation";
@@ -23,7 +28,9 @@ const control =
 function Group({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="border-t border-dashed border-sidebar-border px-4 py-3.5">
-      <h3 className="mb-2 text-caption text-accent-fill">{title}</h3>
+      <h3 data-keep-words className="mb-2 text-caption text-accent-fill">
+        {title}
+      </h3>
       {children}
     </section>
   );
@@ -63,6 +70,7 @@ export function PresenterPanel({ startOpen = false }: { startOpen?: boolean }) {
   const [open, setOpen] = useState(startOpen);
   const [confirming, setConfirming] = useState(false);
   const [status, setStatus] = useState<KeyStatus | null>(null);
+  const { enabled: ai, persisted, canChange } = useAiSwitch();
   const panel = useRef<HTMLElement>(null);
   const returnTo = useRef<Element | null>(null);
 
@@ -81,6 +89,28 @@ export function PresenterPanel({ startOpen = false }: { startOpen?: boolean }) {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  // Without a database the choice lives in this browser; otherwise the server holds it.
+  const mayChange = persisted === false || canChange;
+  async function toggleAi() {
+    setAiSwitch(!ai);
+    if (persisted === false) return;
+    try {
+      const saved = await api<AiFeaturesDto>("/api/ai/features", { body: { enabled: !ai } });
+      setAiSwitch(saved.enabled);
+    } catch (error) {
+      setAiSwitch(ai);
+      toast(error instanceof Error ? error.message : "Couldn't save that.", { tone: "error" });
+    }
+  }
+
+  useEffect(() => {
+    if (!open) return;
+    void fetch("/api/ai/status")
+      .then((r) => r.json() as Promise<KeyStatus | { state: "disabled" }>)
+      .then((s) => setStatus(s.state === "disabled" ? null : s))
+      .catch(() => setStatus(null));
+  }, [open, ai]);
+
   useEffect(() => {
     if (!open) return undefined;
     returnTo.current = document.activeElement;
@@ -88,10 +118,6 @@ export function PresenterPanel({ startOpen = false }: { startOpen?: boolean }) {
     const focusable = () =>
       Array.from(node?.querySelectorAll<HTMLElement>("button") ?? []).filter((b) => !b.hidden);
     focusable()[0]?.focus();
-    void fetch("/api/ai/status")
-      .then((r) => r.json() as Promise<KeyStatus>)
-      .then(setStatus)
-      .catch(() => setStatus(null));
 
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") setOpen(false);
@@ -183,7 +209,21 @@ export function PresenterPanel({ startOpen = false }: { startOpen?: boolean }) {
       </Group>
 
       <Group title="AI status">
-        <dl className="flex flex-col gap-1 text-caption">
+        <div data-keep-words className="mb-2 flex items-center justify-between gap-3 text-caption">
+          <span>AI features {ai ? "on" : "off"}</span>
+          <Switch
+            on={ai}
+            label={`AI features: ${ai ? "on" : "off"}`}
+            disabled={persisted === null || !mayChange}
+            onToggle={() => void toggleAi()}
+          />
+        </div>
+        {!mayChange && (
+          <p className="mb-2 text-caption text-sidebar-muted">
+            Sign in as the Super Admin to change it.
+          </p>
+        )}
+        <dl data-ai-only className="flex flex-col gap-1 text-caption">
           {aiRows(status, lastAiOf(lastAi)).map(([k, v]) => (
             <div key={k} className="flex justify-between gap-3">
               <dt className="flex-none text-sidebar-muted">{k}</dt>
@@ -214,6 +254,7 @@ export function PresenterPanel({ startOpen = false }: { startOpen?: boolean }) {
                 type="button"
                 onClick={() => {
                   resetDemo();
+                  if (persisted === false) setAiSwitch(true);
                   setConfirming(false);
                 }}
                 className="h-9 cursor-pointer rounded-control bg-accent-fill px-3 text-left text-caption text-on-accent hover:bg-accent-fill-hover"

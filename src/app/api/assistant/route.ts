@@ -1,12 +1,13 @@
 import { disciplines } from "@/lib/live/catalogue";
 import { AiError, generateJson, generateWithTools } from "@/lib/ai/engine";
 import { aiLog } from "@/lib/ai/log";
-import { runTool } from "@/lib/ai/types";
+import { runTool, TURNED_OFF } from "@/lib/ai/types";
 import { plan } from "@/lib/knowledge/local";
 import type { Answer, LiveState } from "@/lib/knowledge/state";
 import { aiTools } from "@/lib/knowledge/tools";
 import { dt } from "@/lib/clock";
 import { liveWords } from "@/lib/knowledge/product";
+import { aiSwitchOn } from "@/server/ai-switch";
 import { currentUser } from "@/server/auth";
 import { liveRecords, mentionsLivePatient } from "@/server/assistant-live";
 import type { UserDoc } from "@/server/models";
@@ -119,6 +120,8 @@ function parseAnswer(text: string): Answer {
 
 /** Ask Medisense with live AI: the model reads the demo records through tools, then answers. */
 export async function POST(request: Request) {
+  // The whole assistant goes, including the answers that need no model.
+  if (!(await aiSwitchOn())) return respond({ ok: false, error: TURNED_OFF }, 423);
   const raw = await request.text();
   if (raw.length > MAX_BODY) return respond({ ok: false, error: "Request too large" }, 413);
 

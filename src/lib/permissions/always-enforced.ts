@@ -36,6 +36,10 @@ export const alwaysEnforced: readonly { title: string; detail: string }[] = [
       "AI never writes the clinical assessment, and every AI output needs a named human approval before it counts.",
   },
   {
+    title: "Only the Super Admin switches AI on or off",
+    detail: "The organisation switch stops every AI feature at once, and each change is audited.",
+  },
+  {
     title: "Everything is audited",
     detail:
       "Every create, edit, approval and permission change is recorded. The audit trail cannot be edited.",

@@ -42,6 +42,13 @@ export async function audit(actor: UserDoc, action: string, clientId: ObjectId |
   });
 }
 
+/** Everyone who can be signed in, for changes that affect the whole organisation. */
+export async function allUserIds() {
+  const { users } = await collections();
+  const all = await users.find({ disabled: { $ne: true } }, { projection: { _id: 1 } }).toArray();
+  return all.map((u) => u._id);
+}
+
 export async function adminIds() {
   const { users } = await collections();
   const admins = await users.find({ role: "admin" }, { projection: { _id: 1 } }).toArray();

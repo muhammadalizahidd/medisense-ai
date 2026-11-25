@@ -3,7 +3,7 @@ import { can } from "./permissions";
 import { randomUUID } from "node:crypto";
 import { ObjectId } from "mongodb";
 import { generateJson } from "@/lib/ai/engine";
-import { AiError } from "@/lib/ai/types";
+import { AiError, rethrowDisabled } from "@/lib/ai/types";
 import {
   contextDomains,
   essentialDomains,
@@ -1161,6 +1161,7 @@ async function aiReport(e: AssessExtDoc, a: AssessmentDoc, name: string) {
       suggested: parsed.suggested.slice(0, 3),
     };
   } catch (error) {
+    rethrowDisabled(error);
     if (error instanceof AiError)
       throw new UserFacingError(`AI isn't available right now: ${error.message}`, 409);
     throw new UserFacingError("The AI answer couldn't be read. Try again.", 409);

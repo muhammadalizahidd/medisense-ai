@@ -3,7 +3,7 @@ import { can } from "./permissions";
 import { randomUUID } from "node:crypto";
 import { ObjectId } from "mongodb";
 import { generateJson } from "@/lib/ai/engine";
-import { AiError } from "@/lib/ai/types";
+import { AiError, rethrowDisabled } from "@/lib/ai/types";
 import { restrictedDisciplines } from "@/lib/live/records";
 import {
   planMoves,
@@ -1203,6 +1203,7 @@ async function aiGoals(p: PlanDoc, name: string, notes: string) {
       .map((g, i) => `${i + 1}. ${g}`)
       .join("\n");
   } catch (error) {
+    rethrowDisabled(error);
     if (error instanceof AiError)
       throw new UserFacingError(`AI isn't available right now: ${error.message}`, 409);
     throw new UserFacingError("The AI answer couldn't be read. Try again.", 409);
@@ -1244,6 +1245,7 @@ async function aiProgress(p: PlanDoc, e: PlanExtDoc) {
     const parsed = JSON.parse(out.text) as { summary: string; cautions: string[] };
     return { text: parsed.summary, cautions: parsed.cautions.slice(0, 5) };
   } catch (error) {
+    rethrowDisabled(error);
     if (error instanceof AiError)
       throw new UserFacingError(`AI isn't available right now: ${error.message}`, 409);
     throw new UserFacingError("The AI answer couldn't be read. Try again.", 409);

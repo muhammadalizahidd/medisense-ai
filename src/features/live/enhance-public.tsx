@@ -1,5 +1,7 @@
 "use client";
 
+import { useAiEnabled } from "@/components/ai/ai-switch";
+import { AiSettings } from "./ai-settings";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tag } from "@/components/ui/tag";
@@ -166,6 +168,7 @@ export function VisitorAssistant() {
   const [msgs, setMsgs] = useState<ChatMessage[]>([]);
   return (
     <section
+      data-ai-only
       aria-label="Questions about referring"
       className="mb-6 max-w-180 rounded-card border border-border bg-surface p-4"
     >
@@ -243,6 +246,7 @@ function Counts({ title, data }: { title: string; data: Record<string, number> }
 }
 
 export function AiOversight() {
+  const ai = useAiEnabled();
   const r = useResource<OversightDto>("/api/enhance", (e) => e.type === "care");
   const d = r.data;
   return (
@@ -251,11 +255,13 @@ export function AiOversight() {
         <p className="label-caps text-ink-500">Live care</p>
         <h1 className="type-display text-h1 text-ink-900">AI oversight</h1>
         <p className="mt-1 max-w-180 text-small text-ink-700">
-          How the AI assistants are being used, in counts only. Admins don&apos;t see private chats,
-          answers or clinical text; clinicians review those.
+          {ai
+            ? "How the AI assistants are being used, in counts only. Admins don't see private chats, answers or clinical text; clinicians review those."
+            : "Turn the organisation's assistant features back on here."}
         </p>
       </header>
-      {!d ? (
+      <AiSettings />
+      {!ai ? null : !d ? (
         <div className="h-60 animate-pulse rounded-card bg-sunken" />
       ) : (
         <>

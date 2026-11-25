@@ -2,7 +2,6 @@
 
 import {
   Activity,
-  AlertTriangle,
   ArrowUpRight,
   Gauge,
   History,
@@ -12,22 +11,20 @@ import {
   Workflow,
 } from "lucide-react";
 import { KpiLabel } from "@/components/ui/kpi-icon";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BarList } from "@/components/charts/bar-list";
 import { colour } from "@/components/charts/chart-kit";
 import { DonutChart } from "@/components/charts/donut-chart";
 import { Sparkline } from "@/components/charts/sparkline";
 import { StackedColumns } from "@/components/charts/stacked-columns";
 import { TrendChart } from "@/components/charts/trend-chart";
-import { RuleMark } from "@/components/ai/provenance";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page";
-import { AdminAgent } from "./admin-agent";
 import { Ring } from "@/components/ui/premium";
+import { Segmented } from "@/components/ui/segmented";
 import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { TabPanel, Tabs, useTab } from "@/components/ui/tabs";
-import { Tag } from "@/components/ui/tag";
 import { useNow, useResource } from "@/lib/live/client";
 import {
   isClosed,
@@ -43,60 +40,111 @@ import {
 import { cn } from "@/lib/cn";
 import { ErrorNote, LiveBadge, Skeleton } from "./bits";
 import { FCard } from "./funding-bits";
-import { ApprovalsTab, NotificationsTab } from "./ops-comms";
-import { DemoNote, ops, taskTone, when } from "./ops-bits";
+import { NotificationsTab } from "./ops-comms";
+import { NeedsYou, inboxItems, inboxKinds, type InboxKind } from "./ops-inbox";
+import { DemoNote, ops, when } from "./ops-bits";
 import { QueueTabView } from "./ops-queue";
-import { MatchingTab, ReviewTab } from "./ops-review";
 import { RunLogTab, RulesTab } from "./ops-rules";
 
 const tabs = [
-  { id: "overview", label: "Overview" },
-  { id: "agent", label: "AI agent" },
-  { id: "queue", label: "Work queue" },
-  { id: "review", label: "AI referral review" },
-  { id: "matching", label: "Therapist matching" },
-  { id: "approvals", label: "Approvals" },
-  { id: "notifications", label: "Notifications" },
-  { id: "rules", label: "Rules" },
-  { id: "log", label: "Run log" },
-  { id: "reports", label: "Reports" },
-  { id: "settings", label: "Settings" },
+  { id: "needs", label: "Needs you" },
+  { id: "work", label: "All work" },
+  { id: "trends", label: "Trends" },
+  { id: "automation", label: "Automation" },
 ] as const;
 export type OpsTab = (typeof tabs)[number]["id"];
 
-/** Module 08: one operational command centre. Rules route work; AI suggests; people decide. */
+const autoSections = [
+  { id: "rules", label: "Rules" },
+  { id: "log", label: "Run log" },
+  { id: "messages", label: "Messages" },
+  { id: "settings", label: "Settings" },
+] as const;
+type AutoSection = (typeof autoSections)[number]["id"];
+type TrendsView = "live" | "report";
+
+/** Older links named one of eleven tabs; send each to where that work now lives. */
+const legacy: Record<
+  string,
+  { tab: OpsTab; kind?: InboxKind; section?: AutoSection; trends?: TrendsView }
+> = {
+  overview: { tab: "needs" },
+  agent: { tab: "needs" },
+  queue: { tab: "work" },
+  review: { tab: "needs", kind: "review" },
+  matching: { tab: "needs", kind: "matching" },
+  approvals: { tab: "needs", kind: "approvals" },
+  notifications: { tab: "automation", section: "messages" },
+  rules: { tab: "automation", section: "rules" },
+  log: { tab: "automation", section: "log" },
+  runs: { tab: "automation", section: "log" },
+  reports: { tab: "trends", trends: "report" },
+  settings: { tab: "automation", section: "settings" },
+};
+
+const setParam = (key: string, value: string) => {
+  const url = new URL(window.location.href);
+  url.searchParams.set(key, value);
+  window.history.replaceState(window.history.state, "", url);
+};
+
+/**
+ * Module 08 in four places: what needs a decision, all the work, how it is going, and the rules
+ * behind it. Rules route work; AI suggests; people decide.
+ */
 export function OperationsHub() {
   const { data, error, loading, reload } = useResource<{ hub: OpsHubDto }>(
     "/api/care/operations",
     (e) => e.type === "care",
   );
   const [tab, setTab] = useTab(tabs);
+  const [kind, setKindState] = useState<InboxKind>("all");
+  const [section, setSectionState] = useState<AutoSection>("rules");
+  const [trends, setTrends] = useState<TrendsView>("live");
   const [queueTab, setQueueTab] = useState<QueueTab>("All");
   const [running, setRunning] = useState(false);
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    const old = legacy[q.get("tab") ?? ""];
+    const k = q.get("type") ?? old?.kind;
+    const s = q.get("section") ?? old?.section;
+    /* eslint-disable react-hooks/set-state-in-effect -- read the address once after mount */
+    if (old) setTab(old.tab);
+    if (k && (inboxKinds as readonly string[]).includes(k)) setKindState(k as InboxKind);
+    if (s && autoSections.some((x) => x.id === s)) setSectionState(s as AutoSection);
+    if (old?.trends) setTrends(old.trends);
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [setTab]);
+  const now = useNow();
   if (error && !data) return <ErrorNote message={error} onRetry={reload} />;
   if (loading || !data) return <HubSkeleton />;
   const hub = data.hub;
-  const open = hub.tasks.filter((t) => isOpen(t.status));
+  const setKind = (k: InboxKind) => {
+    setKindState(k);
+    setParam("type", k);
+  };
+  const setSection = (s: AutoSection) => {
+    setSectionState(s);
+    setParam("section", s);
+  };
+  const inbox = inboxItems(hub, now ?? Date.parse(hub.now)).length;
+  const ruleErrors = hub.runs.filter((r) => r.outcome === "Error" && !r.resolved).length;
   const count = (id: OpsTab) => {
-    if (id === "queue") return open.length;
-    if (id === "review") return hub.reviews.filter((r) => !r.ready).length;
-    if (id === "matching") return hub.matching.length;
-    if (id === "approvals") return hub.approvals.filter((a) => a.canDecide).length;
-    if (id === "notifications")
-      return hub.messages.filter((m) => m.state === "Failed" || m.state === "Awaiting Approval")
-        .length;
-    if (id === "log") return hub.runs.filter((r) => r.outcome === "Error" && !r.resolved).length;
+    if (id === "needs") return inbox;
+    if (id === "work") return hub.tasks.filter((t) => isOpen(t.status)).length;
+    if (id === "automation") return ruleErrors;
     return 0;
   };
-  const tabList = tabs.map((t) => ({
-    ...t,
-    count: count(t.id) || undefined,
-    alert: ["approvals", "notifications", "log"].includes(t.id),
-  }));
   const goQueue = (q: QueueTab) => {
     setQueueTab(q);
-    setTab("queue");
+    setTab("work");
   };
+  const sectionCount = (s: AutoSection) =>
+    s === "log"
+      ? ruleErrors
+      : s === "messages"
+        ? hub.messages.filter((m) => m.state === "Failed").length
+        : 0;
 
   return (
     <>
@@ -129,39 +177,69 @@ export function OperationsHub() {
           </div>
         }
       />
-      <Tabs label="Operations" tabs={tabList} value={tab} onChange={(t: OpsTab) => setTab(t)} />
-      <TabPanel id="overview" value={tab}>
-        <Overview hub={hub} goQueue={goQueue} go={setTab} />
+      <Tabs
+        label="Operations"
+        tabs={tabs.map((t) => ({
+          ...t,
+          count: count(t.id) || undefined,
+          alert: t.id === "automation",
+        }))}
+        value={tab}
+        onChange={(t: OpsTab) => setTab(t)}
+      />
+      <TabPanel id="needs" value={tab}>
+        <NeedsYou
+          hub={hub}
+          kind={kind}
+          setKind={setKind}
+          onDone={reload}
+          goWork={() => goQueue("All")}
+        />
       </TabPanel>
-      <TabPanel id="agent" value={tab}>
-        <AdminAgent embedded />
-      </TabPanel>
-      <TabPanel id="queue" value={tab}>
+      <TabPanel id="work" value={tab}>
         <QueueTabView hub={hub} tab={queueTab} setTab={setQueueTab} onDone={reload} />
       </TabPanel>
-      <TabPanel id="review" value={tab}>
-        <ReviewTab hub={hub} onDone={reload} />
+      <TabPanel id="trends" value={tab}>
+        <div className="flex flex-col gap-4">
+          <Segmented
+            label="Trends view"
+            value={trends}
+            onChange={setTrends}
+            options={[
+              { id: "live", label: "Live picture" },
+              { id: "report", label: "KPI report" },
+            ]}
+          />
+          {trends === "live" ? (
+            <Overview
+              hub={hub}
+              goQueue={goQueue}
+              goApprovals={() => {
+                setKind("approvals");
+                setTab("needs");
+              }}
+            />
+          ) : (
+            <Reports hub={hub} />
+          )}
+        </div>
       </TabPanel>
-      <TabPanel id="matching" value={tab}>
-        <MatchingTab hub={hub} onDone={reload} />
-      </TabPanel>
-      <TabPanel id="approvals" value={tab}>
-        <ApprovalsTab hub={hub} onDone={reload} />
-      </TabPanel>
-      <TabPanel id="notifications" value={tab}>
-        <NotificationsTab hub={hub} onDone={reload} />
-      </TabPanel>
-      <TabPanel id="rules" value={tab}>
-        <RulesTab hub={hub} />
-      </TabPanel>
-      <TabPanel id="log" value={tab}>
-        <RunLogTab hub={hub} onDone={reload} />
-      </TabPanel>
-      <TabPanel id="reports" value={tab}>
-        <Reports hub={hub} />
-      </TabPanel>
-      <TabPanel id="settings" value={tab}>
-        <SettingsTab hub={hub} onDone={reload} />
+      <TabPanel id="automation" value={tab}>
+        <div className="flex flex-col gap-4">
+          <Segmented
+            label="Automation section"
+            value={section}
+            onChange={setSection}
+            options={autoSections.map((s) => ({
+              id: s.id,
+              label: sectionCount(s.id) ? `${s.label} · ${sectionCount(s.id)}` : s.label,
+            }))}
+          />
+          {section === "rules" && <RulesTab hub={hub} />}
+          {section === "log" && <RunLogTab hub={hub} onDone={reload} />}
+          {section === "messages" && <NotificationsTab hub={hub} onDone={reload} />}
+          {section === "settings" && <SettingsTab hub={hub} onDone={reload} />}
+        </div>
       </TabPanel>
     </>
   );
@@ -186,11 +264,11 @@ function HubSkeleton() {
 function Overview({
   hub,
   goQueue,
-  go,
+  goApprovals,
 }: {
   hub: OpsHubDto;
   goQueue: (q: QueueTab) => void;
-  go: (t: OpsTab) => void;
+  goApprovals: () => void;
 }) {
   const now = useNow() ?? Date.parse(hub.now);
   const [team, setTeam] = useState("");
@@ -277,11 +355,6 @@ function Overview({
       late: mine.filter((x) => x.overdue || x.status === "Escalated").length,
     };
   });
-  const attention = [
-    ...escalated,
-    ...overdue.filter((t) => t.status !== "Escalated"),
-    ...atRisk,
-  ].slice(0, 30);
   const activity = [
     ...hub.runs.slice(0, 40).map((r) => ({
       at: r.at,
@@ -344,7 +417,7 @@ function Overview({
       value: pendingApprovals.length,
       sub: `${hub.approvals.filter((a) => a.canDecide).length} you can decide`,
       values: spark((d) => d.Closed),
-      onClick: () => go("approvals"),
+      onClick: goApprovals,
     },
   ];
 
@@ -565,55 +638,6 @@ function Overview({
         </FCard>
 
         <FCard
-          icon={AlertTriangle}
-          title="Needs attention"
-          sub="Escalated, overdue and at-risk work, most urgent first"
-          className="xl:col-span-7"
-          flush
-        >
-          {attention.length === 0 ? (
-            <p className="flex h-[420px] items-center justify-center text-small text-ink-500">
-              Nothing is overdue or escalated.
-            </p>
-          ) : (
-            <ul className="h-[420px] divide-y divide-border overflow-y-auto">
-              {attention.map((t) => (
-                <li key={t.id}>
-                  <a
-                    href={`/care/operations/tasks/${t.id}`}
-                    className="flex items-start gap-3 px-5 py-3.5 transition-colors hover:bg-canvas hover:no-underline"
-                  >
-                    <span
-                      className={cn(
-                        "mt-1.5 size-2.5 flex-none rounded-full",
-                        t.status === "Escalated"
-                          ? "bg-over-dot"
-                          : t.overdue
-                            ? "bg-watch-dot"
-                            : "bg-available-dot",
-                      )}
-                      aria-hidden="true"
-                    />
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-small font-semibold text-ink-900">
-                        {t.title}
-                      </span>
-                      <span className="block truncate text-caption text-ink-500">
-                        <span className="font-mono">{t.ref}</span> · {t.team} ·{" "}
-                        {t.assigneeName ?? "Unassigned"}
-                        {t.escalation
-                          ? ` · escalated to ${t.escalation.owner}`
-                          : ` · due ${when(t.dueAt)}`}
-                      </span>
-                    </span>
-                    <Tag tone={taskTone[t.status]}>{t.status}</Tag>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          )}
-        </FCard>
-        <FCard
           icon={Gauge}
           title="Open work by team"
           sub="On track, waiting on someone, or past its SLA"
@@ -676,42 +700,6 @@ function Overview({
               </li>
             ))}
           </ol>
-        </FCard>
-        <FCard
-          icon={Workflow}
-          title="Rules"
-          sub="Automations and how often they ran"
-          className="xl:col-span-5"
-          flush
-          action={<RuleMark>Automation</RuleMark>}
-        >
-          <ul className="h-[420px] divide-y divide-border overflow-y-auto">
-            {hub.rules.map((r) => (
-              <li key={r.id}>
-                <a
-                  href={`/care/operations/rules/${r.id}`}
-                  className="flex items-center gap-3 px-5 py-2.5 transition-colors hover:bg-canvas hover:no-underline"
-                >
-                  <span className="w-14 flex-none font-mono text-caption text-ink-500">
-                    {r.code}
-                  </span>
-                  <span className="min-w-0 flex-1 truncate text-small text-ink-900">{r.name}</span>
-                  <span className="text-caption text-ink-500">{r.runs} runs</span>
-                  <Tag
-                    tone={
-                      r.status === "Active"
-                        ? "healthy"
-                        : r.status === "Paused"
-                          ? "neutral"
-                          : "watch"
-                    }
-                  >
-                    {r.status}
-                  </Tag>
-                </a>
-              </li>
-            ))}
-          </ul>
         </FCard>
       </div>
     </>
@@ -1059,7 +1047,10 @@ function SettingsTab({ hub, onDone }: { hub: OpsHubDto; onDone: () => void }) {
             30,
           )}
         </div>
-        <div className="mt-5 flex items-center justify-between gap-4 rounded-control border border-border px-4 py-3">
+        <div
+          data-ai-only
+          className="mt-5 flex items-center justify-between gap-4 rounded-control border border-border px-4 py-3"
+        >
           <span>
             <span className="block text-small font-semibold text-ink-900">AI referral review</span>
             <span className="block text-caption text-ink-500">

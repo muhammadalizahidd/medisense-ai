@@ -9,6 +9,7 @@ import { cn } from "@/lib/cn";
 export function AiIcon({ className }: { className?: string }) {
   return (
     <svg
+      data-ai-only
       viewBox="0 0 16 16"
       fill="none"
       stroke="currentColor"
@@ -42,7 +43,7 @@ export function DraftLabel({
   meta?: ReactNode;
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2">
+    <div data-ai-only className="flex flex-wrap items-center justify-between gap-2">
       <span className="flex items-center gap-1.5 text-caption font-semibold text-ink-700">
         <AiIcon className="size-3.5" />
         {children}
@@ -72,7 +73,10 @@ export function draftSurface(approved: boolean) {
 /** A small "AI draft" chip, for lists and rows where a full label doesn't fit. */
 export function AiChip({ children = "AI draft" }: { children?: ReactNode }) {
   return (
-    <span className="inline-flex h-5 items-center gap-1 rounded-tag border border-dashed border-draft-rule bg-draft px-1.5 text-label font-semibold tracking-[0.06em] text-ink-700 uppercase">
+    <span
+      data-ai-only
+      className="inline-flex h-5 items-center gap-1 rounded-tag border border-dashed border-draft-rule bg-draft px-1.5 text-label font-semibold tracking-[0.06em] text-ink-700 uppercase"
+    >
       <AiIcon className="size-3" />
       {children}
     </span>
@@ -135,7 +139,7 @@ export function AiDraft({
   className?: string;
 }) {
   return (
-    <section className={cn("rounded-card p-4 surface-draft", className)}>
+    <section data-ai-only className={cn("rounded-card p-4 surface-draft", className)}>
       <DraftLabel meta={meta}>
         {label}
         {suggestionsOnly && <span className="font-medium text-ink-500"> · suggestions only</span>}

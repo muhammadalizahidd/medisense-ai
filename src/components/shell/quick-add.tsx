@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet } from "@/components/ui/sheet";
 import { BookVisitPanel } from "@/features/live/quick-book";
 import { AiReferralSheet } from "@/features/live/ai-referral";
+import { useAiEnabled } from "@/components/ai/ai-switch";
 import { useSession } from "@/lib/live/client";
 import { NewReferralSheet } from "@/features/intake/new-referral";
 import { BookVisitSheet } from "@/features/schedule/book-visit";
@@ -22,6 +23,7 @@ const actions = [
     id: "referral",
     label: "New referral",
     detail: "AI reads it for you to check",
+    plainDetail: "Enter it and check the details",
     icon: FileInput,
   },
   { id: "visit", label: "Book visit", detail: "Home visit or telehealth", icon: CalendarPlus },
@@ -35,6 +37,7 @@ export function QuickAdd() {
   const panel = useRef<HTMLDivElement>(null);
   const { user } = useSession();
   const live = user?.role === "admin";
+  const ai = useAiEnabled();
 
   useEffect(() => {
     if (!open) return undefined;
@@ -60,13 +63,14 @@ export function QuickAdd() {
       </Button>
       {open && (
         <div className="absolute top-11 right-0 z-30 w-72 max-w-[calc(100vw-2rem)] rounded-card border border-border bg-raised p-1.5 shadow-overlay">
-          {actions.map(({ id, label, detail, icon: Icon }) => (
+          {actions.map(({ id, label, icon: Icon, ...action }) => (
             <button
               key={id}
               type="button"
               onClick={() => {
                 setOpen(false);
-                if (id === "client") router.push("/care/new");
+                // Without the reader, a live referral goes straight to the form.
+                if (id === "client" || (id === "referral" && live && !ai)) router.push("/care/new");
                 else setSheet(id);
               }}
               className="flex w-full cursor-pointer items-center gap-3 rounded-control px-2.5 py-2 text-left hover:bg-canvas"
@@ -76,7 +80,9 @@ export function QuickAdd() {
               </span>
               <span className="min-w-0">
                 <span className="block text-small font-semibold">{label}</span>
-                <span className="block truncate text-caption text-ink-500">{detail}</span>
+                <span className="block truncate text-caption text-ink-500">
+                  {!ai && "plainDetail" in action ? action.plainDetail : action.detail}
+                </span>
               </span>
             </button>
           ))}
@@ -84,7 +90,7 @@ export function QuickAdd() {
       )}
       {sheet === "referral" &&
         (live ? (
-          <AiReferralSheet onClose={() => setSheet(null)} />
+          ai && <AiReferralSheet onClose={() => setSheet(null)} />
         ) : (
           <NewReferralSheet onClose={() => setSheet(null)} onAdded={() => router.push("/intake")} />
         ))}

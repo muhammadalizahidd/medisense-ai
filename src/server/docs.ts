@@ -3,7 +3,7 @@ import { can } from "./permissions";
 import { randomUUID } from "node:crypto";
 import { ObjectId } from "mongodb";
 import { generateJson } from "@/lib/ai/engine";
-import { AiError } from "@/lib/ai/types";
+import { AiError, rethrowDisabled } from "@/lib/ai/types";
 import {
   measuresIn,
   templates,
@@ -975,6 +975,7 @@ async function aiDraft(d: ClinicalDocDoc, sources: SourceItem[]) {
   } catch (error) {
     if (error instanceof UserFacingError) throw error;
     // The clinician's work is already saved; the manual path stays open (AT-55).
+    rethrowDisabled(error);
     if (error instanceof AiError)
       throw new UserFacingError(
         `AI isn't available right now: ${error.message}. Your work is saved; write the note manually or try again.`,

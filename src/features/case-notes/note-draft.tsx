@@ -1,5 +1,6 @@
 "use client";
 
+import { useAiEnabled } from "@/components/ai/ai-switch";
 import { dt } from "@/lib/clock";
 import { AlertCircle, ArrowRight, Check } from "lucide-react";
 import Link from "next/link";
@@ -166,9 +167,15 @@ export function NoteDraft({ sample }: { sample: CaseNoteSample }) {
   const editNote = useDemoStore((s) => s.editNote);
   const regenerate = useGenerateNote(sample.id);
   const [template, setTemplate] = useState<"structured" | "soap">("structured");
+  const ai = useAiEnabled();
 
   if (!note || note.mode === "empty") return <EmptyState error={note?.error ?? null} />;
   const { mode, draft, changes, generation, error } = note;
+  const own = generation?.source === "manual";
+  // Switched off: a draft nobody has touched is not shown.
+  if (!ai && !own && changes === 0 && (mode === "draft" || mode === "generating")) {
+    return <EmptyState error={null} />;
+  }
   if (mode === "generating") return <Generating />;
   if (mode === "edit") return <EditForm id={sample.id} draft={draft} />;
 
@@ -193,7 +200,7 @@ export function NoteDraft({ sample }: { sample: CaseNoteSample }) {
         >
           Approved by {sample.clinician} · {dt("20 Oct 2026")}
         </ApprovedLabel>
-      ) : (
+      ) : own ? null : (
         <DraftLabel meta={provenance(generation, sample)} />
       )}
 

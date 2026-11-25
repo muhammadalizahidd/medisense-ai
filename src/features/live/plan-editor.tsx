@@ -1,5 +1,6 @@
 "use client";
 
+import { AiOnly } from "@/components/ai/ai-switch";
 import { ArrowLeft, CheckCircle2, Plus, Target, Trash2 } from "lucide-react";
 import { AiIcon } from "@/components/ai/provenance";
 import { useEffect, useRef, useState } from "react";
@@ -306,31 +307,33 @@ function Plan({ p, reload }: { p: PlanDto; reload: () => void }) {
           )}
           {p.canEdit && p.status === "Under Review" && <Review p={p} busy={busy} act={act} />}
           {p.canEdit && p.status === "Active" && (
-            <Panel title="Progress summary">
-              {p.progressSummary ? (
-                <div className="text-small">
-                  <Tag tone="live">AI draft</Tag>
-                  <p className="mt-2 whitespace-pre-line">{p.progressSummary.text}</p>
-                  <p className="mt-2 text-caption text-ink-500">
-                    Drafted {relativeTime(p.progressSummary.at)} from recorded measures. You
-                    interpret it.
+            <AiOnly>
+              <Panel title="Progress summary">
+                {p.progressSummary ? (
+                  <div className="text-small">
+                    <Tag tone="live">AI draft</Tag>
+                    <p className="mt-2 whitespace-pre-line">{p.progressSummary.text}</p>
+                    <p className="mt-2 text-caption text-ink-500">
+                      Drafted {relativeTime(p.progressSummary.at)} from recorded measures. You
+                      interpret it.
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-small text-ink-700">
+                    AI drafts a tentative summary from the measures recorded at each visit.
                   </p>
-                </div>
-              ) : (
-                <p className="text-small text-ink-700">
-                  AI drafts a tentative summary from the measures recorded at each visit.
-                </p>
-              )}
-              <Button
-                size="sm"
-                className="mt-3"
-                disabled={busy}
-                onClick={() => act({ action: "progress-summary" })}
-              >
-                <AiIcon className="size-3.5" />
-                {p.progressSummary ? "Draft again" : "Draft progress summary"}
-              </Button>
-            </Panel>
+                )}
+                <Button
+                  size="sm"
+                  className="mt-3"
+                  disabled={busy}
+                  onClick={() => act({ action: "progress-summary" })}
+                >
+                  <AiIcon className="size-3.5" />
+                  {p.progressSummary ? "Draft again" : "Draft progress summary"}
+                </Button>
+              </Panel>
+            </AiOnly>
           )}
           {p.reviews.length > 0 && (
             <Panel title="Reviews">

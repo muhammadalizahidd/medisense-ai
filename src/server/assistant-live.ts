@@ -1252,19 +1252,19 @@ async function operationsList(user: UserDoc, input: Record<string, unknown>): Pr
           .map((a) => ({
             label: `${a.ref} ${a.title}`,
             detail: `${a.workflow} · ${a.status} · raised by ${a.initiator}: ${a.reason}`,
-            href: "/care/operations?tab=approvals",
+            href: "/care/operations?tab=needs&type=approvals",
           }))
       : focus === "messages"
         ? messages.map((m) => ({
             label: `${m.ref} ${m.subject}`,
             detail: `${m.state} (simulated) · ${m.channel} to ${m.recipient}${m.reason ? ` · ${m.reason}` : ""}`,
-            href: "/care/operations?tab=notifications",
+            href: "/care/operations?tab=automation&section=messages",
           }))
         : focus === "rules"
           ? runs.map((r) => ({
               label: `${r.ruleCode} v${r.ruleVersion} ${r.ruleName}`,
               detail: `${r.outcome}: ${r.detail}`,
-              href: "/care/operations?tab=log",
+              href: "/care/operations?tab=automation&section=log",
             }))
           : (focus === "escalated"
               ? escalated

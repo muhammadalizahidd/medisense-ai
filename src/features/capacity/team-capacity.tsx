@@ -155,7 +155,7 @@ export function TeamCapacity() {
       <div className="grid items-stretch gap-6 lg:grid-cols-12">
         <Card
           aria-labelledby="utilisation"
-          className="flex flex-col px-6 pt-5 pb-4.5 lg:col-span-8"
+          className="flex flex-col px-6 pt-5 pb-4.5 lg:col-span-8 ai-off:lg:col-span-12"
         >
           <CardTitle
             id="utilisation"
@@ -183,7 +183,7 @@ export function TeamCapacity() {
           />
         </Card>
 
-        <div className="lg:col-span-4 lg:self-stretch">
+        <div data-ai-only className="lg:col-span-4 lg:self-stretch">
           <Recommendation
             previewing={previewing}
             onTogglePreview={() => setPreviewing(!previewing)}

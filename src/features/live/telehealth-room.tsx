@@ -1,5 +1,6 @@
 "use client";
 
+import { useAiEnabled } from "@/components/ai/ai-switch";
 import {
   ArrowLeft,
   Check,
@@ -100,6 +101,7 @@ export function TelehealthRoom({ visitId }: { visitId: string }) {
     `/api/telehealth/${visitId}`,
     (e) => e.type === "care" && (!e.payload.visitId || e.payload.visitId === visitId),
   );
+  const ai = useAiEnabled();
   const [busy, setBusy] = useState(false);
   const [fail, setFail] = useState<string | null>(null);
   const [link, setLink] = useState<string | null>(null);
@@ -318,7 +320,7 @@ export function TelehealthRoom({ visitId }: { visitId: string }) {
               </Button>
             </Panel>
           )}
-          {c.consents.transcription?.given && (inCall || c.transcript.length > 0) && (
+          {ai && c.consents.transcription?.given && (inCall || c.transcript.length > 0) && (
             <Panel title="AI transcription (consented)" action={<Tag tone="live">Draft</Tag>}>
               <p className="-mt-2 mb-3 text-caption text-ink-500">
                 Simulated: type what was said, or add a sample line. The transcript only feeds a

@@ -4,7 +4,7 @@ import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { Binary, ObjectId, type Db } from "mongodb";
 import { z } from "zod";
 import { generateJson } from "@/lib/ai/engine";
-import { AiError } from "@/lib/ai/types";
+import { AiError, rethrowDisabled } from "@/lib/ai/types";
 import {
   DOCUMENT_MAX_BYTES,
   DOCUMENT_TYPES,
@@ -1997,6 +1997,7 @@ export async function aiFundingCheck(user: UserDoc, planId: ObjectId) {
     );
     return { missing, ...parsed };
   } catch (error) {
+    rethrowDisabled(error);
     if (error instanceof AiError)
       throw new UserFacingError(`AI isn't available: ${error.message}`, 409);
     throw new UserFacingError("The AI answer couldn't be read. Try again.", 409);

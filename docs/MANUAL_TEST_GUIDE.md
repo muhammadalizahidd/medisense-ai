@@ -376,6 +376,21 @@ Go to **Billing** and open the draft invoice.
 | Daniel opens `/care/billing` | Redirected; finance only. |
 | The patient record → **Activity**, and the referral → **Audit trail** | Every decision, view of a document, signature and recording access, each with who and when. |
 
+## Part I: The organisation AI switch
+
+Use two browser windows: one signed in as Neil (Super Admin), one as Sarah or Jo.
+
+1. Neil: **AI oversight**. The switch at the top is **On**.
+2. Turn it off and confirm in the dialog box. A message says AI was turned off for everyone. Neil
+   keeps this page, listed in the menu as **Oversight**.
+3. The other window changes within a few seconds, without a reload: a notice appears, **Ask
+   Medisense** and the AI menu items leave, and "AI notes" reads "Notes".
+4. In the other window, open `/care/ai-oversight` by address. It moves you to another page.
+5. Write and sign a session note by hand. It still works.
+6. In Scheduling, the assignment mode reads **Manual** and **AI Assisted** isn't offered.
+7. While it is on, other office staff see the switch on **AI oversight** as read-only.
+8. Neil: turn it on and confirm. Labels, menus and the previous assignment mode return.
+
 ## If something looks wrong
 
 - Note the step number, take a screenshot and copy any red message.

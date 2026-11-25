@@ -1,5 +1,7 @@
+import { AiDisabled } from "@/lib/ai/types";
 import { agentActionSchema } from "@/lib/live/agent";
 import { adminAgentAction, adminAgentView } from "@/server/agent";
+import { aiSwitchOn } from "@/server/ai-switch";
 import "@/server/agent-tools";
 import "@/server/booking-agent";
 import { requireUser } from "@/server/auth";
@@ -14,7 +16,11 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  return handle(async () =>
-    adminAgentAction(await requireUser(), await readJson(request, agentActionSchema)),
-  );
+  return handle(async () => {
+    const user = await requireUser();
+    const action = await readJson(request, agentActionSchema);
+    // Booking confirmations arrive here too and stay; asking the agent a question does not.
+    if (action.type === "ask" && !(await aiSwitchOn())) throw new AiDisabled();
+    return adminAgentAction(user, action);
+  });
 }

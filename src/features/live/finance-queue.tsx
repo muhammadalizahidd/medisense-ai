@@ -159,7 +159,7 @@ export function QueueTab({
         </span>
         {hub.can.officer && (
           <>
-            <Button size="sm" variant="soft" disabled={busy} onClick={aiReview}>
+            <Button data-ai-only size="sm" variant="soft" disabled={busy} onClick={aiReview}>
               <AiIcon className="size-3.5" /> AI review
             </Button>
             <Button size="sm" variant="primary" disabled={busy || !picked.length} onClick={prepare}>
@@ -171,7 +171,10 @@ export function QueueTab({
       </div>
 
       {review && (
-        <section className="bubble-in rounded-card border border-dashed border-draft-rule bg-draft p-4">
+        <section
+          data-ai-only
+          className="bubble-in rounded-card border border-dashed border-draft-rule bg-draft p-4"
+        >
           <div className="mb-2 flex items-center justify-between gap-2">
             <AiChip>AI suggestions</AiChip>
             <button

@@ -1,5 +1,6 @@
 "use client";
 
+import { AiOnly } from "@/components/ai/ai-switch";
 import { Check, Lock, Minus, Plug, Server } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Caption, Card, CardTitle } from "@/components/ui/card";
@@ -40,7 +41,10 @@ export function SecuritySettings() {
       </section>
 
       <div className="mt-6 grid items-start gap-6 lg:grid-cols-12">
-        <Card aria-labelledby="permissions" className="overflow-hidden lg:col-span-7">
+        <Card
+          aria-labelledby="permissions"
+          className="overflow-hidden lg:col-span-7 ai-off:lg:col-span-12"
+        >
           <div className="px-5 pt-5 pb-3">
             <CardTitle
               id="permissions"
@@ -115,38 +119,40 @@ export function SecuritySettings() {
           </Caption>
         </Card>
 
-        <Card aria-labelledby="guardrails" className="overflow-hidden lg:col-span-5">
-          <div className="px-5 pt-5 pb-3">
-            <CardTitle
-              id="guardrails"
-              title="AI guardrails"
-              description="How AI is allowed to work with patient data"
-            />
-          </div>
-          {aiGuardrails.map((g) => (
-            <div key={g.id} className="flex items-start gap-3 border-t border-border px-5 py-3">
-              <Switch
-                on={guardrails[g.id] ?? g.on}
-                disabled={g.locked}
-                label={`${g.label}: ${(guardrails[g.id] ?? g.on) ? "on" : "off"}`}
-                onToggle={() => toggleGuardrail(g.id)}
+        <AiOnly>
+          <Card aria-labelledby="guardrails" className="overflow-hidden lg:col-span-5">
+            <div className="px-5 pt-5 pb-3">
+              <CardTitle
+                id="guardrails"
+                title="AI guardrails"
+                description="How AI is allowed to work with patient data"
               />
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5 text-small font-semibold">
-                  {g.label}
-                  {g.locked && (
-                    <Lock
-                      className="size-3 text-ink-400"
-                      strokeWidth={1.5}
-                      aria-label="Always on"
-                    />
-                  )}
-                </div>
-                <Caption>{g.detail}</Caption>
-              </div>
             </div>
-          ))}
-        </Card>
+            {aiGuardrails.map((g) => (
+              <div key={g.id} className="flex items-start gap-3 border-t border-border px-5 py-3">
+                <Switch
+                  on={guardrails[g.id] ?? g.on}
+                  disabled={g.locked}
+                  label={`${g.label}: ${(guardrails[g.id] ?? g.on) ? "on" : "off"}`}
+                  onToggle={() => toggleGuardrail(g.id)}
+                />
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 text-small font-semibold">
+                    {g.label}
+                    {g.locked && (
+                      <Lock
+                        className="size-3 text-ink-400"
+                        strokeWidth={1.5}
+                        aria-label="Always on"
+                      />
+                    )}
+                  </div>
+                  <Caption>{g.detail}</Caption>
+                </div>
+              </div>
+            ))}
+          </Card>
+        </AiOnly>
       </div>
 
       <Card aria-labelledby="integrations" className="mt-6 overflow-hidden">

@@ -150,7 +150,7 @@ export function ApprovalsTab({ hub, onDone }: { hub: OpsHubDto; onDone: () => vo
   );
 }
 
-function ApprovalSheet({
+export function ApprovalSheet({
   a,
   onClose,
   onDone,
@@ -498,7 +498,7 @@ export function NotificationsTab({ hub, onDone }: { hub: OpsHubDto; onDone: () =
   );
 }
 
-function MessageSheet({
+export function MessageSheet({
   m,
   onClose,
   onDone,

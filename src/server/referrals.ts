@@ -5,7 +5,7 @@ import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { Binary, ObjectId } from "mongodb";
 import { z } from "zod";
 import { generateJson } from "@/lib/ai/engine";
-import { AiError } from "@/lib/ai/types";
+import { AiError, rethrowDisabled } from "@/lib/ai/types";
 import {
   disciplines,
   DOCUMENT_MAX_BYTES,
@@ -1413,6 +1413,7 @@ export async function aiReferralReview(id: ObjectId) {
       model: out.model,
     };
   } catch (error) {
+    rethrowDisabled(error);
     if (error instanceof AiError)
       throw new UserFacingError(`AI isn't available: ${error.message}`, 409);
     throw new UserFacingError("The AI answer couldn't be read. Try again.", 409);

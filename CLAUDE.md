@@ -101,6 +101,7 @@ Read these before changing data, UI or copy:
 - Every generate, edit, approve and assign action writes an audit entry through the demo store.
 - Operational flags say "Requires review based on configured operational indicators". They are never clinical risk or diagnosis.
 - Recommendations are never applied automatically, and the UI says so.
+- **Organisation AI switch** (Super Admin: AI oversight, `/care/ai-oversight`; offline demo: presenter panel). Every new AI feature must respect it. Server: call models only through `src/lib/ai/engine.ts` (it throws `AiDisabled`); a catch block that rewords errors calls `rethrowDisabled` first, and nothing falls back to prepared output while off. Client: hide AI-only parts with `data-ai-only` or `<AiOnly>`, guard auto-run calls with `aiEnabledNow()`, keep a manual path, and give "AI …" labels a plain form with `useAiText`. AI-only routes are listed in `src/lib/ai/routes.ts`. `src/lib/ai/wording.ts` and `scrub.ts` are the safety net for leftover wording, not a substitute for hiding.
 
 **Code**
 

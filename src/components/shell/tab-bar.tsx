@@ -4,6 +4,7 @@ import { Menu } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { useMenu } from "@/components/ai/use-menu";
 import { Sheet } from "@/components/ui/sheet";
 import { cn } from "@/lib/cn";
 import { isActive, isStandalone, navigationFor } from "@/lib/navigation";
@@ -19,9 +20,11 @@ export function TabBar() {
   const [more, setMore] = useState(false);
   const { user: account } = useSession();
   // The live sections come first, as in the sidebar, so the real workflow is one tap away.
-  const groups = navigationFor(role, account?.role === "admin" ? pageAccessFor(account) : null, {
-    liveOnly: Boolean(account),
-  });
+  const groups = useMenu(
+    navigationFor(role, account?.role === "admin" ? pageAccessFor(account) : null, {
+      liveOnly: Boolean(account),
+    }),
+  );
   const items = groups.flatMap((g) => g.items).slice(0, 4);
 
   if (isStandalone(pathname)) return null;

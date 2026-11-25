@@ -1,5 +1,6 @@
 "use client";
 
+import { useAiEnabled, useAiText } from "@/components/ai/ai-switch";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, inputClass, Sheet } from "@/components/ui/sheet";
@@ -15,6 +16,7 @@ import {
 import type { AiMeta, ReferralExtraction } from "@/lib/story/types";
 import { useDemoStore } from "@/state/demo-store";
 import { callStory } from "@/state/use-story-ai";
+import { aiEnabledNow } from "@/state/ai-switch";
 import { Select } from "@/components/ui/select";
 
 const MAX_LENGTH = 8000;
@@ -70,6 +72,20 @@ function toReferral(
   };
 }
 
+/** The details a person gives when no one reads the referral for them. */
+const typedReferral = (client: string): ReferralExtraction => ({
+  client: client.trim(),
+  age: null,
+  funding: "Unknown",
+  services: "",
+  suburb: "",
+  contactName: "",
+  contactPhone: "",
+  fields: [],
+  missing: [],
+  requestEmail: "",
+});
+
 /** AI reads a pasted referral. Only the sample has a prepared fallback; typed text never does. */
 export function NewReferralSheet({
   onClose,
@@ -86,6 +102,9 @@ export function NewReferralSheet({
   const [source, setSource] = useState<ReferralSource>("Email");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [name, setName] = useState("");
+  const ai = useAiEnabled();
+  const label = useAiText();
 
   async function read() {
     const lines = referralLines(text);
@@ -93,8 +112,13 @@ export function NewReferralSheet({
       setError("Paste the referral first.");
       return;
     }
-    setBusy(true);
     setError(null);
+    if (!aiEnabledNow()) {
+      // Entered by a person: the pasted text is kept as the document and every detail is checked.
+      add(typedReferral(name), lines, { source: "manual", model: null, latencyMs: null });
+      return;
+    }
+    setBusy(true);
     const result = await callStory<ReferralExtraction>({ kind: "referral", lines });
     let data: ReferralExtraction;
     let meta: AiMeta;
@@ -112,8 +136,12 @@ export function NewReferralSheet({
       data = result.data;
       meta = result.meta;
     }
+    add(data, lines, meta);
+  }
+
+  function add(data: ReferralExtraction, lines: string[], meta: AiMeta) {
     const id = `new-referral-${count + 1}`;
-    cacheAi(`referral:${id}`, "referral", data, meta);
+    if (meta.source !== "manual") cacheAi(`referral:${id}`, "referral", data, meta);
     const duplicate = findDuplicate(data.client, addedClients);
     const { referral, status } = toReferral(data, lines, source, id, duplicate?.name ?? null);
     added(referral, status);
@@ -125,12 +153,15 @@ export function NewReferralSheet({
   return (
     <Sheet
       title="New referral"
-      description="Paste the referral as you received it. AI reads it, and you check the details before anything is created."
+      description={label(
+        "Paste the referral as you received it. AI reads it, and you check the details before anything is created.",
+        "Paste the referral as you received it, then check the details before anything is created.",
+      )}
       onClose={onClose}
       footer={
         <>
           <Button variant="primary" disabled={busy} onClick={() => void read()}>
-            {busy ? "AI is reading the referral…" : "Read referral with AI"}
+            {busy ? "AI is reading the referral…" : label("Read referral with AI", "Add referral")}
           </Button>
           <Button onClick={onClose}>Cancel</Button>
         </>
@@ -148,6 +179,11 @@ export function NewReferralSheet({
             ))}
           </Select>
         </Field>
+        {!ai && (
+          <Field label="Patient name">
+            <input className={inputClass} value={name} onChange={(e) => setName(e.target.value)} />
+          </Field>
+        )}
         <Field label="Referral text" error={error ?? undefined}>
           <textarea
             rows={14}

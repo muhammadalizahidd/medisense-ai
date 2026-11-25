@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { TURNED_OFF } from "@/lib/ai/types";
 import type { AiMeta, StoryRequest, StoryResponse } from "@/lib/story/types";
+import { aiEnabledNow, useAiSwitch } from "./ai-switch";
 import { useDemoStore } from "./demo-store";
 
 const inFlight = new Set<string>();
@@ -10,6 +12,7 @@ const inFlight = new Set<string>();
 export async function callStory<T>(
   request: StoryRequest,
 ): Promise<{ data: T; meta: AiMeta } | { error: string }> {
+  if (!aiEnabledNow()) return { error: TURNED_OFF };
   try {
     const res = await fetch("/api/story", {
       method: "POST",
@@ -30,11 +33,13 @@ export async function callStory<T>(
 /**
  * Keeps an AI result for as long as what it was written from stays the same. `key` must change
  * when the inputs change. A failed call stores the prepared version, and the presenter panel
- * shows that it was used.
+ * shows that it was used. While the organisation switch is off there is no call, no prepared
+ * version and no data: `off` tells the screen to leave the section out.
  */
 export function useStoryAi<T>(key: string, request: StoryRequest, prepared: T) {
   const cached = useDemoStore((s) => s.story.ai[key]);
   const store = useDemoStore((s) => s.cacheAi);
+  const enabled = useAiSwitch((s) => s.enabled);
   const latest = useRef({ request, prepared });
 
   useEffect(() => {
@@ -42,11 +47,14 @@ export function useStoryAi<T>(key: string, request: StoryRequest, prepared: T) {
   });
 
   useEffect(() => {
+    if (!enabled) return undefined;
     const run = () => {
-      if (useDemoStore.getState().story.ai[key] || inFlight.has(key)) return;
+      if (!aiEnabledNow() || useDemoStore.getState().story.ai[key] || inFlight.has(key)) return;
       inFlight.add(key);
       void callStory<T>(latest.current.request).then((result) => {
         inFlight.delete(key);
+        // Switched off while the call was out: nothing is kept.
+        if (!aiEnabledNow()) return;
         if ("error" in result) {
           store(key, latest.current.request.kind, latest.current.prepared, {
             source: "prepared",
@@ -63,11 +71,12 @@ export function useStoryAi<T>(key: string, request: StoryRequest, prepared: T) {
       return undefined;
     }
     return useDemoStore.persist.onFinishHydration(run);
-  }, [key, store]);
+  }, [key, store, enabled]);
 
   return {
-    data: (cached?.data as T | undefined) ?? null,
-    meta: cached?.meta ?? null,
-    loading: !cached,
+    data: enabled ? ((cached?.data as T | undefined) ?? null) : null,
+    meta: enabled ? (cached?.meta ?? null) : null,
+    loading: enabled && !cached,
+    off: !enabled,
   };
 }
