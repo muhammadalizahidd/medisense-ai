@@ -46,7 +46,7 @@ export type CaseNoteDraft = {
 };
 
 export type CaseNoteGeneration = {
-  source: "live" | "scripted";
+  source: "live" | "scripted" | "manual";
   model: string | null;
   latencyMs: number | null;
   /** 1-based raw note line paired with the first summary sentence. */
@@ -389,8 +389,10 @@ export const useDemoStore = create<DemoState & DemoActions>()(
                   regenerated ? demoActionTimes.noteRegenerated : demoActionTimes.noteGenerated,
                   id,
                 ),
-                "Medisense AI",
-                `${regenerated ? "Regenerated" : "Generated"} draft summary`,
+                generation.source === "manual" ? "Sarah Thompson" : "Medisense AI",
+                generation.source === "manual"
+                  ? "Started a summary from the note"
+                  : `${regenerated ? "Regenerated" : "Generated"} draft summary`,
                 noteObject(id),
               ),
               ...s.audit,
@@ -1156,14 +1158,16 @@ export const useDemoStore = create<DemoState & DemoActions>()(
             noteMeta: meta,
             edits: 0,
             handledPrompts: [],
-            lastAi: { ...meta, kind: "note" },
+            lastAi: meta.source === "manual" ? s.story.lastAi : { ...meta, kind: "note" },
           },
           audit: [
             entry(
               "session-note-drafted",
               "10:42",
-              "Medisense AI",
-              `Wrote draft note from ${note ? allSentences(note).filter((x) => x.line).length : 0} dictated sentences`,
+              meta.source === "manual" ? roleUsers[s.role].name : "Medisense AI",
+              meta.source === "manual"
+                ? "Started the note from the dictation"
+                : `Wrote draft note from ${note ? allSentences(note).filter((x) => x.line).length : 0} dictated sentences`,
               `Oliver Grant, session ${dt("20 Oct")}`,
             ),
             ...s.audit,

@@ -1,5 +1,6 @@
 "use client";
 
+import { useAiEnabled } from "@/components/ai/ai-switch";
 import {
   ArrowLeft,
   ArrowRight,
@@ -393,6 +394,7 @@ function Overview({ p, go, post }: { p: DocFull; go: (t: T) => void; post: Post 
 /* ------------------------------------------------------------------ capture */
 
 function Capture({ p, post }: { p: DocFull; post: Post }) {
+  const ai = useAiEnabled();
   const [text, setText] = useState(p.observations);
   const [rec, setRec] = useState<"idle" | "recording" | "paused">("idle");
   const [secs, setSecs] = useState(0);
@@ -536,36 +538,35 @@ function Capture({ p, post }: { p: DocFull; post: Post }) {
           sub="Each purpose is recorded separately; nothing is inferred"
         >
           <div className="flex flex-col gap-3">
-            {(["ai", ...(p.mode === "Telehealth" ? ["recording"] : []), "sharing"] as const).map(
-              (w) => (
-                <div key={w} className="flex items-center justify-between gap-3">
-                  <span className="text-small text-ink-900">
-                    {w === "ai"
-                      ? "AI processing"
-                      : w === "recording"
-                        ? "Visit recording"
-                        : "Sharing with third parties"}
-                  </span>
-                  <div className="w-40">
-                    <Select
-                      aria-label={`${w} consent`}
-                      className="h-9"
-                      value={p.consents[w as keyof DocFull["consents"]]}
-                      onChange={(e) =>
-                        post(
-                          { type: "consent", which: w, state: e.target.value },
-                          "Consent recorded",
-                        )
-                      }
-                    >
-                      {consentStates.map((c) => (
-                        <option key={c}>{c}</option>
-                      ))}
-                    </Select>
-                  </div>
+            {[
+              ...(ai ? ["ai"] : []),
+              ...(p.mode === "Telehealth" ? ["recording"] : []),
+              "sharing",
+            ].map((w) => (
+              <div key={w} className="flex items-center justify-between gap-3">
+                <span className="text-small text-ink-900">
+                  {w === "ai"
+                    ? "AI processing"
+                    : w === "recording"
+                      ? "Visit recording"
+                      : "Sharing with third parties"}
+                </span>
+                <div className="w-40">
+                  <Select
+                    aria-label={`${w} consent`}
+                    className="h-9"
+                    value={p.consents[w as keyof DocFull["consents"]]}
+                    onChange={(e) =>
+                      post({ type: "consent", which: w, state: e.target.value }, "Consent recorded")
+                    }
+                  >
+                    {consentStates.map((c) => (
+                      <option key={c}>{c}</option>
+                    ))}
+                  </Select>
                 </div>
-              ),
-            )}
+              </div>
+            ))}
           </div>
         </FCard>
       </div>

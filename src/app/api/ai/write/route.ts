@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { generateJson } from "@/lib/ai/engine";
+import { rethrowDisabled } from "@/lib/ai/types";
 import { requireUser } from "@/server/auth";
 import { handle, readJson, UserFacingError } from "@/server/http";
 
@@ -33,7 +34,8 @@ export async function POST(request: Request) {
       const tidy = (JSON.parse(out.text) as { text: string }).text.trim();
       if (!tidy) throw new Error("empty");
       return { text: tidy };
-    } catch {
+    } catch (error) {
+      rethrowDisabled(error);
       throw new UserFacingError(
         "AI writing isn't available right now. Your text is unchanged.",
         409,

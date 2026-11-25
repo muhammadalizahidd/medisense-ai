@@ -1,5 +1,6 @@
 "use client";
 
+import { useAiEnabled } from "@/components/ai/ai-switch";
 import { NoteAssist, wantsAssist } from "@/components/ai/note-assist";
 import { PatientAiTab, TherapistAiInbox, VisitCheckin } from "./enhance-therapist";
 import {
@@ -892,6 +893,8 @@ function NoteSheet({ visit, ctx }: { visit: Visit; ctx: Ctx }) {
   );
   const [missing, setMissing] = useState<string[]>([]);
   const [busy, setBusy] = useState<"draft" | "sign" | null>(null);
+  const ai = useAiEnabled();
+  const [drafted, setDrafted] = useState(Boolean(visit.note?.soap));
   const [listening, setListening] = useState(false);
   const recogniser = useRef<{ stop: () => void } | null>(null);
   useEffect(() => () => recogniser.current?.stop(), []);
@@ -947,6 +950,7 @@ function NoteSheet({ visit, ctx }: { visit: Visit; ctx: Ctx }) {
       // The clinical assessment stays the clinician's own words.
       setDraft({ ...out, assessment: draft?.assessment ?? "" });
       setMissing(out.missing ?? []);
+      setDrafted(true);
     } catch (e) {
       toast("No draft this time", {
         tone: "error",
@@ -962,7 +966,7 @@ function NoteSheet({ visit, ctx }: { visit: Visit; ctx: Ctx }) {
     setBusy("sign");
     try {
       await api(`/api/visits/${visit.id}/note`, {
-        body: { ...draft, aiDrafted: true, sign: true },
+        body: { ...draft, aiDrafted: drafted, sign: true },
       });
       toast("Note signed", { tone: "success", detail: "The patient sees the plain summary only." });
       ctx.done();
@@ -993,8 +997,25 @@ function NoteSheet({ visit, ctx }: { visit: Visit; ctx: Ctx }) {
             <FileSignature className="size-4" aria-hidden="true" /> Sign note as{" "}
             {visit.therapistName}
           </Button>
+        ) : !ai ? (
+          <Button
+            variant="primary"
+            className="w-full"
+            onClick={() =>
+              setDraft({
+                subjective: rough,
+                objective: "",
+                assessment: "",
+                plan: "",
+                forPatient: "",
+              })
+            }
+          >
+            Write the note
+          </Button>
         ) : (
           <Button
+            data-ai-only
             variant="primary"
             className="w-full"
             loading={busy === "draft"}
@@ -1055,6 +1076,7 @@ function NoteSheet({ visit, ctx }: { visit: Visit; ctx: Ctx }) {
           <div className="flex items-center justify-between">
             <AiChip>AI draft, needs your approval</AiChip>
             <button
+              data-ai-only
               type="button"
               onClick={makeDraft}
               className="cursor-pointer text-caption font-semibold text-accent"
@@ -1077,7 +1099,7 @@ function NoteSheet({ visit, ctx }: { visit: Visit; ctx: Ctx }) {
             onChange={set("forPatient")}
           />
           {missing.length > 0 && (
-            <div className="rounded-control bg-watch-bg p-2.5 text-caption text-watch">
+            <div data-ai-only className="rounded-control bg-watch-bg p-2.5 text-caption text-watch">
               <p className="font-semibold">Not in your notes</p>
               <ul className="mt-1 list-disc pl-4 text-ink-700">
                 {missing.slice(0, 4).map((m) => (
@@ -1727,7 +1749,9 @@ const kindIcon: Record<string, typeof House> = {
 };
 
 function PatientScreen({ c, ctx, onClose }: { c: Client; ctx: Ctx; onClose: () => void }) {
-  const [view, setView] = useState<"history" | "goals" | "assess" | "ai">("history");
+  const [picked, setView] = useState<"history" | "goals" | "assess" | "ai">("history");
+  const ai = useAiEnabled();
+  const view = !ai && picked === "ai" ? "history" : picked;
   const [inner, setInner] = useState<ReactNode>(null);
   const record = useResource<{ record: { timeline: TimelineItem[] } }>(`/api/care/records/${c.id}`);
   const plans = useResource<{ rows: PlanRowLite[] }>("/api/care/plans");
@@ -1837,7 +1861,10 @@ function PatientScreen({ c, ctx, onClose }: { c: Client; ctx: Ctx; onClose: () =
           <div
             role="tablist"
             aria-label="Patient"
-            className="mb-4 grid grid-cols-4 gap-1 rounded-full bg-sunken p-1"
+            className={cn(
+              "mb-4 grid gap-1 rounded-full bg-sunken p-1",
+              ai ? "grid-cols-4" : "grid-cols-3",
+            )}
           >
             {(
               [
@@ -1848,6 +1875,7 @@ function PatientScreen({ c, ctx, onClose }: { c: Client; ctx: Ctx; onClose: () =
               ] as const
             ).map(([id, label]) => (
               <button
+                data-ai-only={id === "ai" || undefined}
                 key={id}
                 type="button"
                 role="tab"
@@ -1979,7 +2007,7 @@ function PatientScreen({ c, ctx, onClose }: { c: Client; ctx: Ctx; onClose: () =
               </div>
             ))}
 
-          {view === "ai" && <PatientAiTab clientId={c.id} />}
+          {ai && view === "ai" && <PatientAiTab clientId={c.id} />}
 
           {view === "assess" &&
             (!assess.data ? (

@@ -1,5 +1,6 @@
 "use client";
 
+import { useAiEnabled, useAiText } from "@/components/ai/ai-switch";
 import {
   Activity,
   AlertTriangle,
@@ -70,7 +71,10 @@ export function OperationsHub() {
     "/api/care/operations",
     (e) => e.type === "care",
   );
-  const [tab, setTab] = useTab(tabs);
+  const [picked, setTab] = useTab(tabs);
+  const ai = useAiEnabled();
+  const tab = !ai && picked === "agent" ? "overview" : picked;
+  const text = useAiText();
   const [queueTab, setQueueTab] = useState<QueueTab>("All");
   const [running, setRunning] = useState(false);
   if (error && !data) return <ErrorNote message={error} onRetry={reload} />;
@@ -129,7 +133,14 @@ export function OperationsHub() {
           </div>
         }
       />
-      <Tabs label="Operations" tabs={tabList} value={tab} onChange={(t: OpsTab) => setTab(t)} />
+      <Tabs
+        label="Operations"
+        tabs={tabList
+          .filter((t) => ai || t.id !== "agent")
+          .map((t) => ({ ...t, label: text(t.label) }))}
+        value={tab}
+        onChange={(t: OpsTab) => setTab(t)}
+      />
       <TabPanel id="overview" value={tab}>
         <Overview hub={hub} goQueue={goQueue} go={setTab} />
       </TabPanel>
@@ -1059,7 +1070,10 @@ function SettingsTab({ hub, onDone }: { hub: OpsHubDto; onDone: () => void }) {
             30,
           )}
         </div>
-        <div className="mt-5 flex items-center justify-between gap-4 rounded-control border border-border px-4 py-3">
+        <div
+          data-ai-only
+          className="mt-5 flex items-center justify-between gap-4 rounded-control border border-border px-4 py-3"
+        >
           <span>
             <span className="block text-small font-semibold text-ink-900">AI referral review</span>
             <span className="block text-caption text-ink-500">

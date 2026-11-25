@@ -465,6 +465,7 @@ function SignedPanel({
           ) : (
             <>
               <Button
+                data-ai-only
                 size="sm"
                 className="mb-3"
                 disabled={drafting}
@@ -490,7 +491,11 @@ function SignedPanel({
                 <AiIcon className="size-3.5" />
                 {drafting ? "Drafting…" : "Draft with AI"}
               </Button>
-              {draftNote && <p className="mb-2 text-caption text-ink-700">{draftNote}</p>}
+              {draftNote && (
+                <p data-ai-only className="mb-2 text-caption text-ink-700">
+                  {draftNote}
+                </p>
+              )}
               <TextArea
                 label="Plain-language summary"
                 value={summary}
@@ -638,7 +643,7 @@ function AiCheck({ id }: { id: string }) {
   const [busy, setBusy] = useState(false);
   const [fail, setFail] = useState<string | null>(null);
   return (
-    <div className="w-full">
+    <div data-ai-only className="w-full">
       <Button
         size="sm"
         disabled={busy}

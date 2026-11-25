@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { generateJson } from "@/lib/ai/engine";
+import { rethrowDisabled } from "@/lib/ai/types";
 import {
   extractionSchema,
   referralFromExtraction,
@@ -45,7 +46,8 @@ export async function POST(request: Request) {
         maxTokens: 1800,
       });
       extracted = JSON.parse(out.text) as ReferralExtraction;
-    } catch {
+    } catch (error) {
+      rethrowDisabled(error);
       throw new UserFacingError(
         "AI couldn't read the referral just now. Your text is still here, so try again.",
         409,

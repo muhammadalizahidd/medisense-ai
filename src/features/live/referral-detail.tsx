@@ -1494,7 +1494,11 @@ function AiReview({ id, onUse }: { id: string; onUse: (items: Gap[]) => void }) 
   const chosen = (items ?? []).filter((i) => picked.includes(i.field + i.label));
 
   return (
-    <section aria-labelledby="ai-review" className="overflow-hidden rounded-card surface-draft">
+    <section
+      data-ai-only
+      aria-labelledby="ai-review"
+      className="overflow-hidden rounded-card surface-draft"
+    >
       <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5">
         <div>
           <h2

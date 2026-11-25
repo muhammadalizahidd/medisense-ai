@@ -154,11 +154,13 @@ export function ClientProfileView({ profile }: { profile: ClientProfile }) {
               AI summary — check before relying on it
             </DraftLabel>
           )}
-          <p className="text-body text-ink-900">{profile.summary}</p>
+          <p data-ai-only={!reviewed || undefined} className="text-body text-ink-900">
+            {profile.summary}
+          </p>
           <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
             <Caption>Updated {dt("20 Oct 2026")}, 7:00 am</Caption>
             {!reviewed && (
-              <Button size="sm" onClick={() => setReviewed(true)}>
+              <Button data-ai-only size="sm" onClick={() => setReviewed(true)}>
                 Mark as reviewed
               </Button>
             )}

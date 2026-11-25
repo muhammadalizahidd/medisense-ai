@@ -1,6 +1,21 @@
 /** An error whose message is safe to show in the UI. */
 export class AiError extends Error {}
 
+/** What people see when something is switched off. It deliberately doesn't name the feature. */
+export const TURNED_OFF = "Turned off by your organisation";
+
+/** The organisation switch is off. Never treat this as a failed call that needs a prepared draft. */
+export class AiDisabled extends AiError {
+  constructor() {
+    super(TURNED_OFF);
+  }
+}
+
+/** For catch blocks that reword failures: the switch being off passes through untouched. */
+export function rethrowDisabled(error: unknown) {
+  if (error instanceof AiDisabled) throw error;
+}
+
 export type JsonSchema = Record<string, unknown>;
 
 /** A read-only tool the model may call. `run` returns plain JSON-serialisable data. */

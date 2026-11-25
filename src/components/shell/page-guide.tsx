@@ -3,13 +3,18 @@
 import { CircleHelp, ListChecks, Target, Workflow } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useAiEnabled } from "@/components/ai/ai-switch";
 import { Sheet } from "@/components/ui/sheet";
+import { mentionsAi } from "@/lib/ai/wording";
 import { isStandalone } from "@/lib/navigation";
 import { guideFor, type PageGuide } from "@/lib/page-guides";
 import { cn } from "@/lib/cn";
 
 /** The guide panel: purpose, what you can do, how it works, and what you get. */
 function GuidePanel({ guide, onClose }: { guide: PageGuide; onClose: () => void }) {
+  const ai = useAiEnabled();
+  // Lines about the switched-off features leave; the rest read as written.
+  const kept = (lines: readonly string[]) => (ai ? lines : lines.filter((l) => !mentionsAi(l)));
   return (
     <Sheet title={guide.title} description="Page guide" onClose={onClose}>
       <div className="flex flex-col gap-6">
@@ -24,7 +29,7 @@ function GuidePanel({ guide, onClose }: { guide: PageGuide; onClose: () => void 
             <ListChecks className="size-4 text-accent" aria-hidden="true" /> What you can do here
           </h3>
           <ul className="flex flex-col gap-1.5">
-            {guide.can.map((c) => (
+            {kept(guide.can).map((c) => (
               <li key={c} className="flex gap-2 text-body text-ink-700">
                 <span
                   aria-hidden="true"
@@ -40,7 +45,7 @@ function GuidePanel({ guide, onClose }: { guide: PageGuide; onClose: () => void 
             <Workflow className="size-4 text-accent" aria-hidden="true" /> How it works
           </h3>
           <ol className="flex flex-col gap-2">
-            {guide.steps.map((s, i) => (
+            {kept(guide.steps).map((s, i) => (
               <li key={s} className="flex gap-3 text-body text-ink-700">
                 <span className="flex size-6 flex-none items-center justify-center rounded-full bg-accent-tint text-caption font-semibold text-accent">
                   {i + 1}

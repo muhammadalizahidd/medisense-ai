@@ -8,9 +8,10 @@ import {
   requestedProvider,
   type ActiveProvider,
 } from "./providers";
-import { AiError, type AiOutput, type JsonRequest, type ToolRequest } from "./types";
+import { AiDisabled, AiError, type AiOutput, type JsonRequest, type ToolRequest } from "./types";
+import { aiSwitchOn } from "@/server/ai-switch";
 
-export { AiError } from "./types";
+export { AiDisabled, AiError } from "./types";
 
 export const NO_KEY = "No AI provider key is set";
 
@@ -78,7 +79,9 @@ export function checkAiKey(force = false) {
   return statusCheck;
 }
 
+/** Every model call passes here, so the organisation switch stops all of them in one place. */
 async function ready(): Promise<ActiveProvider> {
+  if (!(await aiSwitchOn())) throw new AiDisabled();
   const status = await checkAiKey();
   const provider = activeProvider();
   if (!provider || status.state === "missing") throw new AiError(NO_KEY);

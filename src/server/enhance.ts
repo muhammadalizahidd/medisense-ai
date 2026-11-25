@@ -1,6 +1,8 @@
 import "server-only";
 import { ObjectId } from "mongodb";
 import { generateJson } from "@/lib/ai/engine";
+import { AiDisabled } from "@/lib/ai/types";
+import { aiSwitchOn } from "./ai-switch";
 import type {
   ActivityDto,
   ChatMessage,
@@ -629,7 +631,19 @@ const SAFETY_TEXT =
 
 /* ------------------------------------------------------------------ actions */
 
+/** Actions that only exist to produce generated text; they stop with the organisation switch. */
+const GENERATED: ReadonlySet<EnhanceAction["type"]> = new Set([
+  "chat",
+  "chat-task",
+  "coach-ask",
+  "coach-draft",
+  "insight-draft",
+  "coord-brief",
+  "translate",
+]);
+
 export async function enhanceAction(u: UserDoc, a: EnhanceAction) {
+  if (GENERATED.has(a.type) && !(await aiSwitchOn())) throw new AiDisabled();
   const care = caregiverInfo(u);
   if (care) {
     if (a.type === "prefs")

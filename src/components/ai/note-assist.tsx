@@ -2,10 +2,12 @@
 
 import { Loader2, Mic, MicOff, Undo2 } from "lucide-react";
 import { useState } from "react";
+import { useAiEnabled } from "@/components/ai/ai-switch";
 import { AiIcon } from "@/components/ai/provenance";
 import { useDictation } from "@/features/case-notes/use-dictation";
 import { cn } from "@/lib/cn";
 import { api } from "@/lib/live/client";
+import { aiEnabledNow } from "@/state/ai-switch";
 
 /** Fields that are reasons or addresses get no assist; everything else written by hand does. */
 const SKIP = /\b(reason|address|postcode|email|phone|url|link)\b/i;
@@ -26,6 +28,7 @@ export function NoteAssist({
   onChange: (value: string) => void;
   className?: string;
 }) {
+  const ai = useAiEnabled();
   const [busy, setBusy] = useState(false);
   const [before, setBefore] = useState<string | null>(null);
   const [fail, setFail] = useState<string | null>(null);
@@ -41,6 +44,8 @@ export function NoteAssist({
       const res = await api<{ text: string }>("/api/ai/write", {
         body: { field: label, text: value },
       });
+      // Switched off while it was writing: the person's own words stay.
+      if (!aiEnabledNow()) return;
       setBefore(value);
       onChange(res.text);
     } catch (e) {
@@ -73,6 +78,7 @@ export function NoteAssist({
         </button>
       )}
       <button
+        data-ai-only
         type="button"
         onClick={write}
         disabled={busy || value.trim().length < 3}
@@ -99,14 +105,16 @@ export function NoteAssist({
         </button>
       )}
       {before !== null && !busy && (
-        <span className="text-label text-ink-500">AI draft · check before saving</span>
+        <span data-ai-only className="text-label text-ink-500">
+          AI draft · check before saving
+        </span>
       )}
       {dictation.listening && dictation.interim && (
         <span className="truncate text-caption text-ink-500 italic">{dictation.interim}…</span>
       )}
-      {(fail ?? dictation.error) && (
+      {((ai && fail) || dictation.error) && (
         <span role="alert" className="text-caption text-over">
-          {fail ?? dictation.error}
+          {(ai && fail) || dictation.error}
         </span>
       )}
     </div>

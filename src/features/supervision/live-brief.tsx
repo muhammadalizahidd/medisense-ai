@@ -75,6 +75,22 @@ export function LiveBrief() {
     }),
   );
 
+  if (brief.off) {
+    return (
+      <PlainAgenda
+        notesToWrite={f.sarahNotes}
+        overdue={escalatedNames}
+        status={
+          f.sarahStatus === "at-risk"
+            ? "At Risk"
+            : f.sarahStatus === "monitor"
+              ? "Watch"
+              : "Healthy"
+        }
+      />
+    );
+  }
+
   const approved = story.briefApprovedKey === key;
   const canApprove = role === "Supervisor";
   const changedHeadings = new Set<string>([
@@ -169,6 +185,42 @@ export function LiveBrief() {
           </Caption>
         </div>
       )}
+    </section>
+  );
+}
+
+/** The session's facts from the records and rules, for a supervisor preparing it themselves. */
+function PlainAgenda({
+  notesToWrite,
+  overdue,
+  status,
+}: {
+  notesToWrite: number;
+  overdue: string[];
+  status: string;
+}) {
+  return (
+    <section
+      aria-labelledby="agenda-title"
+      className="flex h-full flex-col rounded-card border border-border bg-surface px-6 pt-5 pb-4.5"
+    >
+      <h2 id="agenda-title" className="mb-3 text-section font-semibold text-ink-900">
+        Supervision agenda
+      </h2>
+      <dl className="flex flex-col gap-3 text-small">
+        <div>
+          <dt className="font-semibold">Workload</dt>
+          <dd>{status}: 27 patients for a capacity of 25.</dd>
+        </div>
+        <div>
+          <dt className="font-semibold">Notes to write</dt>
+          <dd>{notesToWrite}</dd>
+        </div>
+        <div>
+          <dt className="font-semibold">Escalated follow-ups</dt>
+          <dd>{overdue.length ? overdue.join("; ") : "None escalated."}</dd>
+        </div>
+      </dl>
     </section>
   );
 }

@@ -2,7 +2,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { ObjectId } from "mongodb";
 import { generateJson } from "@/lib/ai/engine";
-import { AiError } from "@/lib/ai/types";
+import { AiError, rethrowDisabled } from "@/lib/ai/types";
 import { assessmentGaps, templateFor } from "@/lib/live/clinical";
 import type { Discipline, ServiceLocation, Support } from "@/lib/live/catalogue";
 import {
@@ -1136,6 +1136,7 @@ async function morningBrief(user: UserDoc) {
     });
     parsed = JSON.parse(out.text);
   } catch (error) {
+    rethrowDisabled(error);
     if (error instanceof AiError)
       throw new UserFacingError(`AI isn't available: ${error.message}`, 409);
     throw new UserFacingError("The AI brief couldn't be read. Try again.", 409);

@@ -1,5 +1,6 @@
 "use client";
 
+import { useAiEnabled, useAiText } from "@/components/ai/ai-switch";
 import {
   ArrowLeft,
   CalendarDays,
@@ -46,6 +47,8 @@ import { cn } from "@/lib/cn";
 import { noteSectionTitles, type SessionNote } from "@/lib/story/types";
 import { useDemoStore } from "@/state/demo-store";
 import { callStory } from "@/state/use-story-ai";
+import { manualNote } from "@/lib/story/manual-note";
+import { aiEnabledNow } from "@/state/ai-switch";
 import { StaffChatOverlay, StaffInbox } from "@/features/live/staff-inbox";
 import { AppCard, AppHeader, AppSheet, PhoneFrame } from "./phone-frame";
 import { Select } from "@/components/ui/select";
@@ -165,6 +168,7 @@ function HomeTab({ onNote, onTab }: { onNote: () => void; onTab: (id: string) =>
 }
 
 function ScheduleTab({ onNote }: { onNote: () => void }) {
+  const label = useAiText();
   const [day, setDay] = useState<number>(TODAY);
   const [openId, setOpenId] = useState<string | null>(null);
   const stage = useDemoStore((s) => s.story.stage);
@@ -236,7 +240,7 @@ function ScheduleTab({ onNote }: { onNote: () => void }) {
                 </div>
                 {v.state === "just-finished" && stage !== "approved" && (
                   <Button variant="primary" className="mt-3 w-full" onClick={onNote}>
-                    Write note with AI
+                    {label("Write note with AI", "Write note")}
                   </Button>
                 )}
               </AppCard>
@@ -867,6 +871,8 @@ function NoteView({ offline, onBack }: { offline: boolean; onBack: () => void })
   const approve = useDemoStore((s) => s.approveSessionNote);
   const reopen = useDemoStore((s) => s.reopenSessionNote);
   const [text, setText] = useState(story.transcript);
+  const ai = useAiEnabled();
+  const label = useAiText();
   const dictation = useDictation((heard) =>
     setText((t) => (t.trim() ? `${t.trimEnd()}\n${heard}` : heard)),
   );
@@ -880,8 +886,13 @@ function NoteView({ offline, onBack }: { offline: boolean; onBack: () => void })
     if (dictation.listening) dictation.stop();
     setTranscript(lines.join("\n"));
     finish();
+    if (!aiEnabledNow()) {
+      complete(manualNote(lines), { source: "manual", model: null, latencyMs: null });
+      return;
+    }
     begin();
     const result = await callStory<SessionNote>({ kind: "note", lines });
+    if (!aiEnabledNow()) return finish();
     if (!("error" in result)) complete(result.data, result.meta);
     else if (lines.join("\n") === sampleDictation.join("\n")) {
       complete(preparedNote, { source: "prepared", model: null, latencyMs: null });
@@ -895,7 +906,9 @@ function NoteView({ offline, onBack }: { offline: boolean; onBack: () => void })
     <div className="absolute inset-0 z-20 overflow-y-auto bg-canvas pb-6">
       <AppHeader
         eyebrow="Oliver Grant, today's visit"
-        title={hasNote ? (approved ? "Note approved" : "Check your note") : "AI session note"}
+        title={
+          hasNote ? (approved ? "Note approved" : "Check your note") : label("AI session note")
+        }
         aside={
           <button
             type="button"
@@ -908,7 +921,7 @@ function NoteView({ offline, onBack }: { offline: boolean; onBack: () => void })
         }
       />
       <div className="p-3.5">
-        {story.stage === "generating" ? (
+        {ai && story.stage === "generating" ? (
           <AppCard>
             <p role="status" className="text-small text-ink-700">
               AI is writing the note…
@@ -933,13 +946,15 @@ function NoteView({ offline, onBack }: { offline: boolean; onBack: () => void })
               ) : null,
             )}
             {story.note.missing.length > 0 && !approved && (
-              <AppCard title="AI thinks this may be missing">
-                <ul className="flex list-disc flex-col gap-1 pl-4 text-small">
-                  {story.note.missing.map((m) => (
-                    <li key={m.id}>{m.text}</li>
-                  ))}
-                </ul>
-              </AppCard>
+              <div data-ai-only>
+                <AppCard title="AI thinks this may be missing">
+                  <ul className="flex list-disc flex-col gap-1 pl-4 text-small">
+                    {story.note.missing.map((m) => (
+                      <li key={m.id}>{m.text}</li>
+                    ))}
+                  </ul>
+                </AppCard>
+              </div>
             )}
             {!approved && (
               <div className="flex gap-2">
@@ -990,7 +1005,7 @@ function NoteView({ offline, onBack }: { offline: boolean; onBack: () => void })
                   {story.error}
                 </p>
               )}
-              {offline && (
+              {ai && offline && (
                 <p className="mt-2 text-small text-watch">
                   AI needs a connection. Your text stays here until you&apos;re back online.
                 </p>
@@ -998,10 +1013,10 @@ function NoteView({ offline, onBack }: { offline: boolean; onBack: () => void })
               <div className="mt-3 flex flex-col gap-2">
                 <Button
                   variant="primary"
-                  disabled={offline || !text.trim()}
+                  disabled={(ai && offline) || !text.trim()}
                   onClick={() => void write()}
                 >
-                  Write note with AI
+                  {label("Write note with AI", "Write note")}
                 </Button>
                 <Button onClick={() => setText(sampleDictation.join("\n"))}>
                   Use sample dictation
@@ -1023,6 +1038,7 @@ export function StaffApp() {
   const [tab, setTab] = useState("home");
   const [noteOpen, setNoteOpen] = useState(false);
   const [chat, setChat] = useState<string | null>(null);
+  const label = useAiText();
   const queued = queuedValue ? queuedValue.split(",") : [];
 
   function toggleOffline() {
@@ -1039,7 +1055,7 @@ export function StaffApp() {
       description="Everything a therapist needs between home visits, from the car or the patient's lounge room."
       features={[
         "Today's visits, directions and when to leave",
-        "Talk through the visit and AI writes the note",
+        label("Talk through the visit and AI writes the note", "Dictate the visit note as you go"),
         "Add patients and book visits on the go",
         "Tasks and notifications in one place",
         "New patient requests and live chat with patients",

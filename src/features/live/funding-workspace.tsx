@@ -1118,7 +1118,7 @@ function MissingCard({
       footer={
         w.can.edit && (
           <>
-            <Button size="sm" variant="primary" disabled={busy} onClick={run}>
+            <Button data-ai-only size="sm" variant="primary" disabled={busy} onClick={run}>
               <AiIcon className="size-3.5" /> {busy ? "AI is checking…" : "AI completeness check"}
             </Button>
             {plan.missing.length > 0 && (
@@ -1158,7 +1158,10 @@ function MissingCard({
         </ul>
       )}
       {check && (
-        <div className="bubble-in mt-4 rounded-control border border-dashed border-draft-rule bg-draft p-3">
+        <div
+          data-ai-only
+          className="bubble-in mt-4 rounded-control border border-dashed border-draft-rule bg-draft p-3"
+        >
           <p className="mb-2 flex items-center justify-between gap-2">
             <AiChip>AI review</AiChip>
             <span className="text-caption text-ink-500">For you to check and send</span>

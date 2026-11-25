@@ -710,6 +710,7 @@ function CategoryPanel({ t, post }: { t: TaskFull; post: Post }) {
               t.canEdit &&
               t.participant && (
                 <Button
+                  data-ai-only
                   size="sm"
                   variant="soft"
                   onClick={async () => {

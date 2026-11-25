@@ -1,5 +1,6 @@
 "use client";
 
+import { useAiEnabled } from "@/components/ai/ai-switch";
 import {
   AlertTriangle,
   BellRing,
@@ -102,6 +103,7 @@ const statusTone: Record<
 /* ------------------------------------------------------------------ board */
 
 export function ScheduleBoard() {
+  const ai = useAiEnabled();
   const [view, setView] = useState<View>("week");
   const [anchor, setAnchor] = useState(() => dayStart(Date.now()));
   const [clinician, setClinician] = useState("");
@@ -222,10 +224,12 @@ export function ScheduleBoard() {
                   label="Assignment mode"
                   value={board.mode}
                   onChange={changeMode}
-                  options={assignmentModes.map((m) => ({
-                    id: m,
-                    label: m === "Rules-Based Auto" ? "Auto" : m,
-                  }))}
+                  options={assignmentModes
+                    .filter((m) => ai || m !== "AI Assisted")
+                    .map((m) => ({
+                      id: m,
+                      label: m === "Rules-Based Auto" ? "Auto" : m,
+                    }))}
                 />
               </div>
             )}
@@ -606,7 +610,7 @@ export function ScheduleBoard() {
       {booking && (
         <BookingWizard
           item={booking}
-          mode={board?.mode ?? "AI Assisted"}
+          mode={board?.mode ?? (ai ? "AI Assisted" : "Manual")}
           onClose={() => setBooking(null)}
           onBooked={() => {
             setBooking(null);

@@ -3,7 +3,7 @@ import { can } from "./permissions";
 import { randomUUID } from "node:crypto";
 import { ObjectId } from "mongodb";
 import { generateJson } from "@/lib/ai/engine";
-import { AiError } from "@/lib/ai/types";
+import { AiError, rethrowDisabled } from "@/lib/ai/types";
 import { consentItems } from "@/lib/live/participant";
 import {
   accessLabel,
@@ -1667,6 +1667,7 @@ async function aiDraft(u: UserDoc, clientId: ObjectId, kind: AiSummaryDto["kind"
         .map((p) => ({ ...p, uncertain: p.uncertain || !p.source })),
     };
   } catch (error) {
+    rethrowDisabled(error);
     if (error instanceof AiError)
       throw new UserFacingError(`AI isn't available right now: ${error.message}`, 409);
     throw new UserFacingError("The AI answer couldn't be read. Try again.", 409);

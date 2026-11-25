@@ -3,7 +3,7 @@ import { can } from "./permissions";
 import { randomUUID } from "node:crypto";
 import { ObjectId } from "mongodb";
 import { generateJson } from "@/lib/ai/engine";
-import { AiError } from "@/lib/ai/types";
+import { AiError, rethrowDisabled } from "@/lib/ai/types";
 import { templates } from "@/lib/live/assess";
 import { restrictedDisciplines } from "@/lib/live/records";
 import {
@@ -1096,6 +1096,7 @@ async function aiBrief(
     const parsed = JSON.parse(out.text) as { brief: string; sources: string[] };
     return { text: parsed.brief, sources: parsed.sources.slice(0, 8) };
   } catch (error) {
+    rethrowDisabled(error);
     if (error instanceof AiError)
       throw new UserFacingError(`AI isn't available right now: ${error.message}`, 409);
     throw new UserFacingError("The AI answer couldn't be read. Try again.", 409);
@@ -1143,6 +1144,7 @@ async function aiNote(a: AppointmentDoc, e: SessionExtDoc, client: ClientDoc) {
     };
   } catch (error) {
     if (error instanceof UserFacingError) throw error;
+    rethrowDisabled(error);
     if (error instanceof AiError)
       throw new UserFacingError(`AI isn't available right now: ${error.message}`, 409);
     throw new UserFacingError("The AI answer couldn't be read. Try again.", 409);

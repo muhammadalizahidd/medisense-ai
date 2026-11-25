@@ -2,6 +2,7 @@ import "server-only";
 import { MongoNetworkError, MongoServerSelectionError, ObjectId } from "mongodb";
 import { NextResponse } from "next/server";
 import { z, ZodError, type ZodType } from "zod";
+import { AiDisabled } from "@/lib/ai/types";
 import { AuthError } from "./auth";
 import { DatabaseUnavailable } from "./db";
 import { serverLog } from "./log";
@@ -55,6 +56,9 @@ export async function handle<T>(run: () => Promise<T>) {
   } catch (error) {
     if (error instanceof AuthError) {
       return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+    if (error instanceof AiDisabled) {
+      return NextResponse.json({ error: error.message }, { status: 423 });
     }
     if (error instanceof UserFacingError) {
       return NextResponse.json({ error: error.message }, { status: error.status });

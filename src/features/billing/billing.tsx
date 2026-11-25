@@ -151,7 +151,7 @@ export function Billing() {
         ]}
       />
 
-      <section className={cn(draftSurface(false), "mt-6 px-5 py-4")}>
+      <section data-ai-only className={cn(draftSurface(false), "mt-6 px-5 py-4")}>
         <AiMark>AI claims summary, recommendation only</AiMark>
         <p className="mt-1.5 type-display text-section font-normal" aria-busy={summary.loading}>
           {summary.loading ? "AI is reading this week's sessions…" : summary.data}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useAiText } from "@/components/ai/ai-switch";
 import {
   ArrowLeft,
   Camera,
@@ -1514,6 +1515,7 @@ function Review({ a, post, go }: { a: AssessDto; post: Post; go: (t: T) => void 
 function Report({ a, post }: { a: AssessDto; post: Post }) {
   const [busy, setBusy] = useState(false);
   const [text, setText] = useState(a.report?.text ?? "");
+  const label = useAiText();
   return (
     <div className="grid items-stretch gap-6 xl:grid-cols-12">
       <div className="flex flex-col gap-6 xl:col-span-8 [&>*:last-child]:flex-1">
@@ -1552,7 +1554,10 @@ function Report({ a, post }: { a: AssessDto; post: Post }) {
             )}
           </AiDraft>
         ) : (
-          <div className="rounded-card border border-dashed border-border-strong px-6 py-10 text-center">
+          <div
+            data-ai-only
+            className="rounded-card border border-dashed border-border-strong px-6 py-10 text-center"
+          >
             <p className="text-small text-ink-700">
               No report draft yet. AI drafts from documented findings only, cites each one and never
               adds unobserved facts.
@@ -1579,6 +1584,7 @@ function Report({ a, post }: { a: AssessDto; post: Post }) {
                   Mark reviewed
                 </Button>
                 <Button
+                  data-ai-only
                   variant="soft"
                   loading={busy}
                   onClick={async () => {
@@ -1596,7 +1602,10 @@ function Report({ a, post }: { a: AssessDto; post: Post }) {
               className={cn(textArea, "min-h-56")}
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="The AI draft appears above; write or paste your final narrative here."
+              placeholder={label(
+                "The AI draft appears above; write or paste your final narrative here.",
+                "Write or paste your final narrative here.",
+              )}
             />
           </FCard>
         )}

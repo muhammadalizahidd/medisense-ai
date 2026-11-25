@@ -1,5 +1,6 @@
 "use client";
 
+import { AiOnly, useAiEnabled } from "@/components/ai/ai-switch";
 import {
   Check,
   Hourglass,
@@ -252,6 +253,7 @@ function Consents({ busy, act }: { busy: boolean; act: Act }) {
     transcription: false,
     sharing: true,
   });
+  const ai = useAiEnabled();
   const set = (k: keyof typeof c) => (v: boolean) => setC((x) => ({ ...x, [k]: v }));
   return (
     <Card title="Your choices">
@@ -267,10 +269,12 @@ function Consents({ busy, act }: { busy: boolean; act: Act }) {
           <strong>Recording.</strong> The clinician may record the visit for my clinical record.
           I&apos;ll always see when it&apos;s on.
         </Tick>
-        <Tick checked={c.transcription} onChange={set("transcription")}>
-          <strong>AI transcription.</strong> Speech may be transcribed to help draft the
-          clinician&apos;s note, which they check and sign.
-        </Tick>
+        <AiOnly>
+          <Tick checked={c.transcription} onChange={set("transcription")}>
+            <strong>AI transcription.</strong> Speech may be transcribed to help draft the
+            clinician&apos;s note, which they check and sign.
+          </Tick>
+        </AiOnly>
         <Tick checked={c.sharing} onChange={set("sharing")}>
           <strong>Information sharing.</strong> Notes from this visit may be shared with my care
           team.
@@ -280,7 +284,7 @@ function Consents({ busy, act }: { busy: boolean; act: Act }) {
         variant="primary"
         className="mt-5"
         disabled={busy}
-        onClick={() => act({ action: "consent", ...c })}
+        onClick={() => act({ action: "consent", ...c, transcription: ai && c.transcription })}
       >
         Save my choices
       </Button>

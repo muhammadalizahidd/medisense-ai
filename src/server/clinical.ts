@@ -3,7 +3,7 @@ import { can } from "./permissions";
 import { randomUUID } from "node:crypto";
 import { ObjectId } from "mongodb";
 import { z } from "zod";
-import { AiError } from "@/lib/ai/types";
+import { AiError, rethrowDisabled } from "@/lib/ai/types";
 import { generateJson } from "@/lib/ai/engine";
 import {
   activityFrequencies,
@@ -629,6 +629,7 @@ export async function draftProgressSummary(user: UserDoc, id: ObjectId) {
     );
     return { text };
   } catch (error) {
+    rethrowDisabled(error);
     if (error instanceof AiError)
       throw new UserFacingError(`The AI draft isn't available: ${error.message}`, 409);
     throw new UserFacingError("The AI draft couldn't be read. Try again.", 409);
@@ -1147,6 +1148,7 @@ export async function draftSoap(user: UserDoc, id: ObjectId, input: z.infer<type
     );
     return { ...draft, model: out.model };
   } catch (error) {
+    rethrowDisabled(error);
     if (error instanceof AiError)
       throw new UserFacingError(`The AI draft isn't available: ${error.message}`, 409);
     throw new UserFacingError("The AI draft couldn't be read. Try again.", 409);
@@ -1286,6 +1288,7 @@ async function ai<T>(
     });
     return { ...(JSON.parse(out.text) as T), model: out.model };
   } catch (error) {
+    rethrowDisabled(error);
     if (error instanceof AiError)
       throw new UserFacingError(`AI isn't available: ${error.message}`, 409);
     throw new UserFacingError("The AI answer couldn't be read. Try again.", 409);

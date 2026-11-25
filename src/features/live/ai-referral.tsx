@@ -141,6 +141,7 @@ export function AiReferralBanner() {
   if (!note) return null;
   return (
     <section
+      data-ai-only
       aria-label="AI draft"
       className="relative rounded-card border border-dashed border-draft-rule bg-draft p-4 pr-12"
     >

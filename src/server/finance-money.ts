@@ -2,7 +2,7 @@ import "server-only";
 import { ObjectId } from "mongodb";
 import { z } from "zod";
 import { generateJson } from "@/lib/ai/engine";
-import { AiError } from "@/lib/ai/types";
+import { AiError, rethrowDisabled } from "@/lib/ai/types";
 import {
   type adjustmentInputSchema,
   type allocationSchema,
@@ -1115,6 +1115,7 @@ export async function aiFinanceReview(user: UserDoc, ids: string[]) {
       }[];
     };
   } catch (error) {
+    rethrowDisabled(error);
     if (error instanceof AiError)
       throw new UserFacingError(`AI isn't available: ${error.message}`, 409);
     throw new UserFacingError("The AI answer couldn't be read. Try again.", 409);
@@ -1166,6 +1167,7 @@ export async function aiInvoiceDraft(
     });
     return JSON.parse(out.text) as { subject: string; message: string };
   } catch (error) {
+    rethrowDisabled(error);
     if (error instanceof AiError)
       throw new UserFacingError(`AI isn't available: ${error.message}`, 409);
     throw new UserFacingError("The AI answer couldn't be read. Try again.", 409);

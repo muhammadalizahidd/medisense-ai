@@ -29,6 +29,7 @@ import {
 } from "@/lib/story/types";
 import { useDemoStore } from "@/state/demo-store";
 import { callStory } from "@/state/use-story-ai";
+import { aiEnabledNow } from "@/state/ai-switch";
 
 let preparing = false;
 
@@ -547,6 +548,8 @@ export function PreparedView() {
     preparing = true;
     void callStory<Prepared>({ kind: "prepare", note }).then((result) => {
       preparing = false;
+      // Switched off while it was working: no prepared version stands in.
+      if (!aiEnabledNow()) return;
       if ("error" in result) {
         complete(preparedFor(note), { source: "prepared", model: null, latencyMs: null });
       } else {

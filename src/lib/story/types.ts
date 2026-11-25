@@ -49,7 +49,7 @@ export type QueueAdvice = {
 };
 
 export type AiMeta = {
-  source: "live" | "prepared";
+  source: "live" | "prepared" | "manual";
   model: string | null;
   latencyMs: number | null;
 };

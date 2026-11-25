@@ -19,7 +19,11 @@ export function AiMark({
   children?: ReactNode;
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+    <div
+      // An approval is a person's decision and stays; the draft label goes with the switch.
+      data-ai-only={state === "Draft" || undefined}
+      className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1"
+    >
       <span
         className={cn(
           "flex items-center gap-1.5 text-caption font-semibold",

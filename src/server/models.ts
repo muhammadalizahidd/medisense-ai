@@ -540,7 +540,7 @@ export interface MessageDoc {
   } | null;
 }
 
-export type LiveEventType = "notification" | "message" | "care" | "read" | "typing";
+export type LiveEventType = "notification" | "message" | "care" | "read" | "typing" | "settings";
 
 /** One row per change a person should see straight away. Kept for a day, then expired. */
 export interface EventDoc {

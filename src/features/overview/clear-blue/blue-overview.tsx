@@ -72,9 +72,10 @@ function BriefingCard() {
   return (
     <section
       aria-label="AI briefing"
+      data-ai-only={!changed || undefined}
       className="flex min-w-0 flex-col gap-4 rounded-card p-5 lg:flex-row lg:items-center"
     >
-      <div className="min-w-0 flex-1">
+      <div data-ai-only className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <h2 className="text-section font-semibold">Today&apos;s briefing</h2>
           <AiMark>AI briefing, recommendation only</AiMark>

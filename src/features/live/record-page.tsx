@@ -1,5 +1,6 @@
 "use client";
 
+import { AiOnly } from "@/components/ai/ai-switch";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -398,7 +399,11 @@ function Summary({ r, post, go }: { r: RecordDto; post: Post; go: (t: RecordTab)
             )}
           </ul>
         </FCard>
-        {r.canWrite && <AiPanel r={r} post={post} />}
+        {r.canWrite && (
+          <AiOnly>
+            <AiPanel r={r} post={post} />
+          </AiOnly>
+        )}
         {r.goals.length > 0 && (
           <FCard icon={Target} title="Care goals" sub="From approved treatment plans" flush>
             <ul className="divide-y divide-border">

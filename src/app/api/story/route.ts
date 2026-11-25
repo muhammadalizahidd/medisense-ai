@@ -10,7 +10,7 @@ import {
   writeDaySummary,
   writeNote,
 } from "@/lib/ai/story";
-import { AiError } from "@/lib/ai/types";
+import { AiDisabled, AiError } from "@/lib/ai/types";
 import type { SessionNote } from "@/lib/story/types";
 
 const MAX_BODY = 60_000;
@@ -97,6 +97,7 @@ export async function POST(request: Request) {
         return respond({ ok: false, error: "Unknown request" }, 400);
     }
   } catch (error) {
+    if (error instanceof AiDisabled) return respond({ ok: false, error: error.message }, 423);
     const reason = error instanceof AiError ? error.message : "Unexpected error";
     if (!(error instanceof AiError)) {
       aiLog.error(`story: ${error instanceof Error ? error.message : String(error)}`);

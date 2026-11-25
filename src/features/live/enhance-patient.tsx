@@ -1,5 +1,6 @@
 "use client";
 
+import { AiOnly, useAiEnabled } from "@/components/ai/ai-switch";
 import { Skeleton } from "./bits";
 import {
   AlertTriangle,
@@ -63,6 +64,7 @@ export function usePatientEnhance() {
 
 export function PatientAiHome({ onTab }: { onTab: (t: string) => void }) {
   const r = usePatientEnhance();
+  const ai = useAiEnabled();
   const [sheet, setSheet] = useState<"chat" | "concern" | "follow" | null>(null);
   const d = r.data;
   const open =
@@ -124,10 +126,12 @@ export function PatientAiHome({ onTab }: { onTab: (t: string) => void }) {
           <IconBadge icon={BotMessageSquare} tone="violet" size={44} />
           <span className="min-w-0 flex-1">
             <span className="block type-display text-h2 leading-tight text-ink-900">
-              Ask Medisense
+              {ai ? "Ask Medisense" : "Book or change a visit"}
             </span>
             <span className="block text-caption text-ink-500">
-              Visits, your plan, invoices: answers from your own records
+              {ai
+                ? "Visits, your plan, invoices: answers from your own records"
+                : "Pick a real free time with your therapist"}
             </span>
           </span>
         </button>
@@ -180,13 +184,16 @@ function ChatSheet({
   reload: () => void;
 }) {
   const [msgs, setMsgs] = useState(d.chat);
-  const [mode, setMode] = useState<"ask" | "agent">("ask");
+  const [picked, setMode] = useState<"ask" | "agent">("ask");
+  const ai = useAiEnabled();
+  // Booking is guided steps and stays; asking questions goes with the switch.
+  const mode = ai ? picked : "agent";
   const [settings, setSettings] = useState(false);
   const [consent, setConsent] = useState(d.prefs.aiConsent);
   const [lang, setLang] = useState(d.prefs.language);
   return (
-    <AppSheet title="Ask Medisense" onClose={onClose}>
-      {!d.actingAs && (
+    <AppSheet title={ai ? "Ask Medisense" : "Book or change a visit"} onClose={onClose}>
+      {ai && !d.actingAs && (
         <div
           role="tablist"
           aria-label="Assistant mode"
@@ -685,6 +692,7 @@ function CoachSheet({
   reload: () => void;
 }) {
   const [reporter, setReporter] = useReporter(d);
+  const ai = useAiEnabled();
   const [view, setView] = useState<"guide" | "log">("guide");
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState(false);
@@ -885,23 +893,25 @@ function CoachSheet({
                 </div>
               )}
               <div className="flex flex-wrap items-center gap-1.5">
-                <Pick
-                  label="Language"
-                  value={lang}
-                  onChange={async (l) => {
-                    setLang(l);
-                    const r = await act<{ steps: typeof coach.steps; note: string }>({
-                      type: "translate",
-                      coachId: coach.id,
-                      language: l,
-                    });
-                    if (r) {
-                      setShown(r.steps);
-                      setNote(r.note);
-                    }
-                  }}
-                  options={languages}
-                />
+                <AiOnly>
+                  <Pick
+                    label="Language"
+                    value={lang}
+                    onChange={async (l) => {
+                      setLang(l);
+                      const r = await act<{ steps: typeof coach.steps; note: string }>({
+                        type: "translate",
+                        coachId: coach.id,
+                        language: l,
+                      });
+                      if (r) {
+                        setShown(r.steps);
+                        setNote(r.note);
+                      }
+                    }}
+                    options={languages}
+                  />
+                </AiOnly>
                 <Button
                   size="sm"
                   onClick={() => {
@@ -919,7 +929,7 @@ function CoachSheet({
                 </Button>
               </div>
               {note && <p className="text-caption text-watch">{note}</p>}
-              <AiBox label="Explained by AI · approved by your therapist" ai={coach.ai}>
+              <AiBox keep label="Explained by AI · approved by your therapist" ai={coach.ai}>
                 <ol className="flex flex-col gap-2">
                   {shown.map((s, i) => (
                     <li key={i} className="flex gap-2.5 text-small text-ink-900">
@@ -944,7 +954,7 @@ function CoachSheet({
                 onChange={setReporter}
                 area="Activities"
               />
-              {answers.map((x) => (
+              {(ai ? answers : []).map((x) => (
                 <div key={x.id} className="flex flex-col gap-1.5">
                   <p className="ml-8 self-end rounded-card bg-accent-fill px-3 py-2 text-small text-on-accent">
                     {x.question}
@@ -1003,6 +1013,7 @@ function CoachSheet({
                 </div>
               ))}
               <form
+                data-ai-only
                 className="flex items-center gap-2"
                 onSubmit={async (e) => {
                   e.preventDefault();

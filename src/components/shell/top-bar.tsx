@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useAiEnabled, useAiText } from "@/components/ai/ai-switch";
 import { AiIcon } from "@/components/ai/provenance";
 import { cn } from "@/lib/cn";
 import { api, useResource, useSession } from "@/lib/live/client";
@@ -160,6 +161,8 @@ function Notifications() {
 export function TopBar() {
   const pathname = usePathname();
   const { section, page } = routeMeta(pathname);
+  const ai = useAiEnabled();
+  const text = useAiText();
   const askField = useRef<HTMLInputElement>(null);
 
   // Cmd/Ctrl+K jumps to Ask Medisense from anywhere.
@@ -182,6 +185,8 @@ export function TopBar() {
   });
   const [draftQuestion, setDraftQuestion] = useState("");
   const closeAssistant = useCallback(() => setAssistant((a) => ({ ...a, open: false })), []);
+  // Switched off while open: the panel closes, and stays closed if it comes back on.
+  if (!ai && assistant.open) setAssistant((a) => ({ ...a, open: false }));
 
   if (isStandalone(pathname)) return null;
 
@@ -198,18 +203,19 @@ export function TopBar() {
             aria-label="Breadcrumb"
             className="flex max-w-[45%] min-w-0 shrink items-center gap-1.5 text-small lg:max-w-[40%]"
           >
-            <span className="hidden truncate text-ink-500 sm:inline">{section}</span>
+            <span className="hidden truncate text-ink-500 sm:inline">{text(section)}</span>
             <ChevronRight
               className="hidden size-3.5 flex-none text-ink-500 sm:block"
               strokeWidth={1.5}
               aria-hidden="true"
             />
             <span className="truncate font-medium text-ink-900" aria-current="page">
-              {page}
+              {text(page)}
             </span>
           </nav>
 
           <form
+            data-ai-only
             onSubmit={(e) => {
               e.preventDefault();
               openAssistant(draftQuestion);
@@ -268,7 +274,7 @@ export function TopBar() {
       </header>
 
       {auditOpen && <AuditDrawer open onClose={() => setAuditOpen(false)} />}
-      {assistant.open && (
+      {ai && assistant.open && (
         <AssistantPanel
           key={assistant.key}
           initialQuestion={assistant.question}

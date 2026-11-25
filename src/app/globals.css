@@ -14,6 +14,8 @@
 
 /* Dark-scheme variant: dark:bg-raised etc. data-scheme is set by the theme script. */
 @custom-variant dark (&:where([data-scheme="dark"], [data-scheme="dark"] *));
+/* Layout that closes the gap when a switched-off panel leaves. */
+@custom-variant ai-off (&:where(html[data-ai="off"] *));
 
 @theme {
   /* ---- Colour: Premium Light + Blue (defaults; themes override below) ---- */
@@ -1342,6 +1344,16 @@
   text-transform: uppercase;
   color: var(--color-ink-500);
 }
+/* The organisation switch: set before first paint, so switched-off features never flash. */
+html[data-ai="off"] [data-ai-only] {
+  display: none !important;
+}
+html[data-ai="off"] .surface-draft {
+  background: var(--color-surface);
+  border-style: solid;
+  border-color: var(--color-border);
+}
+
 @utility surface-draft {
   background: var(--color-draft);
   border: 1px dashed var(--color-draft-rule);

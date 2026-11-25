@@ -1,5 +1,6 @@
 "use client";
 
+import { AiOnly } from "@/components/ai/ai-switch";
 import { Skeleton } from "./bits";
 import {
   AlertTriangle,
@@ -127,32 +128,34 @@ function InboxSheet({
   return (
     <AppSheet title="Patient updates" onClose={onClose}>
       <div className="flex flex-col gap-4">
-        <Group title="AI answers flagged" empty="No flagged AI answers." n={d.feedback.length}>
-          {d.feedback.map((f) => (
-            <Card key={f.id}>
-              <div className="flex items-start justify-between gap-2">
-                <p className="text-small font-semibold text-ink-900">
-                  {f.patient} · {f.source}
+        <AiOnly>
+          <Group title="AI answers flagged" empty="No flagged AI answers." n={d.feedback.length}>
+            {d.feedback.map((f) => (
+              <Card key={f.id}>
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-small font-semibold text-ink-900">
+                    {f.patient} · {f.source}
+                  </p>
+                  <Tag tone={f.rating === "Unsafe" ? "over" : "watch"}>{f.rating}</Tag>
+                </div>
+                <p className="mt-1 text-caption text-ink-700">“{f.excerpt}”</p>
+                <p className="mt-1 text-caption text-ink-500">
+                  Flagged by {f.by} · {shortDate(f.at)}
                 </p>
-                <Tag tone={f.rating === "Unsafe" ? "over" : "watch"}>{f.rating}</Tag>
-              </div>
-              <p className="mt-1 text-caption text-ink-700">“{f.excerpt}”</p>
-              <p className="mt-1 text-caption text-ink-500">
-                Flagged by {f.by} · {shortDate(f.at)}
-              </p>
-              <Button
-                size="sm"
-                className="mt-2"
-                onClick={async () => {
-                  await act({ type: "feedback-resolve", feedbackId: f.id }, "Marked reviewed");
-                  reload();
-                }}
-              >
-                Mark reviewed
-              </Button>
-            </Card>
-          ))}
-        </Group>
+                <Button
+                  size="sm"
+                  className="mt-2"
+                  onClick={async () => {
+                    await act({ type: "feedback-resolve", feedbackId: f.id }, "Marked reviewed");
+                    reload();
+                  }}
+                >
+                  Mark reviewed
+                </Button>
+              </Card>
+            ))}
+          </Group>
+        </AiOnly>
         <Group title="Concerns" empty="No open concerns." n={d.concerns.length}>
           {d.concerns.map((c) => (
             <Row
@@ -932,6 +935,7 @@ function CoachPanel({ d, reload }: { d: TherapistEnhanceDto; reload: () => void 
             {k && k.steps.length > 0 && (
               <div className="mt-2">
                 <AiBox
+                  keep={k.status !== "Draft"}
                   label={
                     k.status === "Draft"
                       ? "AI draft · review before publishing"

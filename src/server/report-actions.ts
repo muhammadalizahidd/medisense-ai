@@ -3,7 +3,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { ObjectId } from "mongodb";
 import { z } from "zod";
 import { generateJson } from "@/lib/ai/engine";
-import { AiError } from "@/lib/ai/types";
+import { AiError, rethrowDisabled } from "@/lib/ai/types";
 import {
   distributionGroups,
   type ExportDto,
@@ -1222,6 +1222,7 @@ async function explainInsight(u: UserDoc, i: ReportInsightDoc) {
     return text;
   } catch (error) {
     if (error instanceof UserFacingError) throw error;
+    rethrowDisabled(error);
     if (error instanceof AiError)
       throw new UserFacingError(`AI isn't available right now: ${error.message}`, 409);
     throw new UserFacingError("The AI answer couldn't be read. Try again.", 409);

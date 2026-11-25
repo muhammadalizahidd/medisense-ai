@@ -378,6 +378,7 @@ export type LiveEvent =
     }
   | { type: "read"; payload: { conversationId: string; readerId?: string } }
   | { type: "typing"; payload: { conversationId: string; name: string } }
+  | { type: "settings"; payload: { aiEnabled: boolean } }
   | { type: "connected"; payload: Record<string, never> };
 
 export type LiveOverviewDto = {
