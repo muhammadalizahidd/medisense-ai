@@ -23,6 +23,7 @@ import {
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Avatar } from "@/components/ui/premium";
 import { MetricBand } from "@/components/ui/metric-band";
 import { PageHeader } from "@/components/ui/page";
 import { Segmented } from "@/components/ui/segmented";
@@ -72,7 +73,7 @@ const START_HOUR = 8;
 const END_HOUR = 18;
 const ROW = 64;
 
-type View = "day" | "week" | "month";
+type View = "team" | "day" | "week" | "month";
 
 const statusStyle: Record<BookingStatus, string> = {
   Held: "border-l-watch-dot bg-watch-bg text-ink-900",
@@ -121,7 +122,8 @@ export function ScheduleBoard() {
 
   // The period on screen, fetched with a margin so switching views keeps data.
   const range = useMemo(() => {
-    if (view === "day") return { from: anchor, to: anchor + DAY, days: [anchor] };
+    if (view === "day" || view === "team")
+      return { from: anchor, to: anchor + DAY, days: [anchor] };
     if (view === "week") {
       const monday = anchor - (weekdayOf(anchor) - 1) * DAY;
       return {
@@ -168,7 +170,7 @@ export function ScheduleBoard() {
   const filtering = Boolean(clinician || discipline || mode || status);
 
   function step(dir: -1 | 1) {
-    if (view === "day") setAnchor((a) => a + dir * DAY);
+    if (view === "day" || view === "team") setAnchor((a) => a + dir * DAY);
     else if (view === "week") setAnchor((a) => a + dir * 7 * DAY);
     else {
       const d = new Date(anchor + OFFSET);
@@ -177,7 +179,7 @@ export function ScheduleBoard() {
     }
   }
   const label =
-    view === "day"
+    view === "day" || view === "team"
       ? fmt(anchor, { weekday: "long", day: "numeric", month: "long", year: "numeric" })
       : view === "week"
         ? `${fmt(range.days[0]!, { day: "numeric", month: "short" })} – ${fmt(range.days[4]!, { day: "numeric", month: "short", year: "numeric" })}`
@@ -309,6 +311,7 @@ export function ScheduleBoard() {
                     value={view}
                     onChange={setView}
                     options={[
+                      { id: "team", label: "Team" },
                       { id: "day", label: "Day" },
                       { id: "week", label: "Week" },
                       { id: "month", label: "Month" },
@@ -424,6 +427,17 @@ export function ScheduleBoard() {
               <div className="p-4">
                 <Skeleton className="h-[560px]" />
               </div>
+            ) : view === "team" ? (
+              <TeamTimeline
+                day={range.days[0]!}
+                events={events}
+                therapists={(board?.therapists ?? []).filter(
+                  (t) =>
+                    (!clinician || t.id === clinician) &&
+                    (!discipline || t.discipline === discipline),
+                )}
+                onOpen={setOpen}
+              />
             ) : view === "month" ? (
               <MonthGrid
                 days={range.days}
@@ -1652,5 +1666,269 @@ function MoveSheet({
         </p>
       </div>
     </Sheet>
+  );
+}
+
+/* ------------------------------------------------------------ team timeline */
+
+type TeamMember = ScheduleBoardDto["therapists"][number];
+
+/** "6 h 30 min", "45 min". */
+const span = (minutes: number) => {
+  const h = Math.floor(minutes / 60);
+  const m = Math.round(minutes % 60);
+  return h ? (m ? `${h} h ${m} min` : `${h} h`) : `${m} min`;
+};
+
+/**
+ * The whole team's day on one screen: a row per clinician, their rostered hours shaded, leave
+ * marked, and each visit a bar at its time. Who is busy, who is free and where two visits clash
+ * read at a glance, without the overlap a calendar column has.
+ */
+function TeamTimeline({
+  day,
+  events,
+  therapists,
+  onOpen,
+}: {
+  day: number;
+  events: ScheduleEventDto[];
+  therapists: TeamMember[];
+  onOpen: (e: ScheduleEventDto) => void;
+}) {
+  const now = useNow() ?? 0;
+  const [showOff, setShowOff] = useState(false);
+  const key = keyOf(day);
+  const weekday = weekdayOf(day);
+  const first = START_HOUR * 60;
+  const last = END_HOUR * 60;
+  const pct = (min: number) =>
+    ((Math.min(Math.max(min, first), last) - first) / (last - first)) * 100;
+  const hours = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => START_HOUR + i);
+
+  const rows = therapists.map((t) => {
+    const roster = t.weekly.find((w) => w.weekday === weekday) ?? null;
+    const leave = t.timeOff.find((o) => o.from <= key && key <= o.to) ?? null;
+    const visits = events
+      .filter(
+        (e) =>
+          e.therapistId === t.id &&
+          keyOf(new Date(e.start).getTime()) === key &&
+          e.status !== "Cancelled" &&
+          e.status !== "Rescheduled",
+      )
+      .sort((a, b) => a.start.localeCompare(b.start));
+    const booked = visits.reduce((m, e) => m + (minutesOf(e.end) - minutesOf(e.start)), 0);
+    const rostered = roster && !leave ? roster.end - roster.start : 0;
+    const clashes = new Set(
+      visits.flatMap((a, i) =>
+        visits.slice(i + 1).flatMap((b) => (b.start < a.end ? [a.id, b.id] : [])),
+      ),
+    );
+    return { t, roster, leave, visits, booked, rostered, clashes };
+  });
+  const working = rows.filter((r) => (r.roster && !r.leave) || r.visits.length);
+  const off = rows.filter((r) => !working.includes(r));
+  const shown = (showOff ? [...working, ...off] : working).sort(
+    (a, b) => b.booked - a.booked || a.t.name.localeCompare(b.t.name),
+  );
+  const booked = working.reduce((m, r) => m + r.booked, 0);
+  const rostered = working.reduce((m, r) => m + r.rostered, 0);
+  const clashCount = working.reduce((m, r) => m + r.clashes.size, 0);
+  const onLeave = rows.filter((r) => r.leave).length;
+  const nowMin = minutesOf(new Date(now).toISOString());
+  const isToday = key === keyOf(now);
+
+  const stats = [
+    { label: "Working", value: String(working.length), sub: `${onLeave} on leave` },
+    {
+      label: "Booked",
+      value: span(booked),
+      sub: rostered
+        ? `${Math.round((booked / rostered) * 100)}% of rostered time`
+        : "No rostered time",
+    },
+    { label: "Free to book", value: span(Math.max(rostered - booked, 0)), sub: "Across the team" },
+    {
+      label: "Clashes",
+      value: String(clashCount / 2),
+      sub: clashCount ? "Double-booked visits" : "None today",
+      over: clashCount > 0,
+    },
+  ];
+
+  return (
+    <div className="flex flex-col">
+      <div className="grid grid-cols-2 gap-px border-b border-border bg-border lg:grid-cols-4">
+        {stats.map((x) => (
+          <div key={x.label} className="bg-surface px-5 py-3">
+            <p className="text-caption font-semibold text-ink-500">{x.label}</p>
+            <p
+              className={cn(
+                "type-display text-h2 leading-tight",
+                x.over ? "text-over" : "text-ink-900",
+              )}
+            >
+              {x.value}
+            </p>
+            <p className="text-caption text-ink-500">{x.sub}</p>
+          </div>
+        ))}
+      </div>
+
+      {shown.length === 0 ? (
+        <div className="p-6">
+          <EmptyNote title="Nobody is rostered this day.">
+            Pick another day or clear the filters.
+          </EmptyNote>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <div className="min-w-[900px]">
+            <div className="sticky top-0 z-10 grid grid-cols-[240px_1fr] border-b border-border bg-surface">
+              <div className="px-5 py-2.5 text-caption font-semibold text-ink-500">
+                {working.length} clinicians, busiest first
+              </div>
+              <div className="relative h-10">
+                {hours.map((h) => (
+                  <span
+                    key={h}
+                    className="absolute top-3 -translate-x-1/2 text-caption whitespace-nowrap text-ink-500 tabular-nums first:translate-x-0 last:-translate-x-full"
+                    style={{ left: `${pct(h * 60)}%` }}
+                  >
+                    {fmt(Date.UTC(2026, 0, 1, h - 10), { hour: "numeric" })}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <ul className="divide-y divide-border">
+              {shown.map((r) => {
+                const load = r.rostered
+                  ? Math.min(100, Math.round((r.booked / r.rostered) * 100))
+                  : 0;
+                return (
+                  <li key={r.t.id} className="grid grid-cols-[240px_1fr] items-stretch">
+                    <div className="flex items-center gap-3 border-r border-border px-5 py-3">
+                      <Avatar name={r.t.name} kind="staff" size={36} />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-small font-semibold text-ink-900">{r.t.name}</p>
+                        <p className="truncate text-caption text-ink-500">{r.t.discipline}</p>
+                        {r.leave ? (
+                          <p className="mt-1 text-caption font-semibold text-watch">On leave</p>
+                        ) : r.rostered ? (
+                          <div className="mt-1.5 flex items-center gap-2">
+                            <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-sunken">
+                              <span
+                                className={cn(
+                                  "block h-full rounded-full",
+                                  load >= 90
+                                    ? "bg-over-dot"
+                                    : load >= 60
+                                      ? "bg-watch-dot"
+                                      : "bg-accent-fill",
+                                )}
+                                style={{ width: `${load}%` }}
+                              />
+                            </span>
+                            <span className="w-9 text-right text-caption font-semibold text-ink-700 tabular-nums">
+                              {load}%
+                            </span>
+                          </div>
+                        ) : r.visits.length ? (
+                          <p className="mt-1 text-caption font-semibold text-watch">
+                            Visit outside roster
+                          </p>
+                        ) : (
+                          <p className="mt-1 text-caption text-ink-500">Not rostered</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="relative h-[68px] bg-sunken/60">
+                      {/* Hour lines */}
+                      {hours.map((h) => (
+                        <span
+                          key={h}
+                          aria-hidden="true"
+                          className="absolute inset-y-0 w-px bg-border/70"
+                          style={{ left: `${pct(h * 60)}%` }}
+                        />
+                      ))}
+                      {/* Rostered hours sit on a white band; the rest of the day stays shaded. */}
+                      {r.roster && !r.leave && (
+                        <span
+                          aria-hidden="true"
+                          className="absolute inset-y-1.5 rounded-control border border-border bg-surface"
+                          style={{
+                            left: `${pct(r.roster.start)}%`,
+                            width: `${pct(r.roster.end) - pct(r.roster.start)}%`,
+                          }}
+                        />
+                      )}
+                      {r.leave && (
+                        <span className="absolute inset-1.5 flex items-center justify-center rounded-control border border-dashed border-watch bg-watch-bg text-caption font-semibold text-watch">
+                          On leave{r.leave.reason ? `: ${r.leave.reason}` : ""}
+                        </span>
+                      )}
+                      {isToday && nowMin > first && nowMin < last && (
+                        <span
+                          aria-hidden="true"
+                          className="absolute inset-y-0 z-10 w-0.5 bg-over-dot"
+                          style={{ left: `${pct(nowMin)}%` }}
+                        />
+                      )}
+                      {r.visits.map((e) => {
+                        const s0 = minutesOf(e.start);
+                        const s1 = minutesOf(e.end);
+                        const clash = r.clashes.has(e.id);
+                        return (
+                          <button
+                            key={e.id}
+                            type="button"
+                            data-no-photo
+                            onClick={() => onOpen(e)}
+                            title={`${time(e.start)}–${time(e.end)} · ${e.patient} · ${e.support} · ${e.status}`}
+                            className={cn(
+                              "absolute top-3 bottom-3 z-[5] flex min-w-6 cursor-pointer flex-col justify-center overflow-hidden rounded-control border-l-[3px] px-2 text-left transition-all duration-(--duration-fast) hover:z-20 hover:-translate-y-px hover:shadow-lift",
+                              statusStyle[e.status],
+                              clash && "ring-2 ring-over",
+                            )}
+                            style={{
+                              left: `${pct(s0)}%`,
+                              width: `${Math.max(pct(s1) - pct(s0), 1.5)}%`,
+                            }}
+                          >
+                            <span className="flex items-center gap-1 truncate text-caption font-semibold text-ink-900">
+                              {e.modality === "Telehealth" && (
+                                <MonitorPlay className="size-3 flex-none" aria-label="Telehealth" />
+                              )}
+                              <span className="truncate">{e.patient}</span>
+                            </span>
+                            <span className="truncate text-label text-ink-500 tabular-nums">
+                              {time(e.start)}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        </div>
+      )}
+
+      {off.length > 0 && (
+        <button
+          type="button"
+          onClick={() => setShowOff(!showOff)}
+          className="cursor-pointer border-t border-border px-5 py-3 text-left text-small font-semibold text-accent hover:bg-canvas"
+        >
+          {showOff ? "Hide" : "Show"} {off.length} not working this day
+        </button>
+      )}
+    </div>
   );
 }

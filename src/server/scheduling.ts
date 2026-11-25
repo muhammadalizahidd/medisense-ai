@@ -445,6 +445,9 @@ export async function scheduleBoard(from: Date, to: Date): Promise<ScheduleBoard
         name: t.name,
         discipline: t.discipline,
         region: t.region,
+        // The team view shades each person's working hours and leave.
+        weekly: t.weekly.map((w) => ({ weekday: w.weekday, start: w.start, end: w.end })),
+        timeOff: (t.timeOff ?? []).map((o) => ({ from: o.from, to: o.to, reason: o.reason })),
       }))
       .sort((a, b) => a.name.localeCompare(b.name)),
     counts: {

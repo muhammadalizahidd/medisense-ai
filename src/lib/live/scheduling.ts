@@ -158,7 +158,16 @@ export type ScheduleBoardDto = {
     therapist: string;
     since: string;
   }[];
-  therapists: { id: string; name: string; discipline: string; region: string }[];
+  therapists: {
+    id: string;
+    name: string;
+    discipline: string;
+    region: string;
+    /** Rostered hours: weekday 1–5, minutes after midnight in Brisbane. */
+    weekly: { weekday: number; start: number; end: number }[];
+    /** Approved leave, Brisbane calendar days, inclusive. */
+    timeOff: { from: string; to: string; reason: string }[];
+  }[];
   counts: {
     today: number;
     week: number;
