@@ -104,6 +104,7 @@ const statusTone: Record<
 /* ------------------------------------------------------------------ board */
 
 export function ScheduleBoard() {
+  const ai = useAiEnabled();
   const [view, setView] = useState<View>("team");
   const [anchor, setAnchor] = useState(() => dayStart(Date.now()));
   const [clinician, setClinician] = useState("");
