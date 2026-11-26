@@ -586,10 +586,15 @@ export const guides: Record<string, PageGuide> = {
   ),
   "/care/billing": g(
     "Billing and finance",
-    "Billable services, invoices, claims, payments and adjustments.",
-    ["Review the billable queue", "Create and approve invoices", "Track claims and payments"],
-    ["Clear the billable queue.", "Approve and issue invoices.", "Reconcile payments."],
-    "Services billed once and payments reconciled.",
+    "Bill finished visits, follow invoices and claims, and match payments.",
+    [
+      "To bill: check each finished visit and prepare invoices",
+      "Invoices and claims: approve, issue, claim and credit",
+      "Payments: record money in and match it to the bank",
+      "Rates and rules: the button at the top, for Finance Managers",
+    ],
+    ["Clear To bill first.", "Approve and issue invoices.", "Record and match payments."],
+    "Services billed once and payments matched.",
   ),
   "/care/billing/[id]": g(
     "Invoice",

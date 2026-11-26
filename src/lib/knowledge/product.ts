@@ -353,7 +353,7 @@ export const productTopics: ProductTopic[] = [
         href: "/therapist/schedule",
       },
       {
-        label: "2. Billable queue checks",
+        label: "2. To bill: checks on each line",
         detail:
           "Each line is checked for: delivery not confirmed, duplicate source (held), service after the plan ended (held for payer validation), price above the limit (Finance Manager approval), payer missing or unverified, tax review. AI review explains likely mistakes as suggestions only.",
         href: "/care/billing?tab=queue",
@@ -377,11 +377,11 @@ export const productTopics: ProductTopic[] = [
       {
         label: "6. Payments",
         detail:
-          "Payments → Record payment (payer, date, method, amount, reference). Open it to allocate across invoices or claims: partial and split allocation are allowed, never more than the payment or a balance. Repeated references are flagged. Unapplied money can be refunded with Finance Manager approval (simulated).",
+          "Payments tab → Payments → Record payment (payer, date, method, amount, reference). Open it to allocate across invoices or claims: partial and split allocation are allowed, never more than the payment or a balance. Repeated references are flagged. Unapplied money can be refunded with Finance Manager approval (simulated).",
         href: "/care/billing?tab=payments",
       },
       {
-        label: "7. Reconciliation",
+        label: "7. Bank matching (reconciliation)",
         detail:
           "Import the mock bank statement; each line gets suggested matches by amount, reference, payer and date. Match it to a payment (or create a payment from an unknown line), then Confirm reconciliation. Nothing reconciles on its own.",
         href: "/care/billing?tab=reconciliation",
@@ -389,7 +389,7 @@ export const productTopics: ProductTopic[] = [
       {
         label: "8. Claims (agency managed)",
         detail:
-          "Claims → open a claim: Prepare (needs the NDIS number), Submit (simulated), record the NDIA outcome (Accepted, Rejected or Partially Paid). A rejection notifies Finance; Correct and resubmit. Record the NDIS remittance in Payments and allocate it to close the claim.",
+          "Invoices and claims tab → Claims → open a claim: Prepare (needs the NDIS number), Submit (simulated), record the NDIA outcome (Accepted, Rejected or Partially Paid). A rejection notifies Finance; Correct and resubmit. Record the NDIS remittance in Payments and allocate it to close the claim.",
         href: "/care/billing?tab=claims",
       },
       {
@@ -401,7 +401,7 @@ export const productTopics: ProductTopic[] = [
       {
         label: "10. Rates, rules and reports",
         detail:
-          "Rates and rules: charge rules per funding path (travel, non-face-to-face, report writing, cancellation notice and share, price limits, tax, terms) saved as new versions by a Finance Manager; rates come from the Funding price catalogue by service date. Reports: invoiced, collected, collection rate, outstanding, credits and unbilled by month, payer, discipline, therapist, service or location, plus ageing; CSV export.",
+          "Rates and rules (button at the top of Billing): charge rules per funding path (travel, non-face-to-face, report writing, cancellation notice and share, price limits, tax, terms) saved as new versions by a Finance Manager; rates come from the Funding price catalogue by service date. Reports: invoiced, collected, collection rate, outstanding, credits and unbilled by month, payer, discipline, therapist, service or location, plus ageing; CSV export.",
         href: "/care/billing?tab=reports",
       },
     ],
