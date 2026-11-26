@@ -125,7 +125,7 @@ export const navigation: { group: string; items: NavItem[] }[] = [
         roles: [C],
       },
       { href: "/care/reports", label: "Reports and analytics", icon: ChartColumn, roles: [L, A] },
-      { href: "/care/ai-agent", label: "Operations agent", icon: BotMessageSquare, roles: [L, A] },
+      { href: "/care/ai-agent", label: "Work agent", icon: BotMessageSquare, roles: [L, A] },
       { href: "/care/ai-oversight", label: "AI oversight", icon: BotMessageSquare, roles: [L, A] },
       { href: "/care/users", label: "User control", icon: UserCog, roles: [A] },
       { href: "/therapist/today", label: "Today", icon: Sun, roles: [C] },
@@ -253,7 +253,13 @@ const roleLayouts: Partial<Record<Role, Section[]>> = {
     {
       group: "Patients",
       live: true,
-      hrefs: ["/care", "/care/records", "/care/assessments", "/care/plans", "/care/progress"],
+      hrefs: [
+        "/care",
+        { href: "/care/records", label: "Clinical" },
+        "/care/assessments",
+        "/care/plans",
+        "/care/progress",
+      ],
     },
     {
       group: "Therapists",
@@ -335,14 +341,30 @@ export function navigationFor(
         }))
         .sort((a, b) => Number(b.live) - Number(a.live));
   const scoped = role === "Admin" ? access : null;
+  // A page that became a tab of another drops out of the menu when that page opens for this
+  // person; someone whose role opens only the old page keeps it.
+  const mergedAway = (href: string) =>
+    role === "Admin" && Boolean(mergedInto[href]) && canOpenPage(mergedInto[href]!, scoped);
   return (
     sections
       // Signed-in people see the live product only; the sample screens stay for presenting.
       .filter((g) => !liveOnly || g.live)
-      .map((g) => ({ ...g, items: g.items.filter((i) => canOpenPage(i.href, scoped)) }))
+      .map((g) => ({
+        ...g,
+        items: g.items.filter((i) => canOpenPage(i.href, scoped) && !mergedAway(i.href)),
+      }))
       .filter((g) => g.items.length > 0)
   );
 }
+
+/** Admin pages that now live as a tab of another page, and the page they live in. */
+export const mergedInto: Record<string, string> = {
+  "/care/assessments": "/care/records",
+  "/care/plans": "/care/records",
+  "/care/progress": "/care/records",
+  "/telehealth/recordings": "/care/sessions",
+  "/care/coordination": "/care/operations",
+};
 
 /** Who the demo is signed in as in each role view. */
 export const roleUsers: Record<Role, { name: string; initials: string; title: string }> = {
@@ -389,7 +411,7 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
   },
   {
     prefix: "/care/ai-agent",
-    meta: { section: "Live care", page: "Operations agent", role: "Admin" },
+    meta: { section: "Live care", page: "Work agent", role: "Admin" },
   },
   {
     prefix: "/care/hr/timesheets",
@@ -513,11 +535,11 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
   },
   {
     prefix: "/care/records/",
-    meta: { section: "Clinical records", page: "Record", role: "Admin" },
+    meta: { section: "Clinical", page: "Record", role: "Admin" },
   },
   {
     prefix: "/care/records",
-    meta: { section: "Live care", page: "Clinical records", role: "Admin" },
+    meta: { section: "Live care", page: "Clinical", role: "Admin" },
   },
   {
     prefix: "/therapist/records/",
@@ -699,6 +721,10 @@ const under = (pathname: string, prefix: string) =>
 
 export function isActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
+  // A page inside a tab lights up the page that holds it.
+  if (Object.entries(mergedInto).some(([from, to]) => to === href && under(pathname, from))) {
+    return true;
+  }
   const hrefs = navigation.flatMap((g) => g.items.map((i) => i.href));
   const section = href.split("/").slice(0, 2).join("/");
   // Single-record entries (e.g. /sessions/oliver-grant) light up for their whole section, unless

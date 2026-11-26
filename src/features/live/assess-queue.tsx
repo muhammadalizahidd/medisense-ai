@@ -13,7 +13,14 @@ import { th, td } from "./funding-bits";
 import { KpiBand, dayOnly, tableBox, tableHead } from "./ops-bits";
 
 /** Module 12: the assessment queue. Therapists see their own; leads and admin see status. */
-export function AssessQueue({ base }: { base: "/therapist/assessments" | "/care/assessments" }) {
+export function AssessQueue({
+  base,
+  embedded = false,
+}: {
+  base: "/therapist/assessments" | "/care/assessments";
+  /** Inside a combined page, which brings its own title. */
+  embedded?: boolean;
+}) {
   const { data, error, loading, reload } = useResource<{ rows: AssessRow[] }>(
     "/api/care/assessments",
     (e) => e.type === "care",
@@ -54,12 +61,14 @@ export function AssessQueue({ base }: { base: "/therapist/assessments" | "/care/
   const open = all.filter((r) => !["Finalised", "Amended", "Cancelled"].includes(r.status));
   return (
     <>
-      <PageHeader
-        eyebrow="Live care"
-        title="Assessments"
-        description="Every assessment, from request to signed report"
-        actions={<LiveBadge />}
-      />
+      {!embedded && (
+        <PageHeader
+          eyebrow="Live care"
+          title="Assessments"
+          description="Every assessment, from request to signed report"
+          actions={<LiveBadge />}
+        />
+      )}
       <KpiBand
         label="Assessment figures"
         items={[

@@ -81,7 +81,7 @@ const frame = {
     "Today's operations briefing and your tasks",
     "Every clinician's visits, day by day",
     "Book someone new from a name and phone",
-    "Ask Medisense, the operations agent and the booking agent",
+    "Ask Medisense, the work agent and the booking agent",
     "Message anyone in the practice: staff, clinicians or patients",
     "Every portal section your role can open",
   ],
@@ -256,7 +256,7 @@ function HomeTab({ ctx }: { ctx: Ctx }) {
       go: () => ctx.setAskMode("ask"),
     },
     {
-      label: "Operations agent",
+      label: "Work agent",
       detail: "Proposals",
       icon: Bot,
       tone: "orange",
@@ -264,7 +264,7 @@ function HomeTab({ ctx }: { ctx: Ctx }) {
     },
   ];
   const shortcuts = everyShortcut.filter(
-    (s) => ai || !["Ask Medisense", "Operations agent"].includes(s.label),
+    (s) => ai || !["Ask Medisense", "Work agent"].includes(s.label),
   );
   const headline = !agent.data
     ? "Reading today's records…"
@@ -861,7 +861,7 @@ function AskTab({
           {(
             [
               ["ask", "Ask", "Ask", MessageCircleQuestion],
-              ["ops", "Operations", "Operations agent", Bot],
+              ["ops", "Operations", "Work agent", Bot],
               ["booking", "Booking", "Booking agent", CalendarPlus],
             ] as const
           ).map(([id, label, name, Icon]) => (
@@ -1139,7 +1139,7 @@ function OpsChat() {
         <AskIntro
           icon={Bot}
           tone="orange"
-          title="The operations agent"
+          title="The work agent"
           text="It reads live records and proposes changes. Nothing happens until you confirm."
           suggestions={OPS_SUGGESTIONS}
           onPick={(q) => void send(q)}
@@ -1166,7 +1166,7 @@ function OpsChat() {
       <div ref={end} aria-hidden="true" className="h-40" />
       <Composer
         busy={busy}
-        placeholder="Ask the operations agent…"
+        placeholder="Ask the work agent…"
         onSend={(q) => void send(q)}
         suggestions={[]}
       />

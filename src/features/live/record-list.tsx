@@ -15,7 +15,14 @@ import { th, td } from "./funding-bits";
 import { KpiBand, ops, tableBox, tableHead, textArea, when } from "./ops-bits";
 
 /** Module 11 CR-01: My clients and clinical record search, permission-aware. */
-export function RecordList({ base }: { base: "/therapist/records" | "/care/records" }) {
+export function RecordList({
+  base,
+  embedded = false,
+}: {
+  base: "/therapist/records" | "/care/records";
+  /** Inside a combined page, which brings its own title. */
+  embedded?: boolean;
+}) {
   const { data, error, loading, reload } = useResource<{ records: RecordListItem[] }>(
     "/api/care/records",
     (e) => e.type === "care",
@@ -48,16 +55,18 @@ export function RecordList({ base }: { base: "/therapist/records" | "/care/recor
   const open = all.filter((r) => r.access !== "none");
   return (
     <>
-      <PageHeader
-        eyebrow="Live care"
-        title="Clinical records"
-        description={
-          therapist
-            ? "Your assigned participants, with history, risks, consent and the full clinical timeline"
-            : "Clinical records, shown at the level your role allows"
-        }
-        actions={<LiveBadge />}
-      />
+      {!embedded && (
+        <PageHeader
+          eyebrow="Live care"
+          title="Clinical records"
+          description={
+            therapist
+              ? "Your assigned participants, with history, risks, consent and the full clinical timeline"
+              : "Clinical records, shown at the level your role allows"
+          }
+          actions={<LiveBadge />}
+        />
+      )}
       <KpiBand
         label="Record figures"
         items={[

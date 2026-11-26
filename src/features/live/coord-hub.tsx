@@ -40,7 +40,14 @@ export type Options = {
 };
 
 /** Module 17 screen: My Tasks, AI suggestions, Care team and Supervision. */
-export function CoordHub({ base }: { base: "/therapist/coordination" | "/care/coordination" }) {
+export function CoordHub({
+  base,
+  embedded = false,
+}: {
+  base: "/therapist/coordination" | "/care/coordination";
+  /** Inside a combined page, which brings its own title. */
+  embedded?: boolean;
+}) {
   const { data, error, loading, reload } = useResource<{
     rows: TaskRow[];
     team: CareTeamRow[];
@@ -48,7 +55,10 @@ export function CoordHub({ base }: { base: "/therapist/coordination" | "/care/co
   }>("/api/care/coordination", (e) => e.type === "care");
   const clock = useNow();
   const router = useRouter();
-  const [tab, setTab] = useTab(tabs);
+  const addressTab = useTab(tabs);
+  const localTab = useState<(typeof tabs)[number]["id"]>("work");
+  // Inside Work and approvals the page's own tabs own the address.
+  const [tab, setTab] = embedded ? localTab : addressTab;
   const [scope, setScope] = useState<Scope>(base === "/therapist/coordination" ? "mine" : "team");
   const [category, setCategory] = useState("");
   const [status, setStatus] = useState("");
@@ -89,21 +99,23 @@ export function CoordHub({ base }: { base: "/therapist/coordination" | "/care/co
   const review = all.filter((r) => r.status === "Pending Review");
   return (
     <>
-      <PageHeader
-        eyebrow="Live care"
-        title={
-          base === "/therapist/coordination" ? "Tasks and care coordination" : "Care coordination"
-        }
-        description="Follow-ups, handovers, referrals, supervision and requests, each with an owner and a due date"
-        actions={
-          <div className="flex items-center gap-2">
-            <Button variant="primary" onClick={() => setCreate(true)}>
-              <ListPlus className="size-4" aria-hidden="true" /> New task
-            </Button>
-            <LiveBadge />
-          </div>
-        }
-      />
+      {!embedded && (
+        <PageHeader
+          eyebrow="Live care"
+          title={
+            base === "/therapist/coordination" ? "Tasks and care coordination" : "Care coordination"
+          }
+          description="Follow-ups, handovers, referrals, supervision and requests, each with an owner and a due date"
+          actions={
+            <div className="flex items-center gap-2">
+              <Button variant="primary" onClick={() => setCreate(true)}>
+                <ListPlus className="size-4" aria-hidden="true" /> New task
+              </Button>
+              <LiveBadge />
+            </div>
+          }
+        />
+      )}
       <KpiBand
         label="Task figures"
         items={[

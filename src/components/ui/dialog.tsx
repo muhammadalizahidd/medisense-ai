@@ -4,7 +4,13 @@ import { X } from "lucide-react";
 import { useEffect, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/cn";
-import { OVERLAY_FRAME, OVERLAY_PANEL, useOverlayStack, useScrollLock } from "./overlay";
+import {
+  OVERLAY_FRAME,
+  overlayPanel,
+  useOverlayStack,
+  useScrollLock,
+  type OverlaySize,
+} from "./overlay";
 import { OverlayCrumbs } from "./overlay-crumbs";
 
 const FOCUSABLE =
@@ -25,6 +31,7 @@ export function Dialog({
   footer,
   onRequestClose,
   above = false,
+  size = "lg",
   children,
 }: {
   title: string;
@@ -39,6 +46,8 @@ export function Dialog({
   onRequestClose: () => void;
   /** Opens above another dialog or sheet. */
   above?: boolean;
+  /** How wide it is on a large screen; see `OverlaySize`. */
+  size?: OverlaySize;
   children: ReactNode;
 }) {
   const panel = useRef<HTMLDivElement>(null);
@@ -100,7 +109,13 @@ export function Dialog({
         onClick={() => request.current()}
         className="absolute inset-0 cursor-default bg-scrim"
       />
-      <div ref={panel} role="dialog" aria-modal="true" aria-label={title} className={OVERLAY_PANEL}>
+      <div
+        ref={panel}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        className={overlayPanel(size)}
+      >
         <OverlayCrumbs title={title} below={below} onClose={onRequestClose} />
         <header className="relative flex flex-col gap-3 border-b border-border px-5 py-4 sm:flex-row sm:items-start sm:justify-between sm:gap-4 sm:px-6 sm:py-5">
           <div className="min-w-0 flex-1 pr-12 sm:pr-0">

@@ -1,5 +1,6 @@
 "use client";
 
+import NextImage from "next/image";
 import { useAiEnabled } from "@/components/ai/ai-switch";
 import { NoteAssist, wantsAssist } from "@/components/ai/note-assist";
 import { PatientAiTab, TherapistAiInbox, VisitCheckin } from "./enhance-therapist";
@@ -2534,7 +2535,15 @@ function ObserveSheet({
 
 const hub: {
   group: string;
-  items: { title: string; detail: string; href: string; icon: typeof House; tone: BadgeTone }[];
+  items: {
+    title: string;
+    detail: string;
+    href: string;
+    icon: typeof House;
+    tone: BadgeTone;
+    /** A photo for the tile, from public/images/tiles; without one the icon fills the banner. */
+    image?: string;
+  }[];
 }[] = [
   {
     group: "Clinical work",
@@ -2543,6 +2552,7 @@ const hub: {
         title: "Assessments",
         detail: "Initial and reviews, domains, evidence, sign",
         href: "/therapist/assessments",
+        image: "/images/tiles/assessments.jpg",
         icon: ClipboardList,
         tone: "violet",
       },
@@ -2550,6 +2560,7 @@ const hub: {
         title: "Treatment plans",
         detail: "Goals, interventions, budgets, sharing",
         href: "/therapist/plans",
+        image: "/images/tiles/treatment-plans.jpg",
         icon: Target,
         tone: "teal",
       },
@@ -2557,6 +2568,7 @@ const hub: {
         title: "Sessions",
         detail: "Session records, goals worked on, outcomes",
         href: "/therapist/sessions",
+        image: "/images/tiles/sessions.jpg",
         icon: CalendarCheck,
         tone: "blue",
       },
@@ -2564,6 +2576,7 @@ const hub: {
         title: "Documentation",
         detail: "Notes, AI drafts, signing, amendments",
         href: "/therapist/documentation",
+        image: "/images/tiles/documentation.jpg",
         icon: FileSignature,
         tone: "orange",
       },
@@ -2571,6 +2584,7 @@ const hub: {
         title: "Progress and reports",
         detail: "Outcome trends, progress reports, release",
         href: "/therapist/progress",
+        image: "/images/tiles/progress-reports.jpg",
         icon: TrendingUp,
         tone: "green",
       },
@@ -2578,6 +2592,7 @@ const hub: {
         title: "Clinical records",
         detail: "History, risks, medications, documents",
         href: "/therapist/records",
+        image: "/images/tiles/clinical-records.jpg",
         icon: FolderOpen,
         tone: "indigo",
       },
@@ -2590,6 +2605,7 @@ const hub: {
         title: "New patients",
         detail: "Requests to accept or decline",
         href: "/therapist",
+        image: "/images/tiles/new-patients.jpg",
         icon: UserPlus,
         tone: "red",
       },
@@ -2597,6 +2613,7 @@ const hub: {
         title: "My workspace",
         detail: "Workload, briefs and what's next",
         href: "/therapist/workspace",
+        image: "/images/tiles/my-workspace.jpg",
         icon: Briefcase,
         tone: "ink",
       },
@@ -2604,6 +2621,7 @@ const hub: {
         title: "Schedule and billing",
         detail: "Calendar, availability, billable visits",
         href: "/therapist/schedule",
+        image: "/images/tiles/schedule-billing.jpg",
         icon: CalendarDays,
         tone: "blue",
       },
@@ -2611,13 +2629,15 @@ const hub: {
         title: "Care coordination",
         detail: "Shared tasks, handovers, the care team",
         href: "/therapist/coordination",
+        image: "/images/tiles/care-coordination.jpg",
         icon: Workflow,
         tone: "teal",
       },
       {
-        title: "Operations tasks",
+        title: "Work tasks",
         detail: "Tasks routed to me by rules",
         href: "/therapist/tasks",
+        image: "/images/tiles/work-tasks.jpg",
         icon: ListChecks,
         tone: "amber",
       },
@@ -2625,6 +2645,7 @@ const hub: {
         title: "My reports",
         detail: "My activity and outcomes",
         href: "/therapist/reports",
+        image: "/images/tiles/my-reports.jpg",
         icon: ChartColumn,
         tone: "violet",
       },
@@ -2632,6 +2653,7 @@ const hub: {
         title: "Video recordings",
         detail: "Telehealth recordings and consent",
         href: "/telehealth/recordings",
+        image: "/images/tiles/video-recordings.jpg",
         icon: Video,
         tone: "red",
       },
@@ -2639,6 +2661,7 @@ const hub: {
         title: "Profile and availability",
         detail: "Hours, time off, credentials",
         href: "/profile",
+        image: "/images/tiles/profile-availability.jpg",
         icon: UserRound,
         tone: "indigo",
       },
@@ -2694,15 +2717,37 @@ function ClinicalTab({
                     onClick={() =>
                       ctx.open(<AppWebView title={it.title} href={it.href} onClose={ctx.close} />)
                     }
-                    className="relative flex min-h-[124px] cursor-pointer flex-col justify-between rounded-card border border-border bg-surface p-3 text-left hover:bg-sunken active:scale-98"
+                    className="group relative flex cursor-pointer flex-col overflow-hidden rounded-card border border-border bg-surface text-left transition-shadow duration-200 hover:shadow-lift active:scale-98"
                   >
-                    <IconBadge icon={it.icon} tone={it.tone} size={42} />
+                    <span className="relative block h-24 w-full overflow-hidden bg-sunken">
+                      {it.image ? (
+                        <NextImage
+                          src={it.image}
+                          alt=""
+                          fill
+                          sizes="(min-width: 48rem) 260px, 50vw"
+                          className="object-cover transition-transform duration-300 group-hover:scale-105 motion-reduce:transition-none"
+                        />
+                      ) : (
+                        <it.icon
+                          aria-hidden="true"
+                          strokeWidth={1.25}
+                          className="absolute -right-3 -bottom-4 size-24 text-ink-900/10 transition-transform duration-300 group-hover:scale-105 motion-reduce:transition-none"
+                        />
+                      )}
+                    </span>
+                    <IconBadge
+                      icon={it.icon}
+                      tone={it.tone}
+                      size={36}
+                      className="absolute top-[4.875rem] left-3 ring-2 ring-surface"
+                    />
                     {n ? (
-                      <span className="absolute top-3 right-3 flex h-6 min-w-6 items-center justify-center rounded-full bg-over-dot px-1.5 text-caption font-semibold text-page">
+                      <span className="absolute top-2 right-2 flex h-6 min-w-6 items-center justify-center rounded-full border-2 border-surface bg-over-dot px-1.5 text-caption font-semibold text-page">
                         {n}
                       </span>
                     ) : null}
-                    <span>
+                    <span className="block px-3 pt-6 pb-3">
                       <span className="block text-small font-semibold text-ink-900">
                         {it.title}
                       </span>

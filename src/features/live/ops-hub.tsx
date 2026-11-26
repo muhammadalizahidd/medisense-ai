@@ -25,7 +25,7 @@ import { Segmented } from "@/components/ui/segmented";
 import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { TabPanel, Tabs, useTab } from "@/components/ui/tabs";
-import { useNow, useResource } from "@/lib/live/client";
+import { useNow, useResource, useSession } from "@/lib/live/client";
 import {
   isClosed,
   isOpen,
@@ -38,8 +38,10 @@ import {
   type TaskDto,
 } from "@/lib/live/operations";
 import { cn } from "@/lib/cn";
+import { canOpenPage, pageAccessFor } from "@/lib/permissions/pages";
 import { ErrorNote, LiveBadge, Skeleton } from "./bits";
 import { FCard } from "./funding-bits";
+import { CoordHub } from "./coord-hub";
 import { NotificationsTab } from "./ops-comms";
 import { NeedsYou, inboxItems, inboxKinds, type InboxKind } from "./ops-inbox";
 import { DemoNote, ops, when } from "./ops-bits";
@@ -51,6 +53,7 @@ const tabs = [
   { id: "work", label: "All work" },
   { id: "trends", label: "Trends" },
   { id: "automation", label: "Automation" },
+  { id: "coordination", label: "Care coordination" },
 ] as const;
 export type OpsTab = (typeof tabs)[number]["id"];
 
@@ -97,7 +100,14 @@ export function OperationsHub() {
     "/api/care/operations",
     (e) => e.type === "care",
   );
-  const [tab, setTab] = useTab(tabs);
+  const { user } = useSession();
+  const coordination = canOpenPage(
+    "/care/coordination",
+    user?.role === "admin" ? pageAccessFor(user) : null,
+  );
+  const shown = tabs.filter((t) => t.id !== "coordination" || coordination);
+  const [chosen, setTab] = useTab(tabs);
+  const tab: OpsTab = shown.some((t) => t.id === chosen) ? chosen : "needs";
   const [kind, setKindState] = useState<InboxKind>("all");
   const [section, setSectionState] = useState<AutoSection>("rules");
   const [trends, setTrends] = useState<TrendsView>("live");
@@ -179,7 +189,7 @@ export function OperationsHub() {
       />
       <Tabs
         label="Work and approvals"
-        tabs={tabs.map((t) => ({
+        tabs={shown.map((t) => ({
           ...t,
           count: count(t.id) || undefined,
           alert: t.id === "automation",
@@ -224,6 +234,11 @@ export function OperationsHub() {
           )}
         </div>
       </TabPanel>
+      {coordination && (
+        <TabPanel id="coordination" value={tab}>
+          <CoordHub base="/care/coordination" embedded />
+        </TabPanel>
+      )}
       <TabPanel id="automation" value={tab}>
         <div className="flex flex-col gap-4">
           <Segmented

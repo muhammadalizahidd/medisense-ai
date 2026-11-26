@@ -29,7 +29,12 @@ const hoursOf = (sec: number) =>
  * Telehealth recordings (section 12): purpose-limited review, no download, every view logged,
  * access restriction and deletion by a Clinical Lead under the retention policy.
  */
-export function RecordingsPage() {
+export function RecordingsPage({
+  embedded = false,
+}: {
+  /** Inside Sessions and notes, which brings its own title. */
+  embedded?: boolean;
+} = {}) {
   const { data, error, reload } = useResource<{ recordings: RecordingDto[] }>(
     "/api/telehealth/recordings",
     (e) => e.type === "care",
@@ -56,12 +61,14 @@ export function RecordingsPage() {
   );
   return (
     <>
-      <PageHeader
-        eyebrow="Telehealth"
-        title="Recordings"
-        description={`Recorded only with the participant's consent and the clinician's permission. Kept ${RECORDING_RETENTION_DAYS} days (proposed), then reviewed for deletion. No downloads; every review is logged.`}
-        actions={<LiveBadge />}
-      />
+      {!embedded && (
+        <PageHeader
+          eyebrow="Telehealth"
+          title="Recordings"
+          description={`Recorded only with the participant's consent and the clinician's permission. Kept ${RECORDING_RETENTION_DAYS} days (proposed), then reviewed for deletion. No downloads; every review is logged.`}
+          actions={<LiveBadge />}
+        />
+      )}
       {!data ? (
         <Skeleton className="h-40" />
       ) : all.length === 0 ? (

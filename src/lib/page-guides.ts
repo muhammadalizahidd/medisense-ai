@@ -715,12 +715,12 @@ export const guides: Record<string, PageGuide> = {
 
   /* ------------------------------------------------------------------ live care: clinical (modules 11 to 15) */
   "/care/records": g(
-    "Clinical records",
-    "Every participant's clinical record, shown at the level your role allows.",
+    "Clinical",
+    "Every patient's clinical side in one place: records, assessments, treatment plans, and progress and reports.",
     [
-      "Filter by discipline and course of care status",
-      "Open a record",
-      "Request access to a locked record",
+      "Clinical records: open a record, or request access to a locked one",
+      "Assessments and treatment plans: follow each from request to signed",
+      "Progress and reports: outcomes, report deadlines and approvals",
     ],
     [
       "Search for the participant.",
@@ -1198,8 +1198,8 @@ export const guides: Record<string, PageGuide> = {
     "The therapist gets the answers before the visit.",
   ),
   "/care/ai-agent": g(
-    "Operations agent",
-    "The admin AI operations agent: a daily briefing, 32 features across intake, allocation, scheduling, funding, billing and operations, with every change shown as a proposal a person confirms.",
+    "Work agent",
+    "The admin AI work agent: a daily briefing, 32 features across intake, allocation, scheduling, funding, billing and operations, with every change shown as a proposal a person confirms.",
     [
       "Read today's briefing in the order the operations SOP sets",
       "Ask a question or pick one of the 32 features",

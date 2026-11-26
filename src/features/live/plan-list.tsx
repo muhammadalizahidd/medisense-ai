@@ -15,7 +15,14 @@ import { th, td } from "./funding-bits";
 import { KpiBand, dayOnly, ops, tableBox, tableHead } from "./ops-bits";
 
 /** Module 13 screen 4.1: My Treatment Plans. */
-export function PlanList({ base }: { base: "/therapist/plans" | "/care/plans" }) {
+export function PlanList({
+  base,
+  embedded = false,
+}: {
+  base: "/therapist/plans" | "/care/plans";
+  /** Inside a combined page, which brings its own title. */
+  embedded?: boolean;
+}) {
   const { data, error, loading, reload } = useResource<{ rows: PlanRow[] }>(
     "/api/care/plans",
     (e) => e.type === "care",
@@ -59,12 +66,14 @@ export function PlanList({ base }: { base: "/therapist/plans" | "/care/plans" })
   };
   return (
     <>
-      <PageHeader
-        eyebrow="Live care"
-        title="Treatment plans"
-        description="Goals, interventions and reviews for every course of care"
-        actions={<LiveBadge />}
-      />
+      {!embedded && (
+        <PageHeader
+          eyebrow="Live care"
+          title="Treatment plans"
+          description="Goals, interventions and reviews for every course of care"
+          actions={<LiveBadge />}
+        />
+      )}
       <KpiBand
         label="Plan figures"
         items={[
