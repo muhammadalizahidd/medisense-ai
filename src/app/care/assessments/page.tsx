@@ -1,6 +1,10 @@
-import { redirect } from "next/navigation";
+import { TabRedirect } from "@/components/ui/tab-redirect";
 
-/** Assessments is now a tab of Clinical; single records keep their own pages. */
-export default function Page() {
-  redirect("/care/records?tab=assessments");
+/** Assessments is now a tab of Clinical; single assessments keep their own pages. */
+export default function Page({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  return <TabRedirect to="/care/records" tab="assessments" searchParams={searchParams} />;
 }

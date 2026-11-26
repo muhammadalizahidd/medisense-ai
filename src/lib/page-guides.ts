@@ -741,11 +741,15 @@ export const guides: Record<string, PageGuide> = {
     "A reviewed, current clinical record.",
   ),
   "/therapist/records": g(
-    "My patients' records",
-    "Clinical records for patients you treat.",
-    ["Find a patient's record", "See drafts to sign and items to review"],
-    ["Open the patient.", "Review and update the record."],
-    "Your patients' records kept current.",
+    "Clinical",
+    "Your patients' clinical side in one place: records, assessments and treatment plans.",
+    [
+      "Clinical records: find a record, sign drafts, review items",
+      "Assessments: start, continue and sign",
+      "Treatment plans: write, review and share with the patient",
+    ],
+    ["Pick a tab.", "Open the patient or the item you need."],
+    "Your patients' records, assessments and plans kept current.",
   ),
   "/therapist/records/[id]": g(
     "Clinical record",

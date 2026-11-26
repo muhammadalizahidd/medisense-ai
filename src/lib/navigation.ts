@@ -213,7 +213,7 @@ type Section = {
 
 const roleLayouts: Partial<Record<Role, Section[]>> = {
   Clinician: [
-    // Seven everyday places. Everything else stays one click away under More.
+    // Eight everyday places. Everything else stays one click away under More.
     {
       group: "My work",
       live: true,
@@ -222,6 +222,7 @@ const roleLayouts: Partial<Record<Role, Section[]>> = {
         { href: "/therapist/schedule", label: "Schedule" },
         "/therapist/patients",
         { href: "/therapist/documentation", label: "Notes", icon: FileText },
+        { href: "/therapist/records", label: "Clinical", icon: Stethoscope },
         { href: "/therapist/coordination", label: "Tasks", icon: ListChecks },
         "/messages",
         { href: "/therapist/progress", label: "Reports", icon: ChartColumn },
@@ -231,14 +232,7 @@ const roleLayouts: Partial<Record<Role, Section[]>> = {
       group: "More",
       live: true,
       more: true,
-      hrefs: [
-        "/therapist/assessments",
-        "/therapist/plans",
-        "/therapist/ai",
-        "/telehealth/recordings",
-        "/mobile/therapist",
-        "/mobile/patient",
-      ],
+      hrefs: ["/therapist/ai", "/telehealth/recordings", "/mobile/therapist", "/mobile/patient"],
     },
     { group: "My work", hrefs: ["/my-day", "/sessions/oliver-grant"] },
     { group: "AI workspace", hrefs: ["/case-notes/mia-robinson", "/reports"] },
@@ -364,6 +358,8 @@ export const mergedInto: Record<string, string> = {
   "/care/progress": "/care/records",
   "/telehealth/recordings": "/care/sessions",
   "/care/coordination": "/care/operations",
+  "/therapist/assessments": "/therapist/records",
+  "/therapist/plans": "/therapist/records",
 };
 
 /** Who the demo is signed in as in each role view. */
@@ -543,11 +539,11 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
   },
   {
     prefix: "/therapist/records/",
-    meta: { section: "Clinical records", page: "Record", role: "Clinician" },
+    meta: { section: "Clinical", page: "Record", role: "Clinician" },
   },
   {
     prefix: "/therapist/records",
-    meta: { section: "Live care", page: "Clinical records", role: "Clinician" },
+    meta: { section: "Live care", page: "Clinical", role: "Clinician" },
   },
   {
     prefix: "/care/operations/tasks/",
