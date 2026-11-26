@@ -67,7 +67,7 @@ export function RecordList({ base }: { base: "/therapist/records" | "/care/recor
             sub: therapist ? "assigned or consultation access" : "you can open",
           },
           {
-            label: "Active episodes",
+            label: "Active courses of care",
             value: open.reduce(
               (s, r) => s + r.episodes.filter((e) => e.status === "Active").length,
               0,
@@ -138,12 +138,12 @@ export function RecordList({ base }: { base: "/therapist/records" | "/care/recor
         </div>
         <div className="w-48">
           <Select
-            aria-label="Episode status"
+            aria-label="Course of care status"
             className="h-9"
             value={status}
             onChange={(e) => setStatus(e.target.value)}
           >
-            <option value="">Any episode status</option>
+            <option value="">Any course of care status</option>
             {["Awaiting assessment", "Active", "On hold", "Discharged", "Closed"].map((d) => (
               <option key={d}>{d}</option>
             ))}
@@ -175,7 +175,7 @@ export function RecordList({ base }: { base: "/therapist/records" | "/care/recor
           <thead className={tableHead}>
             <tr>
               <th className={th}>Participant</th>
-              <th className={th}>Episodes</th>
+              <th className={th}>Courses of care</th>
               <th className={th}>Next visit</th>
               <th className={th}>Risks</th>
               <th className={th}>History</th>

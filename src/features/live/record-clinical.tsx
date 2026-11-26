@@ -1054,9 +1054,9 @@ function EntrySheet({
           {opts(entryTypes)}
         </Select>
       </Field>
-      <Field label="Episode">
+      <Field label="Course of care">
         <Select
-          aria-label="Episode"
+          aria-label="Course of care"
           value={v.episodeId ?? ""}
           onChange={(e) => setV({ ...v, episodeId: e.target.value || null })}
         >
@@ -1297,9 +1297,9 @@ function ClassifySheet({
           {opts(documentCategories)}
         </Select>
       </Field>
-      <Field label="Episode">
+      <Field label="Course of care">
         <Select
-          aria-label="Episode"
+          aria-label="Course of care"
           value={v.episodeId ?? ""}
           onChange={(e) => setV({ ...v, episodeId: e.target.value || null })}
         >

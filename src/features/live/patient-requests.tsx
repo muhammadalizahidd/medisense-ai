@@ -4,6 +4,7 @@ import { Check, IdCard, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page";
+import { Segmented } from "@/components/ui/segmented";
 import { Field, Sheet, inputClass } from "@/components/ui/sheet";
 import { TabPanel, Tabs, useTab } from "@/components/ui/tabs";
 import { Tag, type TagTone } from "@/components/ui/tag";
@@ -45,12 +46,19 @@ const tone: Record<string, TagTone> = {
 };
 
 /** Modules 18–19: identity and health-record changes patients asked for in the app. */
-export function PatientRequests() {
+export function PatientRequests({
+  embedded = false,
+}: {
+  /** Inside the Patients page, which brings its own title. */
+  embedded?: boolean;
+} = {}) {
   const res = useResource<{ requests: Req[] }>(
     "/api/care/patient-requests",
     (e) => e.type === "care",
   );
-  const [tab, setTab] = useTab(tabs);
+  const addressTab = useTab(tabs);
+  const localTab = useState<(typeof tabs)[number]["id"]>("Pending");
+  const [tab, setTab] = embedded ? localTab : addressTab;
   const [rejecting, setRejecting] = useState<Req | null>(null);
   const now = useNow();
   const [reason, setReason] = useState("");
@@ -75,12 +83,14 @@ export function PatientRequests() {
   const rows = all.filter((r) => r.status === tab);
   return (
     <>
-      <PageHeader
-        eyebrow="Live care"
-        title="Patient requests"
-        description="Corrections patients asked for in their app. Identity changes apply only when approved; clinicians decide on health information."
-        actions={<LiveBadge />}
-      />
+      {!embedded && (
+        <PageHeader
+          eyebrow="Live care"
+          title="Patient requests"
+          description="Corrections patients asked for in their app. Identity changes apply only when approved; clinicians decide on health information."
+          actions={<LiveBadge />}
+        />
+      )}
       <KpiBand
         label="Request figures"
         items={[
@@ -126,12 +136,23 @@ export function PatientRequests() {
       />
       <div className="grid items-stretch gap-6 xl:grid-cols-12">
         <div className="flex min-w-0 flex-col xl:col-span-8">
-          <Tabs
-            tabs={tabs.map((t) => ({ ...t, count: count(t.id) }))}
-            value={tab}
-            onChange={setTab}
-            label="Request status"
-          />
+          {embedded ? (
+            <div className="mb-4">
+              <Segmented
+                label="Request status"
+                value={tab}
+                onChange={setTab}
+                options={tabs.map((t) => ({ id: t.id, label: `${t.label} · ${count(t.id)}` }))}
+              />
+            </div>
+          ) : (
+            <Tabs
+              tabs={tabs.map((t) => ({ ...t, count: count(t.id) }))}
+              value={tab}
+              onChange={setTab}
+              label="Request status"
+            />
+          )}
           {tabs.map((t) => (
             <TabPanel key={t.id} id={t.id} value={tab}>
               {!res.data ? (

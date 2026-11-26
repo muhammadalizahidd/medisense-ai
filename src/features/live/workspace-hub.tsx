@@ -427,7 +427,7 @@ function HomeTab({
           {
             label: "My active patients",
             value: cap.activeClients,
-            sub: `${cap.activeEpisodes} service episodes`,
+            sub: `${cap.activeEpisodes} courses of care`,
             onClick: () => go("clients"),
           },
           {
@@ -1994,7 +1994,7 @@ function ClientsTab({ ws }: { ws: WorkspaceDto }) {
           <table className="w-full text-small">
             <thead className={tableHead}>
               <tr>
-                {["Patient", "Service episodes", "Next visit", "Last visit", "Flags", ""].map(
+                {["Patient", "Courses of care", "Next visit", "Last visit", "Flags", ""].map(
                   (h) => (
                     <th key={h} className="px-4 py-2.5 text-left font-semibold">
                       {h}

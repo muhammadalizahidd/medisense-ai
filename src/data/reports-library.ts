@@ -89,7 +89,7 @@ const sectionsFor: Record<ReportType, string[]> = {
     "Diagnosis",
     "Therapy plan",
   ],
-  "Discharge summary": ["Episode of care", "Goals achieved", "Home program", "Referrals onward"],
+  "Discharge summary": ["Course of care", "Goals achieved", "Home program", "Referrals onward"],
 };
 
 type Row = [

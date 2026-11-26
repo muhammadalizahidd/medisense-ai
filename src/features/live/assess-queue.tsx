@@ -57,7 +57,7 @@ export function AssessQueue({ base }: { base: "/therapist/assessments" | "/care/
       <PageHeader
         eyebrow="Live care"
         title="Assessments"
-        description="Every assessment episode, from request to signed report"
+        description="Every assessment, from request to signed report"
         actions={<LiveBadge />}
       />
       <KpiBand

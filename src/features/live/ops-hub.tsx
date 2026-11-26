@@ -150,7 +150,7 @@ export function OperationsHub() {
     <>
       <PageHeader
         eyebrow="Live care"
-        title="Operations"
+        title="Work and approvals"
         description={
           <span>{hub.can.roleLabel} · rules route the work, AI only suggests, people decide</span>
         }
@@ -178,7 +178,7 @@ export function OperationsHub() {
         }
       />
       <Tabs
-        label="Operations"
+        label="Work and approvals"
         tabs={tabs.map((t) => ({
           ...t,
           count: count(t.id) || undefined,
@@ -479,7 +479,7 @@ function Overview({
       </div>
 
       <section
-        aria-label="Operations pulse"
+        aria-label="Work pulse"
         className="grid overflow-hidden rounded-card border border-border bg-surface shadow-lift xl:grid-cols-12"
       >
         <div className="flex items-center gap-6 border-b border-border p-6 xl:col-span-4 xl:border-r xl:border-b-0">
@@ -496,7 +496,7 @@ function Overview({
           </Ring>
           <div className="min-w-0">
             <p className="text-label font-semibold tracking-[0.08em] text-ink-500 uppercase">
-              Operations pulse
+              Work pulse
             </p>
             <p className="mt-1 type-display text-h1 leading-none text-ink-900">{open.length}</p>
             <p className="mt-1 text-small text-ink-700">

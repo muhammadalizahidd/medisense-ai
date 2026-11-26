@@ -23,7 +23,7 @@ import { td, th } from "./funding-bits";
 import { KpiBand, dayOnly, tableBox, tableHead } from "./ops-bits";
 
 const tabs = [
-  { id: "episodes", label: "Episodes" },
+  { id: "episodes", label: "Courses of care" },
   { id: "reports", label: "Report centre" },
   { id: "approvals", label: "Approval queue" },
 ] as const;
@@ -118,7 +118,7 @@ export function ProgressHub({
         label="Progress figures"
         items={[
           {
-            label: "Active episodes",
+            label: "Active courses of care",
             value: episodes.filter((e) =>
               ["Active Treatment", "Under Review", "Assessment Only"].includes(e.state),
             ).length,
@@ -201,7 +201,7 @@ export function ProgressHub({
           <div className="flex flex-wrap items-center gap-2 rounded-card border border-border bg-surface p-3 shadow-lift">
             <div className="w-48">
               <Select
-                aria-label="Episode state"
+                aria-label="Course of care state"
                 className="h-9"
                 value={state}
                 onChange={(e) => setState(e.target.value)}
@@ -237,7 +237,7 @@ export function ProgressHub({
                   <th className={th}>Progress</th>
                   <th className={th}>Review</th>
                   <th className={th}>Latest report</th>
-                  <th className={th}>Episode</th>
+                  <th className={th}>Course of care</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -292,7 +292,7 @@ export function ProgressHub({
             </table>
           </div>
           <p className="mt-2! px-1 text-caption text-ink-500">
-            {eps.length} of {episodes.length} episodes · scroll inside the table for more
+            {eps.length} of {episodes.length} courses of care · scroll inside the table for more
           </p>
         </div>
       </TabPanel>

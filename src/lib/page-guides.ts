@@ -354,11 +354,11 @@ export const guides: Record<string, PageGuide> = {
   /* ------------------------------------------------------------------ live care: intake and patients */
   "/care": g(
     "Patients",
-    "Every new patient moving from accepted referral to ready for service, as a board.",
+    "Every patient in one place: referrals coming in, patients waiting for or seeing a therapist, and corrections they asked for in their app.",
     [
-      "See patients by onboarding stage",
-      "Open a patient to finish their onboarding",
-      "Filter by stage and service",
+      "Patients: find a therapist, follow onboarding, book a visit",
+      "Referrals: triage, check eligibility, accept or decline",
+      "Patient requests: approve or reject changes from the app",
     ],
     [
       "Start with the oldest patients in each stage.",
@@ -601,8 +601,8 @@ export const guides: Record<string, PageGuide> = {
 
   /* ------------------------------------------------------------------ live care: operations and reports */
   "/care/operations": g(
-    "Operations",
-    "The operations hub: work queue, approvals, rules, notifications and run log.",
+    "Work and approvals",
+    "Everything to work on and approve in one place: the work queue, approvals, rules, notifications and run log.",
     ["Work the queue by team and priority", "Decide approvals", "Review rules and what they did"],
     [
       "Start with overdue and escalated tasks.",
@@ -718,7 +718,7 @@ export const guides: Record<string, PageGuide> = {
     "Clinical records",
     "Every participant's clinical record, shown at the level your role allows.",
     [
-      "Filter by discipline and episode status",
+      "Filter by discipline and course of care status",
       "Open a record",
       "Request access to a locked record",
     ],
@@ -731,7 +731,7 @@ export const guides: Record<string, PageGuide> = {
   ),
   "/care/records/[id]": g(
     "Clinical record",
-    "One participant's clinical record: episodes, history, conditions, medicines, risks and consents.",
+    "One participant's clinical record: courses of care, history, conditions, medicines, risks and consents.",
     [
       "Review history and conditions",
       "Check risks and the safe-visit plan",
@@ -760,7 +760,7 @@ export const guides: Record<string, PageGuide> = {
   ),
   "/care/assessments": g(
     "Assessments",
-    "Every assessment episode from request to signed report.",
+    "Every assessment from request to signed report.",
     [
       "Filter by status, discipline, location and clinician",
       "See status mix and open work",
@@ -782,7 +782,7 @@ export const guides: Record<string, PageGuide> = {
   ),
   "/therapist/assessments": g(
     "My assessments",
-    "Your assessment episodes from request to signed report.",
+    "Your assessments from request to signed report.",
     ["Filter and open assessments", "See what's due this week"],
     ["Open the next assessment.", "Record findings.", "Sign the report."],
     "Your assessments completed and signed.",
@@ -806,7 +806,7 @@ export const guides: Record<string, PageGuide> = {
   ),
   "/care/plans": g(
     "Treatment plans",
-    "Every treatment plan and episode still waiting for one.",
+    "Every treatment plan and course of care still waiting for one.",
     ["Filter by state and discipline", "See reviews due and co-sign work", "Open a plan"],
     ["Check co-sign and overdue reviews.", "Open the plan.", "Co-sign or review."],
     "Plans active, reviewed and co-signed on time.",
@@ -824,10 +824,10 @@ export const guides: Record<string, PageGuide> = {
   ),
   "/therapist/plans": g(
     "My treatment plans",
-    "Your treatment plans, and episodes waiting for a plan.",
-    ["Create a plan for an episode", "See next reviews", "Open a plan"],
-    ["Create plans for new episodes.", "Open plans with reviews due.", "Record the review."],
-    "Every episode has a current, reviewed plan.",
+    "Your treatment plans, and courses of care waiting for a plan.",
+    ["Create a plan for a course of care", "See next reviews", "Open a plan"],
+    ["Create plans for new courses of care.", "Open plans with reviews due.", "Record the review."],
+    "Every course of care has a current, reviewed plan.",
   ),
   "/therapist/plans/[id]": g(
     "Treatment plan workspace",
@@ -975,24 +975,24 @@ export const guides: Record<string, PageGuide> = {
     "Your caseload, sessions, notes and progress at a glance, with your clinical reports one tap away.",
     [
       "See which goals are improving and which reviews are due",
-      "Open an episode to record outcomes or reassess",
+      "Open a course of care to record outcomes or reassess",
       "Work your report centre and see what's with a reviewer",
     ],
     [
       "Start with overdue reviews and reports.",
-      "Open the episode and record today's measure.",
+      "Open the course of care and record today's measure.",
       "Draft, check and sign the report, then release it.",
     ],
-    "Every episode measured and reported on time.",
+    "Every course of care measured and reported on time.",
   ),
   "/therapist/progress/[episode]": g(
-    "Episode progress",
-    "One service episode: goals against baseline and target, observations, reassessments, reports and discharge.",
+    "Course of care progress",
+    "One course of care: goals against baseline and target, observations, reassessments, reports and discharge.",
     [
       "Record an observation with method, unit, source and setting",
       "Reassess over one or more visits and sign the outcome",
       "Revise a goal target with a reason",
-      "Request a report or discharge the episode",
+      "Request a report or discharge the course of care",
     ],
     [
       "Check each goal's trend; 'Not calculable' explains why.",
@@ -1021,7 +1021,7 @@ export const guides: Record<string, PageGuide> = {
   ),
   "/care/progress": g(
     "Progress and reports",
-    "Team-wide episode progress, report deadlines and the clinical approval queue.",
+    "Team-wide course of care progress, report deadlines and the clinical approval queue.",
     [
       "See overdue reviews and reports by owner",
       "Open the approval queue to co-sign",
@@ -1031,15 +1031,15 @@ export const guides: Record<string, PageGuide> = {
     "Reports delivered on time with governance applied.",
   ),
   "/care/progress/[episode]": g(
-    "Episode progress (care team)",
-    "One episode's progress at your access level: goals, reports and discharge status.",
+    "Course of care progress (care team)",
+    "One course of care's progress at your access level: goals, reports and discharge status.",
     ["Review goal progress and observations (clinical leads)", "See report and discharge status"],
     [
       "Check goal progress.",
       "Open the latest report.",
       "Follow up on discharge or overdue reviews.",
     ],
-    "A clear view of where the episode stands.",
+    "A clear view of where the course of care stands.",
   ),
   "/care/progress/reports/[id]": g(
     "Clinical report",

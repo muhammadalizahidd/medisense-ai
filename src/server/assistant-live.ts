@@ -895,9 +895,11 @@ export function liveTools(user: UserDoc | null): LiveTool[] {
       {
         name: "live_progress",
         description:
-          "Module 16 progress and clinical reports the person may see: service episodes (Assessment Only, Active Treatment, Paused, Under Review, Transfer Pending, Discharged), goals improving or achieved, next review date and whether it is overdue, and clinical reports (FCA, NDIS progress, discipline progress, reassessment, handover, discharge) with status, due date and purpose.",
+          "Module 16 progress and clinical reports the person may see: courses of care (Assessment Only, Active Treatment, Paused, Under Review, Transfer Pending, Discharged), goals improving or achieved, next review date and whether it is overdue, and clinical reports (FCA, NDIS progress, discipline progress, reassessment, handover, discharge) with status, due date and purpose.",
         properties: {
-          query: prop("Optional participant name, RPT reference, report status or episode state"),
+          query: prop(
+            "Optional participant name, RPT reference, report status or course of care state",
+          ),
         },
         run: (i) => progressSummary(user, i),
       },
@@ -927,7 +929,7 @@ export function liveTools(user: UserDoc | null): LiveTool[] {
       {
         name: "live_clinical_record",
         description:
-          "Module 11 clinical record for one participant, filtered to what this person may see: episodes, history gaps and review, conditions (reported vs confirmed), allergy status, medicines, open risks and safe visit plan, unsigned drafts, consent (telehealth, recording, AI scribe, sharing) and reconciliation items.",
+          "Module 11 clinical record for one participant, filtered to what this person may see: courses of care, history gaps and review, conditions (reported vs confirmed), allergy status, medicines, open risks and safe visit plan, unsigned drafts, consent (telehealth, recording, AI scribe, sharing) and reconciliation items.",
         properties: { name: prop("Participant name, or part of it") },
         run: (i) => clinicalRecord(user, i),
       },
@@ -1463,7 +1465,7 @@ async function progressSummary(user: UserDoc, input: Record<string, unknown>): P
     })),
   ];
   return {
-    summary: `${eps.length} episode(s) you can see: ${eps.filter((e) => e.reviewOverdue).length} with an overdue review; ${reps.length} report(s): ${reps.filter((r) => !["Signed", "Released", "Superseded", "Withdrawn"].includes(r.status)).length} open (${reps.filter((r) => r.overdue).length} overdue), ${reps.filter((r) => r.status === "In Review").length} awaiting co-signature, ${reps.filter((r) => r.status === "Released").length} released.`,
+    summary: `${eps.length} course(s) of care you can see: ${eps.filter((e) => e.reviewOverdue).length} with an overdue review; ${reps.length} report(s): ${reps.filter((r) => !["Signed", "Released", "Superseded", "Withdrawn"].includes(r.status)).length} open (${reps.filter((r) => r.overdue).length} overdue), ${reps.filter((r) => r.status === "In Review").length} awaiting co-signature, ${reps.filter((r) => r.status === "Released").length} released.`,
     items,
     note: "Progress percentages appear only for comparable upward numeric goals; others show 'Not calculable'. Reports are released only after signing and recipient checks.",
   };
@@ -1597,7 +1599,7 @@ async function planSummary(user: UserDoc, input: Record<string, unknown>): Promi
   }
   const count = (...s: string[]) => rows.filter((r) => s.includes(r.state)).length;
   return {
-    summary: `${rows.length} plan(s) and episode(s) you can see: ${count("Active")} active, ${count("Not Started")} waiting for a plan, ${count("Draft", "Ready for Approval")} in draft, ${count("Pending Review")} awaiting Clinical Lead review, ${rows.filter((r) => r.reviewOverdue).length} with an overdue review.`,
+    summary: `${rows.length} plan(s) and course(s) of care you can see: ${count("Active")} active, ${count("Not Started")} waiting for a plan, ${count("Draft", "Ready for Approval")} in draft, ${count("Pending Review")} awaiting Clinical Lead review, ${rows.filter((r) => r.reviewOverdue).length} with an overdue review.`,
     items,
     note: "Goals and targets are set by the clinician; AI only suggests wording and summarises signed measurements. Progress percentages are shown only for numeric measures.",
   };

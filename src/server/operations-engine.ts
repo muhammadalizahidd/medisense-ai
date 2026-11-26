@@ -1191,7 +1191,7 @@ function aut12(ctx: Ctx): Planned[] {
       key,
       entity: `Assessment ${a.support} · ${c?.name ?? ""}`,
       input: `${a.status} for ${Math.floor(ageDays)} days (review deadline ${ctx.settings.assessmentOverdueDays} days)`,
-      actions: ["Create a clinician follow-up linked to the same episode"],
+      actions: ["Create a clinician follow-up linked to the same course of care"],
       run: async (rule, mode) => {
         const { task, created: isNew } = await insertTask("Automation", {
           ...ruleFields(rule, mode),
@@ -1217,7 +1217,7 @@ function aut12(ctx: Ctx): Planned[] {
           sla: "Standard",
           visibility: "Team Only",
           idemKey: key,
-          note: "The partial save is kept. This follow-up continues the same assessment episode; it doesn't start a new one.",
+          note: "The partial save is kept. This follow-up continues the same assessment; it doesn't start a new one.",
           checklist: [
             { label: "Complete the outstanding sections" },
             { label: "Sign the assessment or record why it can't be finished" },

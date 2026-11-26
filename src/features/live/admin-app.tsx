@@ -457,7 +457,7 @@ function HomeTab({ ctx }: { ctx: Ctx }) {
             action={
               <button
                 type="button"
-                onClick={() => ctx.web("Operations", "/care/operations")}
+                onClick={() => ctx.web("Work and approvals", "/care/operations")}
                 className="cursor-pointer text-caption font-semibold text-accent"
               >
                 All tasks

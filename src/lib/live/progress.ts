@@ -169,7 +169,7 @@ export const reportTemplates: Record<ReportType, { key: string; title: string }[
     { key: "recs", title: "Recommendations" },
   ],
   "Discipline progress report": [
-    { key: "summary", title: "Episode summary" },
+    { key: "summary", title: "Course of care summary" },
     { key: "goals", title: "Goals reviewed" },
     { key: "interventions", title: "Interventions" },
     { key: "findings", title: "Objective findings" },

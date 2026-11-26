@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { PageContainer, PageLoading } from "@/components/ui/page";
-import { CareBoard } from "@/features/live/care-board";
+import { PatientsHub } from "@/features/live/patients-hub";
 import { OfflinePage } from "@/features/live/offline-page";
 import { requirePageUser } from "@/server/page-auth";
 
@@ -11,7 +11,7 @@ async function CarePageContent() {
   if (!(await requirePageUser("/care", "admin"))) return <OfflinePage />;
   return (
     <PageContainer>
-      <CareBoard />
+      <PatientsHub />
     </PageContainer>
   );
 }

@@ -42,7 +42,6 @@ import {
   Smartphone,
   UserCheck,
   Users,
-  UserRoundPen,
   Workflow,
   type LucideIcon,
   BotMessageSquare,
@@ -86,7 +85,6 @@ export const navigation: { group: string; items: NavItem[] }[] = [
   {
     group: "Live care",
     items: [
-      { href: "/care/referrals", label: "Referrals and intake", icon: FileInput, roles: [L, A] },
       { href: "/care", label: "Patients", icon: UserPlus, roles: [L, A] },
       { href: "/care/therapists", label: "Therapists", icon: Stethoscope, roles: [L, A] },
       { href: "/care/schedule", label: "Scheduling", icon: CalendarRange, roles: [L, A] },
@@ -95,7 +93,7 @@ export const navigation: { group: string; items: NavItem[] }[] = [
       { href: "/care/hr", label: "Credentials and compliance", icon: IdCard, roles: [L, A] },
       { href: "/care/hr/leave", label: "Leave and absence", icon: CalendarOff, roles: [L, A] },
       { href: "/care/hr/timesheets", label: "Timesheets", icon: Timer, roles: [L, A] },
-      { href: "/care/operations", label: "Operations", icon: Workflow, roles: [L, A] },
+      { href: "/care/operations", label: "Work and approvals", icon: Workflow, roles: [L, A] },
       { href: "/care/records", label: "Clinical records", icon: FileText, roles: [L, A] },
       { href: "/care/assessments", label: "Assessments", icon: ClipboardList, roles: [L, A] },
       { href: "/care/plans", label: "Treatment plans", icon: Target, roles: [L, A] },
@@ -108,12 +106,6 @@ export const navigation: { group: string; items: NavItem[] }[] = [
       { href: "/care/documentation", label: "Documentation", icon: FileSignature, roles: [L, A] },
       { href: "/care/progress", label: "Progress and reports", icon: TrendingUp, roles: [L, A] },
       { href: "/care/coordination", label: "Care coordination", icon: Workflow, roles: [L, A] },
-      {
-        href: "/care/patient-requests",
-        label: "Patient requests",
-        icon: UserRoundPen,
-        roles: [L, A],
-      },
       { href: "/therapist/records", label: "Clinical records", icon: FileText, roles: [C] },
       { href: "/therapist/assessments", label: "Assessments", icon: ClipboardList, roles: [C] },
       { href: "/therapist/plans", label: "Treatment plans", icon: Target, roles: [C] },
@@ -261,15 +253,7 @@ const roleLayouts: Partial<Record<Role, Section[]>> = {
     {
       group: "Patients",
       live: true,
-      hrefs: [
-        "/care/referrals",
-        "/care",
-        "/care/patient-requests",
-        "/care/records",
-        "/care/assessments",
-        "/care/plans",
-        "/care/progress",
-      ],
+      hrefs: ["/care", "/care/records", "/care/assessments", "/care/plans", "/care/progress"],
     },
     {
       group: "Therapists",
@@ -284,7 +268,7 @@ const roleLayouts: Partial<Record<Role, Section[]>> = {
       hrefs: ["/care/hr", "/care/hr/leave", "/care/hr/timesheets"],
     },
     {
-      group: "Operations and AI",
+      group: "Work and AI",
       live: true,
       hrefs: ["/care/operations", "/care/reports", "/care/ai-oversight"],
     },
@@ -449,7 +433,7 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
   },
   {
     prefix: "/care/progress/",
-    meta: { section: "Progress and reports", page: "Episode progress", role: "Admin" },
+    meta: { section: "Progress and reports", page: "Course of care progress", role: "Admin" },
   },
   {
     prefix: "/care/progress",
@@ -461,7 +445,7 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
   },
   {
     prefix: "/therapist/progress/",
-    meta: { section: "Progress and reports", page: "Episode progress", role: "Clinician" },
+    meta: { section: "Progress and reports", page: "Course of care progress", role: "Clinician" },
   },
   {
     prefix: "/therapist/progress",
@@ -545,15 +529,15 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
   },
   {
     prefix: "/care/operations/tasks/",
-    meta: { section: "Operations", page: "Task", role: "Admin" },
+    meta: { section: "Work and approvals", page: "Task", role: "Admin" },
   },
   {
     prefix: "/care/operations/rules/",
-    meta: { section: "Operations", page: "Workflow rule", role: "Admin" },
+    meta: { section: "Work and approvals", page: "Workflow rule", role: "Admin" },
   },
   {
     prefix: "/care/operations",
-    meta: { section: "Live care", page: "Operations", role: "Admin" },
+    meta: { section: "Live care", page: "Work and approvals", role: "Admin" },
   },
   {
     prefix: "/therapist/reports",
@@ -599,11 +583,11 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
   { prefix: "/profile", meta: { section: "Live care", page: "My profile", role: "Clinician" } },
   {
     prefix: "/care/new",
-    meta: { section: "Referrals and intake", page: "Enter a referral", role: "Admin" },
+    meta: { section: "Patients", page: "Enter a referral", role: "Admin" },
   },
   {
     prefix: "/care/referrals/",
-    meta: { section: "Referrals and intake", page: "Referral", role: "Admin" },
+    meta: { section: "Patients", page: "Referral", role: "Admin" },
   },
   {
     prefix: "/care/referrals",

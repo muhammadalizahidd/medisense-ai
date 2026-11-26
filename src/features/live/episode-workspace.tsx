@@ -136,7 +136,7 @@ export function EpisodeWorkspace({
       </section>
       <div className="mt-2">
         <Tabs
-          label="Episode"
+          label="Course of care"
           tabs={visible.map((t) => ({
             ...t,
             count:
@@ -166,7 +166,7 @@ export function EpisodeWorkspace({
         <Discharge key={k} p={p} post={post} />
       </TabPanel>
       <TabPanel id="history" value={current}>
-        <FCard icon={History} title="Episode history" sub="Who did what, when and why" flush>
+        <FCard icon={History} title="Course of care history" sub="Who did what, when and why" flush>
           <ol className="max-h-[620px] divide-y divide-border overflow-y-auto">
             {p.timeline.map((h, i) => (
               <li key={i} className="flex flex-wrap items-baseline gap-x-4 px-5 py-3">
@@ -373,8 +373,8 @@ function Outcomes({ p, post, go }: { p: EpisodeFull; post: Post; go: (t: T) => v
       </div>
       {!p.goals.length && (
         <p className="rounded-card border border-dashed border-border-strong px-6 py-12 text-center text-small text-ink-700">
-          No treatment-plan goals for this episode. An assessment-only episode can finish with a
-          report and no plan.
+          No treatment-plan goals for this course of care. An assessment-only course of care can
+          finish with a report and no plan.
         </p>
       )}
       {p.view !== "status" && (
@@ -922,7 +922,7 @@ function Reports({ p, post, base }: { p: EpisodeFull; post: Post; base: string }
     <div className="grid items-stretch gap-6 xl:grid-cols-12">
       <FCard
         icon={FileText}
-        title="Reports for this episode"
+        title="Reports for this course of care"
         sub="Drafts are never visible to the participant"
         className="xl:col-span-8"
         flush

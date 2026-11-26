@@ -1010,7 +1010,7 @@ export const metrics: MetricDef[] = [
     domain: "Participants",
     basis: "Started",
     definition: "Service requests whose first delivered visit falls in the period.",
-    limit: "Repeat appointments are not new episodes.",
+    limit: "Repeat appointments are not new courses of care.",
     drill: { module: "Patients", href: "/care" },
     compute: (f, from, to) =>
       count(f.services.filter((s) => inRange(s.startedAt, from, to)).length),
@@ -1403,7 +1403,7 @@ export const metrics: MetricDef[] = [
     definition:
       "Accepted AI suggestions ÷ reviewed suggestions × 100. Rejected and deferred are counted separately.",
     limit: "Pending suggestions are not in the denominator.",
-    drill: { module: "Operations", href: "/care/operations" },
+    drill: { module: "Work and approvals", href: "/care/operations" },
     compute: (f, from, to) => {
       const s = f.suggestions.filter((x) => inRange(x.at, from, to) && x.decision !== "Pending");
       return pct(s.filter((x) => x.decision === "Accepted").length, s.length);
@@ -1419,7 +1419,7 @@ export const metrics: MetricDef[] = [
     better: "down",
     definition: "Open assigned tasks whose due time is before now (business timestamp).",
     limit: "Completed and cancelled tasks are excluded.",
-    drill: { module: "Operations", href: "/care/operations?tab=work" },
+    drill: { module: "Work and approvals", href: "/care/operations?tab=work" },
     compute: (f, _from, _to, ctx) =>
       count(
         f.tasks.filter((t) => !["Completed", "Cancelled"].includes(t.status) && t.dueAt < ctx.now)

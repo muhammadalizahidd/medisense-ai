@@ -220,15 +220,15 @@ export const reports: ReportDef[] = [
     domain: "Participants",
     grain: "One row per service setting × month",
     basis: "Started / closed",
-    unit: "people; episodes",
+    unit: "people; courses of care",
     detail: false,
     drill: "/care",
     columns: [
       { key: "category", label: "Service setting", kind: "text" },
       { key: "month", label: "Month", kind: "text" },
       { key: "people", label: "Unique people", kind: "number" },
-      { key: "newEpisodes", label: "New episodes", kind: "number" },
-      { key: "closed", label: "Closed episodes", kind: "number" },
+      { key: "newEpisodes", label: "New courses of care", kind: "number" },
+      { key: "closed", label: "Closed courses of care", kind: "number" },
     ],
     rows: (f, filters) => {
       const out: Row[] = [];
@@ -1007,7 +1007,7 @@ export const categories: Record<BuilderCategory, Category> = {
       { key: "requests", label: "Service requests", unit: "requests", agg: (xs) => xs.length },
       {
         key: "started",
-        label: "Started episodes",
+        label: "Started courses of care",
         unit: "episodes",
         agg: (xs) => xs.filter((x) => x.startedAt).length,
       },

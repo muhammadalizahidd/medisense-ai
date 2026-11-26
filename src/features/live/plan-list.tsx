@@ -62,7 +62,7 @@ export function PlanList({ base }: { base: "/therapist/plans" | "/care/plans" })
       <PageHeader
         eyebrow="Live care"
         title="Treatment plans"
-        description="Goals, interventions and reviews for every service episode"
+        description="Goals, interventions and reviews for every course of care"
         actions={<LiveBadge />}
       />
       <KpiBand
@@ -77,7 +77,7 @@ export function PlanList({ base }: { base: "/therapist/plans" | "/care/plans" })
           {
             label: "Not started",
             value: all.filter((r) => r.state === "Not Started").length,
-            sub: "episodes waiting for a plan",
+            sub: "courses of care waiting for a plan",
             tone: "watch",
             onClick: () => setState("Not Started"),
           },
@@ -238,7 +238,7 @@ export function PlanList({ base }: { base: "/therapist/plans" | "/care/plans" })
         </table>
       </div>
       <p className="mt-2! px-1 text-caption text-ink-500">
-        {rows.length} of {all.length} plans and episodes · scroll inside the table for more
+        {rows.length} of {all.length} plans and courses of care · scroll inside the table for more
       </p>
     </>
   );

@@ -570,9 +570,9 @@ export function NewTask({
               <option value="">No participant (general task)</option>
             </Select>
           </Field>
-          <Field label="Service episode">
+          <Field label="Course of care">
             <Select
-              aria-label="Service episode"
+              aria-label="Course of care"
               value={v.needId}
               onChange={(e) => setV({ ...v, needId: e.target.value })}
             >
@@ -581,7 +581,7 @@ export function NewTask({
                   {n.discipline}
                 </option>
               ))}
-              <option value="">Not episode-specific</option>
+              <option value="">Not specific to one course of care</option>
             </Select>
           </Field>
           <Field label="Owner">
