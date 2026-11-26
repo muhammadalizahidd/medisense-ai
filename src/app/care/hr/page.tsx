@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { homeFor } from "@/lib/live/routes";
 import { PageContainer, PageLoading } from "@/components/ui/page";
 import { OfflinePage } from "@/features/live/offline-page";
-import { PeopleHr } from "@/features/live/people-hr";
+import { HrHub } from "@/features/live/hr-hub";
 import { HR_PERMISSION } from "@/server/hr";
 import { requirePageUser } from "@/server/page-auth";
 import { can } from "@/server/permissions";
@@ -20,7 +20,7 @@ async function PageContent() {
   }
   return (
     <PageContainer>
-      <PeopleHr />
+      <HrHub />
     </PageContainer>
   );
 }

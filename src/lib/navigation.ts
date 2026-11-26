@@ -90,7 +90,7 @@ export const navigation: { group: string; items: NavItem[] }[] = [
       { href: "/care/schedule", label: "Scheduling", icon: CalendarRange, roles: [L, A] },
       { href: "/care/funding", label: "Funding and agreements", icon: Landmark, roles: [L, A] },
       { href: "/care/billing", label: "Billing and finance", icon: Receipt, roles: [L, A] },
-      { href: "/care/hr", label: "Credentials and compliance", icon: IdCard, roles: [L, A] },
+      { href: "/care/hr", label: "People and HR", icon: IdCard, roles: [L, A] },
       { href: "/care/hr/leave", label: "Leave and absence", icon: CalendarOff, roles: [L, A] },
       { href: "/care/hr/timesheets", label: "Timesheets", icon: Timer, roles: [L, A] },
       { href: "/care/operations", label: "Work and approvals", icon: Workflow, roles: [L, A] },
@@ -241,11 +241,11 @@ const roleLayouts: Partial<Record<Role, Section[]>> = {
     { group: "Mobile apps", hrefs: ["/mobile/family"] },
   ],
   Admin: [
-    // The organisation dashboard, first in the menu: only a Super Admin opens it (see pageAccess).
-    { group: "Dashboard", live: true, hrefs: ["/"] },
-    { group: "Messages", live: true, hrefs: ["/care/messages"] },
+    // Four headings, so the menu reads as a short list of jobs. The organisation dashboard comes
+    // first: only a Super Admin opens it (see pageAccess).
+    { group: "Home", live: true, hrefs: ["/", "/care/messages", "/care/operations"] },
     {
-      group: "Patients",
+      group: "Care",
       live: true,
       hrefs: [
         "/care",
@@ -253,26 +253,26 @@ const roleLayouts: Partial<Record<Role, Section[]>> = {
         "/care/assessments",
         "/care/plans",
         "/care/progress",
+        "/care/therapists",
+        "/care/sessions",
+        "/care/coordination",
+        "/telehealth/recordings",
+        "/care/schedule",
       ],
     },
     {
-      group: "Therapists",
+      group: "Finance and HR",
       live: true,
-      hrefs: ["/care/therapists", "/care/sessions", "/care/coordination", "/telehealth/recordings"],
+      hrefs: [
+        "/care/funding",
+        "/care/billing",
+        "/care/hr",
+        "/care/hr/leave",
+        "/care/hr/timesheets",
+        "/care/reports",
+      ],
     },
-    { group: "Scheduling", live: true, hrefs: ["/care/schedule"] },
-    { group: "Finance", live: true, hrefs: ["/care/funding", "/care/billing"] },
-    {
-      group: "People and HR",
-      live: true,
-      hrefs: ["/care/hr", "/care/hr/leave", "/care/hr/timesheets"],
-    },
-    {
-      group: "Work and AI",
-      live: true,
-      hrefs: ["/care/operations", "/care/reports", "/care/ai-oversight"],
-    },
-    { group: "Administration", live: true, hrefs: ["/care/users"] },
+    { group: "Settings", live: true, hrefs: ["/care/ai-oversight", "/care/users"] },
     {
       group: "Apps",
       live: true,
@@ -358,6 +358,8 @@ export const mergedInto: Record<string, string> = {
   "/care/progress": "/care/records",
   "/telehealth/recordings": "/care/sessions",
   "/care/coordination": "/care/operations",
+  "/care/hr/leave": "/care/hr",
+  "/care/hr/timesheets": "/care/hr",
   "/therapist/assessments": "/therapist/records",
   "/therapist/plans": "/therapist/records",
 };
@@ -419,7 +421,7 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
   },
   {
     prefix: "/care/hr",
-    meta: { section: "People and HR", page: "Credentials and compliance", role: "Admin" },
+    meta: { section: "Live care", page: "People and HR", role: "Admin" },
   },
   {
     prefix: "/care/users",

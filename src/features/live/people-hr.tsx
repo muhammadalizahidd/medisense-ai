@@ -40,7 +40,12 @@ const STATUS_TONE: Record<string, TagTone> = {
 };
 
 /** People and HR: credential alerts first; the register of every credential beside it. */
-export function PeopleHr() {
+export function PeopleHr({
+  embedded = false,
+}: {
+  /** Inside People and HR, which brings its own title and owns the address. */
+  embedded?: boolean;
+} = {}) {
   const { data, error, loading, reload } = useResource<CredentialAlertsDto>(
     "/api/care/hr",
     (e) => e.type === "care",
@@ -51,17 +56,21 @@ export function PeopleHr() {
     { id: "alerts" as const, label: "Needs action", count: alerts.length, alert: true },
     { id: "register" as const, label: "Credential register", count: rows.length },
   ];
-  const [tab, setTab] = useTab(tabs, "alerts");
+  const addressTab = useTab(tabs, "alerts");
+  const localTab = useState<(typeof tabs)[number]["id"]>("alerts");
+  const [tab, setTab] = embedded ? localTab : addressTab;
   const s = data?.summary;
 
   return (
     <>
-      <PageHeader
-        eyebrow="People and HR"
-        title="Credentials and compliance"
-        description="Registrations, worker screening, insurance and training for every clinician, with what needs action first."
-        actions={<LiveBadge />}
-      />
+      {!embedded && (
+        <PageHeader
+          eyebrow="People and HR"
+          title="Credentials and compliance"
+          description="Registrations, worker screening, insurance and training for every clinician, with what needs action first."
+          actions={<LiveBadge />}
+        />
+      )}
       {error && !data ? (
         <ErrorNote message={error} onRetry={reload} />
       ) : loading && !data ? (

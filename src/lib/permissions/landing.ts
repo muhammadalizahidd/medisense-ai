@@ -3,8 +3,8 @@ import { navigationFor } from "@/lib/navigation";
 import { landingPath, type AppAccess } from "./apps";
 import { canOpenPage, type PageAccess } from "./pages";
 
-/** Pages that are everyone's but nobody's work; used only when nothing else opens. */
-const LAST_RESORT = ["/care/messages"];
+/** Pages every admin shares (messages, the shared work queue); used only when nothing else opens. */
+const LAST_RESORT = ["/care/messages", "/care/operations"];
 
 /**
  * Where a person lands. The usual home when they may open it; otherwise, for an admin, the first
