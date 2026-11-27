@@ -33,6 +33,7 @@ export function TabBar() {
     <>
       <nav
         aria-label="Primary, phone"
+        data-tour="menu"
         style={darkFocus}
         className="sticky bottom-0 z-20 grid h-16 flex-none grid-cols-5 border-t border-sidebar-border bg-sidebar md:hidden print:hidden"
       >
