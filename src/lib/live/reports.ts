@@ -630,9 +630,23 @@ export const blankFilters = (today: string): ReportFilters => ({
   grain: "Week",
 });
 
+const readableDay = (key: string, year: boolean) =>
+  new Intl.DateTimeFormat("en-AU", {
+    timeZone: "UTC",
+    day: "numeric",
+    month: "short",
+    ...(year ? { year: "numeric" } : {}),
+  }).format(new Date(`${key}T00:00:00Z`));
+
+/** "1 Oct – 31 Dec 2026", or one day on its own. */
+export function readableRange(from: string, to: string) {
+  if (from === to) return readableDay(from, true);
+  return `${readableDay(from, from.slice(0, 4) !== to.slice(0, 4))} – ${readableDay(to, true)}`;
+}
+
 export function filterSummary(f: ReportFilters, patientName?: string) {
   return [
-    `${f.preset === "Custom" ? "Custom" : f.preset}: ${f.from} to ${f.to}`,
+    `${f.preset === "Custom" ? "Custom" : f.preset}: ${readableRange(f.from, f.to)}`,
     f.setting && `Setting: ${f.setting}`,
     f.discipline && `Discipline: ${f.discipline}`,
     f.support && `Support: ${f.support}`,

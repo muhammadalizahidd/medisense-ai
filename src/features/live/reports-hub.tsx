@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ChevronRight, Download, Filter, Plus, RefreshCw } from "lucide-react";
+import { ArrowLeft, ChevronRight, Download, Filter, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -14,7 +14,7 @@ import { filterSummary } from "@/lib/live/reports";
 import { ErrorNote, LiveBadge, Skeleton } from "./bits";
 import { readParam, useNavParam } from "./report-nav";
 import { ExportsTab, Methodology, SchedulesTab } from "./reports-admin";
-import { AREAS, AreaPage, Overview, areaVisible, type AreaId } from "./reports-areas";
+import { AREAS, AreaPage, HIDDEN_AREAS, Overview, areaVisible, type AreaId } from "./reports-areas";
 import { ExportSheet, FilterBar, useReportCtx, useReportFilters, type Ctx } from "./reports-bits";
 import { BuilderTab } from "./reports-builder";
 import { TherapistList } from "./therapist-picker";
@@ -56,10 +56,34 @@ export function ReportsHub() {
     "/api/care/reports",
     (e) => e.type === "care",
   );
-  const [tab, setTab] = useTab(tabs);
+  useEffect(() => {
+    // System reports have their own pages now, one per group in the Reports menu.
+    if (readParam("tab") === "system") window.location.replace("/care/reports/system/types");
+  }, []);
   if (error && !data) return <ErrorNote message={error} onRetry={reload} />;
   if (loading || !data) return <Skeleton className="h-[720px]" />;
-  return <Hub hub={data.hub} tab={tab} setTab={setTab} reload={reload} />;
+  return <OverviewOnly hub={data.hub} reload={reload} />;
+}
+
+/**
+ * For now the page is the Overview alone: no heading row and no tabs. The full tabbed page stays
+ * below (ReportsHubTabs) so the tabs can come back without rebuilding them.
+ */
+function OverviewOnly({ hub, reload }: { hub: ReportsHubDto; reload: () => void }) {
+  const [f, setF] = useReportFilters(hub.today);
+  const c = useReportCtx(hub, f, setF, reload);
+  return (
+    <>
+      <h1 className="sr-only">Reports and analytics</h1>
+      <Overview c={c} openArea={() => undefined} />
+    </>
+  );
+}
+
+/** The tabbed reports page, held back while the page shows Overview alone. */
+export function ReportsHubTabs({ hub, reload }: { hub: ReportsHubDto; reload: () => void }) {
+  const [tab, setTab] = useTab(tabs);
+  return <Hub hub={hub} tab={tab} setTab={setTab} reload={reload} />;
 }
 
 function Hub({
@@ -95,9 +119,10 @@ function Hub({
     if (old.view) setView(old.view);
   }, [setTab, setView]);
 
-  const visible = AREAS.filter((a) => areaVisible(a, c));
+  const visible = AREAS.filter((a) => areaVisible(a, c) && !HIDDEN_AREAS.has(a.id));
   const newInsights = hub.insights.filter((i) => i.status === "New").length;
-  const current: Tab = tab === "custom" || visible.some((a) => a.id === tab) ? tab : "overview";
+  // Custom reports are held back for now, like the hidden areas.
+  const current: Tab = visible.some((a) => a.id === tab) ? tab : "overview";
 
   /** Switch tab and sub-tab together; a new tab starts on its first view. */
   const go = (t: Tab, v = "") => {
@@ -172,16 +197,6 @@ function Hub({
               <Download className="size-4" aria-hidden="true" />
               Download
             </Button>
-            <Button
-              variant="primary"
-              onClick={() => {
-                setBuilderView(null);
-                go("custom", "build");
-              }}
-            >
-              <Plus className="size-4" aria-hidden="true" />
-              Create a report
-            </Button>
             <Button size="sm" variant="ghost" aria-label="Refresh" onClick={reload}>
               <RefreshCw className="size-4" aria-hidden="true" />
             </Button>
@@ -199,7 +214,6 @@ function Hub({
               label: a.label,
               count: a.id === "automation" ? newInsights || undefined : undefined,
             })),
-            { id: "custom" as const, label: "Custom reports" },
           ]}
           value={current}
           onChange={(t: Tab) => go(t)}
@@ -212,13 +226,6 @@ function Hub({
           </span>
         ))}
         <span>Brisbane time · data as of {time}</span>
-        <button
-          type="button"
-          onClick={() => go("custom", "about")}
-          className="cursor-pointer font-semibold text-accent hover:underline"
-        >
-          How these numbers work
-        </button>
       </p>
       <div className="mt-5">
         <TabPanel id="overview" value={current}>
