@@ -2,6 +2,7 @@ import { z } from "zod";
 import { cached, cacheKey } from "@/server/cache";
 import { exportInputSchema, scheduleInputSchema, viewInputSchema } from "@/lib/live/report-dto";
 import { requireUser } from "@/server/auth";
+import { heldPermissions } from "@/server/permissions";
 import { handle, objectId, readJson } from "@/server/http";
 import {
   createExport,
@@ -17,11 +18,21 @@ import { saveReportSettings, settingsInputSchema } from "@/server/report-setting
  * get their own caseload only (section 8); participants have no reporting area.
  */
 export async function GET(request: Request) {
-  return handle(() =>
-    cached(cacheKey(request), 60_000, async () => ({
-      hub: await reportsHub(await requireUser("admin", "therapist")),
-    })),
-  );
+  // Five minutes: any change in the database clears the cache at once, so this only saves the
+  // multi-second rebuild when nothing has changed.
+  return handle(async () => {
+    // The person is read here, inside the request: a background rebuild has no cookies to read.
+    // Their permissions are part of the key, so a changed role never sees the old answer.
+    const user = await requireUser("admin", "therapist");
+    const access = [...heldPermissions(user)].sort().join(",");
+    return cached(
+      `${cacheKey(request)}|${user.role}|${access}`,
+      300_000,
+      async () => ({ hub: await reportsHub(user) }),
+      // Rebuilt in the background after a change, so reports open at once instead of in seconds.
+      { warm: true },
+    );
+  });
 }
 
 const actionSchema = z.discriminatedUnion("type", [

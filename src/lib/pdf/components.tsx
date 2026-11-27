@@ -1,4 +1,4 @@
-import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
+import { Document, Page, Path, StyleSheet, Svg, Text, View } from "@react-pdf/renderer";
 import type { ReactNode } from "react";
 import { FONT, pdfColour as c, pdfSize as size } from "./theme";
 
@@ -45,6 +45,15 @@ const s = StyleSheet.create({
     justifyContent: "space-between",
   },
   brand: { color: c.white, fontSize: 10, fontWeight: 700, letterSpacing: 0.6 },
+  brandRow: { flexDirection: "row", alignItems: "center", gap: 7 },
+  logo: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    backgroundColor: c.accent,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   bandNote: { color: c.navyMuted, fontSize: size.small, fontWeight: 500 },
   footerRule: {
     position: "absolute",
@@ -79,6 +88,8 @@ const s = StyleSheet.create({
   sectionTitle: { fontSize: size.section, fontWeight: 600, color: c.navy },
   tiles: { flexDirection: "row", gap: 8, marginBottom: space.xs },
   tile: { flex: 1, minWidth: 0, backgroundColor: c.mintSoft, borderRadius: 4, padding: 10 },
+  tilePlain: { backgroundColor: c.white, borderWidth: 0.75, borderColor: c.borderStrong },
+  trRule: { borderBottomWidth: 0.5, borderBottomColor: c.border },
   tileLabel: { fontSize: size.small, color: c.ink700, fontWeight: 500 },
   tileValue: { marginTop: 4, fontSize: size.value, fontWeight: 600, color: c.navy },
   tileNote: { marginTop: 2, fontSize: size.tiny, color: c.ink500 },
@@ -162,22 +173,50 @@ export function Doc({
   );
 }
 
+/** The platform's mark (the pulse in a heart, as in the app's sidebar), drawn as vectors. */
+export function LogoMark() {
+  return (
+    <View style={s.logo}>
+      <Svg width={12} height={12} viewBox="0 0 24 24">
+        <Path
+          d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"
+          stroke={c.white}
+          strokeWidth={2.2}
+          fill="none"
+        />
+        <Path
+          d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"
+          stroke={c.white}
+          strokeWidth={2.2}
+          fill="none"
+        />
+      </Svg>
+    </View>
+  );
+}
+
 /** A4 page with the navy band on top and a footer with the page number on every page. */
 export function DocPage({
   kind,
   footer,
+  orientation = "portrait",
   children,
 }: {
   /** What this is: "Report", "Invoice". Shown on the right of the band. */
   kind: string;
   /** Left side of the footer: when the data is from and who may see it. */
   footer: string;
+  /** Landscape gives wide tables room for every column. */
+  orientation?: "portrait" | "landscape";
   children: ReactNode;
 }) {
   return (
-    <Page size="A4" style={s.page}>
+    <Page size="A4" orientation={orientation} style={s.page}>
       <View style={s.band} fixed>
-        <Text style={s.brand}>MEDISENSE</Text>
+        <View style={s.brandRow}>
+          <LogoMark />
+          <Text style={s.brand}>MEDISENSE</Text>
+        </View>
         <Text style={s.bandNote}>{kind}</Text>
       </View>
       {children}
@@ -229,13 +268,13 @@ export function tileValueSize(value: string, tiles: number) {
   return Math.max(11, Math.min(size.value, Math.floor(room / (Math.max(1, value.length) * 0.6))));
 }
 
-/** Up to four headline numbers, side by side. */
-export function StatTiles({ tiles }: { tiles: Tile[] }) {
+/** Up to four headline numbers, side by side. `plain` keeps the page pure white: outlined tiles. */
+export function StatTiles({ tiles, plain = false }: { tiles: Tile[]; plain?: boolean }) {
   const shown = tiles.slice(0, 4);
   return (
     <View style={s.tiles} wrap={false}>
       {shown.map((t) => (
-        <View key={t.label} style={s.tile}>
+        <View key={t.label} style={[s.tile, plain ? s.tilePlain : {}]}>
           <Text style={s.tileLabel}>{t.label}</Text>
           <Text
             style={[
@@ -291,6 +330,8 @@ const MAX_WHOLE = 20;
 const PAGE_WIDTH = 595.28;
 /** The width a table has to fill: the page less its side margins. */
 export const TABLE_WIDTH = PAGE_WIDTH - size.page.side * 2;
+/** The same on an A4 page turned on its side. */
+export const LANDSCAPE_TABLE_WIDTH = 841.89 - size.page.side * 2;
 
 const longestToken = (text: string) => Math.max(0, ...text.split(/\s+/).map((w) => w.length));
 
@@ -336,10 +377,22 @@ export function columnWidths(
 }
 
 /** A table whose header repeats on every page and whose rows never split across pages. */
-export function DataTable({ columns, rows }: { columns: TableColumn[]; rows: TableRow[] }) {
+export function DataTable({
+  columns,
+  rows,
+  width = TABLE_WIDTH,
+  striped = true,
+}: {
+  columns: TableColumn[];
+  rows: TableRow[];
+  /** The room the table fills; a landscape page passes LANDSCAPE_TABLE_WIDTH. */
+  width?: number;
+  /** False keeps the page pure white: hairlines between rows instead of tinted stripes. */
+  striped?: boolean;
+}) {
   // The rows have side padding, so the columns share the width inside it; otherwise the last
   // column runs to the very edge of the page.
-  const widths = columnWidths(columns, rows, TABLE_WIDTH - ROW_PAD * 2);
+  const widths = columnWidths(columns, rows, width - ROW_PAD * 2);
   // Eight or more columns get slightly smaller type, so a wide report stays tidy.
   const dense = columns.length >= 8;
   const cell = (col: TableColumn) => ({
@@ -358,7 +411,7 @@ export function DataTable({ columns, rows }: { columns: TableColumn[]; rows: Tab
         ))}
       </View>
       {rows.map((row, i) => (
-        <View key={i} style={[s.tr, i % 2 ? s.trAlt : {}]} wrap={false}>
+        <View key={i} style={[s.tr, striped ? (i % 2 ? s.trAlt : {}) : s.trRule]} wrap={false}>
           {columns.map((col) => (
             <Text
               key={col.key}

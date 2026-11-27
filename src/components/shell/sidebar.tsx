@@ -94,6 +94,15 @@ export function Sidebar() {
     const t = setTimeout(() => preload(THERAPIST_PAGES), 2500);
     return () => clearTimeout(t);
   }, [therapist]);
+  // Reports are the heaviest office page (every visit, worked out in the browser), so for anyone
+  // who reads reports they load behind the page they're on.
+  const readsReports =
+    account?.role === "admin" && account.permissions.some((p) => p.startsWith("reports.read."));
+  useEffect(() => {
+    if (!readsReports) return undefined;
+    const t = setTimeout(() => preload(["/api/care/reports"]), 4000);
+    return () => clearTimeout(t);
+  }, [readsReports]);
   const unreadMessages = useUnreadMessages(
     account?.role === "therapist" || account?.role === "admin",
   );
@@ -201,17 +210,32 @@ export function Sidebar() {
 
       {!sessionLoading &&
         groups.map(({ group, items, live, more }) => {
-          // "More" starts folded and opens on a click; sample groups start open and fold.
+          // "More" starts folded and opens on a click; every other group starts open and folds.
           const open = more && items.some((i) => isActive(pathname, i.href));
           const folded =
-            !q && !open && (more ? !collapsed.includes(group) : !live && collapsed.includes(group));
+            !q && !open && (more ? !collapsed.includes(group) : collapsed.includes(group));
           return (
             <div key={group} className="flex flex-col gap-0.5">
               {live && !more ? (
-                <div className="hidden items-center gap-1.5 px-2.5 pb-1 text-label font-semibold tracking-[0.08em] text-sidebar-muted uppercase xl:flex">
-                  <i aria-hidden="true" className="size-1.5 rounded-full bg-live-dot" />
-                  {group}
-                </div>
+                <button
+                  type="button"
+                  aria-expanded={!folded}
+                  aria-label={`${group}: ${folded ? "show" : "hide"} pages`}
+                  onClick={() => toggle(group)}
+                  className="hidden h-7 cursor-pointer items-center justify-between gap-2 rounded-control px-2.5 text-label font-semibold tracking-[0.08em] text-sidebar-muted uppercase hover:text-sidebar-ink xl:flex"
+                >
+                  <span className="flex min-w-0 items-center gap-1.5">
+                    <i aria-hidden="true" className="size-1.5 flex-none rounded-full bg-live-dot" />
+                    <span className="truncate">{group}</span>
+                  </span>
+                  <ChevronDown
+                    className={cn(
+                      "size-3.5 flex-none transition-transform duration-(--duration-fast) motion-reduce:transition-none",
+                      folded && "-rotate-90",
+                    )}
+                    aria-hidden="true"
+                  />
+                </button>
               ) : (
                 <button
                   type="button"
