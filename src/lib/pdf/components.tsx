@@ -319,6 +319,8 @@ export type TableColumn = {
   align: "left" | "right";
   /** Relative width. Text columns default wider than number columns. */
   flex?: number;
+  /** A column people scan by (a reference, a name): set in bold. */
+  bold?: boolean;
 };
 export type TableRow = Record<string, string>;
 
@@ -419,6 +421,7 @@ export function DataTable({
                 s.tdText,
                 figure(row[col.key] ?? ""),
                 dense ? { fontSize: size.tiny } : {},
+                col.bold ? { fontWeight: 600, color: c.navy } : {},
                 cell(col),
               ]}
             >

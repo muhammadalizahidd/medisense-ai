@@ -22,7 +22,6 @@ import {
   Download,
   FileSpreadsheet,
   FileText,
-  HeartPulse,
   Layers,
   LoaderCircle,
   Stethoscope,
@@ -115,10 +114,10 @@ function Chips<T extends string>({
           aria-pressed={value === o.id}
           onClick={() => onChange(o.id)}
           className={cn(
-            "h-9 cursor-pointer rounded-full border px-3.5 text-small font-medium transition-colors duration-(--duration-fast) active:scale-[0.98]",
+            "h-8 cursor-pointer rounded-full border px-3 text-small font-medium transition-colors duration-(--duration-fast) active:scale-[0.98]",
             value === o.id
-              ? "border-transparent bg-sidebar font-semibold text-sidebar-ink"
-              : "border-border-strong bg-surface text-ink-700 hover:bg-sunken hover:text-ink-900",
+              ? "border-transparent bg-accent-fill font-semibold text-on-accent"
+              : "border-sidebar-border text-sidebar-ink hover:bg-sidebar-hover",
           )}
         >
           {o.label}
@@ -212,15 +211,16 @@ export function SystemReports() {
   if (!user) return <Skeleton className="h-160" />;
   return (
     <div className="flex flex-col gap-5">
-      <Hero count={allowed.length} period={badRange ? "—" : periodLabel(range.from, range.to)} />
-
       <section
         aria-label="Report period"
-        className="flex flex-col gap-4 rounded-card border border-border bg-surface p-5"
+        className="flex flex-col gap-2.5 rounded-card bg-sidebar px-5 py-4 text-sidebar-ink"
       >
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div className="flex min-w-0 flex-col gap-2">
-            <span className="label-caps text-ink-500">Period</span>
+        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+          <div className="flex min-w-0 flex-wrap items-center gap-3">
+            <span className="flex items-center gap-1.5 label-caps text-sidebar-muted">
+              <CalendarDays className="size-4" aria-hidden="true" />
+              Period
+            </span>
             <Chips
               label="Quick periods"
               options={presets}
@@ -228,7 +228,7 @@ export function SystemReports() {
               onChange={(p) => p !== "custom" && choosePreset(p)}
             />
           </div>
-          <div className="flex flex-wrap items-end gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             <DateInput
               label="From"
               value={range.from}
@@ -244,15 +244,17 @@ export function SystemReports() {
           </div>
         </div>
         {badRange ? (
-          <p role="alert" className="text-small text-over">
+          <p role="alert" className="text-small font-semibold text-sidebar-ink">
             The end date must be on or after the start date.
           </p>
         ) : (
-          <p className="text-caption text-ink-500">
-            {preset === "custom" ? "Your own dates" : presets.find((p) => p.id === preset)?.label}
-            {" · "}
-            {periodLabel(range.from, range.to)} · Brisbane time. Patient list and caseload show
-            everyone as of today.
+          <p className="text-caption text-sidebar-muted">
+            <span className="font-semibold text-sidebar-ink">
+              {preset === "custom" ? "Your own dates" : presets.find((p) => p.id === preset)?.label}
+              {" · "}
+              {periodLabel(range.from, range.to)}
+            </span>
+            {" · "}Brisbane time. Patient list and caseload show everyone as of today.
           </p>
         )}
       </section>
@@ -283,40 +285,6 @@ export function SystemReports() {
   );
 }
 
-function Hero({ count, period }: { count: number; period: string }) {
-  return (
-    <section className="flex flex-wrap items-center justify-between gap-5 rounded-card bg-sidebar p-6 text-sidebar-ink">
-      <div className="flex min-w-0 items-center gap-4">
-        <span
-          aria-hidden="true"
-          className="grid size-12 flex-none place-items-center rounded-control bg-accent-fill text-on-accent"
-        >
-          <HeartPulse className="size-6" strokeWidth={2} />
-        </span>
-        <div className="min-w-0">
-          <p className="label-caps text-sidebar-muted">Medisense · System reports</p>
-          <h2 className="type-display text-h2 text-sidebar-ink">Reports from the live records</h2>
-          <p className="mt-1 text-small text-sidebar-muted">
-            Counted on the server, checked on screen, downloaded as PDF or Excel.
-          </p>
-        </div>
-      </div>
-      <dl className="grid grid-cols-3 gap-px overflow-hidden rounded-control border border-sidebar-border">
-        {[
-          ["Reports", String(count)],
-          ["Formats", "PDF · Excel"],
-          ["Period", period],
-        ].map(([label, value]) => (
-          <div key={label} className="flex min-w-28 flex-col gap-0.5 bg-sidebar-hover px-4 py-2.5">
-            <dt className="text-caption text-sidebar-muted">{label}</dt>
-            <dd className="text-small font-semibold text-sidebar-ink">{value}</dd>
-          </div>
-        ))}
-      </dl>
-    </section>
-  );
-}
-
 function DateInput({
   label,
   value,
@@ -331,15 +299,15 @@ function DateInput({
   onChange: (value: string) => void;
 }) {
   return (
-    <label className="flex flex-col gap-1.5">
-      <span className="label-caps text-ink-500">{label}</span>
+    <label className="flex items-center gap-2">
+      <span className="label-caps text-sidebar-muted">{label}</span>
       <input
         type="date"
         value={value}
         min={min || undefined}
         max={max || undefined}
         onChange={(e) => onChange(e.target.value)}
-        className="h-9 rounded-control border border-border-strong bg-surface px-2.5 text-small text-ink-900 focus-visible:shadow-focus"
+        className="h-8 rounded-control border border-transparent bg-surface px-2.5 text-small text-ink-900 focus-visible:shadow-focus"
       />
     </label>
   );
@@ -695,7 +663,7 @@ function DataTable({ table, updating }: { table: SystemReportTable; updating: bo
                       className={cn(
                         "px-3 py-2 whitespace-nowrap text-ink-900",
                         table.columns[i]?.numeric && "text-right tabular-nums",
-                        i === 0 && "font-medium",
+                        table.columns[i]?.strong ? "font-semibold" : i === 0 && "font-medium",
                       )}
                     >
                       {show(v)}

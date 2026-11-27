@@ -59,6 +59,7 @@ export function SystemReportDocument({
     key: String(i),
     label: c.label,
     align: c.numeric ? "right" : "left",
+    bold: c.strong,
   }));
   const rows: TableRow[] = table.rows
     .slice(0, SYSTEM_PDF_ROW_LIMIT)

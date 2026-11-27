@@ -133,6 +133,9 @@ const rowNoun: Record<SystemReportId, string> = {
   "type-community": "Community visits",
 };
 
+/** The columns people scan a report by, shown in bold on screen and in the PDF. */
+const STRONG = new Set(["Reference", "MRN", "Patient", "Therapist", "Funding"]);
+
 const number = new Intl.NumberFormat("en-AU", { maximumFractionDigits: 1 });
 
 /**
@@ -506,9 +509,16 @@ export async function systemReportTable(
     }
   }
 
-  const numeric = head.map((_, i) => rows.some((r) => typeof r[i] === "number"));
+  // Where a report lists visits by reference, the MRN comes straight after it.
+  const order = head.map((_, i) => i);
+  const ref = head.indexOf("Reference" as never);
+  const mrn = head.indexOf("MRN" as never);
+  if (ref === 0 && mrn > 1) order.splice(1, 0, ...order.splice(mrn, 1));
+  const cols = order.map((i) => head[i] as string);
+  rows = rows.map((r) => order.map((i) => r[i] ?? ""));
+  const numeric = cols.map((_, i) => rows.some((r) => typeof r[i] === "number"));
   const sum = (label: string) => {
-    const i = (head as readonly string[]).indexOf(label);
+    const i = cols.indexOf(label);
     return rows.reduce((n, r) => n + (typeof r[i] === "number" ? r[i] : 0), 0);
   };
   return {
@@ -518,7 +528,11 @@ export async function systemReportTable(
     period: periodLabel(from ?? "", to ?? ""),
     type: typeLabel(type ?? ""),
     generatedAt: new Date().toISOString(),
-    columns: head.map((label, i) => ({ label, numeric: numeric[i] ?? false })),
+    columns: cols.map((label, i) => ({
+      label,
+      numeric: numeric[i] ?? false,
+      strong: STRONG.has(label),
+    })),
     rows,
     totals: [
       { label: rowNoun[report.id], value: number.format(rows.length) },

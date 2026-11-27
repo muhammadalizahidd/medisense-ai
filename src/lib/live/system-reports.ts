@@ -353,7 +353,8 @@ export type SystemReportTable = {
   /** "All appointment types", or the one type the report was cut to. */
   type: string;
   generatedAt: string;
-  columns: { label: string; numeric: boolean }[];
+  /** `strong` marks the columns people scan by: reference, MRN, patient, therapist, funding. */
+  columns: { label: string; numeric: boolean; strong: boolean }[];
   rows: (string | number)[][];
   /** Headline figures: the row count, then the sum of each total column. */
   totals: { label: string; value: string }[];

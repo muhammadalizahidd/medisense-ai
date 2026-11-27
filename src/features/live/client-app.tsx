@@ -1,5 +1,6 @@
 "use client";
 
+import NextImage from "next/image";
 import { PatientAiHome } from "./enhance-patient";
 import {
   CalendarDays,
@@ -148,6 +149,7 @@ export function ClientApp() {
             />
           ) : (
             <>
+              <WelcomeHero />
               {sent ? (
                 <SentCard sent={sent} onUseCode={() => setFormKey((k) => k + 1)} />
               ) : (
@@ -427,5 +429,56 @@ function MessageBanner({
         </button>
       </div>
     </div>
+  );
+}
+
+/** The top of the patient sign-in screen: a warm photo, the Medisense mark and what the app does. */
+function WelcomeHero() {
+  const features = [
+    { icon: CalendarDays, label: "Your visits" },
+    { icon: MessageCircle, label: "Message your team" },
+    { icon: HeartPulse, label: "Your progress" },
+  ];
+  return (
+    <section className="mb-3 overflow-hidden rounded-card border border-border bg-surface">
+      <div className="relative h-40 sm:h-48">
+        <NextImage
+          src="/images/tiles/new-patients.jpg"
+          alt=""
+          fill
+          priority
+          sizes="(min-width: 48rem) 720px, 100vw"
+          className="object-cover"
+        />
+        <span
+          aria-hidden="true"
+          className="absolute bottom-3 left-4 flex items-center gap-2 rounded-full bg-surface py-1.5 pr-3.5 pl-1.5 shadow-overlay"
+        >
+          <span className="grid size-8 place-items-center rounded-full bg-accent-fill text-on-accent">
+            <HeartPulse className="size-4.5" strokeWidth={2} />
+          </span>
+          <span className="text-small font-semibold text-ink-900">Medisense</span>
+        </span>
+      </div>
+      <div className="flex flex-col gap-3 p-4">
+        <div>
+          <h2 className="text-section font-semibold text-ink-900">Your care, all in one place</h2>
+          <p className="mt-0.5 text-small text-ink-700">
+            See your visits, message your care team and follow your progress, from your phone.
+          </p>
+        </div>
+        <ul className="grid grid-cols-3 gap-2">
+          {features.map(({ icon: Icon, label }) => (
+            <li
+              key={label}
+              className="flex flex-col items-center gap-1.5 rounded-control bg-accent-tint px-2 py-3 text-center"
+            >
+              <Icon className="size-5 text-accent" strokeWidth={2} aria-hidden="true" />
+              <span className="text-caption font-semibold text-ink-900">{label}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
   );
 }
