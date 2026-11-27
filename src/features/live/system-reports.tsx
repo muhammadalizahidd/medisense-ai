@@ -44,6 +44,7 @@ import {
   type SystemReportTable,
 } from "@/lib/live/system-reports";
 import { ErrorNote, Skeleton } from "./bits";
+import { DateRangePicker } from "./date-range-picker";
 
 const presets = [
   { id: "today", label: "Today" },
@@ -203,10 +204,6 @@ export function SystemReports() {
     setPreset(p);
     setRange(rangeFor(p));
   };
-  const setDate = (key: "from" | "to", value: string) => {
-    setPreset("custom");
-    setRange((r) => ({ ...r, [key]: value }));
-  };
 
   if (!user) return <Skeleton className="h-160" />;
   return (
@@ -228,18 +225,14 @@ export function SystemReports() {
               onChange={(p) => p !== "custom" && choosePreset(p)}
             />
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <DateInput
-              label="From"
-              value={range.from}
-              max={range.to}
-              onChange={(v) => setDate("from", v)}
-            />
-            <DateInput
-              label="To"
-              value={range.to}
-              min={range.from}
-              onChange={(v) => setDate("to", v)}
+          <div className="flex items-center gap-2">
+            <span className="label-caps text-sidebar-muted">Dates</span>
+            <DateRangePicker
+              value={range}
+              onChange={(next) => {
+                setPreset(next.from || next.to ? "custom" : "all");
+                setRange(next);
+              }}
             />
           </div>
         </div>
@@ -282,34 +275,6 @@ export function SystemReports() {
         </div>
       )}
     </div>
-  );
-}
-
-function DateInput({
-  label,
-  value,
-  min,
-  max,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  min?: string;
-  max?: string;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <label className="flex items-center gap-2">
-      <span className="label-caps text-sidebar-muted">{label}</span>
-      <input
-        type="date"
-        value={value}
-        min={min || undefined}
-        max={max || undefined}
-        onChange={(e) => onChange(e.target.value)}
-        className="h-8 rounded-control border border-transparent bg-surface px-2.5 text-small text-ink-900 focus-visible:shadow-focus"
-      />
-    </label>
   );
 }
 

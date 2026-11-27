@@ -17,6 +17,18 @@ import {
   type TableRow,
 } from "../components";
 
+/** Shorter headings for a printed page, so a heading never stacks over three lines. */
+const PRINT_LABEL: Record<string, string> = {
+  "Date of birth": "DOB",
+  "Booked minutes": "Booked mins",
+  "Actual minutes": "Actual mins",
+  "Hours delivered": "Hours",
+  "Average minutes per visit": "Avg mins / visit",
+  "Did not attend": "DNA",
+  "Patients seen": "Patients",
+  "Visits completed": "Completed",
+};
+
 /** The most rows a PDF carries; the CSV always holds every row. */
 export const SYSTEM_PDF_ROW_LIMIT = 1000;
 
@@ -57,9 +69,10 @@ export function SystemReportDocument({
 }) {
   const columns: TableColumn[] = table.columns.map((c, i) => ({
     key: String(i),
-    label: c.label,
     align: c.numeric ? "right" : "left",
     bold: c.strong,
+    keep: c.label === "Reference" || c.label === "MRN",
+    label: PRINT_LABEL[c.label] ?? c.label,
   }));
   const rows: TableRow[] = table.rows
     .slice(0, SYSTEM_PDF_ROW_LIMIT)

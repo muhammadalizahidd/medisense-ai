@@ -321,6 +321,8 @@ export type TableColumn = {
   flex?: number;
   /** A column people scan by (a reference, a name): set in bold. */
   bold?: boolean;
+  /** Never break a value in this column (a reference, an MRN): it keeps its full width. */
+  keep?: boolean;
 };
 export type TableRow = Record<string, string>;
 
@@ -348,6 +350,8 @@ export function columnWidths(
   columns: TableColumn[],
   rows: TableRow[],
   total = TABLE_WIDTH,
+  /** Smaller type (a dense table) needs proportionally less room per character. */
+  scale = 1,
 ): number[] {
   const sample = rows.slice(0, 300);
   const spec = columns.map((col) => {
@@ -355,10 +359,12 @@ export function columnWidths(
     const longest = Math.min(34, Math.max(...cells.map((v) => v.length)));
     const word = Math.max(...cells.map(longestToken));
     return {
-      need: Math.max(6, longest) * CHAR + PAD,
-      // A token longer than this can be broken, so it never forces the whole table wider.
-      min: Math.max(5, Math.min(word, MAX_WHOLE)) * CHAR_TOKEN + PAD,
+      need: Math.max(6, longest) * CHAR * scale + PAD,
+      // A token longer than this can be broken, so it never forces the whole table wider; a kept
+      // column (a reference, an MRN) always fits its longest value.
+      min: Math.max(5, col.keep ? word : Math.min(word, MAX_WHOLE)) * CHAR_TOKEN * scale + PAD,
       share: col.flex ?? 1,
+      keep: Boolean(col.keep),
     };
   });
   // A word is never wider than the whole line it has to share.
@@ -370,8 +376,10 @@ export function columnWidths(
   }
   const mins = spec.reduce((n, x) => n + x.min, 0);
   if (mins >= total) {
-    // Even the longest words don't fit: shrink evenly and let the longest break.
-    return spec.map((x) => (x.min / mins) * total);
+    // Even the longest words don't fit: kept columns hold their width, the rest shrink evenly.
+    const kept = spec.reduce((n, x) => n + (x.keep ? x.min : 0), 0);
+    const rest = Math.max(mins - kept, 1);
+    return spec.map((x) => (x.keep ? x.min : (x.min / rest) * Math.max(total - kept, 0)));
   }
   const room = total - mins;
   const wants = need.reduce((n, v, i) => n + (v - (spec[i]?.min ?? 0)), 0) || 1;
@@ -394,9 +402,15 @@ export function DataTable({
 }) {
   // The rows have side padding, so the columns share the width inside it; otherwise the last
   // column runs to the very edge of the page.
-  const widths = columnWidths(columns, rows, width - ROW_PAD * 2);
-  // Eight or more columns get slightly smaller type, so a wide report stays tidy.
+  // Eight or more columns get slightly smaller type, so a wide report stays tidy; the widths are
+  // worked out at that size, so more fits on a line.
   const dense = columns.length >= 8;
+  const widths = columnWidths(
+    columns,
+    rows,
+    width - ROW_PAD * 2,
+    dense ? size.tiny / size.small : 1,
+  );
   const cell = (col: TableColumn) => ({
     width: widths[columns.indexOf(col)] ?? 60,
     flexShrink: 0,
@@ -407,7 +421,7 @@ export function DataTable({
     <View>
       <View style={s.th} fixed>
         {columns.map((col) => (
-          <Text key={col.key} style={[s.thText, cell(col)]}>
+          <Text key={col.key} style={[s.thText, dense ? { fontSize: size.tiny } : {}, cell(col)]}>
             {col.label}
           </Text>
         ))}
