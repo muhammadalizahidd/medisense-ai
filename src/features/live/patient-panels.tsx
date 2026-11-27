@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, inputClass } from "@/components/ui/sheet";
 import { AppCard } from "@/features/mobile/phone-frame";
-import { api } from "@/lib/live/client";
+import { api, useResource } from "@/lib/live/client";
 import { slotLabel } from "@/lib/live/time";
 import type { AppointmentDto, ClientHomeDto } from "@/lib/live/types";
 import { Stars } from "./bits";
@@ -170,6 +170,118 @@ export function PatientDetailsCard({
         )}
         <Button type="submit" variant="primary" disabled={state.busy}>
           {state.busy ? "Saving…" : "Save details"}
+        </Button>
+      </form>
+    </AppCard>
+  );
+}
+
+/**
+ * Sign-in details: a patient who came in with their MRN adds an email and password, so they can
+ * sign in either way. Their MRN confirms it's them, and also resets a forgotten password.
+ */
+export function PatientSignInCard() {
+  const { data, reload } = useResource<{ email: string; hasPassword: boolean }>("/api/me/sign-in");
+  const [email, setEmail] = useState<string | null>(null);
+  const [password, setPassword] = useState("");
+  const [again, setAgain] = useState("");
+  const [mrn, setMrn] = useState("");
+  const [state, setState] = useState<{ busy: boolean; error: string | null; done: boolean }>({
+    busy: false,
+    error: null,
+    done: false,
+  });
+  const shownEmail = email ?? data?.email ?? "";
+  // The sign-in check is cached for a few seconds, so a fresh save counts even before it shows.
+  const [saved, setSaved] = useState<string | null>(null);
+  const hasPassword = Boolean(data?.hasPassword) || saved !== null;
+
+  async function save(event: FormEvent) {
+    event.preventDefault();
+    if (password.length < 10) {
+      return setState({
+        busy: false,
+        error: "Use at least 10 characters for the password.",
+        done: false,
+      });
+    }
+    if (password !== again) {
+      return setState({ busy: false, error: "The two passwords don't match.", done: false });
+    }
+    setState({ busy: true, error: null, done: false });
+    try {
+      await api("/api/me/sign-in", { body: { email: shownEmail, password, mrn } });
+      setPassword("");
+      setAgain("");
+      setMrn("");
+      setSaved(shownEmail);
+      setState({ busy: false, error: null, done: true });
+      reload();
+    } catch (e) {
+      setState({
+        busy: false,
+        error: e instanceof Error ? e.message : "Couldn't save your sign-in details.",
+        done: false,
+      });
+    }
+  }
+
+  return (
+    <AppCard title={hasPassword ? "Sign-in details" : "Sign in with email"}>
+      <p className="mb-3 text-small text-ink-700">
+        {hasPassword
+          ? `You can sign in with ${saved ?? data?.email ?? "your email"} and your password, or with your MRN.`
+          : "Right now you sign in with your MRN. Add an email and password so you can sign in either way."}
+      </p>
+      <form onSubmit={save} className="flex flex-col gap-3" noValidate>
+        <Field label="Email">
+          <input
+            type="email"
+            autoComplete="email"
+            value={shownEmail}
+            onChange={(e) => setEmail(e.target.value)}
+            className={inputClass}
+          />
+        </Field>
+        <Field label={hasPassword ? "New password" : "Password"} hint="At least 10 characters.">
+          <input
+            type="password"
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className={inputClass}
+          />
+        </Field>
+        <Field label="Password again">
+          <input
+            type="password"
+            autoComplete="new-password"
+            value={again}
+            onChange={(e) => setAgain(e.target.value)}
+            className={inputClass}
+          />
+        </Field>
+        <Field label="Your MRN" hint="To confirm it's you, for example MRN-12112026-0001.">
+          <input
+            autoComplete="off"
+            autoCapitalize="characters"
+            value={mrn}
+            onChange={(e) => setMrn(e.target.value)}
+            className={inputClass}
+          />
+        </Field>
+        {state.error && (
+          <p role="alert" className="text-small text-over">
+            {state.error}
+          </p>
+        )}
+        {state.done && (
+          <p role="status" className="text-small text-healthy">
+            Saved. Next time, sign in with your email and password, or with your MRN.
+          </p>
+        )}
+        <Button type="submit" variant="primary" disabled={state.busy || !data}>
+          {state.busy ? "Saving…" : hasPassword ? "Change password" : "Save email and password"}
         </Button>
       </form>
     </AppCard>

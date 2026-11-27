@@ -34,7 +34,7 @@ import { PendingReferral, ReferralOverlay, SentCard, type SentReferral } from ".
 import { ErrorNote, Skeleton } from "./bits";
 import { CancelVisitPanel } from "./cancel-visit";
 import { ChatOverlay } from "./chat-overlay";
-import { PatientDetailsCard, RateVisitPanel } from "./patient-panels";
+import { PatientDetailsCard, PatientSignInCard, RateVisitPanel } from "./patient-panels";
 import { ConversationList, useConversations, useUnreadMessages } from "./conversations";
 import { PatientHome } from "./patient-home";
 import { PatientProgress } from "./patient-progress";
@@ -346,6 +346,7 @@ function ClientTabs({
                 onSaved={home.reload}
               />
             )}
+            <PatientSignInCard />
             <AppCard title="Need another service?">
               <p className="mb-3 text-small text-ink-700">
                 {sent
