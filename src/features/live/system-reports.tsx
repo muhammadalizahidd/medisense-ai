@@ -261,7 +261,7 @@ function show(value: string | number) {
 /** Filters survive moving between report pages in the same tab, so a period is set once. */
 const STORE = "medisense-system-report-filters";
 
-function useFilters() {
+export function useSystemFilters() {
   const [filters, setFilters] = useState<SystemReportFilters>(defaults);
   useEffect(() => {
     try {
@@ -326,7 +326,7 @@ export function SystemReportsPage({ group }: { group: Group }) {
     [group, user],
   );
   const [report, setReport] = useReportParam(reports);
-  const [filters, setFilters] = useFilters();
+  const [filters, setFilters] = useSystemFilters();
   const meta = groupMeta[group];
   const url = report ? systemReportUrl(report.id, filters, "json") : null;
   const { data, error, reload } = useResource<{ table: SystemReportTable }>(url);
@@ -473,7 +473,7 @@ function IconSelect({
   );
 }
 
-function FilterBar({
+export function FilterBar({
   filters,
   onChange,
   options,

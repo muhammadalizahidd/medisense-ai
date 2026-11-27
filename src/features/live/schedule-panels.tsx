@@ -97,12 +97,12 @@ export function ResourcesPanel({
         <div className="flex items-center gap-3">
           <div className="w-52">
             <Select
-              aria-label="Discipline"
+              aria-label="Therapy type"
               className="h-9"
               value={discipline}
               onChange={(e) => setDiscipline(e.target.value)}
             >
-              <option value="">Any discipline</option>
+              <option value="">Any therapy type</option>
               {[...new Set((data?.resources ?? []).map((r) => r.discipline))].sort().map((d) => (
                 <option key={d}>{d}</option>
               ))}
@@ -163,7 +163,7 @@ export function ResourcesPanel({
                       return (
                         <td key={d.date} className="px-3 py-3 align-top">
                           {d.working === 0 ? (
-                            <span className="text-caption text-ink-500">Not working</span>
+                            <span className="text-caption text-ink-500">Off roster</span>
                           ) : d.leave ? (
                             <span className="inline-flex items-center gap-1 rounded-tag bg-watch-bg px-2 py-1 text-label font-semibold text-watch">
                               <CalendarOff className="size-3" aria-hidden="true" /> {d.leave}

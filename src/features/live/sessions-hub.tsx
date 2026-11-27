@@ -1,53 +1,49 @@
 "use client";
 
+import { useEffect } from "react";
 import { PageHeader } from "@/components/ui/page";
-import { TabPanel, Tabs, useTab } from "@/components/ui/tabs";
-import { useSession } from "@/lib/live/client";
-import { canOpenPage, pageAccessFor } from "@/lib/permissions/pages";
 import { LiveBadge } from "./bits";
 import { DocQueue } from "./doc-queue";
-import { RecordingsPage } from "./recordings-page";
 import { SessionList } from "./session-list";
 
-const tabs = [
-  { id: "sessions", label: "Sessions" },
-  { id: "notes", label: "Notes" },
-  { id: "recordings", label: "Recordings" },
-] as const;
+/** Sessions and notes is a group in the menu; each part is its own page. */
+export type SessionsSection = "sessions" | "notes";
+
+const HEAD: Record<SessionsSection, { title: string; line: string }> = {
+  sessions: {
+    title: "Sessions",
+    line: "Every visit across the team: attendance, delivery and what happens next",
+  },
+  notes: {
+    title: "Clinical notes",
+    line: "The clinical note from each visit: what is late, drafted, flagged or awaiting co-sign",
+  },
+};
 
 /**
- * Every visit and the note that comes out of it, in one place for the office: the sessions with
- * attendance and delivery, and the notes with what is late, drafted by AI, flagged or awaiting
- * co-sign. Each note belongs to a session, so they share one page instead of two.
+ * The office view of every visit (Sessions) or every note (Clinical notes). Telehealth
+ * recordings, the third part of the group, has its own page.
  */
-export function SessionsHub() {
-  const { user } = useSession();
-  const recordings = canOpenPage(
-    "/telehealth/recordings",
-    user?.role === "admin" ? pageAccessFor(user) : null,
-  );
-  const shown = tabs.filter((t) => t.id !== "recordings" || recordings);
-  const [chosen, setTab] = useTab(tabs);
-  const tab = shown.some((t) => t.id === chosen) ? chosen : "sessions";
+export function SessionsHub({ section = "sessions" }: { section?: SessionsSection }) {
+  // Old links named a tab (?tab=notes); each part has its own address now.
+  useEffect(() => {
+    if (section !== "sessions") return;
+    const old = new URLSearchParams(window.location.search).get("tab");
+    if (old === "notes") window.location.replace("/care/documentation");
+    if (old === "recordings") window.location.replace("/telehealth/recordings");
+  }, [section]);
   return (
     <>
       <PageHeader
-        eyebrow="Live care"
-        title="Sessions and notes"
-        description="Every visit across the team and the clinical note that comes out of it"
+        eyebrow="Sessions and notes"
+        title={HEAD[section].title}
+        description={HEAD[section].line}
         actions={<LiveBadge />}
       />
-      <Tabs label="Sessions and notes" tabs={shown} value={tab} onChange={setTab} />
-      <TabPanel id="sessions" value={tab}>
+      {section === "sessions" ? (
         <SessionList base="/care/sessions" embedded />
-      </TabPanel>
-      <TabPanel id="notes" value={tab}>
+      ) : (
         <DocQueue base="/care/documentation" embedded />
-      </TabPanel>
-      {recordings && (
-        <TabPanel id="recordings" value={tab}>
-          <RecordingsPage embedded />
-        </TabPanel>
       )}
     </>
   );

@@ -92,6 +92,19 @@ export const navigation: { group: string; items: NavItem[] }[] = [
       { href: "/care", label: "Patients", icon: UserPlus, roles: [L, A] },
       { href: "/care/therapists", label: "Therapists", icon: Stethoscope, roles: [L, A] },
       { href: "/care/schedule", label: "Scheduling", icon: CalendarRange, roles: [L, A] },
+      {
+        href: "/care/schedule/resources",
+        label: "Resources and leave",
+        icon: CalendarOff,
+        roles: [L, A],
+      },
+      { href: "/care/schedule/reminders", label: "Reminders", icon: BellRing, roles: [L, A] },
+      {
+        href: "/care/schedule/exceptions",
+        label: "Exceptions and audit",
+        icon: Flag,
+        roles: [L, A],
+      },
       { href: "/care/funding", label: "Funding and agreements", icon: Landmark, roles: [L, A] },
       { href: "/care/billing", label: "Billing and finance", icon: Receipt, roles: [L, A] },
       { href: "/care/hr", label: "People and HR", icon: IdCard, roles: [L, A] },
@@ -171,7 +184,12 @@ export const navigation: { group: string; items: NavItem[] }[] = [
       { href: "/therapist", label: "My new patients", icon: BellRing, roles: [C] },
       { href: "/messages", label: "Messages", icon: MessagesSquare, roles: [C] },
       { href: "/care/messages", label: "Messages", icon: MessagesSquare, roles: [L, A] },
-      { href: "/telehealth/recordings", label: "Recordings", icon: Video, roles: [L, A, C] },
+      {
+        href: "/telehealth/recordings",
+        label: "Telehealth recordings",
+        icon: Video,
+        roles: [L, A, C],
+      },
       { href: "/profile", label: "My profile", icon: CircleUserRound, roles: [L, A, S, C] },
     ],
   },
@@ -288,10 +306,28 @@ const roleLayouts: Partial<Record<Role, Section[]>> = {
         "/care/plans",
         "/care/progress",
         "/care/therapists",
-        "/care/sessions",
         "/care/coordination",
+      ],
+    },
+    {
+      // Each part of sessions and notes is its own page.
+      group: "Sessions and notes",
+      live: true,
+      hrefs: [
+        { href: "/care/sessions", label: "Sessions" },
+        { href: "/care/documentation", label: "Clinical notes" },
         "/telehealth/recordings",
-        "/care/schedule",
+      ],
+    },
+    {
+      // Each part of scheduling is its own page.
+      group: "Scheduling",
+      live: true,
+      hrefs: [
+        { href: "/care/schedule", label: "Calendar", icon: CalendarDays },
+        "/care/schedule/resources",
+        "/care/schedule/reminders",
+        "/care/schedule/exceptions",
       ],
     },
     {
@@ -402,7 +438,6 @@ export const mergedInto: Record<string, string> = {
   "/care/assessments": "/care/records",
   "/care/plans": "/care/records",
   "/care/progress": "/care/records",
-  "/telehealth/recordings": "/care/sessions",
   "/care/coordination": "/care/operations",
   "/care/hr/leave": "/care/hr",
   "/care/hr/timesheets": "/care/hr",
@@ -427,7 +462,7 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
   },
   {
     prefix: "/telehealth/recordings",
-    meta: { section: "Live care", page: "Recordings", role: "Clinician" },
+    meta: { section: "Sessions and notes", page: "Telehealth recordings", role: "Clinician" },
   },
   {
     prefix: "/care/funding/agreements/",
@@ -531,7 +566,7 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
   },
   {
     prefix: "/care/documentation",
-    meta: { section: "Live care", page: "Sessions and notes", role: "Admin" },
+    meta: { section: "Sessions and notes", page: "Clinical notes", role: "Admin" },
   },
   {
     prefix: "/therapist/documentation/",
@@ -547,7 +582,7 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
   },
   {
     prefix: "/care/sessions",
-    meta: { section: "Live care", page: "Sessions and notes", role: "Admin" },
+    meta: { section: "Sessions and notes", page: "Sessions", role: "Admin" },
   },
   {
     prefix: "/therapist/sessions/",
@@ -642,8 +677,20 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
     meta: { section: "Live care", page: "My schedule", role: "Clinician" },
   },
   {
+    prefix: "/care/schedule/resources",
+    meta: { section: "Scheduling", page: "Resources and leave", role: "Admin" },
+  },
+  {
+    prefix: "/care/schedule/reminders",
+    meta: { section: "Scheduling", page: "Reminders", role: "Admin" },
+  },
+  {
+    prefix: "/care/schedule/exceptions",
+    meta: { section: "Scheduling", page: "Exceptions and audit", role: "Admin" },
+  },
+  {
     prefix: "/care/schedule",
-    meta: { section: "Live care", page: "Scheduling", role: "Admin" },
+    meta: { section: "Scheduling", page: "Calendar", role: "Admin" },
   },
   {
     prefix: "/care/therapists",

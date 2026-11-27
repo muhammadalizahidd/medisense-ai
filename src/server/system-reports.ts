@@ -9,6 +9,8 @@ import {
   type SystemReportFilters,
   type SystemReportFormat,
   type SystemReportId,
+  type OverviewFigures,
+  type SystemOverview,
   type SystemReportTable,
   type VisitSummary,
 } from "@/lib/live/system-reports";
@@ -582,7 +584,7 @@ export async function systemReportTable(
         }
         const doneDays = visits.filter((a) => a.status === "completed");
         footerOverride = {
-          "Patients seen": new Set(doneDays.map((a) => String(a.clientId))).size,
+          "Patients visited": new Set(doneDays.map((a) => String(a.clientId))).size,
           "Therapists working": new Set(doneDays.map((a) => String(a.therapistId))).size,
         };
         rows = [...days.entries()]
@@ -655,7 +657,7 @@ export async function systemReportTable(
         ]);
         const done = visits.filter((a) => a.status === "completed" && tallies.has(typeOf(a)));
         footerOverride = {
-          "Patients seen": new Set(done.map((a) => String(a.clientId))).size,
+          "Patients visited": new Set(done.map((a) => String(a.clientId))).size,
           Therapists: new Set(done.map((a) => String(a.therapistId))).size,
         };
         break;
@@ -768,4 +770,226 @@ export async function downloadSystemReport(
   ]);
   const pdf = await renderPdf(SystemReportDocument({ table, preparedBy: admin.name }));
   return { body: new Uint8Array(pdf), type: "application/pdf", filename: `${base}.pdf` };
+}
+
+/* ------------------------------------------------------------------ overview */
+
+const monthFmt = new Intl.DateTimeFormat("en-AU", {
+  timeZone: TZ,
+  month: "short",
+  year: "2-digit",
+});
+const shortDayFmt = new Intl.DateTimeFormat("en-AU", {
+  timeZone: TZ,
+  day: "numeric",
+  month: "short",
+});
+
+/**
+ * The reports overview: the same visits the system reports count, summed up by appointment type,
+ * therapy, therapist, funding and over time. Worked out here, so the page receives a few hundred
+ * numbers instead of every visit.
+ */
+export async function systemOverview(
+  admin: UserDoc,
+  filters: Partial<Record<keyof SystemReportFilters, string | null>>,
+): Promise<SystemOverview> {
+  if (!can(admin, "reports.detail.scheduling")) {
+    throw new UserFacingError("You don't have access to the reports overview.", 400);
+  }
+  const from = parseDay(filters.from ?? null);
+  const to = parseDay(filters.to ?? null);
+  if (from && to && from > to) throw new UserFacingError("The start date is after the end date.");
+  const region = filters.region?.trim() || "";
+  const discipline = filters.discipline?.trim() || "";
+  const therapist = /^[a-f0-9]{24}$/.test(filters.therapist ?? "") ? (filters.therapist ?? "") : "";
+  const status = visitStatusFilters.some((s) => s.id === filters.status)
+    ? (filters.status ?? "")
+    : "";
+
+  const range: { $gte?: Date; $lt?: Date } = {};
+  if (from) range.$gte = startOf(from);
+  if (to) range.$lt = new Date(startOf(to).getTime() + DAY_MS);
+  const before =
+    range.$gte && range.$lt
+      ? {
+          $gte: new Date(range.$gte.getTime() - (range.$lt.getTime() - range.$gte.getTime())),
+          $lt: range.$gte,
+        }
+      : null;
+  const fetchFrom = before?.$gte ?? range.$gte;
+
+  const { appointments, clients, therapists } = await collections();
+  const [allVisits, clientList, therapistList] = await Promise.all([
+    appointments
+      .find(from || to ? { start: { ...range, ...(fetchFrom ? { $gte: fetchFrom } : {}) } } : {}, {
+        projection: {
+          therapistId: 1,
+          clientId: 1,
+          discipline: 1,
+          start: 1,
+          end: 1,
+          status: 1,
+          checkOut: 1,
+          modality: 1,
+          needId: 1,
+          "site.location": 1,
+        },
+      })
+      .sort({ start: 1 })
+      .toArray(),
+    clients
+      .find({}, { projection: { funding: 1, "needs.id": 1, "needs.location": 1 } })
+      .toArray() as Promise<ClientDoc[]>,
+    therapists
+      .find({}, { projection: { name: 1, discipline: 1, region: 1, active: 1 } })
+      .toArray() as Promise<TherapistDoc[]>,
+  ]);
+
+  const clientById = new Map(clientList.map((c) => [String(c._id), c]));
+  const therapistById = new Map(therapistList.map((t) => [String(t._id), t]));
+  const typeOf = (a: AppointmentDoc) => {
+    const need = clientById.get(String(a.clientId))?.needs?.find((n) => n.id === a.needId);
+    return modeOf(a.site?.location ?? need?.location, a.modality);
+  };
+  const passes = (a: AppointmentDoc) =>
+    a.status !== "rescheduled" &&
+    (!region || therapistById.get(String(a.therapistId))?.region === region) &&
+    (!discipline || a.discipline === discipline) &&
+    (!therapist || String(a.therapistId) === therapist) &&
+    matchesStatus(a, status);
+  const within = (a: AppointmentDoc, r: { $gte?: Date; $lt?: Date }) =>
+    (!r.$gte || a.start >= r.$gte) && (!r.$lt || a.start < r.$lt);
+  const filtered = allVisits.filter(passes);
+  const visits = filtered.filter((a) => within(a, range));
+
+  const figures = (list: AppointmentDoc[]): OverviewFigures => {
+    const t = blank();
+    for (const a of list) count(t, a);
+    const done = list.filter((a) => a.status === "completed");
+    const rate = completionRate(t);
+    return {
+      visits: t.visits,
+      completed: t.completed,
+      cancelled: t.cancelled,
+      booked: t.upcoming,
+      hours: hours(t.minutes),
+      dna: t.dna,
+      patients: new Set(done.map((a) => String(a.clientId))).size,
+      therapists: new Set(done.map((a) => String(a.therapistId))).size,
+      rate: rate === "" ? null : rate,
+      types: Object.fromEntries(
+        appointmentTypes.map((k) => [typeLabel(k), list.filter((a) => typeOf(a) === k).length]),
+      ),
+    };
+  };
+
+  // Days for a month or less, weeks up to about four months, months beyond.
+  const first = range.$gte ?? visits[0]?.start ?? new Date();
+  const last = range.$lt ?? new Date((visits.at(-1)?.start ?? new Date()).getTime() + DAY_MS);
+  const span = (last.getTime() - first.getTime()) / DAY_MS;
+  const grain: SystemOverview["grain"] = span <= 31 ? "Day" : span <= 125 ? "Week" : "Month";
+  const bucketOf = (d: Date) => {
+    const k = dayFmt.format(d);
+    if (grain === "Day") return k;
+    if (grain === "Month") return k.slice(0, 7);
+    const wd = (new Date(`${k}T00:00:00Z`).getUTCDay() + 6) % 7;
+    return new Date(Date.parse(`${k}T00:00:00Z`) - wd * DAY_MS).toISOString().slice(0, 10);
+  };
+  const labelOf = (b: string) => {
+    const d = new Date(`${grain === "Month" ? `${b}-01` : b}T00:00:00${OFFSET}`);
+    return grain === "Month" ? monthFmt.format(d) : shortDayFmt.format(d);
+  };
+  const buckets: string[] = [];
+  for (let t = first.getTime(); t < last.getTime(); t += DAY_MS) {
+    const b = bucketOf(new Date(t));
+    if (buckets.at(-1) !== b) buckets.push(b);
+    if (buckets.length > 400) break;
+  }
+  const trendMap = new Map(
+    buckets.map((b) => [b, { label: labelOf(b), completed: 0, cancelled: 0, dna: 0, booked: 0 }]),
+  );
+  for (const a of visits) {
+    const row = trendMap.get(bucketOf(a.start));
+    if (!row) continue;
+    if (a.status === "completed") row.completed += 1;
+    else if (isCancelled(a.status)) row.cancelled += 1;
+    else if (a.status === "no-show") row.dna += 1;
+    else if (isBooked(a)) row.booked += 1;
+  }
+
+  const statuses = new Map<string, number>();
+  for (const a of visits) {
+    const label = statusLabel[a.status];
+    statuses.set(label, (statuses.get(label) ?? 0) + 1);
+  }
+
+  const byType = appointmentTypes.map((k) => {
+    const t = blank();
+    for (const a of visits) if (typeOf(a) === k) count(t, a);
+    return {
+      label: typeLabel(k),
+      visits: t.visits,
+      completed: t.completed,
+      hours: hours(t.minutes),
+    };
+  });
+
+  const therapies = new Map<string, Tally>();
+  const people = new Map<string, Tally>();
+  for (const a of visits) {
+    const th = therapies.get(a.discipline) ?? blank();
+    count(th, a);
+    therapies.set(a.discipline, th);
+    const p = people.get(String(a.therapistId)) ?? blank();
+    count(p, a);
+    people.set(String(a.therapistId), p);
+  }
+
+  const funding = new Map<string, Set<string>>();
+  for (const a of visits) {
+    if (a.status !== "completed") continue;
+    const f = clientById.get(String(a.clientId))?.funding ?? "Other";
+    const set = funding.get(f) ?? new Set<string>();
+    set.add(String(a.clientId));
+    funding.set(f, set);
+  }
+
+  const active = therapistList
+    .filter((t) => t.active !== false)
+    .sort((a, b) => a.name.localeCompare(b.name));
+  return {
+    request: [from ?? "", to ?? "", region, discipline, therapist, status].join("|"),
+    period: periodLabel(from ?? "", to ?? ""),
+    grain,
+    summary: {
+      current: figures(visits),
+      previous: before ? figures(filtered.filter((a) => within(a, before))) : null,
+    },
+    trend: [...trendMap.values()],
+    statuses: [...statuses]
+      .map(([label, value]) => ({ label, value }))
+      .sort((a, b) => b.value - a.value),
+    byType,
+    byTherapy: [...therapies]
+      .map(([label, t]) => ({ label, visits: t.visits, hours: hours(t.minutes) }))
+      .sort((a, b) => b.visits - a.visits),
+    topTherapists: [...people]
+      .map(([id, t]) => ({
+        name: therapistById.get(id)?.name ?? "Unknown therapist",
+        discipline: therapistById.get(id)?.discipline ?? "",
+        visits: t.visits,
+        hours: hours(t.minutes),
+      }))
+      .sort((a, b) => b.hours - a.hours || b.visits - a.visits)
+      .slice(0, 8),
+    funding: [...funding]
+      .map(([label, set]) => ({ label, patients: set.size }))
+      .sort((a, b) => b.patients - a.patients),
+    options: {
+      regions: [...new Set(active.map((t) => t.region).filter(Boolean))].sort(),
+      disciplines: [...new Set(active.map((t) => t.discipline).filter(Boolean))].sort(),
+      therapists: active.map((t) => ({ id: String(t._id), name: t.name })),
+    },
+  };
 }

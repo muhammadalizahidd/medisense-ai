@@ -497,7 +497,7 @@ export function Activity({ c }: { c: Ctx }) {
   const options: { id: Measure; label: string }[] = [
     ...(has(domainOf("R01")) ? [{ id: "referrals" as const, label: "Referrals" }] : []),
     ...(has(domainOf("R07")) ? [{ id: "sessions" as const, label: "Sessions delivered" }] : []),
-    ...(has(domainOf("R04")) ? [{ id: "patients" as const, label: "Patients seen" }] : []),
+    ...(has(domainOf("R04")) ? [{ id: "patients" as const, label: "Patients visited" }] : []),
     ...(has(domainOf("R14")) ? [{ id: "revenue" as const, label: "Revenue invoiced" }] : []),
   ];
   const [pick, setPick] = useState<Measure | null>(null);

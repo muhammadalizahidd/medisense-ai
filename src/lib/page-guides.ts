@@ -532,6 +532,27 @@ export const guides: Record<string, PageGuide> = {
     ],
     "Everyone is one message away, without leaving the system.",
   ),
+  "/care/schedule/resources": g(
+    "Resources and leave",
+    "Each clinician's week: rostered hours, what is booked, what is free, and leave.",
+    ["See free and booked hours by day", "Add leave for a clinician", "Filter by therapy type"],
+    ["Pick the week.", "Find the clinician.", "Add leave or check free time."],
+    "A clear picture of who can take more visits this week.",
+  ),
+  "/care/schedule/reminders": g(
+    "Visit reminders",
+    "Reminders sent to patients before their visits, and the ones that failed.",
+    ["See sent and failed reminders", "Resend a reminder"],
+    ["Check the failed list.", "Fix the contact details.", "Resend."],
+    "Every patient reminded before their visit.",
+  ),
+  "/care/schedule/exceptions": g(
+    "Scheduling exceptions and audit",
+    "Clashes, leave conflicts, blocked bookings and change requests, with the booking history.",
+    ["Open each exception", "Move or cancel the visit", "Read the audit trail"],
+    ["Open the exception.", "Resolve it.", "Check the audit trail."],
+    "No double bookings or visits during leave.",
+  ),
   "/care/schedule": g(
     "Scheduling",
     "Book, reschedule and confirm visits across the team.",

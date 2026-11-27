@@ -98,7 +98,7 @@ export function TherapistSessions({ t }: { t: TherapistDetailDto }) {
         metrics={[
           { label: "Sessions delivered", value: completed.length },
           { label: "Upcoming", value: all.filter(isUpcoming).length },
-          { label: "Patients seen", value: t.sessions.patients },
+          { label: "Patients visited", value: t.sessions.patients },
           { label: "Hours with patients", value: Math.round(minutes / 6) / 10 },
           { label: "Recordings", value: all.filter((s) => s.recording).length },
           {

@@ -13,6 +13,7 @@ import { reportById } from "@/lib/live/report-catalogue";
 import { filterSummary } from "@/lib/live/reports";
 import { ErrorNote, LiveBadge, Skeleton } from "./bits";
 import { readParam, useNavParam } from "./report-nav";
+import { ReportsOverview } from "./reports-overview";
 import { ExportsTab, Methodology, SchedulesTab } from "./reports-admin";
 import { AREAS, AreaPage, HIDDEN_AREAS, Overview, areaVisible, type AreaId } from "./reports-areas";
 import { ExportSheet, FilterBar, useReportCtx, useReportFilters, type Ctx } from "./reports-bits";
@@ -51,33 +52,28 @@ const legacy: Record<string, { tab: Tab; view?: string }> = {
 type Open = { kind: "download" } | { kind: "filters" } | null;
 
 /** Module 09: operational reports and analytics, scoped to the person's role. */
+/**
+ * Reports and analytics is, for now, the overview of the system reports: it reads one small
+ * summary from the server instead of every record. The full tabbed page stays below
+ * (ReportsHubTabs) so its tabs can come back without rebuilding them.
+ */
 export function ReportsHub() {
-  const { data, error, loading, reload } = useResource<{ hub: ReportsHubDto }>(
-    "/api/care/reports",
-    (e) => e.type === "care",
-  );
   useEffect(() => {
     // System reports have their own pages now, one per group in the Reports menu.
     if (readParam("tab") === "system") window.location.replace("/care/reports/system/types");
   }, []);
-  if (error && !data) return <ErrorNote message={error} onRetry={reload} />;
-  if (loading || !data) return <Skeleton className="h-[720px]" />;
-  return <OverviewOnly hub={data.hub} reload={reload} />;
+  return <ReportsOverview />;
 }
 
-/**
- * For now the page is the Overview alone: no heading row and no tabs. The full tabbed page stays
- * below (ReportsHubTabs) so the tabs can come back without rebuilding them.
- */
-function OverviewOnly({ hub, reload }: { hub: ReportsHubDto; reload: () => void }) {
-  const [f, setF] = useReportFilters(hub.today);
-  const c = useReportCtx(hub, f, setF, reload);
-  return (
-    <>
-      <h1 className="sr-only">Reports and analytics</h1>
-      <Overview c={c} openArea={() => undefined} />
-    </>
+/** Loads the full reports data, for the tabbed page when it returns. */
+export function ReportsHubFull() {
+  const { data, error, loading, reload } = useResource<{ hub: ReportsHubDto }>(
+    "/api/care/reports",
+    (e) => e.type === "care",
   );
+  if (error && !data) return <ErrorNote message={error} onRetry={reload} />;
+  if (loading || !data) return <Skeleton className="h-[720px]" />;
+  return <ReportsHubTabs hub={data.hub} reload={reload} />;
 }
 
 /** The tabbed reports page, held back while the page shows Overview alone. */

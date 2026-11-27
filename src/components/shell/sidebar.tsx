@@ -11,6 +11,7 @@ import { isActive, isStandalone, navigationFor, roleUsers } from "@/lib/navigati
 import { pageAccessFor } from "@/lib/permissions/pages";
 import { useUnreadMessages } from "@/features/live/conversations";
 import { preload, useSession } from "@/lib/live/client";
+import { defaultSystemFilters, systemOverviewUrl } from "@/lib/live/system-reports";
 import { useDemoStore } from "@/state/demo-store";
 import { photoFor } from "@/lib/avatars";
 
@@ -94,13 +95,13 @@ export function Sidebar() {
     const t = setTimeout(() => preload(THERAPIST_PAGES), 2500);
     return () => clearTimeout(t);
   }, [therapist]);
-  // Reports are the heaviest office page (every visit, worked out in the browser), so for anyone
-  // who reads reports they load behind the page they're on.
+  // The reports overview loads behind the page for anyone who can open it, for this month (the
+  // period it opens on).
   const readsReports =
-    account?.role === "admin" && account.permissions.some((p) => p.startsWith("reports.read."));
+    account?.role === "admin" && account.permissions.includes("reports.detail.scheduling");
   useEffect(() => {
     if (!readsReports) return undefined;
-    const t = setTimeout(() => preload(["/api/care/reports"]), 4000);
+    const t = setTimeout(() => preload([systemOverviewUrl(defaultSystemFilters())]), 4000);
     return () => clearTimeout(t);
   }, [readsReports]);
   const unreadMessages = useUnreadMessages(

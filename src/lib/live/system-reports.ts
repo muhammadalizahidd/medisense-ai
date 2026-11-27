@@ -86,12 +86,12 @@ export const systemReports = [
     id: "by-therapist",
     group: "Therapists",
     title: "Therapist Activity Report",
-    description: "One row per therapist: patients seen, visits and hours delivered.",
+    description: "One row per therapist: patients visited, visits and hours delivered.",
     columns: [
       "Therapist",
       "Therapy type",
       "Region",
-      "Patients seen",
+      "Patients visited",
       "Visits",
       "Completed",
       "Cancelled",
@@ -185,7 +185,7 @@ export const systemReports = [
       "Cancelled",
       "Did not attend",
       "Hours delivered",
-      "Patients seen",
+      "Patients visited",
       "Therapists working",
     ],
     permission: "reports.detail.scheduling",
@@ -204,7 +204,7 @@ export const systemReports = [
       "Did not attend",
       "Booked",
       "Hours delivered",
-      "Patients seen",
+      "Patients visited",
       "Therapists",
       "Completion rate",
     ],
@@ -539,4 +539,57 @@ export function periodLabel(from: string, to: string) {
   if (from) return `From ${readable(from)}`;
   if (to) return `Up to ${readable(to)}`;
   return "All time";
+}
+
+/** The figures heading the reports overview, for one period. */
+export type OverviewFigures = VisitSummary & {
+  dna: number;
+  patients: number;
+  therapists: number;
+  /** Completed out of the visits whose outcome is known, as a percentage; null with none. */
+  rate: number | null;
+  /** Visits by appointment type, keyed by its label ("Home visits", "Telehealth"…). */
+  types: Record<string, number>;
+};
+
+/** The reports overview: every system report group summed up for one period, on the server. */
+export type SystemOverview = {
+  request: string;
+  period: string;
+  grain: "Day" | "Week" | "Month";
+  summary: { current: OverviewFigures; previous: OverviewFigures | null };
+  trend: { label: string; completed: number; cancelled: number; dna: number; booked: number }[];
+  statuses: { label: string; value: number }[];
+  byType: { label: string; visits: number; completed: number; hours: number }[];
+  byTherapy: { label: string; visits: number; hours: number }[];
+  topTherapists: { name: string; discipline: string; visits: number; hours: number }[];
+  funding: { label: string; patients: number }[];
+  options: SystemReportTable["options"];
+};
+
+export const systemOverviewUrl = (f: SystemReportFilters) => {
+  const q = new URLSearchParams();
+  for (const [k, v] of Object.entries(f)) if (v) q.set(k, v);
+  return `/api/care/reports/system/overview?${q.toString()}`;
+};
+
+const isoDay = (y: number, m: number, d: number) =>
+  new Date(Date.UTC(y, m, d)).toISOString().slice(0, 10);
+
+/** This month in Brisbane, nothing else set: where every report page and the overview start. */
+export function defaultSystemFilters(): SystemReportFilters {
+  const [y, m] = new Intl.DateTimeFormat("en-CA", { timeZone: "Australia/Brisbane" })
+    .format(new Date())
+    .split("-")
+    .map(Number);
+  const year = y ?? 2026;
+  const month = (m ?? 1) - 1;
+  return {
+    from: isoDay(year, month, 1),
+    to: isoDay(year, month + 1, 0),
+    region: "",
+    discipline: "",
+    therapist: "",
+    status: "",
+  };
 }

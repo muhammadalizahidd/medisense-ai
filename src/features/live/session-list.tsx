@@ -1,10 +1,22 @@
 "use client";
 
-import { Lock, Search, X } from "lucide-react";
+import {
+  Baby,
+  Building2,
+  House,
+  Lock,
+  type LucideIcon,
+  School,
+  Search,
+  Trees,
+  Video,
+  X,
+} from "lucide-react";
 import { useState } from "react";
 import { PageHeader } from "@/components/ui/page";
 import { Segmented } from "@/components/ui/segmented";
 import { Select } from "@/components/ui/select";
+import { Paged } from "@/components/ui/table-pager";
 import { Tag } from "@/components/ui/tag";
 import { useNow, useResource } from "@/lib/live/client";
 import {
@@ -20,6 +32,28 @@ import { td, th } from "./funding-bits";
 import { KpiBand, tableBox, tableHead, when } from "./ops-bits";
 
 const DAY = 86_400_000;
+
+/** Each visit setting's icon, for the Mode tag. */
+const MODE_ICON: Record<string, LucideIcon> = {
+  Home: House,
+  School,
+  Daycare: Baby,
+  "Day Program": Building2,
+  Community: Trees,
+  Telehealth: Video,
+};
+
+/** Where a visit happens, as an outline tag with its icon. */
+export function ModeTag({ mode }: { mode: string }) {
+  const Icon = MODE_ICON[mode];
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-tag border border-border-strong px-2 py-0.5 text-caption font-medium whitespace-nowrap text-ink-700">
+      {Icon && <Icon className="size-3.5 text-accent" aria-hidden="true" />}
+      {mode}
+    </span>
+  );
+}
+
 type Range = "today" | "week" | "past" | "upcoming" | "all";
 
 /** Module 14 screen: My Sessions (therapist) and Sessions (care team). */
@@ -203,7 +237,7 @@ export function SessionList({
             value={q}
             onChange={(e) => setQ(e.target.value)}
             aria-label="Search sessions"
-            placeholder="Session, appointment, participant or MRN"
+            placeholder="Session, appointment, patient or MRN"
             className="min-w-0 flex-1 bg-transparent text-small outline-none placeholder:text-ink-500"
           />
           {q && (
@@ -218,71 +252,78 @@ export function SessionList({
           )}
         </label>
       </div>
-      <div className={tableBox}>
-        <table className="w-full text-left text-small">
-          <thead className={tableHead}>
-            <tr>
-              <th className={th}>Session</th>
-              <th className={th}>Participant</th>
-              <th className={th}>When</th>
-              <th className={th}>Mode</th>
-              <th className={th}>Note</th>
-              <th className={th}>Next step</th>
-              <th className={th}>Attendance</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {rows.map((r) => (
-              <tr key={r.id} className="hover:bg-canvas">
-                <td className={td}>
-                  <a
-                    href={`${base}/${r.id}`}
-                    className="font-semibold text-ink-900 hover:text-accent hover:no-underline"
-                  >
-                    {r.purpose}
-                  </a>
-                  <span className="flex items-center gap-1.5 font-mono text-caption text-ink-500">
-                    {r.restricted && <Lock className="size-3" aria-label="Restricted discipline" />}
-                    {r.ref}
-                  </span>
-                </td>
-                <td className={td}>
-                  <span className="block text-ink-900">{r.participant}</span>
-                  <span className="font-mono text-caption text-ink-500">{r.participantId}</span>
-                </td>
-                <td className={cn(td, "whitespace-nowrap")}>
-                  <span className="block text-ink-900">{when(r.start)}</span>
-                  <span className="text-caption text-ink-500">
-                    {r.discipline}
-                    {base === "/care/sessions" ? ` · ${r.therapist}` : ""}
-                  </span>
-                </td>
-                <td className={cn(td, "whitespace-nowrap")}>{r.mode}</td>
-                <td className={td}>
-                  <Tag tone={recordTone[r.record]}>{r.record}</Tag>
-                  {r.sync !== "Synced" && (
-                    <span className="mt-1 block text-caption text-over">{r.sync}</span>
-                  )}
-                </td>
-                <td className={cn(td, "text-ink-700")}>{r.next}</td>
-                <td className={td}>
-                  <Tag tone={attendanceTone[r.attendance]}>{r.attendance}</Tag>
-                </td>
-              </tr>
-            ))}
-            {!rows.length && (
-              <tr>
-                <td colSpan={7} className="px-5 py-12 text-center text-small text-ink-500">
-                  No sessions match these filters.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-      <p className="mt-2! px-1 text-caption text-ink-500">
-        {rows.length} of {all.length} sessions · scroll inside the table for more
-      </p>
+      <Paged key={`${range}|${att}|${mode}|${service}|${query}`} rows={rows} noun="sessions">
+        {(page) => (
+          <div className={tableBox}>
+            <table className="w-full text-left text-small">
+              <thead className={tableHead}>
+                <tr>
+                  <th className={th}>Session</th>
+                  <th className={th}>Patient</th>
+                  <th className={th}>When</th>
+                  <th className={th}>Mode</th>
+                  <th className={th}>Note</th>
+                  <th className={th}>Next step</th>
+                  <th className={th}>Attendance</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {page.map((r) => (
+                  <tr key={r.id} className="hover:bg-canvas">
+                    <td className={td}>
+                      <a
+                        href={`${base}/${r.id}`}
+                        className="font-semibold text-ink-900 hover:text-accent hover:no-underline"
+                      >
+                        {r.purpose}
+                      </a>
+                      <span className="flex items-center gap-1.5 font-mono text-caption text-ink-500">
+                        {r.restricted && (
+                          <Lock className="size-3" aria-label="Restricted discipline" />
+                        )}
+                        {r.ref}
+                      </span>
+                    </td>
+                    <td className={td}>
+                      <span className="block text-ink-900">{r.participant}</span>
+                      <span className="font-mono text-caption text-ink-500">{r.participantId}</span>
+                    </td>
+                    <td className={cn(td, "whitespace-nowrap")}>
+                      <span className="block text-ink-900">{when(r.start)}</span>
+                      <span className="text-caption text-ink-500">
+                        {r.discipline}
+                        {base === "/care/sessions" ? ` · ${r.therapist}` : ""}
+                      </span>
+                    </td>
+                    <td className={cn(td, "whitespace-nowrap")}>
+                      <ModeTag mode={r.mode} />
+                    </td>
+                    <td className={td}>
+                      <Tag tone={recordTone[r.record]}>{r.record}</Tag>
+                      {r.sync !== "Synced" && (
+                        <span className="mt-1 block text-caption text-over">{r.sync}</span>
+                      )}
+                    </td>
+                    <td className={td}>
+                      <Tag tone="outline">{r.next}</Tag>
+                    </td>
+                    <td className={td}>
+                      <Tag tone={attendanceTone[r.attendance]}>{r.attendance}</Tag>
+                    </td>
+                  </tr>
+                ))}
+                {!page.length && (
+                  <tr>
+                    <td colSpan={7} className="px-5 py-12 text-center text-small text-ink-500">
+                      No sessions match these filters.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Paged>
     </>
   );
 }

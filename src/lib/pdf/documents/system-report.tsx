@@ -25,7 +25,7 @@ const PRINT_LABEL: Record<string, string> = {
   "Hours delivered": "Hours",
   "Average minutes per visit": "Avg mins / visit",
   "Did not attend": "DNA",
-  "Patients seen": "Patients",
+  "Patients visited": "Patients",
   "Visits completed": "Completed",
 };
 

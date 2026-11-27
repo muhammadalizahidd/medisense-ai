@@ -1,5 +1,6 @@
 "use client";
 
+import { Paged } from "@/components/ui/table-pager";
 import { AudioLines, Clock3, Lock, PlayCircle, ShieldCheck, Trash2, Video } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -64,8 +65,8 @@ export function RecordingsPage({
       {!embedded && (
         <PageHeader
           eyebrow="Telehealth"
-          title="Recordings"
-          description={`Recorded only with the participant's consent and the clinician's permission. Kept ${RECORDING_RETENTION_DAYS} days (proposed), then reviewed for deletion. No downloads; every review is logged.`}
+          title="Telehealth recordings"
+          description={`Recorded only with the patient's consent and the clinician's permission. Kept ${RECORDING_RETENTION_DAYS} days (proposed), then reviewed for deletion. No downloads; every review is logged.`}
           actions={<LiveBadge />}
         />
       )}
@@ -120,9 +121,9 @@ export function RecordingsPage({
               {shown.length} recording{shown.length === 1 ? "" : "s"}
             </span>
           </div>
-          {shown.map((r) => (
-            <Recording key={r.id} r={r} onChanged={reload} />
-          ))}
+          <Paged key={`${filter}|${visit ?? ""}`} rows={shown} noun="recordings">
+            {(page) => page.map((r) => <Recording key={r.id} r={r} onChanged={reload} />)}
+          </Paged>
         </div>
       )}
     </>
@@ -204,7 +205,7 @@ function Recording({ r, onChanged }: { r: RecordingDto; onChanged: () => void })
         </p>
       ) : (
         <div className="grid gap-6 lg:grid-cols-12">
-          <div className="lg:col-span-7">
+          <div className="lg:col-span-5 xl:col-span-4">
             {playing ? (
               <div className="flex flex-col gap-3">
                 {playing.video && playing.audio && (
@@ -261,8 +262,8 @@ function Recording({ r, onChanged }: { r: RecordingDto; onChanged: () => void })
               <div className="flex flex-col gap-3">
                 <div className="relative flex aspect-video items-center justify-center overflow-hidden rounded-card bg-call-stage">
                   <div className="flex items-center gap-6 opacity-90">
-                    <Avatar name={r.patient} size={96} kind="patient" />
-                    <Avatar name={r.therapist} size={64} />
+                    <Avatar name={r.patient} size={64} kind="patient" />
+                    <Avatar name={r.therapist} size={44} />
                   </div>
                   <span className="absolute top-3 left-3 rounded-full bg-call-tile px-2.5 py-1 text-caption text-call-ink">
                     {minutes(r.durationSec)}
@@ -298,7 +299,7 @@ function Recording({ r, onChanged }: { r: RecordingDto; onChanged: () => void })
               </div>
             )}
           </div>
-          <div className="flex flex-col gap-5 lg:col-span-5">
+          <div className="flex flex-col gap-5 lg:col-span-7 xl:col-span-8">
             {r.transcript.length > 0 && (
               <div>
                 <h3 className="mb-2 label-caps text-ink-500">Transcript (consented)</h3>

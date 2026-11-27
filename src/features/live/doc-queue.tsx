@@ -1,5 +1,7 @@
 "use client";
 
+import { Paged } from "@/components/ui/table-pager";
+import { ModeTag } from "./session-list";
 import { FilePlus2, Lock, Search, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -216,7 +218,7 @@ export function DocQueue({
             value={q}
             onChange={(e) => setQ(e.target.value)}
             aria-label="Search notes"
-            placeholder="Participant, MRN, DOC reference or note title"
+            placeholder="Patient, MRN, DOC reference or note title"
             className="min-w-0 flex-1 bg-transparent text-small outline-none placeholder:text-ink-500"
           />
           {q && (
@@ -231,88 +233,99 @@ export function DocQueue({
           )}
         </label>
       </div>
-      <div className={tableBox}>
-        <table className="w-full text-left text-small">
-          <thead className={tableHead}>
-            <tr>
-              <th className={th}>Note</th>
-              <th className={th}>Participant</th>
-              <th className={th}>Encounter</th>
-              <th className={th}>Capture</th>
-              <th className={th}>Checks</th>
-              <th className={th}>Priority</th>
-              <th className={th}>Status</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {rows.map((r) => (
-              <tr key={r.id} className="hover:bg-canvas">
-                <td className={td}>
-                  <a
-                    href={`${base}/${r.id}`}
-                    className="font-semibold text-ink-900 hover:text-accent hover:no-underline"
-                  >
-                    {r.noteType}
-                  </a>
-                  <span className="flex items-center gap-1.5 font-mono text-caption text-ink-500">
-                    {r.restricted && <Lock className="size-3" aria-label="Protected note" />}
-                    {r.ref}
-                  </span>
-                </td>
-                <td className={td}>
-                  <span className="block text-ink-900">{r.participant}</span>
-                  <span className="font-mono text-caption text-ink-500">{r.participantId}</span>
-                </td>
-                <td className={cn(td, "whitespace-nowrap")}>
-                  <span className="block text-ink-900">{when(r.encounterAt)}</span>
-                  <span className="text-caption text-ink-500">
-                    {r.discipline} · {r.mode}
-                    {base === "/care/documentation" ? ` · ${r.clinician}` : ""}
-                  </span>
-                </td>
-                <td className={td}>
-                  {r.capture}
-                  {r.aiUsed && (
-                    <span className="block text-caption text-ink-500">AI draft used</span>
-                  )}
-                </td>
-                <td className={td}>
-                  {r.warnings ? (
-                    <Tag tone="over">{r.warnings} to resolve</Tag>
-                  ) : r.supervised ? (
-                    <Tag tone="outline">Supervised</Tag>
-                  ) : (
-                    <span className="text-ink-500">—</span>
-                  )}
-                </td>
-                <td
-                  className={cn(
-                    td,
-                    r.priority === "Overdue" || r.priority === "Escalated"
-                      ? "font-semibold text-over"
-                      : "text-ink-700",
-                  )}
-                >
-                  {r.priority}
-                </td>
-                <td className={td}>
-                  <Tag tone={statusTone[r.status]}>{r.status}</Tag>
-                </td>
-              </tr>
-            ))}
-            {!rows.length && (
-              <tr>
-                <td colSpan={7} className="px-5 py-12 text-center text-small text-ink-500">
-                  No notes match these filters.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-      <p className="mt-2! px-1 text-caption text-ink-500">
-        {rows.length} of {all.length} notes · scroll inside the table for more
-      </p>
+      <Paged
+        key={`${status}|${type}|${discipline}|${priority}|${source}|${range}|${query}`}
+        rows={rows}
+        noun="notes"
+      >
+        {(page) => (
+          <div className={tableBox}>
+            <table className="w-full text-left text-small">
+              <thead className={tableHead}>
+                <tr>
+                  <th className={th}>Note</th>
+                  <th className={th}>Patient</th>
+                  <th className={th}>Encounter</th>
+                  <th className={th}>Capture</th>
+                  <th className={th}>Checks</th>
+                  <th className={th}>Priority</th>
+                  <th className={th}>Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {page.map((r) => (
+                  <tr key={r.id} className="hover:bg-canvas">
+                    <td className={td}>
+                      <a
+                        href={`${base}/${r.id}`}
+                        className="font-semibold text-ink-900 hover:text-accent hover:no-underline"
+                      >
+                        {r.noteType}
+                      </a>
+                      <span className="flex items-center gap-1.5 font-mono text-caption text-ink-500">
+                        {r.restricted && <Lock className="size-3" aria-label="Protected note" />}
+                        {r.ref}
+                      </span>
+                    </td>
+                    <td className={td}>
+                      <span className="block text-ink-900">{r.participant}</span>
+                      <span className="font-mono text-caption text-ink-500">{r.participantId}</span>
+                    </td>
+                    <td className={cn(td, "whitespace-nowrap")}>
+                      <span className="block text-ink-900">{when(r.encounterAt)}</span>
+                      <span className="text-caption text-ink-500">
+                        {r.discipline}
+                        {base === "/care/documentation" ? ` · ${r.clinician}` : ""}
+                      </span>
+                    </td>
+                    <td className={td}>
+                      <span className="flex flex-col items-start gap-1">
+                        <ModeTag mode={r.mode} />
+                        <Tag tone="outline">{r.capture}</Tag>
+                        {r.aiUsed && (
+                          <span className="text-caption text-ink-500">AI draft used</span>
+                        )}
+                      </span>
+                    </td>
+                    <td className={td}>
+                      {r.warnings ? (
+                        <Tag tone="over">{r.warnings} to resolve</Tag>
+                      ) : r.supervised ? (
+                        <Tag tone="outline">Supervised</Tag>
+                      ) : (
+                        <span className="text-ink-500">—</span>
+                      )}
+                    </td>
+                    <td className={td}>
+                      <Tag
+                        tone={
+                          r.priority === "Overdue" || r.priority === "Escalated"
+                            ? "over"
+                            : r.priority === "Routine"
+                              ? "neutral"
+                              : "watch"
+                        }
+                      >
+                        {r.priority}
+                      </Tag>
+                    </td>
+                    <td className={td}>
+                      <Tag tone={statusTone[r.status]}>{r.status}</Tag>
+                    </td>
+                  </tr>
+                ))}
+                {!page.length && (
+                  <tr>
+                    <td colSpan={7} className="px-5 py-12 text-center text-small text-ink-500">
+                      No notes match these filters.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Paged>
       {wizard && (
         <NewNote
           options={data.options}
@@ -348,7 +361,7 @@ export function NewNote({
   return (
     <Sheet
       title="New note"
-      description="Choose the participant and visit; everything else is filled in for you"
+      description="Choose the patient and visit; everything else is filled in for you"
       onClose={onClose}
       footer={
         <Button
@@ -380,9 +393,9 @@ export function NewNote({
       }
     >
       <div className="flex flex-col gap-4">
-        <Field label="Participant and service">
+        <Field label="Patient and service">
           <Select
-            aria-label="Participant and service"
+            aria-label="Patient and service"
             value={episode}
             onChange={(e) => {
               setEpisode(e.target.value);
@@ -456,7 +469,7 @@ export function NewNote({
         )}
         <label className="flex items-start gap-2 text-small">
           <input type="checkbox" checked={confirm} onChange={(e) => setConfirm(e.target.checked)} />
-          <span>This is the right participant and encounter.</span>
+          <span>This is the right patient and encounter.</span>
         </label>
       </div>
     </Sheet>
