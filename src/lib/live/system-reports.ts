@@ -2,7 +2,6 @@ import type { Discipline } from "./catalogue";
 
 /** Every visit of one therapy type, with the patient's details and where it happened. */
 const therapyVisitColumns = [
-  "Reference",
   "Date",
   "Start",
   "Patient",
@@ -149,7 +148,6 @@ export const systemReports = [
     title: "Visit Register Report",
     description: "Every visit in the period: date, patient, therapist, status, time and note.",
     columns: [
-      "Reference",
       "Date",
       "Start",
       "Patient",
@@ -170,7 +168,7 @@ export const systemReports = [
     group: "Visits",
     title: "Cancellation and Did Not Attend Report",
     description: "Visits that didn't go ahead, with who cancelled and why.",
-    columns: ["Reference", "Date", "Start", "Patient", "MRN", "Therapist", "Status", "Reason"],
+    columns: ["Date", "Start", "Patient", "MRN", "Therapist", "Status", "Reason"],
     permission: "reports.detail.scheduling",
     totals: [],
   },
@@ -220,7 +218,6 @@ export const systemReports = [
     description: "Every home visit with the patient, address, therapist, status and time.",
     appointmentType: "Home",
     columns: [
-      "Reference",
       "Date",
       "Start",
       "Patient",
@@ -247,7 +244,6 @@ export const systemReports = [
     description: "Every telehealth appointment with the patient, therapist, status and time.",
     appointmentType: "Telehealth",
     columns: [
-      "Reference",
       "Date",
       "Start",
       "Patient",
@@ -274,7 +270,6 @@ export const systemReports = [
     description: "Every school visit with the patient, school address, therapist, status and time.",
     appointmentType: "School",
     columns: [
-      "Reference",
       "Date",
       "Start",
       "Patient",
@@ -301,7 +296,6 @@ export const systemReports = [
     description: "Every daycare visit with the patient, address, therapist, status and time.",
     appointmentType: "Daycare",
     columns: [
-      "Reference",
       "Date",
       "Start",
       "Patient",
@@ -328,7 +322,6 @@ export const systemReports = [
     description: "Every day program visit with the patient, address, therapist, status and time.",
     appointmentType: "Day Program",
     columns: [
-      "Reference",
       "Date",
       "Start",
       "Patient",
@@ -355,7 +348,6 @@ export const systemReports = [
     description: "Every community visit with the patient, address, therapist, status and time.",
     appointmentType: "Community",
     columns: [
-      "Reference",
       "Date",
       "Start",
       "Patient",
@@ -380,21 +372,20 @@ export const systemReports = [
     group: "Therapy types",
     title: "Therapy Service Summary Report",
     description:
-      "Occupational therapy, physiotherapy, speech and every other therapy: visits, hours and patients.",
+      "Each therapy's visits by visit type: home, telehealth, school, daycare, day program and community.",
     columns: [
       "Therapy type",
       "Visits",
-      "Completed",
-      "Cancelled",
-      "Did not attend",
-      "Booked",
-      "Hours delivered",
-      "Patients seen",
-      "Therapists",
+      "Home visits",
+      "Telehealth",
+      "School visits",
+      "Daycare visits",
+      "Day Program visits",
+      "Community visits",
       "Completion rate",
     ],
     permission: "reports.detail.scheduling",
-    totals: ["Visits", "Completed", "Hours delivered"],
+    totals: ["Visits", "Home visits", "Telehealth"],
   },
   therapyReport("therapy-ot", "Occupational Therapy", "Occupational Therapy"),
   therapyReport("therapy-physio", "Physiotherapy", "Physiotherapy"),
@@ -426,7 +417,7 @@ export type SystemReportTable = {
   /** The filters in words: "Brisbane North · Occupational Therapy", or "No other filters". */
   filters: string;
   /**
-   * `strong` marks the columns people scan by: reference, MRN, patient, therapist, funding.
+   * `strong` marks the columns people scan by: MRN, patient, therapist, funding.
    * `percent` values are percentages (0–100).
    */
   columns: { label: string; numeric: boolean; strong: boolean; percent: boolean }[];

@@ -59,6 +59,8 @@ import { toast } from "@/components/ui/toast";
 import { cn } from "@/lib/cn";
 import { useResource, useSession } from "@/lib/live/client";
 import {
+  isAppointmentType,
+  typeLabel,
   periodLabel,
   systemReports,
   systemReportUrl,
@@ -811,22 +813,44 @@ function ReportCard({
   const numbers = Array.from({ length: Math.min(5, pages) }, (_, i) => start + i);
 
   return (
-    <section className="flex min-w-0 flex-col gap-4 rounded-card border border-border bg-surface p-5">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex min-w-0 items-start gap-3">
-          <span className="grid size-10 flex-none place-items-center rounded-control bg-accent-tint text-accent">
-            <Icon className="size-5" aria-hidden="true" />
+    <section className="flex min-w-0 flex-col gap-3 rounded-card border border-border bg-surface p-4">
+      {/* One compact bar: what the report is, search, and the two downloads. */}
+      <header className="flex flex-wrap items-center gap-x-4 gap-y-3">
+        <div className="flex min-w-0 flex-1 items-center gap-2.5" title={report.description}>
+          <span className="grid size-8 flex-none place-items-center rounded-control bg-accent-tint text-accent">
+            <Icon className="size-4" aria-hidden="true" />
           </span>
           <div className="min-w-0">
-            <h2 className="text-section font-semibold text-ink-900">{report.title}</h2>
-            <p className="mt-0.5 text-small text-ink-700">{report.description}</p>
-            <p className="mt-1 text-caption text-ink-500">
-              {table.period} · {table.filters}
+            <h2 className="truncate text-section leading-tight font-semibold text-ink-900">
+              {report.title}
+            </h2>
+            <p
+              className="flex items-center gap-1.5 truncate text-caption text-ink-500"
+              aria-live="polite"
+            >
+              {updating && <LoaderCircle className="size-3 animate-spin" aria-hidden="true" />}
+              {updating
+                ? "Updating…"
+                : `${table.period} · ${table.filters} · ${numberFmt.format(table.rows.length)} rows`}
             </p>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button onClick={() => void download("pdf")} disabled={busy !== null || updating}>
+        <SearchField
+          label={`Search ${report.title}`}
+          placeholder="Search this report…"
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setPage(0);
+          }}
+          className="w-72 max-w-full"
+        />
+        <div className="flex items-center gap-2">
+          <Button
+            variant="primary"
+            onClick={() => void download("pdf")}
+            disabled={busy !== null || updating}
+          >
             {busy === "pdf" ? (
               <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
             ) : (
@@ -834,7 +858,11 @@ function ReportCard({
             )}
             {busy === "pdf" ? "Preparing PDF" : "Download PDF"}
           </Button>
-          <Button onClick={() => void download("csv")} disabled={busy !== null || updating}>
+          <Button
+            variant="primary"
+            onClick={() => void download("csv")}
+            disabled={busy !== null || updating}
+          >
             {busy === "csv" ? (
               <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
             ) : (
@@ -844,23 +872,6 @@ function ReportCard({
           </Button>
         </div>
       </header>
-
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <SearchField
-          label={`Search ${report.title}`}
-          placeholder="Search this report…"
-          value={query}
-          onChange={(e) => {
-            setQuery(e.target.value);
-            setPage(0);
-          }}
-          className="w-96 max-w-full"
-        />
-        <p className="flex items-center gap-2 text-caption text-ink-500" aria-live="polite">
-          {updating && <LoaderCircle className="size-3.5 animate-spin" aria-hidden="true" />}
-          {updating ? "Updating…" : `${numberFmt.format(table.rows.length)} rows`}
-        </p>
-      </div>
 
       {table.rows.length === 0 ? (
         <div className="flex flex-col items-center gap-2 rounded-card border border-dashed border-border-strong p-10 text-center">
@@ -884,6 +895,8 @@ function ReportCard({
                     className={cn(
                       "px-4 py-3 whitespace-nowrap",
                       c.numeric ? "text-right" : "text-left",
+                      // The first column stays in place while the table scrolls sideways.
+                      i === 0 && "sticky left-0 z-2 border-r border-border bg-accent-tint",
                     )}
                   >
                     <button
@@ -913,7 +926,7 @@ function ReportCard({
               {shown.map((r, ri) => (
                 <tr
                   key={`${at}-${ri}`}
-                  className="border-t border-border transition-colors duration-(--duration-fast) hover:bg-sunken"
+                  className="group border-t border-border transition-colors duration-(--duration-fast) hover:bg-sunken"
                 >
                   {r.map((v, i) => (
                     <td
@@ -921,7 +934,9 @@ function ReportCard({
                       className={cn(
                         "px-4 py-2.5 whitespace-nowrap text-ink-900",
                         table.columns[i]?.numeric && "text-right tabular-nums",
-                        table.columns[i]?.strong ? "font-semibold" : i === 0 && "font-medium",
+                        (table.columns[i]?.strong || i === 0) && "font-semibold",
+                        i === 0 &&
+                          "sticky left-0 z-1 border-r border-border bg-surface transition-colors duration-(--duration-fast) group-hover:bg-sunken",
                       )}
                     >
                       <Cell
@@ -954,6 +969,7 @@ function ReportCard({
                       className={cn(
                         "px-4 py-3 font-semibold whitespace-nowrap text-ink-900",
                         table.columns[i]?.numeric && "text-right tabular-nums",
+                        i === 0 && "sticky left-0 z-1 border-r border-border bg-accent-tint",
                       )}
                     >
                       {i === 0 ? (
@@ -1074,6 +1090,35 @@ function PageButton({
   );
 }
 
+/** Counts that mean a visit didn't go ahead: amber for cancelled, red for did not attend. */
+const ALERT_COUNT: Record<string, string> = {
+  Cancelled: "bg-watch-bg text-watch",
+  "Did not attend": "bg-over-bg text-over",
+};
+
+/** The per-visit-type columns of the therapy summary. */
+const VISIT_TYPE_COLUMNS = new Set([
+  "Home visits",
+  "Telehealth",
+  "School visits",
+  "Daycare visits",
+  "Day Program visits",
+  "Community visits",
+]);
+
+/** Each funding source keeps one tint, so it reads at a glance down the column. */
+const FUNDING_TONE: Record<string, string> = {
+  NDIS: "bg-available-bg text-available",
+  "Aged Care": "bg-healthy-bg text-healthy",
+  Private: "bg-sunken text-ink-700",
+};
+
+const NOTE_TONE: Record<string, TagTone> = {
+  Signed: "healthy",
+  Draft: "watch",
+  "Not written": "over",
+};
+
 /** A completion rate as a tinted pill: green from 80%, amber from 60%, red below. */
 function Rate({ value }: { value: number }) {
   return (
@@ -1104,6 +1149,58 @@ function Cell({
   first: boolean;
 }) {
   if (percent) return typeof value === "number" ? <Rate value={value} /> : "—";
+  if (typeof value === "number") {
+    // Counts that need attention stand out; visit-type counts fade when there were none.
+    if (ALERT_COUNT[label] && value > 0) {
+      return (
+        <span
+          className={cn(
+            "inline-flex min-w-7 justify-center rounded-full px-2 py-0.5 text-caption font-semibold tabular-nums",
+            ALERT_COUNT[label],
+          )}
+        >
+          {numberFmt.format(value)}
+        </span>
+      );
+    }
+    if (VISIT_TYPE_COLUMNS.has(label)) {
+      return value > 0 ? (
+        <span className="inline-flex min-w-7 justify-center rounded-full bg-accent-tint px-2 py-0.5 text-caption font-semibold text-accent tabular-nums">
+          {numberFmt.format(value)}
+        </span>
+      ) : (
+        <span className="text-ink-400">0</span>
+      );
+    }
+    if (label === "Visits" || label === "Hours delivered" || label === "Hours given") {
+      return <span className="font-semibold">{numberFmt.format(value)}</span>;
+    }
+  }
+  if (typeof value === "string" && value) {
+    if (label === "Funding") {
+      return (
+        <span
+          className={cn(
+            "inline-flex rounded-tag px-2 py-0.5 text-caption font-semibold",
+            FUNDING_TONE[value] ?? "bg-sunken text-ink-700",
+          )}
+        >
+          {value}
+        </span>
+      );
+    }
+    if (label === "Note") return <Tag tone={NOTE_TONE[value] ?? "neutral"}>{value}</Tag>;
+    if (!first && (label === "Type" || label === "Appointment type")) {
+      const key = isAppointmentType(value) ? typeLabel(value) : value;
+      const TypeIcon = typeRowIcon[key];
+      return (
+        <span className="inline-flex items-center gap-1.5 rounded-tag border border-border-strong px-2 py-0.5 text-caption font-medium text-ink-700">
+          {TypeIcon && <TypeIcon className="size-3.5 text-accent" aria-hidden="true" />}
+          {value}
+        </span>
+      );
+    }
+  }
   if (label === "Status" && typeof value === "string" && value) {
     return <Tag tone={statusTone[value] ?? "neutral"}>{value}</Tag>;
   }

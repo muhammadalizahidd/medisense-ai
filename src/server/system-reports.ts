@@ -147,7 +147,7 @@ const rowNoun: Record<SystemReportId, string> = {
 };
 
 /** The columns people scan a report by, shown in bold on screen and in the PDF. */
-const STRONG = new Set(["Reference", "MRN", "Patient", "Therapist", "Funding"]);
+const STRONG = new Set(["MRN", "Patient", "Therapist", "Funding"]);
 
 /** Columns whose Total row adds them up; the rest (averages, scores, names) stay blank there. */
 const SUMMABLE = new Set([
@@ -166,6 +166,7 @@ const SUMMABLE = new Set([
   "Active patients",
   "Capacity",
   "Free places",
+  ...appointmentTypes.map((t) => typeLabel(t)),
 ]);
 
 /** Of the visits whose outcome is known (not still booked), the share that were completed. */
@@ -358,7 +359,6 @@ export async function systemReportTable(
         ? "Video call"
         : a.site?.address || (kind === "Home" ? homeAddress(c) : "") || c?.suburb || "";
     return [
-      a.ref ?? "",
       day(a.start),
       time(a.start),
       c?.name ?? "Unknown patient",
@@ -517,7 +517,6 @@ export async function systemReportTable(
       }
       case "visits": {
         rows = visits.map((a) => [
-          a.ref ?? "",
           day(a.start),
           time(a.start),
           patientName(a.clientId),
@@ -545,7 +544,6 @@ export async function systemReportTable(
         rows = visits
           .filter((a) => isCancelled(a.status) || a.status === "no-show" || a.status === "aborted")
           .map((a) => [
-            a.ref ?? "",
             day(a.start),
             time(a.start),
             patientName(a.clientId),
@@ -603,41 +601,27 @@ export async function systemReportTable(
         break;
       }
       case "by-therapy": {
+        // Each therapy's visits split by where they happened (home, telehealth, school…).
         const kinds = discipline ? [discipline] : [...disciplines];
+        const all = blank();
         const tallies = new Map(
-          kinds.map((k) => [
-            k as string,
-            { tally: blank(), patients: new Set<string>(), therapists: new Set<string>() },
-          ]),
+          kinds.map((k) => [k as string, { tally: blank(), byType: new Map<string, number>() }]),
         );
         for (const a of visits) {
           const entry = tallies.get(a.discipline);
-          if (!entry) continue;
+          if (!entry || a.status === "rescheduled") continue;
           count(entry.tally, a);
-          if (a.status === "completed") {
-            entry.patients.add(String(a.clientId));
-            entry.therapists.add(String(a.therapistId));
-          }
+          count(all, a);
+          const kind = typeOf(a);
+          entry.byType.set(kind, (entry.byType.get(kind) ?? 0) + 1);
         }
         rows = [...tallies.entries()].map(([k, e]) => [
           k,
           e.tally.visits,
-          e.tally.completed,
-          e.tally.cancelled,
-          e.tally.dna,
-          e.tally.upcoming,
-          hours(e.tally.minutes),
-          e.patients.size,
-          e.therapists.size,
+          ...appointmentTypes.map((t) => e.byType.get(t) ?? 0),
           completionRate(e.tally),
         ]);
-        const doneTherapy = visits.filter(
-          (a) => a.status === "completed" && tallies.has(a.discipline),
-        );
-        footerOverride = {
-          "Patients seen": new Set(doneTherapy.map((a) => String(a.clientId))).size,
-          Therapists: new Set(doneTherapy.map((a) => String(a.therapistId))).size,
-        };
+        footerOverride = { "Completion rate": completionRate(all) };
         break;
       }
       case "by-type": {
@@ -678,11 +662,10 @@ export async function systemReportTable(
       }
     }
 
-  // Where a report lists visits by reference, the MRN comes straight after it.
+  // Visit lists lead with the patient's MRN.
   const order = head.map((_, i) => i);
-  const ref = head.indexOf("Reference" as never);
   const mrn = head.indexOf("MRN" as never);
-  if (ref === 0 && mrn > 1) order.splice(1, 0, ...order.splice(mrn, 1));
+  if (head[0] === "Date" && mrn > 0) order.unshift(...order.splice(mrn, 1));
   const cols = order.map((i) => head[i] as string);
   rows = rows.map((r) => order.map((i) => r[i] ?? ""));
   const numeric = cols.map((_, i) => rows.some((r) => typeof r[i] === "number"));

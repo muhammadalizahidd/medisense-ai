@@ -71,7 +71,7 @@ export function SystemReportDocument({
     key: String(i),
     align: c.numeric ? "right" : "left",
     bold: c.strong,
-    keep: c.label === "Reference" || c.label === "MRN",
+    keep: c.label === "MRN",
     label: PRINT_LABEL[c.label] ?? c.label,
   }));
   const cell = (r: (string | number)[]) =>
