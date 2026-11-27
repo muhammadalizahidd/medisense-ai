@@ -78,27 +78,27 @@ type Group = (typeof systemReportGroups)[number];
 /** What each report group's page is called and says under its title. */
 const groupMeta: Record<Group, { title: string; line: string; icon: LucideIcon }> = {
   "Appointment types": {
-    title: "Appointment type reports",
+    title: "Appointment Type Reports",
     line: "Visits, outcomes and time by where care happens: home, telehealth, school and more.",
     icon: Layers,
   },
   "Therapy types": {
-    title: "Therapy type reports",
+    title: "Therapy Service Reports",
     line: "Visits, outcomes and time for each therapy: occupational therapy, physiotherapy, speech and more.",
     icon: Activity,
   },
   Patients: {
-    title: "Patient reports",
+    title: "Patient Reports",
     line: "Each patient's visits, details, funding and the time given to them.",
     icon: UsersRound,
   },
   Therapists: {
-    title: "Therapist reports",
+    title: "Therapist Reports",
     line: "Each therapist's patients, visits, hours delivered and caseload.",
     icon: Stethoscope,
   },
   Visits: {
-    title: "Visit reports",
+    title: "Visit Reports",
     line: "Every visit, every cancellation and each day's activity.",
     icon: CalendarDays,
   },
@@ -106,31 +106,31 @@ const groupMeta: Record<Group, { title: string; line: string; icon: LucideIcon }
 
 /** Short names for the tab row; the full title heads the report card. */
 const tabLabel: Record<SystemReportId, string> = {
-  "by-type": "All types",
-  "type-home": "Home visits",
-  "type-telehealth": "Telehealth",
-  "type-school": "School visits",
-  "type-daycare": "Daycare visits",
-  "type-day-program": "Day program",
-  "type-community": "Community visits",
-  "by-therapy": "All therapy types",
-  "therapy-ot": "Occupational therapy",
-  "therapy-physio": "Physiotherapy",
-  "therapy-speech": "Speech pathology",
-  "therapy-ep": "Exercise physiology",
-  "therapy-psychology": "Psychology",
-  "therapy-trauma": "Trauma therapy",
-  "therapy-dietetics": "Dietetics",
-  "therapy-podiatry": "Podiatry",
-  "therapy-nursing": "Nursing",
-  "by-patient": "Visits by patient",
-  patients: "Patient list",
-  "by-therapist": "Visits by therapist",
-  "patient-therapist": "Patient and therapist time",
-  caseload: "Caseload",
-  visits: "All visits",
-  missed: "Cancellations and DNA",
-  "by-day": "Visits by day",
+  "by-type": "Summary Report",
+  "type-home": "Home Visit Report",
+  "type-telehealth": "Telehealth Report",
+  "type-school": "School Visit Report",
+  "type-daycare": "Daycare Visit Report",
+  "type-day-program": "Day Program Report",
+  "type-community": "Community Visit Report",
+  "by-therapy": "Summary Report",
+  "therapy-ot": "Occupational Therapy Report",
+  "therapy-physio": "Physiotherapy Report",
+  "therapy-speech": "Speech Pathology Report",
+  "therapy-ep": "Exercise Physiology Report",
+  "therapy-psychology": "Psychology Report",
+  "therapy-trauma": "Trauma Therapy Report",
+  "therapy-dietetics": "Dietetics Report",
+  "therapy-podiatry": "Podiatry Report",
+  "therapy-nursing": "Nursing Report",
+  "by-patient": "Patient Activity Report",
+  patients: "Patient Register Report",
+  "by-therapist": "Therapist Activity Report",
+  "patient-therapist": "Therapist and Patient Hours Report",
+  caseload: "Therapist Caseload Report",
+  visits: "Visit Register Report",
+  missed: "Cancellation and DNA Report",
+  "by-day": "Daily Visit Activity Report",
 };
 
 const reportIcon: Record<SystemReportId, LucideIcon> = {
@@ -582,7 +582,7 @@ function ReportTabs({
   return (
     <nav
       aria-label="Reports"
-      className="no-scrollbar flex gap-1 overflow-x-auto rounded-card border border-border bg-surface p-1.5"
+      className="flex flex-wrap gap-1 rounded-card border border-border bg-surface p-1.5"
     >
       {reports.map((r) => {
         const Icon = reportIcon[r.id];
@@ -848,7 +848,7 @@ function ReportCard({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <SearchField
           label={`Search ${report.title}`}
-          placeholder={`Search ${tabLabel[report.id].toLowerCase()}…`}
+          placeholder="Search this report…"
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);

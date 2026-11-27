@@ -24,8 +24,8 @@ const therapyVisitColumns = [
 const therapyReport = <I extends string>(id: I, therapyType: Discipline, title: string) => ({
   id,
   group: "Therapy types" as const,
-  title: `${title} visits`,
-  description: `Every ${title.toLowerCase()} visit with the patient, setting, therapist, status and time.`,
+  title: `${title} Report`,
+  description: `Every ${title.toLowerCase()} session with the patient, setting, therapist, status and time.`,
   therapyType,
   columns: therapyVisitColumns,
   permission: "reports.detail.scheduling" as const,
@@ -42,7 +42,7 @@ export const systemReports = [
   {
     id: "by-patient",
     group: "Patients",
-    title: "Visits by patient",
+    title: "Patient Activity Report",
     description: "One row per patient: visits completed, cancelled and missed, and time given.",
     columns: [
       "MRN",
@@ -65,7 +65,7 @@ export const systemReports = [
   {
     id: "patients",
     group: "Patients",
-    title: "Patient list",
+    title: "Patient Register Report",
     description: "Every patient with their details, funding, status and therapists.",
     columns: [
       "MRN",
@@ -86,7 +86,7 @@ export const systemReports = [
   {
     id: "by-therapist",
     group: "Therapists",
-    title: "Visits by therapist",
+    title: "Therapist Activity Report",
     description: "One row per therapist: patients seen, visits and hours delivered.",
     columns: [
       "Therapist",
@@ -108,7 +108,7 @@ export const systemReports = [
   {
     id: "patient-therapist",
     group: "Therapists",
-    title: "Patient and therapist time",
+    title: "Therapist and Patient Hours Report",
     description: "Which therapist saw which patient, how many visits and how much time.",
     columns: [
       "Therapist",
@@ -127,7 +127,7 @@ export const systemReports = [
   {
     id: "caseload",
     group: "Therapists",
-    title: "Therapist caseload",
+    title: "Therapist Caseload Report",
     description: "Active patients against capacity and the caseload score for each therapist.",
     columns: [
       "Therapist",
@@ -146,7 +146,7 @@ export const systemReports = [
   {
     id: "visits",
     group: "Visits",
-    title: "All visits",
+    title: "Visit Register Report",
     description: "Every visit in the period: date, patient, therapist, status, time and note.",
     columns: [
       "Reference",
@@ -168,7 +168,7 @@ export const systemReports = [
   {
     id: "missed",
     group: "Visits",
-    title: "Cancellations and did not attend",
+    title: "Cancellation and Did Not Attend Report",
     description: "Visits that didn't go ahead, with who cancelled and why.",
     columns: ["Reference", "Date", "Start", "Patient", "MRN", "Therapist", "Status", "Reason"],
     permission: "reports.detail.scheduling",
@@ -177,7 +177,7 @@ export const systemReports = [
   {
     id: "by-day",
     group: "Visits",
-    title: "Visits by day",
+    title: "Daily Visit Activity Report",
     description: "One row per day: visits booked, completed, cancelled and hours delivered.",
     columns: [
       "Date",
@@ -196,7 +196,7 @@ export const systemReports = [
   {
     id: "by-type",
     group: "Appointment types",
-    title: "Visits by appointment type",
+    title: "Appointment Type Summary Report",
     description: "Home visits, telehealth, school and other settings: visits, hours and patients.",
     columns: [
       "Appointment type",
@@ -216,7 +216,7 @@ export const systemReports = [
   {
     id: "type-home",
     group: "Appointment types",
-    title: "Home visits",
+    title: "Home Visit Report",
     description: "Every home visit with the patient, address, therapist, status and time.",
     appointmentType: "Home",
     columns: [
@@ -243,7 +243,7 @@ export const systemReports = [
   {
     id: "type-telehealth",
     group: "Appointment types",
-    title: "Telehealth appointments",
+    title: "Telehealth Appointment Report",
     description: "Every telehealth appointment with the patient, therapist, status and time.",
     appointmentType: "Telehealth",
     columns: [
@@ -270,7 +270,7 @@ export const systemReports = [
   {
     id: "type-school",
     group: "Appointment types",
-    title: "School visits",
+    title: "School Visit Report",
     description: "Every school visit with the patient, school address, therapist, status and time.",
     appointmentType: "School",
     columns: [
@@ -297,7 +297,7 @@ export const systemReports = [
   {
     id: "type-daycare",
     group: "Appointment types",
-    title: "Daycare visits",
+    title: "Daycare Visit Report",
     description: "Every daycare visit with the patient, address, therapist, status and time.",
     appointmentType: "Daycare",
     columns: [
@@ -324,7 +324,7 @@ export const systemReports = [
   {
     id: "type-day-program",
     group: "Appointment types",
-    title: "Day program visits",
+    title: "Day Program Visit Report",
     description: "Every day program visit with the patient, address, therapist, status and time.",
     appointmentType: "Day Program",
     columns: [
@@ -351,7 +351,7 @@ export const systemReports = [
   {
     id: "type-community",
     group: "Appointment types",
-    title: "Community visits",
+    title: "Community Visit Report",
     description: "Every community visit with the patient, address, therapist, status and time.",
     appointmentType: "Community",
     columns: [
@@ -378,7 +378,7 @@ export const systemReports = [
   {
     id: "by-therapy",
     group: "Therapy types",
-    title: "Visits by therapy type",
+    title: "Therapy Service Summary Report",
     description:
       "Occupational therapy, physiotherapy, speech and every other therapy: visits, hours and patients.",
     columns: [
@@ -396,12 +396,12 @@ export const systemReports = [
     permission: "reports.detail.scheduling",
     totals: ["Visits", "Completed", "Hours delivered"],
   },
-  therapyReport("therapy-ot", "Occupational Therapy", "Occupational therapy"),
+  therapyReport("therapy-ot", "Occupational Therapy", "Occupational Therapy"),
   therapyReport("therapy-physio", "Physiotherapy", "Physiotherapy"),
-  therapyReport("therapy-speech", "Speech Pathology", "Speech pathology"),
-  therapyReport("therapy-ep", "Exercise Physiology", "Exercise physiology"),
+  therapyReport("therapy-speech", "Speech Pathology", "Speech Pathology"),
+  therapyReport("therapy-ep", "Exercise Physiology", "Exercise Physiology"),
   therapyReport("therapy-psychology", "Psychology", "Psychology"),
-  therapyReport("therapy-trauma", "Trauma Therapy", "Trauma therapy"),
+  therapyReport("therapy-trauma", "Trauma Therapy", "Trauma Therapy"),
   therapyReport("therapy-dietetics", "Dietetics", "Dietetics"),
   therapyReport("therapy-podiatry", "Podiatry", "Podiatry"),
   therapyReport("therapy-nursing", "Nursing", "Nursing"),
