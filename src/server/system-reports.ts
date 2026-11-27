@@ -12,6 +12,7 @@ import {
   type SystemReportTable,
   type VisitSummary,
 } from "@/lib/live/system-reports";
+import { disciplines } from "@/lib/live/catalogue";
 import { collections } from "./db";
 import { UserFacingError } from "./http";
 import { audit } from "./live";
@@ -133,6 +134,16 @@ const rowNoun: Record<SystemReportId, string> = {
   "type-daycare": "Daycare visits",
   "type-day-program": "Day program visits",
   "type-community": "Community visits",
+  "by-therapy": "Therapy types",
+  "therapy-ot": "Occupational therapy visits",
+  "therapy-physio": "Physiotherapy visits",
+  "therapy-speech": "Speech pathology visits",
+  "therapy-ep": "Exercise physiology visits",
+  "therapy-psychology": "Psychology visits",
+  "therapy-trauma": "Trauma therapy visits",
+  "therapy-dietetics": "Dietetics visits",
+  "therapy-podiatry": "Podiatry visits",
+  "therapy-nursing": "Nursing visits",
 };
 
 /** The columns people scan a report by, shown in bold on screen and in the PDF. */
@@ -221,8 +232,9 @@ export async function systemReportTable(
   const status = visitStatusFilters.some((s) => s.id === filters.status)
     ? (filters.status ?? "")
     : "";
-  // A per-type report is always that type.
+  // A per-type report is always that appointment type; a per-therapy report, that therapy.
   const type = "appointmentType" in report ? report.appointmentType : null;
+  const therapy = "therapyType" in report ? report.therapyType : null;
 
   const range: { $gte?: Date; $lt?: Date } = {};
   if (from) range.$gte = startOf(from);
@@ -315,6 +327,7 @@ export async function systemReportTable(
   // Every filter but the dates, so the period before can be cut the same way.
   const passes = (a: AppointmentDoc) =>
     (!type || typeOf(a) === type) &&
+    (!therapy || a.discipline === therapy) &&
     (!region || regionOf(a) === region) &&
     (!discipline || a.discipline === discipline) &&
     (!therapist || String(a.therapistId) === therapist) &&
@@ -337,285 +350,333 @@ export async function systemReportTable(
   const head = report.columns;
   let rows: (string | number)[][] = [];
 
-  switch (report.id satisfies SystemReportId) {
-    case "by-patient": {
-      const tallies = new Map<string, { tally: Tally; therapists: Set<string> }>();
-      for (const a of visits) {
-        const key = String(a.clientId);
-        const entry = tallies.get(key) ?? { tally: blank(), therapists: new Set<string>() };
-        count(entry.tally, a);
-        if (a.status === "completed") entry.therapists.add(therapistName(a.therapistId));
-        tallies.set(key, entry);
+  const detailRow = (a: AppointmentDoc, withType: boolean) => {
+    const c = clientById.get(String(a.clientId));
+    const kind = typeOf(a);
+    const address =
+      kind === "Telehealth"
+        ? "Video call"
+        : a.site?.address || (kind === "Home" ? homeAddress(c) : "") || c?.suburb || "";
+    return [
+      a.ref ?? "",
+      day(a.start),
+      time(a.start),
+      c?.name ?? "Unknown patient",
+      c?.mrn ?? "",
+      c?.dateOfBirth ?? "",
+      c?.phone ?? "",
+      c?.funding ?? "",
+      ...(withType ? [typeLabel(kind)] : []),
+      address,
+      therapistName(a.therapistId),
+      ...(withType ? [] : [a.discipline]),
+      a.purpose ?? "",
+      statusLabel[a.status],
+      Math.round((a.end.getTime() - a.start.getTime()) / 60_000),
+      a.status === "completed" ? minutesGiven(a) : "",
+      noteState(a),
+    ];
+  };
+
+  if (therapy) rows = visits.map((a) => detailRow(a, true));
+  else
+    switch (report.id satisfies SystemReportId) {
+      case "by-patient": {
+        const tallies = new Map<string, { tally: Tally; therapists: Set<string> }>();
+        for (const a of visits) {
+          const key = String(a.clientId);
+          const entry = tallies.get(key) ?? { tally: blank(), therapists: new Set<string>() };
+          count(entry.tally, a);
+          if (a.status === "completed") entry.therapists.add(therapistName(a.therapistId));
+          tallies.set(key, entry);
+        }
+        rows = byName([...tallies.entries()], ([id]) => clientById.get(id)?.name ?? "").map(
+          ([id, { tally: t, therapists: ts }]) => {
+            const c = clientById.get(id);
+            return [
+              c?.mrn ?? "",
+              c?.name ?? "Unknown patient",
+              c?.funding ?? "",
+              c?.suburb ?? "",
+              t.visits,
+              t.completed,
+              t.cancelled,
+              t.dna,
+              t.upcoming,
+              hours(t.minutes),
+              [...ts].sort().join("; "),
+              day(t.first),
+              day(t.last),
+            ];
+          },
+        );
+        break;
       }
-      rows = byName([...tallies.entries()], ([id]) => clientById.get(id)?.name ?? "").map(
-        ([id, { tally: t, therapists: ts }]) => {
-          const c = clientById.get(id);
-          return [
-            c?.mrn ?? "",
-            c?.name ?? "Unknown patient",
-            c?.funding ?? "",
-            c?.suburb ?? "",
-            t.visits,
+      case "patients": {
+        const seen = new Map<string, Set<string>>();
+        for (const a of visits) {
+          if (a.status !== "completed" && a.status !== "booked" && a.status !== "tentative")
+            continue;
+          const set = seen.get(String(a.clientId)) ?? new Set<string>();
+          set.add(therapistName(a.therapistId));
+          seen.set(String(a.clientId), set);
+        }
+        rows = byName(
+          clientList.filter((c) => !visitFilters || patientsWithVisits.has(String(c._id))),
+          (c) => c.name,
+        ).map((c) => [
+          c.mrn ?? "",
+          c.name,
+          c.dateOfBirth ?? "",
+          c.phone ?? "",
+          c.email,
+          c.suburb,
+          c.region,
+          c.funding,
+          c.discharged ? "Discharged" : c.provisional ? "Provisional" : "Active",
+          [...(seen.get(String(c._id)) ?? [])].sort().join("; "),
+          day(c.createdAt),
+        ]);
+        break;
+      }
+      case "by-therapist": {
+        const tallies = new Map<string, { tally: Tally; patients: Set<string> }>();
+        for (const t of therapistList) {
+          if (therapistShown(t))
+            tallies.set(String(t._id), { tally: blank(), patients: new Set() });
+        }
+        for (const a of visits) {
+          const key = String(a.therapistId);
+          const entry = tallies.get(key) ?? { tally: blank(), patients: new Set<string>() };
+          count(entry.tally, a);
+          if (a.status === "completed") entry.patients.add(String(a.clientId));
+          tallies.set(key, entry);
+        }
+        rows = byName([...tallies.entries()], ([id]) => therapistById.get(id)?.name ?? "").map(
+          ([id, { tally: t, patients }]) => {
+            const th = therapistById.get(id);
+            return [
+              th?.name ?? "Unknown therapist",
+              th?.discipline ?? "",
+              th?.region ?? "",
+              patients.size,
+              t.visits,
+              t.completed,
+              t.cancelled,
+              t.dna,
+              t.upcoming,
+              hours(t.minutes),
+              t.completed ? Math.round(t.minutes / t.completed) : 0,
+              completionRate(t),
+            ];
+          },
+        );
+        break;
+      }
+      case "patient-therapist": {
+        const pairs = new Map<string, { a: AppointmentDoc; tally: Tally }>();
+        for (const a of visits) {
+          if (a.status !== "completed") continue;
+          const key = `${String(a.therapistId)}|${String(a.clientId)}`;
+          const entry = pairs.get(key) ?? { a, tally: blank() };
+          count(entry.tally, a);
+          pairs.set(key, entry);
+        }
+        rows = [...pairs.values()]
+          .sort(
+            (x, y) =>
+              therapistName(x.a.therapistId).localeCompare(therapistName(y.a.therapistId)) ||
+              patientName(x.a.clientId).localeCompare(patientName(y.a.clientId)),
+          )
+          .map(({ a, tally: t }) => [
+            therapistName(a.therapistId),
+            therapistById.get(String(a.therapistId))?.discipline ?? a.discipline,
+            patientMrn(a.clientId),
+            patientName(a.clientId),
             t.completed,
-            t.cancelled,
-            t.dna,
-            t.upcoming,
+            t.minutes,
             hours(t.minutes),
-            [...ts].sort().join("; "),
             day(t.first),
             day(t.last),
-          ];
-        },
-      );
-      break;
-    }
-    case "patients": {
-      const seen = new Map<string, Set<string>>();
-      for (const a of visits) {
-        if (a.status !== "completed" && a.status !== "booked" && a.status !== "tentative") continue;
-        const set = seen.get(String(a.clientId)) ?? new Set<string>();
-        set.add(therapistName(a.therapistId));
-        seen.set(String(a.clientId), set);
+          ]);
+        break;
       }
-      rows = byName(
-        clientList.filter((c) => !visitFilters || patientsWithVisits.has(String(c._id))),
-        (c) => c.name,
-      ).map((c) => [
-        c.mrn ?? "",
-        c.name,
-        c.dateOfBirth ?? "",
-        c.phone ?? "",
-        c.email,
-        c.suburb,
-        c.region,
-        c.funding,
-        c.discharged ? "Discharged" : c.provisional ? "Provisional" : "Active",
-        [...(seen.get(String(c._id)) ?? [])].sort().join("; "),
-        day(c.createdAt),
-      ]);
-      break;
-    }
-    case "by-therapist": {
-      const tallies = new Map<string, { tally: Tally; patients: Set<string> }>();
-      for (const t of therapistList) {
-        if (therapistShown(t)) tallies.set(String(t._id), { tally: blank(), patients: new Set() });
-      }
-      for (const a of visits) {
-        const key = String(a.therapistId);
-        const entry = tallies.get(key) ?? { tally: blank(), patients: new Set<string>() };
-        count(entry.tally, a);
-        if (a.status === "completed") entry.patients.add(String(a.clientId));
-        tallies.set(key, entry);
-      }
-      rows = byName([...tallies.entries()], ([id]) => therapistById.get(id)?.name ?? "").map(
-        ([id, { tally: t, patients }]) => {
-          const th = therapistById.get(id);
-          return [
-            th?.name ?? "Unknown therapist",
-            th?.discipline ?? "",
-            th?.region ?? "",
-            patients.size,
-            t.visits,
-            t.completed,
-            t.cancelled,
-            t.dna,
-            t.upcoming,
-            hours(t.minutes),
-            t.completed ? Math.round(t.minutes / t.completed) : 0,
-            completionRate(t),
-          ];
-        },
-      );
-      break;
-    }
-    case "patient-therapist": {
-      const pairs = new Map<string, { a: AppointmentDoc; tally: Tally }>();
-      for (const a of visits) {
-        if (a.status !== "completed") continue;
-        const key = `${String(a.therapistId)}|${String(a.clientId)}`;
-        const entry = pairs.get(key) ?? { a, tally: blank() };
-        count(entry.tally, a);
-        pairs.set(key, entry);
-      }
-      rows = [...pairs.values()]
-        .sort(
-          (x, y) =>
-            therapistName(x.a.therapistId).localeCompare(therapistName(y.a.therapistId)) ||
-            patientName(x.a.clientId).localeCompare(patientName(y.a.clientId)),
-        )
-        .map(({ a, tally: t }) => [
-          therapistName(a.therapistId),
-          therapistById.get(String(a.therapistId))?.discipline ?? a.discipline,
-          patientMrn(a.clientId),
-          patientName(a.clientId),
-          t.completed,
-          t.minutes,
-          hours(t.minutes),
-          day(t.first),
-          day(t.last),
+      case "caseload": {
+        rows = byName(therapistList.filter(therapistShown), (t) => t.name).map((t) => [
+          t.name,
+          t.discipline,
+          t.region,
+          t.seniority,
+          t.activeClients,
+          t.capacity,
+          Math.max(t.capacity - t.activeClients, 0),
+          t.caseloadScore,
+          t.caseloadScore >= 80 ? "At Risk" : t.caseloadScore >= 60 ? "Watch" : "Healthy",
         ]);
-      break;
-    }
-    case "caseload": {
-      rows = byName(therapistList.filter(therapistShown), (t) => t.name).map((t) => [
-        t.name,
-        t.discipline,
-        t.region,
-        t.seniority,
-        t.activeClients,
-        t.capacity,
-        Math.max(t.capacity - t.activeClients, 0),
-        t.caseloadScore,
-        t.caseloadScore >= 80 ? "At Risk" : t.caseloadScore >= 60 ? "Watch" : "Healthy",
-      ]);
-      break;
-    }
-    case "visits": {
-      rows = visits.map((a) => [
-        a.ref ?? "",
-        day(a.start),
-        time(a.start),
-        patientName(a.clientId),
-        patientMrn(a.clientId),
-        therapistName(a.therapistId),
-        a.discipline,
-        typeOf(a),
-        statusLabel[a.status],
-        Math.round((a.end.getTime() - a.start.getTime()) / 60_000),
-        a.status === "completed" ? minutesGiven(a) : "",
-        noteState(a),
-      ]);
-      break;
-    }
-    case "type-home":
-    case "type-telehealth":
-    case "type-school":
-    case "type-daycare":
-    case "type-day-program":
-    case "type-community": {
-      rows = visits.map((a) => {
-        const c = clientById.get(String(a.clientId));
-        const address =
-          a.site?.address || (typeOf(a) === "Home" ? homeAddress(c) : "") || c?.suburb || "";
-        return [
+        break;
+      }
+      case "visits": {
+        rows = visits.map((a) => [
           a.ref ?? "",
           day(a.start),
           time(a.start),
-          c?.name ?? "Unknown patient",
-          c?.mrn ?? "",
-          c?.dateOfBirth ?? "",
-          c?.phone ?? "",
-          c?.funding ?? "",
-          typeOf(a) === "Telehealth" ? "Video call" : address,
+          patientName(a.clientId),
+          patientMrn(a.clientId),
           therapistName(a.therapistId),
           a.discipline,
-          a.purpose ?? "",
+          typeOf(a),
           statusLabel[a.status],
           Math.round((a.end.getTime() - a.start.getTime()) / 60_000),
           a.status === "completed" ? minutesGiven(a) : "",
           noteState(a),
-        ];
-      });
-      break;
-    }
-    case "missed": {
-      rows = visits
-        .filter((a) => isCancelled(a.status) || a.status === "no-show" || a.status === "aborted")
-        .map((a) => [
-          a.ref ?? "",
-          day(a.start),
-          time(a.start),
-          patientName(a.clientId),
-          patientMrn(a.clientId),
-          therapistName(a.therapistId),
-          statusLabel[a.status],
-          a.cancellation
-            ? `${a.cancellation.by === "client" ? "Patient" : "Medisense"}: ${a.cancellation.reason}`
-            : a.aborted
-              ? a.aborted.reason
-              : a.noShow
-                ? `Did not attend. Attempts: ${a.noShow.attempts}`
-                : "",
         ]);
-      break;
-    }
-    case "by-day": {
-      const days = new Map<
-        string,
-        { tally: Tally; when: Date; patients: Set<string>; therapists: Set<string> }
-      >();
-      for (const a of visits) {
-        const key = day(a.start);
-        const entry = days.get(key) ?? {
-          tally: blank(),
-          when: a.start,
-          patients: new Set<string>(),
-          therapists: new Set<string>(),
-        };
-        count(entry.tally, a);
-        if (a.status === "completed") {
-          entry.patients.add(String(a.clientId));
-          entry.therapists.add(String(a.therapistId));
-        }
-        days.set(key, entry);
+        break;
       }
-      const doneDays = visits.filter((a) => a.status === "completed");
-      footerOverride = {
-        "Patients seen": new Set(doneDays.map((a) => String(a.clientId))).size,
-        "Therapists working": new Set(doneDays.map((a) => String(a.therapistId))).size,
-      };
-      rows = [...days.entries()]
-        .sort(([x], [y]) => x.localeCompare(y))
-        .map(([d, e]) => [
-          d,
-          weekdayFmt.format(e.when),
+      case "type-home":
+      case "type-telehealth":
+      case "type-school":
+      case "type-daycare":
+      case "type-day-program":
+      case "type-community": {
+        rows = visits.map((a) => detailRow(a, false));
+        break;
+      }
+      case "missed": {
+        rows = visits
+          .filter((a) => isCancelled(a.status) || a.status === "no-show" || a.status === "aborted")
+          .map((a) => [
+            a.ref ?? "",
+            day(a.start),
+            time(a.start),
+            patientName(a.clientId),
+            patientMrn(a.clientId),
+            therapistName(a.therapistId),
+            statusLabel[a.status],
+            a.cancellation
+              ? `${a.cancellation.by === "client" ? "Patient" : "Medisense"}: ${a.cancellation.reason}`
+              : a.aborted
+                ? a.aborted.reason
+                : a.noShow
+                  ? `Did not attend. Attempts: ${a.noShow.attempts}`
+                  : "",
+          ]);
+        break;
+      }
+      case "by-day": {
+        const days = new Map<
+          string,
+          { tally: Tally; when: Date; patients: Set<string>; therapists: Set<string> }
+        >();
+        for (const a of visits) {
+          const key = day(a.start);
+          const entry = days.get(key) ?? {
+            tally: blank(),
+            when: a.start,
+            patients: new Set<string>(),
+            therapists: new Set<string>(),
+          };
+          count(entry.tally, a);
+          if (a.status === "completed") {
+            entry.patients.add(String(a.clientId));
+            entry.therapists.add(String(a.therapistId));
+          }
+          days.set(key, entry);
+        }
+        const doneDays = visits.filter((a) => a.status === "completed");
+        footerOverride = {
+          "Patients seen": new Set(doneDays.map((a) => String(a.clientId))).size,
+          "Therapists working": new Set(doneDays.map((a) => String(a.therapistId))).size,
+        };
+        rows = [...days.entries()]
+          .sort(([x], [y]) => x.localeCompare(y))
+          .map(([d, e]) => [
+            d,
+            weekdayFmt.format(e.when),
+            e.tally.visits,
+            e.tally.completed,
+            e.tally.cancelled,
+            e.tally.dna,
+            hours(e.tally.minutes),
+            e.patients.size,
+            e.therapists.size,
+          ]);
+        break;
+      }
+      case "by-therapy": {
+        const kinds = discipline ? [discipline] : [...disciplines];
+        const tallies = new Map(
+          kinds.map((k) => [
+            k as string,
+            { tally: blank(), patients: new Set<string>(), therapists: new Set<string>() },
+          ]),
+        );
+        for (const a of visits) {
+          const entry = tallies.get(a.discipline);
+          if (!entry) continue;
+          count(entry.tally, a);
+          if (a.status === "completed") {
+            entry.patients.add(String(a.clientId));
+            entry.therapists.add(String(a.therapistId));
+          }
+        }
+        rows = [...tallies.entries()].map(([k, e]) => [
+          k,
           e.tally.visits,
           e.tally.completed,
           e.tally.cancelled,
           e.tally.dna,
+          e.tally.upcoming,
           hours(e.tally.minutes),
           e.patients.size,
           e.therapists.size,
+          completionRate(e.tally),
         ]);
-      break;
-    }
-    case "by-type": {
-      const kinds = type ? [type] : [...appointmentTypes];
-      const tallies = new Map(
-        kinds.map((k) => [
-          k as string,
-          { tally: blank(), patients: new Set<string>(), therapists: new Set<string>() },
-        ]),
-      );
-      for (const a of visits) {
-        const entry = tallies.get(typeOf(a));
-        if (!entry) continue;
-        count(entry.tally, a);
-        if (a.status === "completed") {
-          entry.patients.add(String(a.clientId));
-          entry.therapists.add(String(a.therapistId));
-        }
+        const doneTherapy = visits.filter(
+          (a) => a.status === "completed" && tallies.has(a.discipline),
+        );
+        footerOverride = {
+          "Patients seen": new Set(doneTherapy.map((a) => String(a.clientId))).size,
+          Therapists: new Set(doneTherapy.map((a) => String(a.therapistId))).size,
+        };
+        break;
       }
-      rows = [...tallies.entries()].map(([k, e]) => [
-        typeLabel(k),
-        e.tally.visits,
-        e.tally.completed,
-        e.tally.cancelled,
-        e.tally.dna,
-        e.tally.upcoming,
-        hours(e.tally.minutes),
-        e.patients.size,
-        e.therapists.size,
-        completionRate(e.tally),
-      ]);
-      const done = visits.filter((a) => a.status === "completed" && tallies.has(typeOf(a)));
-      footerOverride = {
-        "Patients seen": new Set(done.map((a) => String(a.clientId))).size,
-        Therapists: new Set(done.map((a) => String(a.therapistId))).size,
-      };
-      break;
+      case "by-type": {
+        const kinds = type ? [type] : [...appointmentTypes];
+        const tallies = new Map(
+          kinds.map((k) => [
+            k as string,
+            { tally: blank(), patients: new Set<string>(), therapists: new Set<string>() },
+          ]),
+        );
+        for (const a of visits) {
+          const entry = tallies.get(typeOf(a));
+          if (!entry) continue;
+          count(entry.tally, a);
+          if (a.status === "completed") {
+            entry.patients.add(String(a.clientId));
+            entry.therapists.add(String(a.therapistId));
+          }
+        }
+        rows = [...tallies.entries()].map(([k, e]) => [
+          typeLabel(k),
+          e.tally.visits,
+          e.tally.completed,
+          e.tally.cancelled,
+          e.tally.dna,
+          e.tally.upcoming,
+          hours(e.tally.minutes),
+          e.patients.size,
+          e.therapists.size,
+          completionRate(e.tally),
+        ]);
+        const done = visits.filter((a) => a.status === "completed" && tallies.has(typeOf(a)));
+        footerOverride = {
+          "Patients seen": new Set(done.map((a) => String(a.clientId))).size,
+          Therapists: new Set(done.map((a) => String(a.therapistId))).size,
+        };
+        break;
+      }
     }
-  }
 
   // Where a report lists visits by reference, the MRN comes straight after it.
   const order = head.map((_, i) => i);
@@ -656,6 +717,7 @@ export async function systemReportTable(
     description: report.description,
     period: periodLabel(from ?? "", to ?? ""),
     type: typeLabel(type ?? ""),
+    therapy: therapy ?? "",
     request: [report.id, from ?? "", to ?? "", region, discipline, therapist, status].join("|"),
     filters:
       [

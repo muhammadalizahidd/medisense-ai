@@ -1,6 +1,16 @@
 "use client";
 
 import {
+  Activity,
+  Apple,
+  Bone,
+  Brain,
+  Dumbbell,
+  Footprints,
+  Hand,
+  HeartHandshake,
+  MessageCircle,
+  Syringe,
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
@@ -72,6 +82,11 @@ const groupMeta: Record<Group, { title: string; line: string; icon: LucideIcon }
     line: "Visits, outcomes and time by where care happens: home, telehealth, school and more.",
     icon: Layers,
   },
+  "Therapy types": {
+    title: "Therapy type reports",
+    line: "Visits, outcomes and time for each therapy: occupational therapy, physiotherapy, speech and more.",
+    icon: Activity,
+  },
   Patients: {
     title: "Patient reports",
     line: "Each patient's visits, details, funding and the time given to them.",
@@ -98,6 +113,16 @@ const tabLabel: Record<SystemReportId, string> = {
   "type-daycare": "Daycare visits",
   "type-day-program": "Day program",
   "type-community": "Community visits",
+  "by-therapy": "All therapy types",
+  "therapy-ot": "Occupational therapy",
+  "therapy-physio": "Physiotherapy",
+  "therapy-speech": "Speech pathology",
+  "therapy-ep": "Exercise physiology",
+  "therapy-psychology": "Psychology",
+  "therapy-trauma": "Trauma therapy",
+  "therapy-dietetics": "Dietetics",
+  "therapy-podiatry": "Podiatry",
+  "therapy-nursing": "Nursing",
   "by-patient": "Visits by patient",
   patients: "Patient list",
   "by-therapist": "Visits by therapist",
@@ -116,6 +141,16 @@ const reportIcon: Record<SystemReportId, LucideIcon> = {
   "type-daycare": Baby,
   "type-day-program": Building2,
   "type-community": Trees,
+  "by-therapy": Activity,
+  "therapy-ot": Hand,
+  "therapy-physio": Bone,
+  "therapy-speech": MessageCircle,
+  "therapy-ep": Dumbbell,
+  "therapy-psychology": Brain,
+  "therapy-trauma": HeartHandshake,
+  "therapy-dietetics": Apple,
+  "therapy-podiatry": Footprints,
+  "therapy-nursing": Syringe,
   "by-patient": UserRound,
   patients: ClipboardList,
   "by-therapist": Stethoscope,
@@ -134,6 +169,15 @@ const typeRowIcon: Record<string, LucideIcon> = {
   "Daycare visits": Baby,
   "Day Program visits": Building2,
   "Community visits": Trees,
+  "Occupational Therapy": Hand,
+  Physiotherapy: Bone,
+  "Speech Pathology": MessageCircle,
+  "Exercise Physiology": Dumbbell,
+  Psychology: Brain,
+  "Trauma Therapy": HeartHandshake,
+  Dietetics: Apple,
+  Podiatry: Footprints,
+  Nursing: Syringe,
 };
 
 const statusTone: Record<string, TagTone> = {
@@ -471,14 +515,14 @@ function FilterBar({
           ))}
         </IconSelect>
       </Field>
-      <Field label="Service" htmlFor="sr-discipline">
+      <Field label="Therapy type" htmlFor="sr-discipline">
         <IconSelect
           id="sr-discipline"
           icon={Layers}
           value={filters.discipline}
           onChange={(discipline) => set({ discipline })}
         >
-          <option value="">All services</option>
+          <option value="">All therapy types</option>
           {options?.disciplines.map((d) => (
             <option key={d} value={d}>
               {d}

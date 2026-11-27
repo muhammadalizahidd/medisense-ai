@@ -38,6 +38,7 @@ export const pagePermissions: Record<string, readonly string[]> = {
   "/care/reports/therapists": ["reports.therapist"],
   // Each group of system reports opens for the detail permission its reports need.
   "/care/reports/system/types": ["reports.detail.scheduling"],
+  "/care/reports/system/therapy": ["reports.detail.scheduling"],
   "/care/reports/system/patients": ["reports.detail.participants"],
   "/care/reports/system/therapists": ["reports.detail.staff", "reports.detail.scheduling"],
   "/care/reports/system/visits": ["reports.detail.scheduling"],

@@ -1,3 +1,37 @@
+import type { Discipline } from "./catalogue";
+
+/** Every visit of one therapy type, with the patient's details and where it happened. */
+const therapyVisitColumns = [
+  "Reference",
+  "Date",
+  "Start",
+  "Patient",
+  "MRN",
+  "Date of birth",
+  "Phone",
+  "Funding",
+  "Appointment type",
+  "Address",
+  "Therapist",
+  "Purpose",
+  "Status",
+  "Booked minutes",
+  "Actual minutes",
+  "Note",
+] as const;
+
+/** One therapy type's visit report; the id keeps its literal type for the report maps. */
+const therapyReport = <I extends string>(id: I, therapyType: Discipline, title: string) => ({
+  id,
+  group: "Therapy types" as const,
+  title: `${title} visits`,
+  description: `Every ${title.toLowerCase()} visit with the patient, setting, therapist, status and time.`,
+  therapyType,
+  columns: therapyVisitColumns,
+  permission: "reports.detail.scheduling" as const,
+  totals: ["Booked minutes", "Actual minutes"] as const,
+});
+
 /**
  * System reports: plain downloadable tables straight from the live records, no charts. Shared by
  * the System reports tab and the download route, so both agree on what each report holds and who
@@ -56,7 +90,7 @@ export const systemReports = [
     description: "One row per therapist: patients seen, visits and hours delivered.",
     columns: [
       "Therapist",
-      "Discipline",
+      "Therapy type",
       "Region",
       "Patients seen",
       "Visits",
@@ -78,7 +112,7 @@ export const systemReports = [
     description: "Which therapist saw which patient, how many visits and how much time.",
     columns: [
       "Therapist",
-      "Discipline",
+      "Therapy type",
       "MRN",
       "Patient",
       "Visits completed",
@@ -97,7 +131,7 @@ export const systemReports = [
     description: "Active patients against capacity and the caseload score for each therapist.",
     columns: [
       "Therapist",
-      "Discipline",
+      "Therapy type",
       "Region",
       "Seniority",
       "Active patients",
@@ -121,7 +155,7 @@ export const systemReports = [
       "Patient",
       "MRN",
       "Therapist",
-      "Discipline",
+      "Therapy type",
       "Type",
       "Status",
       "Booked minutes",
@@ -196,7 +230,7 @@ export const systemReports = [
       "Funding",
       "Address",
       "Therapist",
-      "Discipline",
+      "Therapy type",
       "Purpose",
       "Status",
       "Booked minutes",
@@ -223,7 +257,7 @@ export const systemReports = [
       "Funding",
       "Address",
       "Therapist",
-      "Discipline",
+      "Therapy type",
       "Purpose",
       "Status",
       "Booked minutes",
@@ -250,7 +284,7 @@ export const systemReports = [
       "Funding",
       "Address",
       "Therapist",
-      "Discipline",
+      "Therapy type",
       "Purpose",
       "Status",
       "Booked minutes",
@@ -277,7 +311,7 @@ export const systemReports = [
       "Funding",
       "Address",
       "Therapist",
-      "Discipline",
+      "Therapy type",
       "Purpose",
       "Status",
       "Booked minutes",
@@ -304,7 +338,7 @@ export const systemReports = [
       "Funding",
       "Address",
       "Therapist",
-      "Discipline",
+      "Therapy type",
       "Purpose",
       "Status",
       "Booked minutes",
@@ -331,7 +365,7 @@ export const systemReports = [
       "Funding",
       "Address",
       "Therapist",
-      "Discipline",
+      "Therapy type",
       "Purpose",
       "Status",
       "Booked minutes",
@@ -341,6 +375,36 @@ export const systemReports = [
     permission: "reports.detail.scheduling",
     totals: ["Booked minutes", "Actual minutes"],
   },
+  {
+    id: "by-therapy",
+    group: "Therapy types",
+    title: "Visits by therapy type",
+    description:
+      "Occupational therapy, physiotherapy, speech and every other therapy: visits, hours and patients.",
+    columns: [
+      "Therapy type",
+      "Visits",
+      "Completed",
+      "Cancelled",
+      "Did not attend",
+      "Booked",
+      "Hours delivered",
+      "Patients seen",
+      "Therapists",
+      "Completion rate",
+    ],
+    permission: "reports.detail.scheduling",
+    totals: ["Visits", "Completed", "Hours delivered"],
+  },
+  therapyReport("therapy-ot", "Occupational Therapy", "Occupational therapy"),
+  therapyReport("therapy-physio", "Physiotherapy", "Physiotherapy"),
+  therapyReport("therapy-speech", "Speech Pathology", "Speech pathology"),
+  therapyReport("therapy-ep", "Exercise Physiology", "Exercise physiology"),
+  therapyReport("therapy-psychology", "Psychology", "Psychology"),
+  therapyReport("therapy-trauma", "Trauma Therapy", "Trauma therapy"),
+  therapyReport("therapy-dietetics", "Dietetics", "Dietetics"),
+  therapyReport("therapy-podiatry", "Podiatry", "Podiatry"),
+  therapyReport("therapy-nursing", "Nursing", "Nursing"),
 ] as const;
 
 export type SystemReport = (typeof systemReports)[number];
@@ -355,6 +419,8 @@ export type SystemReportTable = {
   /** "All appointment types", or the one type the report was cut to. */
   type: string;
   generatedAt: string;
+  /** The one therapy type a per-therapy report covers, else "". */
+  therapy: string;
   /** Which request this answers (report and filters), so a screen can tell a stale answer. */
   request: string;
   /** The filters in words: "Brisbane North · Occupational Therapy", or "No other filters". */
@@ -391,6 +457,7 @@ export type SystemReportId = SystemReport["id"];
 /** The order the reports list shows its groups: appointment types first. */
 export const systemReportGroups = [
   "Appointment types",
+  "Therapy types",
   "Patients",
   "Therapists",
   "Visits",
@@ -426,6 +493,7 @@ export const systemReportById = (id: string) => systemReports.find((r) => r.id =
 /** Each report group has its own page, which the Reports menu links to. */
 export const systemReportSlugs = {
   "Appointment types": "types",
+  "Therapy types": "therapy",
   Patients: "patients",
   Therapists: "therapists",
   Visits: "visits",

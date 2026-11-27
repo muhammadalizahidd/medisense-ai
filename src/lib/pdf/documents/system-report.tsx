@@ -125,6 +125,7 @@ export function SystemReportDocument({
                 ["What it shows", table.description],
                 ["Period", table.period],
                 ["Appointment type", table.type],
+                ...(table.therapy ? [["Therapy type", table.therapy] as [string, string]] : []),
                 ["Filters", table.filters],
                 ["Rows", numberCell.format(table.rows.length)],
                 ["Prepared by", preparedBy],

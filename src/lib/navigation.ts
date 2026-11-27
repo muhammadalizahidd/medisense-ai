@@ -21,6 +21,7 @@ import {
   Target,
   CalendarCheck,
   CalendarCheck2,
+  Activity,
   Layers,
   UsersRound,
   TrendingUp,
@@ -132,6 +133,12 @@ export const navigation: { group: string; items: NavItem[] }[] = [
         href: "/care/reports/system/types",
         label: "Appointment types",
         icon: Layers,
+        roles: [L, A],
+      },
+      {
+        href: "/care/reports/system/therapy",
+        label: "Therapy types",
+        icon: Activity,
         roles: [L, A],
       },
       { href: "/care/reports/system/patients", label: "Patients", icon: UsersRound, roles: [L, A] },
@@ -300,6 +307,7 @@ const roleLayouts: Partial<Record<Role, Section[]>> = {
       hrefs: [
         { href: "/care/reports", label: "Analytics" },
         "/care/reports/system/types",
+        "/care/reports/system/therapy",
         "/care/reports/system/patients",
         "/care/reports/system/therapists",
         "/care/reports/system/visits",
