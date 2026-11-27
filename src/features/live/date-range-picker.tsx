@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
@@ -55,9 +55,17 @@ export function rangeText({ from, to }: Range) {
 export function DateRangePicker({
   value,
   onChange,
+  presets = [],
+  variant = "pill",
+  id,
 }: {
   value: Range;
   onChange: (next: Range) => void;
+  /** Quick periods listed beside the months; picking one fills the range. */
+  presets?: readonly { label: string; range: Range }[];
+  /** `pill` sits on a dark bar; `field` matches the other form fields. */
+  variant?: "pill" | "field";
+  id?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<Range>(value);
@@ -76,7 +84,7 @@ export function DateRangePicker({
     setHover(null);
     setView({ y: at.y, m: at.m });
     const rect = trigger.current?.getBoundingClientRect();
-    setToRight(Boolean(rect && rect.left + 700 > window.innerWidth));
+    setToRight(Boolean(rect && rect.left + (presets.length ? 860 : 700) > window.innerWidth));
     setOpen(true);
   };
   const close = (refocus = true) => {
@@ -173,14 +181,33 @@ export function DateRangePicker({
     <div ref={box} className="relative">
       <button
         ref={trigger}
+        id={id}
         type="button"
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => (open ? close() : show())}
-        className="flex h-9 cursor-pointer items-center gap-2 rounded-full bg-surface px-3.5 text-small font-semibold text-ink-900 transition-colors duration-(--duration-fast) hover:bg-sunken focus-visible:shadow-focus"
+        className={cn(
+          "flex cursor-pointer items-center gap-2 text-small transition-colors duration-(--duration-fast) focus-visible:shadow-focus",
+          variant === "pill"
+            ? "h-9 rounded-full bg-surface px-3.5 font-semibold text-ink-900 hover:bg-sunken"
+            : "h-10 w-full rounded-control border border-border-strong bg-surface px-3 font-medium text-ink-900 hover:border-accent",
+          variant === "field" && open && "border-accent shadow-focus",
+        )}
       >
-        <CalendarDays className="size-4 text-accent" aria-hidden="true" />
-        {rangeText(value)}
+        <CalendarDays
+          className={cn("size-4 flex-none", variant === "pill" ? "text-accent" : "text-ink-500")}
+          aria-hidden="true"
+        />
+        <span className="min-w-0 flex-1 truncate text-left">{rangeText(value)}</span>
+        {variant === "field" && (
+          <ChevronDown
+            className={cn(
+              "size-4 flex-none text-ink-500 transition-transform duration-(--duration-fast)",
+              open && "rotate-180 text-accent",
+            )}
+            aria-hidden="true"
+          />
+        )}
       </button>
       {open && (
         <div
@@ -198,6 +225,39 @@ export function DateRangePicker({
           )}
         >
           <div className="flex items-start gap-6">
+            {presets.length > 0 && (
+              <div
+                role="group"
+                aria-label="Quick periods"
+                className="flex w-36 flex-none flex-col gap-0.5 border-r border-border pr-4"
+              >
+                {presets.map((p) => {
+                  const on = p.range.from === draft.from && p.range.to === draft.to;
+                  return (
+                    <button
+                      key={p.label}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => {
+                        setDraft(p.range);
+                        if (p.range.from) {
+                          const at = parts(p.range.from);
+                          setView({ y: at.y, m: at.m });
+                        }
+                      }}
+                      className={cn(
+                        "h-8 cursor-pointer rounded-control px-2.5 text-left text-small transition-colors duration-(--duration-fast)",
+                        on
+                          ? "bg-accent-tint font-semibold text-accent"
+                          : "text-ink-700 hover:bg-sunken hover:text-ink-900",
+                      )}
+                    >
+                      {p.label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             <button
               type="button"
               onClick={() => step(-1)}

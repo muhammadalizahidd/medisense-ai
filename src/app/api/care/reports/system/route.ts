@@ -20,17 +20,24 @@ export async function GET(request: Request) {
   const report = params.get("report") ?? "";
   const from = params.get("from");
   const to = params.get("to");
-  const type = params.get("type");
+  const filters = {
+    from,
+    to,
+    region: params.get("region"),
+    discipline: params.get("discipline"),
+    therapist: params.get("therapist"),
+    status: params.get("status"),
+  };
   try {
     if (format === "json") {
       const table = await cached(cacheKey(request), 60_000, () =>
-        systemReportTable(admin, report, from, to, type),
+        systemReportTable(admin, report, filters),
       );
       return NextResponse.json({ table }, { headers: { "Cache-Control": "no-store" } });
     }
     if (format !== "csv" && format !== "pdf") return plain("Choose PDF or CSV.", 400);
-    const table = await systemReportTable(admin, report, from, to, type);
-    const stamp = [[from, to].filter(Boolean).join("_to_") || "all-time", type]
+    const table = await systemReportTable(admin, report, filters);
+    const stamp = [[from, to].filter(Boolean).join("_to_") || "all-time"]
       .filter(Boolean)
       .join("-")
       .toLowerCase()

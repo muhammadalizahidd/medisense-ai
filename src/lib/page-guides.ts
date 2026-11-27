@@ -636,6 +636,17 @@ export const guides: Record<string, PageGuide> = {
     ["Pick the report.", "Set filters.", "Save, schedule or export it."],
     "The figures you need, on demand or on a schedule.",
   ),
+  "/care/reports/system/[group]": g(
+    "System reports",
+    "Ready-made tables from the live records, by appointment type, patient, therapist or visit.",
+    [
+      "Filter by dates, branch, service, therapist and status",
+      "Switch reports with the tabs",
+      "Download the PDF or Excel file",
+    ],
+    ["Set the date range and filters.", "Pick the report tab.", "Check the table, then download."],
+    "A finished report, the same on screen and in the file, with the download recorded.",
+  ),
   "/care/reports/therapists": g(
     "Therapist reports",
     "Choose a therapist to see their caseload, sessions, notes and progress.",

@@ -29,6 +29,11 @@ export const legacyPageAccess: Record<string, string[]> = {
   "/care/billing": [FIN, FINM],
   "/care/operations": [INTAKE, SCHED, FINM, LEAD, OPS],
   "/care/reports": [INTAKE, SCHED, FINM, LEAD, OPS],
+  // System report pages follow the row-level detail their reports need.
+  "/care/reports/system/types": [SCHED, LEAD, OPS],
+  "/care/reports/system/patients": [INTAKE, LEAD, OPS],
+  "/care/reports/system/therapists": [SCHED, LEAD, OPS],
+  "/care/reports/system/visits": [SCHED, LEAD, OPS],
   "/care/ai-agent": [INTAKE, SCHED, OPS],
   "/care/ai-oversight": CARE,
   "/care/hr": [LEAD, OPS],

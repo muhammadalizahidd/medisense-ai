@@ -74,9 +74,16 @@ export function SystemReportDocument({
     keep: c.label === "Reference" || c.label === "MRN",
     label: PRINT_LABEL[c.label] ?? c.label,
   }));
-  const rows: TableRow[] = table.rows
-    .slice(0, SYSTEM_PDF_ROW_LIMIT)
-    .map((r) => Object.fromEntries(r.map((v, i) => [String(i), text(v)])));
+  const cell = (r: (string | number)[]) =>
+    Object.fromEntries(
+      r.map((v, i) => [
+        String(i),
+        table.columns[i]?.percent && typeof v === "number" ? `${text(v)}%` : text(v),
+      ]),
+    );
+  const rows: TableRow[] = table.rows.slice(0, SYSTEM_PDF_ROW_LIMIT).map(cell);
+  // The Total row closes the table when every row fits on the PDF.
+  if (table.footer && table.rows.length <= SYSTEM_PDF_ROW_LIMIT) rows.push(cell(table.footer));
   const when = generated(table.generatedAt);
   return (
     <Doc title={`${table.title} · ${table.period}`} author={preparedBy}>
@@ -87,7 +94,7 @@ export function SystemReportDocument({
       >
         <TitleBlock
           title={table.title}
-          subtitle={`${table.period} · ${table.type} · Prepared by ${preparedBy} · ${when}`}
+          subtitle={`${table.period} · ${table.type} · ${table.filters} · Prepared by ${preparedBy} · ${when}`}
         />
         <StatTiles tiles={table.totals.slice(0, 4)} plain />
         <Section title="Report data">
@@ -118,6 +125,7 @@ export function SystemReportDocument({
                 ["What it shows", table.description],
                 ["Period", table.period],
                 ["Appointment type", table.type],
+                ["Filters", table.filters],
                 ["Rows", numberCell.format(table.rows.length)],
                 ["Prepared by", preparedBy],
                 ["Generated", when],

@@ -2,13 +2,15 @@ import "server-only";
 import type { ObjectId } from "mongodb";
 import {
   appointmentTypes,
-  isAppointmentType,
   periodLabel,
   typeLabel,
   systemReportById,
+  visitStatusFilters,
+  type SystemReportFilters,
   type SystemReportFormat,
   type SystemReportId,
   type SystemReportTable,
+  type VisitSummary,
 } from "@/lib/live/system-reports";
 import { collections } from "./db";
 import { UserFacingError } from "./http";
@@ -136,6 +138,63 @@ const rowNoun: Record<SystemReportId, string> = {
 /** The columns people scan a report by, shown in bold on screen and in the PDF. */
 const STRONG = new Set(["Reference", "MRN", "Patient", "Therapist", "Funding"]);
 
+/** Columns whose Total row adds them up; the rest (averages, scores, names) stay blank there. */
+const SUMMABLE = new Set([
+  "Visits",
+  "Completed",
+  "Cancelled",
+  "Did not attend",
+  "Booked",
+  "Hours given",
+  "Hours delivered",
+  "Hours",
+  "Minutes",
+  "Visits completed",
+  "Booked minutes",
+  "Actual minutes",
+  "Active patients",
+  "Capacity",
+  "Free places",
+]);
+
+/** Of the visits whose outcome is known (not still booked), the share that were completed. */
+const completionRate = (t: Tally) => {
+  const closed = t.visits - t.upcoming;
+  return closed > 0 ? Math.round((t.completed / closed) * 1000) / 10 : "";
+};
+
+const matchesStatus = (a: AppointmentDoc, status: string) => {
+  switch (status) {
+    case "completed":
+      return a.status === "completed";
+    case "booked":
+      return isBooked(a);
+    case "cancelled":
+      return isCancelled(a.status);
+    case "dna":
+      return a.status === "no-show";
+    case "incomplete":
+      return a.status === "aborted";
+    default:
+      return true;
+  }
+};
+
+const summarise = (list: AppointmentDoc[]): VisitSummary => {
+  const t = blank();
+  for (const a of list) count(t, a);
+  return {
+    visits: t.visits,
+    completed: t.completed,
+    cancelled: t.cancelled,
+    booked: t.upcoming,
+    hours: hours(t.minutes),
+  };
+};
+
+const DAY_MS = 86_400_000;
+const startOf = (iso: string) => new Date(`${iso}T00:00:00${OFFSET}`);
+
 const number = new Intl.NumberFormat("en-AU", { maximumFractionDigits: 1 });
 
 /**
@@ -146,52 +205,69 @@ const number = new Intl.NumberFormat("en-AU", { maximumFractionDigits: 1 });
 export async function systemReportTable(
   admin: UserDoc,
   reportId: string,
-  fromParam: string | null,
-  toParam: string | null,
-  typeParam: string | null = null,
+  filters: Partial<Record<keyof SystemReportFilters, string | null>>,
 ): Promise<SystemReportTable> {
   const report = systemReportById(reportId);
   if (!report) throw new UserFacingError("That report doesn't exist.", 404);
   if (!can(admin, report.permission)) {
     throw new UserFacingError("You don't have access to this report.", 400);
   }
-  const from = parseDay(fromParam);
-  const to = parseDay(toParam);
+  const from = parseDay(filters.from ?? null);
+  const to = parseDay(filters.to ?? null);
   if (from && to && from > to) throw new UserFacingError("The start date is after the end date.");
-  // A per-type report is always that type; otherwise an optional type cuts any visit report.
-  const fixed = "appointmentType" in report ? report.appointmentType : null;
-  const type = fixed ?? (isAppointmentType(typeParam) ? typeParam : null);
+  const region = filters.region?.trim() || "";
+  const discipline = filters.discipline?.trim() || "";
+  const therapist = /^[a-f0-9]{24}$/.test(filters.therapist ?? "") ? (filters.therapist ?? "") : "";
+  const status = visitStatusFilters.some((s) => s.id === filters.status)
+    ? (filters.status ?? "")
+    : "";
+  // A per-type report is always that type.
+  const type = "appointmentType" in report ? report.appointmentType : null;
 
   const range: { $gte?: Date; $lt?: Date } = {};
-  if (from) range.$gte = new Date(`${from}T00:00:00${OFFSET}`);
-  if (to) range.$lt = new Date(new Date(`${to}T00:00:00${OFFSET}`).getTime() + 86_400_000);
+  if (from) range.$gte = startOf(from);
+  if (to) range.$lt = new Date(startOf(to).getTime() + DAY_MS);
+  // The period just before, the same length, so the headline figures can show the change.
+  const before =
+    range.$gte && range.$lt
+      ? {
+          $gte: new Date(range.$gte.getTime() - (range.$lt.getTime() - range.$gte.getTime())),
+          $lt: range.$gte,
+        }
+      : null;
+  const fetchFrom = before?.$gte ?? range.$gte;
 
   const { appointments, clients, therapists } = await collections();
   const needsVisits = report.id !== "caseload" && report.id !== "patients";
   const [allVisits, clientList, therapistList] = await Promise.all([
     needsVisits || report.id === "patients"
       ? appointments
-          .find(report.id === "patients" || !(from || to) ? {} : { start: range }, {
-            projection: {
-              therapistId: 1,
-              clientId: 1,
-              discipline: 1,
-              start: 1,
-              end: 1,
-              status: 1,
-              cancellation: 1,
-              checkOut: 1,
-              note: 1,
-              noShow: 1,
-              aborted: 1,
-              modality: 1,
-              ref: 1,
-              needId: 1,
-              purpose: 1,
-              "site.location": 1,
-              "site.address": 1,
+          .find(
+            report.id === "patients" || !(from || to)
+              ? {}
+              : { start: { ...range, ...(fetchFrom ? { $gte: fetchFrom } : {}) } },
+            {
+              projection: {
+                therapistId: 1,
+                clientId: 1,
+                discipline: 1,
+                start: 1,
+                end: 1,
+                status: 1,
+                cancellation: 1,
+                checkOut: 1,
+                note: 1,
+                noShow: 1,
+                aborted: 1,
+                modality: 1,
+                ref: 1,
+                needId: 1,
+                purpose: 1,
+                "site.location": 1,
+                "site.address": 1,
+              },
             },
-          })
+          )
           .sort({ start: 1 })
           .toArray()
       : Promise.resolve([] as AppointmentDoc[]),
@@ -235,8 +311,28 @@ export async function systemReportTable(
     const need = clientById.get(String(a.clientId))?.needs?.find((n) => n.id === a.needId);
     return modeOf(a.site?.location ?? need?.location, a.modality);
   };
-  // A chosen appointment type cuts every visit-based report down to that type.
-  const visits = type ? allVisits.filter((a) => typeOf(a) === type) : allVisits;
+  const regionOf = (a: AppointmentDoc) => therapistById.get(String(a.therapistId))?.region ?? "";
+  // Every filter but the dates, so the period before can be cut the same way.
+  const passes = (a: AppointmentDoc) =>
+    (!type || typeOf(a) === type) &&
+    (!region || regionOf(a) === region) &&
+    (!discipline || a.discipline === discipline) &&
+    (!therapist || String(a.therapistId) === therapist) &&
+    matchesStatus(a, status);
+  const within = (a: AppointmentDoc, r: { $gte?: Date; $lt?: Date }) =>
+    (!r.$gte || a.start >= r.$gte) && (!r.$lt || a.start < r.$lt);
+  const filtered = allVisits.filter(passes);
+  const visits = filtered.filter((a) => within(a, range));
+  // Lists of everyone (therapists, patients) follow the filters too.
+  const therapistShown = (t: TherapistDoc) =>
+    t.active !== false &&
+    (!region || t.region === region) &&
+    (!discipline || t.discipline === discipline) &&
+    (!therapist || String(t._id) === therapist);
+  const visitFilters = Boolean(region || discipline || therapist || status);
+  // Patient list: every patient, or, once a filter is set, the ones with a matching visit.
+  const patientsWithVisits = new Set(filtered.map((a) => String(a.clientId)));
+  let footerOverride: Record<string, string | number> = {};
 
   const head = report.columns;
   let rows: (string | number)[][] = [];
@@ -281,7 +377,10 @@ export async function systemReportTable(
         set.add(therapistName(a.therapistId));
         seen.set(String(a.clientId), set);
       }
-      rows = byName([...clientList], (c) => c.name).map((c) => [
+      rows = byName(
+        clientList.filter((c) => !visitFilters || patientsWithVisits.has(String(c._id))),
+        (c) => c.name,
+      ).map((c) => [
         c.mrn ?? "",
         c.name,
         c.dateOfBirth ?? "",
@@ -299,7 +398,7 @@ export async function systemReportTable(
     case "by-therapist": {
       const tallies = new Map<string, { tally: Tally; patients: Set<string> }>();
       for (const t of therapistList) {
-        if (t.active !== false) tallies.set(String(t._id), { tally: blank(), patients: new Set() });
+        if (therapistShown(t)) tallies.set(String(t._id), { tally: blank(), patients: new Set() });
       }
       for (const a of visits) {
         const key = String(a.therapistId);
@@ -323,6 +422,7 @@ export async function systemReportTable(
             t.upcoming,
             hours(t.minutes),
             t.completed ? Math.round(t.minutes / t.completed) : 0,
+            completionRate(t),
           ];
         },
       );
@@ -357,10 +457,7 @@ export async function systemReportTable(
       break;
     }
     case "caseload": {
-      rows = byName(
-        therapistList.filter((t) => t.active !== false),
-        (t) => t.name,
-      ).map((t) => [
+      rows = byName(therapistList.filter(therapistShown), (t) => t.name).map((t) => [
         t.name,
         t.discipline,
         t.region,
@@ -462,6 +559,11 @@ export async function systemReportTable(
         }
         days.set(key, entry);
       }
+      const doneDays = visits.filter((a) => a.status === "completed");
+      footerOverride = {
+        "Patients seen": new Set(doneDays.map((a) => String(a.clientId))).size,
+        "Therapists working": new Set(doneDays.map((a) => String(a.therapistId))).size,
+      };
       rows = [...days.entries()]
         .sort(([x], [y]) => x.localeCompare(y))
         .map(([d, e]) => [
@@ -504,7 +606,13 @@ export async function systemReportTable(
         hours(e.tally.minutes),
         e.patients.size,
         e.therapists.size,
+        completionRate(e.tally),
       ]);
+      const done = visits.filter((a) => a.status === "completed" && tallies.has(typeOf(a)));
+      footerOverride = {
+        "Patients seen": new Set(done.map((a) => String(a.clientId))).size,
+        Therapists: new Set(done.map((a) => String(a.therapistId))).size,
+      };
       break;
     }
   }
@@ -519,21 +627,63 @@ export async function systemReportTable(
   const numeric = cols.map((_, i) => rows.some((r) => typeof r[i] === "number"));
   const sum = (label: string) => {
     const i = cols.indexOf(label);
-    return rows.reduce((n, r) => n + (typeof r[i] === "number" ? r[i] : 0), 0);
+    const total = rows.reduce((n, r) => n + (typeof r[i] === "number" ? r[i] : 0), 0);
+    return Math.round(total * 10) / 10;
   };
+  // A Total row only where something adds up, and only for more than one row.
+  const footer =
+    rows.length > 1 && cols.some((c) => SUMMABLE.has(c))
+      ? cols.map((c, i) => {
+          if (i === 0) return "Total";
+          if (c in footerOverride) return footerOverride[c] ?? "";
+          if (c === "Completion rate") {
+            const t = blank();
+            t.visits = sum("Visits");
+            t.completed = sum("Completed");
+            t.upcoming = sum("Booked");
+            return completionRate(t);
+          }
+          return SUMMABLE.has(c) ? sum(c) : "";
+        })
+      : null;
+  const active = byName(
+    therapistList.filter((t) => t.active !== false),
+    (t) => t.name,
+  );
   return {
     id: report.id,
     title: report.title,
     description: report.description,
     period: periodLabel(from ?? "", to ?? ""),
     type: typeLabel(type ?? ""),
+    request: [report.id, from ?? "", to ?? "", region, discipline, therapist, status].join("|"),
+    filters:
+      [
+        region,
+        discipline,
+        therapist ? (therapistById.get(therapist)?.name ?? "") : "",
+        visitStatusFilters.find((s) => s.id === status)?.label ?? "",
+      ]
+        .filter(Boolean)
+        .join(" · ") || "No other filters",
     generatedAt: new Date().toISOString(),
     columns: cols.map((label, i) => ({
       label,
       numeric: numeric[i] ?? false,
       strong: STRONG.has(label),
+      percent: label === "Completion rate",
     })),
     rows,
+    footer,
+    summary: {
+      current: summarise(visits),
+      previous: before ? summarise(filtered.filter((a) => within(a, before))) : null,
+    },
+    options: {
+      regions: [...new Set(active.map((t) => t.region).filter(Boolean))].sort(),
+      disciplines: [...new Set(active.map((t) => t.discipline).filter(Boolean))].sort(),
+      therapists: active.map((t) => ({ id: String(t._id), name: t.name })),
+    },
     totals: [
       { label: rowNoun[report.id], value: number.format(rows.length) },
       ...(report.totals as readonly string[]).map((label) => ({
@@ -553,15 +703,15 @@ export async function downloadSystemReport(
 ) {
   await audit(
     admin,
-    `Downloaded system report "${table.title}" as ${format.toUpperCase()} (${table.period}, ${table.type}, ${table.rows.length} rows)`,
+    `Downloaded system report "${table.title}" as ${format.toUpperCase()} (${table.period}, ${table.type}, ${table.filters}, ${table.rows.length} rows)`,
     null,
   );
   const base = `medisense-${table.id}-${stamp}`;
   if (format === "csv") {
     return {
       body: toCsv(
-        table.columns.map((c) => c.label),
-        table.rows,
+        table.columns.map((c) => (c.percent ? `${c.label} (%)` : c.label)),
+        table.footer ? [...table.rows, table.footer] : table.rows,
       ),
       type: "text/csv; charset=utf-8",
       filename: `${base}.csv`,

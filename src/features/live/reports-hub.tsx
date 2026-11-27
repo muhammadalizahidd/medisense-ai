@@ -18,12 +18,10 @@ import { AREAS, AreaPage, Overview, areaVisible, type AreaId } from "./reports-a
 import { ExportSheet, FilterBar, useReportCtx, useReportFilters, type Ctx } from "./reports-bits";
 import { BuilderTab } from "./reports-builder";
 import { TherapistList } from "./therapist-picker";
-import { SystemReports } from "./system-reports";
 import { TherapistReportsHub } from "./therapist-reports-hub";
 
 const tabs = [
   { id: "overview", label: "Overview" },
-  { id: "system", label: "System reports" },
   ...AREAS.map((a) => ({ id: a.id, label: a.label })),
   { id: "custom", label: "Custom reports" },
 ] as const;
@@ -86,6 +84,11 @@ function Hub({
   const close = () => setOpen(null);
 
   useEffect(() => {
+    // System reports have their own pages now, one per group in the Reports menu.
+    if (readParam("tab") === "system") {
+      window.location.replace("/care/reports/system/types");
+      return;
+    }
     const old = legacy[readParam("tab") ?? ""];
     if (!old) return;
     setTab(old.tab);
@@ -94,8 +97,7 @@ function Hub({
 
   const visible = AREAS.filter((a) => areaVisible(a, c));
   const newInsights = hub.insights.filter((i) => i.status === "New").length;
-  const current: Tab =
-    tab === "custom" || tab === "system" || visible.some((a) => a.id === tab) ? tab : "overview";
+  const current: Tab = tab === "custom" || visible.some((a) => a.id === tab) ? tab : "overview";
 
   /** Switch tab and sub-tab together; a new tab starts on its first view. */
   const go = (t: Tab, v = "") => {
@@ -192,7 +194,6 @@ function Hub({
           label="Reports"
           tabs={[
             tabs[0],
-            { id: "system" as const, label: "System reports" },
             ...visible.map((a) => ({
               id: a.id,
               label: a.label,
@@ -227,9 +228,6 @@ function Hub({
             openSchedules={() => go("custom", "schedules")}
             openDownloads={() => go("custom", "downloads")}
           />
-        </TabPanel>
-        <TabPanel id="system" value={current}>
-          <SystemReports />
         </TabPanel>
         {visible.map((a) => (
           <TabPanel key={a.id} id={a.id} value={current}>

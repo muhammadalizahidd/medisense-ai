@@ -20,6 +20,9 @@ import {
   ClipboardList,
   Target,
   CalendarCheck,
+  CalendarCheck2,
+  Layers,
+  UsersRound,
   TrendingUp,
   FileSignature,
   Contact,
@@ -125,6 +128,25 @@ export const navigation: { group: string; items: NavItem[] }[] = [
         roles: [C],
       },
       { href: "/care/reports", label: "Reports and analytics", icon: ChartColumn, roles: [L, A] },
+      {
+        href: "/care/reports/system/types",
+        label: "Appointment types",
+        icon: Layers,
+        roles: [L, A],
+      },
+      { href: "/care/reports/system/patients", label: "Patients", icon: UsersRound, roles: [L, A] },
+      {
+        href: "/care/reports/system/therapists",
+        label: "Therapists",
+        icon: Stethoscope,
+        roles: [L, A],
+      },
+      {
+        href: "/care/reports/system/visits",
+        label: "Visits",
+        icon: CalendarCheck2,
+        roles: [L, A],
+      },
       { href: "/care/ai-agent", label: "Work agent", icon: BotMessageSquare, roles: [L, A] },
       { href: "/care/ai-oversight", label: "AI oversight", icon: BotMessageSquare, roles: [L, A] },
       { href: "/care/users", label: "User control", icon: UserCog, roles: [A] },
@@ -269,7 +291,18 @@ const roleLayouts: Partial<Record<Role, Section[]>> = {
         "/care/hr",
         "/care/hr/leave",
         "/care/hr/timesheets",
-        "/care/reports",
+      ],
+    },
+    {
+      // Analytics first, then one page per group of system reports.
+      group: "Reports",
+      live: true,
+      hrefs: [
+        { href: "/care/reports", label: "Analytics" },
+        "/care/reports/system/types",
+        "/care/reports/system/patients",
+        "/care/reports/system/therapists",
+        "/care/reports/system/visits",
       ],
     },
     { group: "Settings", live: true, hrefs: ["/care/ai-oversight", "/care/users"] },
@@ -402,6 +435,10 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
   {
     prefix: "/care/billing",
     meta: { section: "Live care", page: "Billing and finance", role: "Admin" },
+  },
+  {
+    prefix: "/care/reports/system",
+    meta: { section: "Reports and analytics", page: "System reports", role: "Admin" },
   },
   {
     prefix: "/care/reports",

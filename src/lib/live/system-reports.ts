@@ -66,6 +66,7 @@ export const systemReports = [
       "Booked",
       "Hours delivered",
       "Average minutes per visit",
+      "Completion rate",
     ],
     permission: "reports.detail.staff",
     totals: ["Visits", "Completed", "Hours delivered"],
@@ -173,6 +174,7 @@ export const systemReports = [
       "Hours delivered",
       "Patients seen",
       "Therapists",
+      "Completion rate",
     ],
     permission: "reports.detail.scheduling",
     totals: ["Visits", "Completed", "Hours delivered"],
@@ -353,11 +355,36 @@ export type SystemReportTable = {
   /** "All appointment types", or the one type the report was cut to. */
   type: string;
   generatedAt: string;
-  /** `strong` marks the columns people scan by: reference, MRN, patient, therapist, funding. */
-  columns: { label: string; numeric: boolean; strong: boolean }[];
+  /** Which request this answers (report and filters), so a screen can tell a stale answer. */
+  request: string;
+  /** The filters in words: "Brisbane North · Occupational Therapy", or "No other filters". */
+  filters: string;
+  /**
+   * `strong` marks the columns people scan by: reference, MRN, patient, therapist, funding.
+   * `percent` values are percentages (0–100).
+   */
+  columns: { label: string; numeric: boolean; strong: boolean; percent: boolean }[];
   rows: (string | number)[][];
+  /** The Total row: sums where adding up makes sense, blanks elsewhere. Null when it wouldn't help. */
+  footer: (string | number)[] | null;
   /** Headline figures: the row count, then the sum of each total column. */
   totals: { label: string; value: string }[];
+  /** Visit figures for the chosen period and filters, with the period just before for comparison. */
+  summary: { current: VisitSummary; previous: VisitSummary | null };
+  /** What each filter can be set to, from the live records. */
+  options: {
+    regions: string[];
+    disciplines: string[];
+    therapists: { id: string; name: string }[];
+  };
+};
+
+export type VisitSummary = {
+  visits: number;
+  completed: number;
+  cancelled: number;
+  booked: number;
+  hours: number;
 };
 export type SystemReportId = SystemReport["id"];
 
@@ -396,17 +423,50 @@ export const typeLabel = (type: string) =>
 
 export const systemReportById = (id: string) => systemReports.find((r) => r.id === id) ?? null;
 
+/** Each report group has its own page, which the Reports menu links to. */
+export const systemReportSlugs = {
+  "Appointment types": "types",
+  Patients: "patients",
+  Therapists: "therapists",
+  Visits: "visits",
+} as const satisfies Record<(typeof systemReportGroups)[number], string>;
+export type SystemReportSlug = (typeof systemReportSlugs)[keyof typeof systemReportSlugs];
+
+export const groupForSlug = (slug: string) =>
+  systemReportGroups.find((g) => systemReportSlugs[g] === slug) ?? null;
+
+/** Visit outcomes the Status filter offers. Booked covers tentative bookings too. */
+export const visitStatusFilters = [
+  { id: "completed", label: "Completed" },
+  { id: "booked", label: "Booked" },
+  { id: "cancelled", label: "Cancelled" },
+  { id: "dna", label: "Did not attend" },
+  { id: "incomplete", label: "Incomplete" },
+] as const;
+export type VisitStatusFilter = (typeof visitStatusFilters)[number]["id"];
+
+/** Everything a report can be cut by. Empty strings mean "all". Dates are Brisbane days. */
+export type SystemReportFilters = {
+  from: string;
+  to: string;
+  region: string;
+  discipline: string;
+  therapist: string;
+  status: string;
+};
+
 export type SystemReportFormat = "json" | "csv" | "pdf";
 
 /** The address of one report: the preview (json), or a download as PDF or CSV (opens in Excel). */
 export const systemReportUrl = (
   id: SystemReportId,
-  from: string,
-  to: string,
+  f: SystemReportFilters,
   format: SystemReportFormat = "json",
-  type = "",
-) =>
-  `/api/care/reports/system?${new URLSearchParams({ report: id, from, to, type, format }).toString()}`;
+) => {
+  const q = new URLSearchParams({ report: id, format });
+  for (const [k, v] of Object.entries(f)) if (v) q.set(k, v);
+  return `/api/care/reports/system?${q.toString()}`;
+};
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const readable = (iso: string) => {
