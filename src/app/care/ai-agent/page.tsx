@@ -5,7 +5,7 @@ import { AdminAgent } from "@/features/live/admin-agent";
 import { OfflinePage } from "@/features/live/offline-page";
 import { requirePageUser } from "@/server/page-auth";
 
-export const metadata: Metadata = { title: "Operations agent · Medisense" };
+export const metadata: Metadata = { title: "Work agent · Medisense" };
 
 async function PageContent() {
   if (!(await requirePageUser("/care/ai-agent", "admin"))) return <OfflinePage />;

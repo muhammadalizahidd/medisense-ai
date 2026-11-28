@@ -45,7 +45,12 @@ const filters: Record<Filter, (r: ReferralSummaryDto) => boolean> = {
 };
 
 /** Admin module A02: every referral, from arrival to acceptance, with what needs doing next. */
-export function ReferralQueue() {
+export function ReferralQueue({
+  embedded = false,
+}: {
+  /** Inside the Patients page, which brings its own title. */
+  embedded?: boolean;
+} = {}) {
   const { data, error, loading, reload } = useResource<{ referrals: ReferralSummaryDto[] }>(
     "/api/care/referrals",
     (event) => event.type === "care",
@@ -65,35 +70,37 @@ export function ReferralQueue() {
 
   return (
     <>
-      <PageHeader
-        eyebrow="Live care"
-        title="Referrals and intake"
-        description="Every referral moves through the completeness check, intake review, clinical triage and funding before matching. Nothing is re-entered: accepting one creates the patient and their service requests."
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <LiveBadge />
-            <button
-              type="button"
-              onClick={() => {
-                void navigator.clipboard?.writeText(`${window.location.origin}/refer`);
-                setCopied(true);
-              }}
-              className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-control border border-border-strong bg-surface px-3 text-small font-semibold text-ink-900 hover:bg-canvas"
-            >
-              <Copy className="size-3.5" aria-hidden="true" />
-              {copied ? "Link copied" : "Copy public form link"}
-            </button>
-            <ButtonLink href="/refer" target="_blank">
-              <ExternalLink className="size-3.5" aria-hidden="true" />
-              Public form
-            </ButtonLink>
-            <ButtonLink href="/care/new" variant="primary">
-              <Plus className="size-4" aria-hidden="true" />
-              Enter a referral
-            </ButtonLink>
-          </div>
-        }
-      />
+      {!embedded && (
+        <PageHeader
+          eyebrow="Live care"
+          title="Referrals and intake"
+          description="Every referral moves through the completeness check, intake review, clinical triage and funding before matching. Nothing is re-entered: accepting one creates the patient and their service requests."
+          actions={
+            <div className="flex flex-wrap items-center gap-2">
+              <LiveBadge />
+              <button
+                type="button"
+                onClick={() => {
+                  void navigator.clipboard?.writeText(`${window.location.origin}/refer`);
+                  setCopied(true);
+                }}
+                className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-control border border-border-strong bg-surface px-3 text-small font-semibold text-ink-900 hover:bg-canvas"
+              >
+                <Copy className="size-3.5" aria-hidden="true" />
+                {copied ? "Link copied" : "Copy public form link"}
+              </button>
+              <ButtonLink href="/refer" target="_blank">
+                <ExternalLink className="size-3.5" aria-hidden="true" />
+                Public form
+              </ButtonLink>
+              <ButtonLink href="/care/new" variant="primary">
+                <Plus className="size-4" aria-hidden="true" />
+                Enter a referral
+              </ButtonLink>
+            </div>
+          }
+        />
+      )}
 
       <MetricBand
         label="Referral figures"

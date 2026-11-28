@@ -53,7 +53,12 @@ function toCents(text: string): number | null {
 const fromCents = (c: number | null) => (c === null ? "" : (c / 100).toFixed(2));
 
 /** People and HR, pay rates: how each therapist is paid, from which date, and every change. */
-export function PayRates() {
+export function PayRates({
+  embedded = false,
+}: {
+  /** Inside People and HR, which brings its own title. */
+  embedded?: boolean;
+} = {}) {
   const { data, error, loading, reload } = useResource<PayRatesBoardDto>(
     "/api/care/hr/pay",
     (e) => e.type === "care",
@@ -73,12 +78,14 @@ export function PayRates() {
 
   return (
     <>
-      <PageHeader
-        eyebrow="People and HR"
-        title="Pay rates"
-        description="How each therapist is paid, from which date, and every change that was made."
-        actions={<LiveBadge />}
-      />
+      {!embedded && (
+        <PageHeader
+          eyebrow="People and HR"
+          title="Pay rates"
+          description="How each therapist is paid, from which date, and every change that was made."
+          actions={<LiveBadge />}
+        />
+      )}
       {error && !data ? (
         <ErrorNote message={error} onRetry={reload} />
       ) : loading && !data ? (

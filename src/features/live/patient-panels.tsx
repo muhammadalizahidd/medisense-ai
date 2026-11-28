@@ -1,10 +1,12 @@
 "use client";
 
+import { Eye, EyeOff } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, inputClass } from "@/components/ui/sheet";
+import { cn } from "@/lib/cn";
 import { AppCard } from "@/features/mobile/phone-frame";
-import { api } from "@/lib/live/client";
+import { api, useResource } from "@/lib/live/client";
 import { slotLabel } from "@/lib/live/time";
 import type { AppointmentDto, ClientHomeDto } from "@/lib/live/types";
 import { Stars } from "./bits";
@@ -173,5 +175,140 @@ export function PatientDetailsCard({
         </Button>
       </form>
     </AppCard>
+  );
+}
+
+/**
+ * Sign-in details: a patient who came in with their MRN adds an email and password, so they can
+ * sign in either way. Their MRN confirms it's them, and also resets a forgotten password.
+ */
+export function PatientSignInCard() {
+  const { data, reload } = useResource<{ email: string; hasPassword: boolean }>("/api/me/sign-in");
+  const [email, setEmail] = useState<string | null>(null);
+  const [password, setPassword] = useState("");
+  const [again, setAgain] = useState("");
+  const [mrn, setMrn] = useState("");
+  const [state, setState] = useState<{ busy: boolean; error: string | null; done: boolean }>({
+    busy: false,
+    error: null,
+    done: false,
+  });
+  const shownEmail = email ?? data?.email ?? "";
+  // The sign-in check is cached for a few seconds, so a fresh save counts even before it shows.
+  const [saved, setSaved] = useState<string | null>(null);
+  const hasPassword = Boolean(data?.hasPassword) || saved !== null;
+
+  // A message from the last try goes as soon as the person changes anything.
+  const typed = (set: (value: string) => void) => (value: string) => {
+    set(value);
+    setState((s) => (s.error || s.done ? { ...s, error: null, done: false } : s));
+  };
+
+  async function save(event: FormEvent) {
+    event.preventDefault();
+    if (password.length < 10) {
+      return setState({
+        busy: false,
+        error: "Use at least 10 characters for the password.",
+        done: false,
+      });
+    }
+    if (password !== again) {
+      return setState({ busy: false, error: "The two passwords don't match.", done: false });
+    }
+    setState({ busy: true, error: null, done: false });
+    try {
+      await api("/api/me/sign-in", { body: { email: shownEmail, password, mrn } });
+      setPassword("");
+      setAgain("");
+      setMrn("");
+      setSaved(shownEmail);
+      setState({ busy: false, error: null, done: true });
+      reload();
+    } catch (e) {
+      setState({
+        busy: false,
+        error: e instanceof Error ? e.message : "Couldn't save your sign-in details.",
+        done: false,
+      });
+    }
+  }
+
+  return (
+    <AppCard title={hasPassword ? "Sign-in details" : "Sign in with email"}>
+      <p className="mb-3 text-small text-ink-700">
+        {hasPassword
+          ? `You can sign in with ${saved ?? data?.email ?? "your email"} and your password, or with your MRN.`
+          : "Right now you sign in with your MRN. Add an email and password so you can sign in either way."}
+      </p>
+      <form onSubmit={save} className="flex flex-col gap-3" noValidate>
+        <Field label="Email">
+          <input
+            type="email"
+            autoComplete="email"
+            value={shownEmail}
+            onChange={(e) => typed(setEmail)(e.target.value)}
+            className={inputClass}
+          />
+        </Field>
+        <Field label={hasPassword ? "New password" : "Password"} hint="At least 10 characters.">
+          <PasswordInput value={password} onChange={typed(setPassword)} />
+        </Field>
+        <Field label="Password again">
+          <PasswordInput value={again} onChange={typed(setAgain)} />
+        </Field>
+        <Field label="Your MRN" hint="To confirm it's you, for example MRN-12112026-0001.">
+          <input
+            autoComplete="off"
+            autoCapitalize="characters"
+            value={mrn}
+            onChange={(e) => typed(setMrn)(e.target.value)}
+            className={inputClass}
+          />
+        </Field>
+        {state.error && (
+          <p role="alert" className="text-small text-over">
+            {state.error}
+          </p>
+        )}
+        {state.done && (
+          <p role="status" className="text-small text-healthy">
+            Saved. Next time, sign in with your email and password, or with your MRN.
+          </p>
+        )}
+        <Button type="submit" variant="primary" disabled={state.busy || !data}>
+          {state.busy ? "Saving…" : hasPassword ? "Change password" : "Save email and password"}
+        </Button>
+      </form>
+    </AppCard>
+  );
+}
+
+/** A password field with a show/hide button inside it. */
+function PasswordInput({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  const [show, setShow] = useState(false);
+  return (
+    <span className="relative flex">
+      <input
+        type={show ? "text" : "password"}
+        autoComplete="new-password"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={cn(inputClass, "w-full pr-11")}
+      />
+      <button
+        type="button"
+        onClick={() => setShow((v) => !v)}
+        aria-label={show ? "Hide password" : "Show password"}
+        aria-pressed={show}
+        className="absolute inset-y-0 right-0 grid w-11 cursor-pointer place-items-center rounded-r-control text-ink-500 hover:text-ink-900"
+      >
+        {show ? (
+          <EyeOff className="size-4" aria-hidden="true" />
+        ) : (
+          <Eye className="size-4" aria-hidden="true" />
+        )}
+      </button>
+    </span>
   );
 }

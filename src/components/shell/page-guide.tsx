@@ -97,6 +97,7 @@ export function PageGuideButton() {
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Page guide"
+        data-tour="guide"
         title="Page guide: what this page is for and how to use it (?)"
         className="flex h-9 cursor-pointer items-center gap-1.5 rounded-control px-2 text-small font-medium text-ink-700 transition-colors duration-(--duration-fast) hover:bg-sunken hover:text-ink-900"
       >

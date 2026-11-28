@@ -199,7 +199,7 @@ async function seedOnce() {
           {
             at: new Date(now - 90 * DAY),
             by,
-            action: `Episode opened: ${n.discipline}`,
+            action: `Course of care opened: ${n.discipline}`,
             reason: "",
           },
         ],

@@ -15,7 +15,14 @@ import { th, td } from "./funding-bits";
 import { KpiBand, dayOnly, ops, tableBox, tableHead } from "./ops-bits";
 
 /** Module 13 screen 4.1: My Treatment Plans. */
-export function PlanList({ base }: { base: "/therapist/plans" | "/care/plans" }) {
+export function PlanList({
+  base,
+  embedded = false,
+}: {
+  base: "/therapist/plans" | "/care/plans";
+  /** Inside a combined page, which brings its own title. */
+  embedded?: boolean;
+}) {
   const { data, error, loading, reload } = useResource<{ rows: PlanRow[] }>(
     "/api/care/plans",
     (e) => e.type === "care",
@@ -59,12 +66,14 @@ export function PlanList({ base }: { base: "/therapist/plans" | "/care/plans" })
   };
   return (
     <>
-      <PageHeader
-        eyebrow="Live care"
-        title="Treatment plans"
-        description="Goals, interventions and reviews for every service episode"
-        actions={<LiveBadge />}
-      />
+      {!embedded && (
+        <PageHeader
+          eyebrow="Live care"
+          title="Treatment plans"
+          description="Goals, interventions and reviews for every course of care"
+          actions={<LiveBadge />}
+        />
+      )}
       <KpiBand
         label="Plan figures"
         items={[
@@ -77,7 +86,7 @@ export function PlanList({ base }: { base: "/therapist/plans" | "/care/plans" })
           {
             label: "Not started",
             value: all.filter((r) => r.state === "Not Started").length,
-            sub: "episodes waiting for a plan",
+            sub: "courses of care waiting for a plan",
             tone: "watch",
             onClick: () => setState("Not Started"),
           },
@@ -238,7 +247,7 @@ export function PlanList({ base }: { base: "/therapist/plans" | "/care/plans" })
         </table>
       </div>
       <p className="mt-2! px-1 text-caption text-ink-500">
-        {rows.length} of {all.length} plans and episodes · scroll inside the table for more
+        {rows.length} of {all.length} plans and courses of care · scroll inside the table for more
       </p>
     </>
   );

@@ -68,7 +68,12 @@ export function useWeekParam() {
 }
 
 /** People and HR: timesheets built from visits, waiting for approval, and the payroll file. */
-export function TimesheetBoard() {
+export function TimesheetBoard({
+  embedded = false,
+}: {
+  /** Inside People and HR, which brings its own title and owns the address. */
+  embedded?: boolean;
+} = {}) {
   const [week, setWeek] = useWeekParam();
   const { data, error, loading, reload } = useResource<TimesheetBoardDto>(
     `/api/care/hr/timesheets${week ? `?week=${week}` : ""}`,
@@ -81,18 +86,22 @@ export function TimesheetBoard() {
     { id: "payroll" as const, label: "Payroll", count: approved },
     { id: "history" as const, label: "History", count: data?.history.length },
   ];
-  const [tab, setTab] = useTab(tabs, "approve");
+  const addressTab = useTab(tabs, "approve");
+  const localTab = useState<(typeof tabs)[number]["id"]>("approve");
+  const [tab, setTab] = embedded ? localTab : addressTab;
   const s = data?.summary;
   const current = data?.weeks.find((w) => w.week === data.week);
 
   return (
     <>
-      <PageHeader
-        eyebrow="People and HR"
-        title="Timesheets"
-        description="Each clinician's week, already filled in from their roster, visits and approved leave. Check what the rules flag, approve, and send the hours to payroll."
-        actions={<LiveBadge />}
-      />
+      {!embedded && (
+        <PageHeader
+          eyebrow="People and HR"
+          title="Timesheets"
+          description="Each clinician's week, already filled in from their roster, visits and approved leave. Check what the rules flag, approve, and send the hours to payroll."
+          actions={<LiveBadge />}
+        />
+      )}
       {error && !data ? (
         <ErrorNote message={error} onRetry={reload} />
       ) : loading && !data ? (

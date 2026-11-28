@@ -5,7 +5,6 @@ import {
   IdCard,
   CalendarOff,
   Timer,
-  Wallet,
   CircleUserRound,
   Landmark,
   Stethoscope,
@@ -21,6 +20,10 @@ import {
   ClipboardList,
   Target,
   CalendarCheck,
+  CalendarCheck2,
+  Activity,
+  Layers,
+  UsersRound,
   TrendingUp,
   FileSignature,
   Contact,
@@ -43,7 +46,6 @@ import {
   Smartphone,
   UserCheck,
   Users,
-  UserRoundPen,
   Workflow,
   type LucideIcon,
   BotMessageSquare,
@@ -87,30 +89,40 @@ export const navigation: { group: string; items: NavItem[] }[] = [
   {
     group: "Live care",
     items: [
-      { href: "/care/referrals", label: "Referrals and intake", icon: FileInput, roles: [L, A] },
       { href: "/care", label: "Patients", icon: UserPlus, roles: [L, A] },
       { href: "/care/therapists", label: "Therapists", icon: Stethoscope, roles: [L, A] },
       { href: "/care/schedule", label: "Scheduling", icon: CalendarRange, roles: [L, A] },
+      {
+        href: "/care/schedule/resources",
+        label: "Resources and leave",
+        icon: CalendarOff,
+        roles: [L, A],
+      },
+      { href: "/care/schedule/reminders", label: "Reminders", icon: BellRing, roles: [L, A] },
+      {
+        href: "/care/schedule/exceptions",
+        label: "Exceptions and audit",
+        icon: Flag,
+        roles: [L, A],
+      },
       { href: "/care/funding", label: "Funding and agreements", icon: Landmark, roles: [L, A] },
       { href: "/care/billing", label: "Billing and finance", icon: Receipt, roles: [L, A] },
-      { href: "/care/hr", label: "Credentials and compliance", icon: IdCard, roles: [L, A] },
+      { href: "/care/hr", label: "People and HR", icon: IdCard, roles: [L, A] },
       { href: "/care/hr/leave", label: "Leave and absence", icon: CalendarOff, roles: [L, A] },
       { href: "/care/hr/timesheets", label: "Timesheets", icon: Timer, roles: [L, A] },
-      { href: "/care/hr/pay", label: "Pay rates", icon: Wallet, roles: [L, A] },
-      { href: "/care/operations", label: "Operations", icon: Workflow, roles: [L, A] },
+      { href: "/care/operations", label: "Work and approvals", icon: Workflow, roles: [L, A] },
       { href: "/care/records", label: "Clinical records", icon: FileText, roles: [L, A] },
       { href: "/care/assessments", label: "Assessments", icon: ClipboardList, roles: [L, A] },
       { href: "/care/plans", label: "Treatment plans", icon: Target, roles: [L, A] },
-      { href: "/care/sessions", label: "Sessions", icon: CalendarCheck, roles: [L, A] },
+      {
+        href: "/care/sessions",
+        label: "Sessions and notes",
+        icon: CalendarCheck,
+        roles: [L, A],
+      },
       { href: "/care/documentation", label: "Documentation", icon: FileSignature, roles: [L, A] },
       { href: "/care/progress", label: "Progress and reports", icon: TrendingUp, roles: [L, A] },
       { href: "/care/coordination", label: "Care coordination", icon: Workflow, roles: [L, A] },
-      {
-        href: "/care/patient-requests",
-        label: "Patient requests",
-        icon: UserRoundPen,
-        roles: [L, A],
-      },
       { href: "/therapist/records", label: "Clinical records", icon: FileText, roles: [C] },
       { href: "/therapist/assessments", label: "Assessments", icon: ClipboardList, roles: [C] },
       { href: "/therapist/plans", label: "Treatment plans", icon: Target, roles: [C] },
@@ -130,7 +142,37 @@ export const navigation: { group: string; items: NavItem[] }[] = [
         roles: [C],
       },
       { href: "/care/reports", label: "Reports and analytics", icon: ChartColumn, roles: [L, A] },
-      { href: "/care/ai-agent", label: "Operations agent", icon: BotMessageSquare, roles: [L, A] },
+      {
+        href: "/care/reports/system/types",
+        label: "Appointment type reports",
+        icon: Layers,
+        roles: [L, A],
+      },
+      {
+        href: "/care/reports/system/therapy",
+        label: "Therapy service reports",
+        icon: Activity,
+        roles: [L, A],
+      },
+      {
+        href: "/care/reports/system/patients",
+        label: "Patient reports",
+        icon: UsersRound,
+        roles: [L, A],
+      },
+      {
+        href: "/care/reports/system/therapists",
+        label: "Therapist reports",
+        icon: Stethoscope,
+        roles: [L, A],
+      },
+      {
+        href: "/care/reports/system/visits",
+        label: "Visit reports",
+        icon: CalendarCheck2,
+        roles: [L, A],
+      },
+      { href: "/care/ai-agent", label: "Work agent", icon: BotMessageSquare, roles: [L, A] },
       { href: "/care/ai-oversight", label: "AI oversight", icon: BotMessageSquare, roles: [L, A] },
       { href: "/care/users", label: "User control", icon: UserCog, roles: [A] },
       { href: "/therapist/today", label: "Today", icon: Sun, roles: [C] },
@@ -142,7 +184,12 @@ export const navigation: { group: string; items: NavItem[] }[] = [
       { href: "/therapist", label: "My new patients", icon: BellRing, roles: [C] },
       { href: "/messages", label: "Messages", icon: MessagesSquare, roles: [C] },
       { href: "/care/messages", label: "Messages", icon: MessagesSquare, roles: [L, A] },
-      { href: "/telehealth/recordings", label: "Recordings", icon: Video, roles: [L, A, C] },
+      {
+        href: "/telehealth/recordings",
+        label: "Telehealth recordings",
+        icon: Video,
+        roles: [L, A, C],
+      },
       { href: "/profile", label: "My profile", icon: CircleUserRound, roles: [L, A, S, C] },
     ],
   },
@@ -218,7 +265,7 @@ type Section = {
 
 const roleLayouts: Partial<Record<Role, Section[]>> = {
   Clinician: [
-    // Seven everyday places. Everything else stays one click away under More.
+    // Eight everyday places. Everything else stays one click away under More.
     {
       group: "My work",
       live: true,
@@ -227,6 +274,7 @@ const roleLayouts: Partial<Record<Role, Section[]>> = {
         { href: "/therapist/schedule", label: "Schedule" },
         "/therapist/patients",
         { href: "/therapist/documentation", label: "Notes", icon: FileText },
+        { href: "/therapist/records", label: "Clinical", icon: Stethoscope },
         { href: "/therapist/coordination", label: "Tasks", icon: ListChecks },
         "/messages",
         { href: "/therapist/progress", label: "Reports", icon: ChartColumn },
@@ -236,14 +284,7 @@ const roleLayouts: Partial<Record<Role, Section[]>> = {
       group: "More",
       live: true,
       more: true,
-      hrefs: [
-        "/therapist/assessments",
-        "/therapist/plans",
-        "/therapist/ai",
-        "/telehealth/recordings",
-        "/mobile/therapist",
-        "/mobile/patient",
-      ],
+      hrefs: ["/therapist/ai", "/telehealth/recordings", "/mobile/therapist", "/mobile/patient"],
     },
     { group: "My work", hrefs: ["/my-day", "/sessions/oliver-grant"] },
     { group: "AI workspace", hrefs: ["/case-notes/mia-robinson", "/reports"] },
@@ -252,46 +293,68 @@ const roleLayouts: Partial<Record<Role, Section[]>> = {
     { group: "Mobile apps", hrefs: ["/mobile/family"] },
   ],
   Admin: [
-    // The organisation dashboard, first in the menu: only a Super Admin opens it (see pageAccess).
-    { group: "Dashboard", live: true, hrefs: ["/"] },
-    { group: "Messages", live: true, hrefs: ["/care/messages"] },
+    // Four headings, so the menu reads as a short list of jobs. The organisation dashboard comes
+    // first: only a Super Admin opens it (see pageAccess).
+    { group: "Home", live: true, hrefs: ["/", "/care/messages", "/care/operations"] },
     {
-      group: "Patients",
+      group: "Care",
       live: true,
       hrefs: [
-        "/care/referrals",
         "/care",
-        "/care/patient-requests",
-        "/care/records",
+        { href: "/care/records", label: "Clinical" },
         "/care/assessments",
         "/care/plans",
         "/care/progress",
+        "/care/therapists",
+        "/care/coordination",
       ],
     },
     {
-      group: "Therapists",
+      // Each part of sessions and notes is its own page.
+      group: "Sessions and notes",
       live: true,
       hrefs: [
-        "/care/therapists",
-        "/care/sessions",
-        "/care/documentation",
-        "/care/coordination",
+        { href: "/care/sessions", label: "Sessions" },
+        { href: "/care/documentation", label: "Clinical notes" },
         "/telehealth/recordings",
       ],
     },
-    { group: "Scheduling", live: true, hrefs: ["/care/schedule"] },
-    { group: "Finance", live: true, hrefs: ["/care/funding", "/care/billing"] },
     {
-      group: "People and HR",
+      // Each part of scheduling is its own page.
+      group: "Scheduling",
       live: true,
-      hrefs: ["/care/hr", "/care/hr/leave", "/care/hr/timesheets", "/care/hr/pay"],
+      hrefs: [
+        { href: "/care/schedule", label: "Calendar", icon: CalendarDays },
+        "/care/schedule/resources",
+        "/care/schedule/reminders",
+        "/care/schedule/exceptions",
+      ],
     },
     {
-      group: "Operations and AI",
+      group: "Finance and HR",
       live: true,
-      hrefs: ["/care/operations", "/care/reports", "/care/ai-oversight"],
+      hrefs: [
+        "/care/funding",
+        "/care/billing",
+        "/care/hr",
+        "/care/hr/leave",
+        "/care/hr/timesheets",
+      ],
     },
-    { group: "Administration", live: true, hrefs: ["/care/users"] },
+    {
+      // Analytics first, then one page per group of system reports.
+      group: "Reports",
+      live: true,
+      hrefs: [
+        { href: "/care/reports", label: "Analytics dashboard" },
+        "/care/reports/system/types",
+        "/care/reports/system/therapy",
+        "/care/reports/system/patients",
+        "/care/reports/system/therapists",
+        "/care/reports/system/visits",
+      ],
+    },
+    { group: "Settings", live: true, hrefs: ["/care/ai-oversight", "/care/users"] },
     {
       group: "Apps",
       live: true,
@@ -354,14 +417,34 @@ export function navigationFor(
         }))
         .sort((a, b) => Number(b.live) - Number(a.live));
   const scoped = role === "Admin" ? access : null;
+  // A page that became a tab of another drops out of the menu when that page opens for this
+  // person; someone whose role opens only the old page keeps it.
+  const mergedAway = (href: string) =>
+    role === "Admin" && Boolean(mergedInto[href]) && canOpenPage(mergedInto[href]!, scoped);
   return (
     sections
       // Signed-in people see the live product only; the sample screens stay for presenting.
       .filter((g) => !liveOnly || g.live)
-      .map((g) => ({ ...g, items: g.items.filter((i) => canOpenPage(i.href, scoped)) }))
+      .map((g) => ({
+        ...g,
+        items: g.items.filter((i) => canOpenPage(i.href, scoped) && !mergedAway(i.href)),
+      }))
       .filter((g) => g.items.length > 0)
   );
 }
+
+/** Admin pages that now live as a tab of another page, and the page they live in. */
+export const mergedInto: Record<string, string> = {
+  "/care/assessments": "/care/records",
+  "/care/plans": "/care/records",
+  "/care/progress": "/care/records",
+  "/care/coordination": "/care/operations",
+  "/care/hr/leave": "/care/hr",
+  "/care/hr/timesheets": "/care/hr",
+  "/care/hr/pay": "/care/hr",
+  "/therapist/assessments": "/therapist/records",
+  "/therapist/plans": "/therapist/records",
+};
 
 /** Who the demo is signed in as in each role view. */
 export const roleUsers: Record<Role, { name: string; initials: string; title: string }> = {
@@ -380,7 +463,7 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
   },
   {
     prefix: "/telehealth/recordings",
-    meta: { section: "Live care", page: "Recordings", role: "Clinician" },
+    meta: { section: "Sessions and notes", page: "Telehealth recordings", role: "Clinician" },
   },
   {
     prefix: "/care/funding/agreements/",
@@ -403,20 +486,20 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
     meta: { section: "Live care", page: "Billing and finance", role: "Admin" },
   },
   {
+    prefix: "/care/reports/system",
+    meta: { section: "Reports and analytics", page: "System reports", role: "Admin" },
+  },
+  {
     prefix: "/care/reports",
     meta: { section: "Live care", page: "Reports and analytics", role: "Admin" },
   },
   {
     prefix: "/care/ai-agent",
-    meta: { section: "Live care", page: "Operations agent", role: "Admin" },
+    meta: { section: "Live care", page: "Work agent", role: "Admin" },
   },
   {
     prefix: "/care/hr/timesheets",
     meta: { section: "People and HR", page: "Timesheets", role: "Admin" },
-  },
-  {
-    prefix: "/care/hr/pay",
-    meta: { section: "People and HR", page: "Pay rates", role: "Admin" },
   },
   {
     prefix: "/care/hr/leave",
@@ -424,7 +507,7 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
   },
   {
     prefix: "/care/hr",
-    meta: { section: "People and HR", page: "Credentials and compliance", role: "Admin" },
+    meta: { section: "Live care", page: "People and HR", role: "Admin" },
   },
   {
     prefix: "/care/users",
@@ -456,7 +539,7 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
   },
   {
     prefix: "/care/progress/",
-    meta: { section: "Progress and reports", page: "Episode progress", role: "Admin" },
+    meta: { section: "Progress and reports", page: "Course of care progress", role: "Admin" },
   },
   {
     prefix: "/care/progress",
@@ -468,7 +551,7 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
   },
   {
     prefix: "/therapist/progress/",
-    meta: { section: "Progress and reports", page: "Episode progress", role: "Clinician" },
+    meta: { section: "Progress and reports", page: "Course of care progress", role: "Clinician" },
   },
   {
     prefix: "/therapist/progress",
@@ -480,11 +563,11 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
   },
   {
     prefix: "/care/documentation/",
-    meta: { section: "Documentation", page: "Clinical note", role: "Admin" },
+    meta: { section: "Sessions and notes", page: "Clinical note", role: "Admin" },
   },
   {
     prefix: "/care/documentation",
-    meta: { section: "Live care", page: "Documentation", role: "Admin" },
+    meta: { section: "Sessions and notes", page: "Clinical notes", role: "Admin" },
   },
   {
     prefix: "/therapist/documentation/",
@@ -496,11 +579,11 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
   },
   {
     prefix: "/care/sessions/",
-    meta: { section: "Sessions", page: "Session", role: "Admin" },
+    meta: { section: "Sessions and notes", page: "Session", role: "Admin" },
   },
   {
     prefix: "/care/sessions",
-    meta: { section: "Live care", page: "Sessions", role: "Admin" },
+    meta: { section: "Sessions and notes", page: "Sessions", role: "Admin" },
   },
   {
     prefix: "/therapist/sessions/",
@@ -536,31 +619,31 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
   },
   {
     prefix: "/care/records/",
-    meta: { section: "Clinical records", page: "Record", role: "Admin" },
+    meta: { section: "Clinical", page: "Record", role: "Admin" },
   },
   {
     prefix: "/care/records",
-    meta: { section: "Live care", page: "Clinical records", role: "Admin" },
+    meta: { section: "Live care", page: "Clinical", role: "Admin" },
   },
   {
     prefix: "/therapist/records/",
-    meta: { section: "Clinical records", page: "Record", role: "Clinician" },
+    meta: { section: "Clinical", page: "Record", role: "Clinician" },
   },
   {
     prefix: "/therapist/records",
-    meta: { section: "Live care", page: "Clinical records", role: "Clinician" },
+    meta: { section: "Live care", page: "Clinical", role: "Clinician" },
   },
   {
     prefix: "/care/operations/tasks/",
-    meta: { section: "Operations", page: "Task", role: "Admin" },
+    meta: { section: "Work and approvals", page: "Task", role: "Admin" },
   },
   {
     prefix: "/care/operations/rules/",
-    meta: { section: "Operations", page: "Workflow rule", role: "Admin" },
+    meta: { section: "Work and approvals", page: "Workflow rule", role: "Admin" },
   },
   {
     prefix: "/care/operations",
-    meta: { section: "Live care", page: "Operations", role: "Admin" },
+    meta: { section: "Live care", page: "Work and approvals", role: "Admin" },
   },
   {
     prefix: "/therapist/reports",
@@ -595,8 +678,20 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
     meta: { section: "Live care", page: "My schedule", role: "Clinician" },
   },
   {
+    prefix: "/care/schedule/resources",
+    meta: { section: "Scheduling", page: "Resources and leave", role: "Admin" },
+  },
+  {
+    prefix: "/care/schedule/reminders",
+    meta: { section: "Scheduling", page: "Reminders", role: "Admin" },
+  },
+  {
+    prefix: "/care/schedule/exceptions",
+    meta: { section: "Scheduling", page: "Exceptions and audit", role: "Admin" },
+  },
+  {
     prefix: "/care/schedule",
-    meta: { section: "Live care", page: "Scheduling", role: "Admin" },
+    meta: { section: "Scheduling", page: "Calendar", role: "Admin" },
   },
   {
     prefix: "/care/therapists",
@@ -606,11 +701,11 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
   { prefix: "/profile", meta: { section: "Live care", page: "My profile", role: "Clinician" } },
   {
     prefix: "/care/new",
-    meta: { section: "Referrals and intake", page: "Enter a referral", role: "Admin" },
+    meta: { section: "Patients", page: "Enter a referral", role: "Admin" },
   },
   {
     prefix: "/care/referrals/",
-    meta: { section: "Referrals and intake", page: "Referral", role: "Admin" },
+    meta: { section: "Patients", page: "Referral", role: "Admin" },
   },
   {
     prefix: "/care/referrals",
@@ -712,21 +807,7 @@ export function routeMeta(pathname: string): RouteMeta {
 }
 
 /** Screens that stand alone, without the staff sidebar and top bar. */
-export function isStandalone(pathname: string) {
-  return (
-    pathname.startsWith("/family") ||
-    pathname.startsWith("/mobile") ||
-    pathname === "/login" ||
-    pathname === "/refer" ||
-    pathname.startsWith("/refer/") ||
-    pathname.startsWith("/join/") ||
-    pathname.startsWith("/checkin/") ||
-    pathname.startsWith("/appointment/") ||
-    pathname.startsWith("/agreement/") ||
-    pathname.startsWith("/upload/") ||
-    pathname.startsWith("/contact/")
-  );
-}
+export { isStandalone } from "./standalone";
 
 /** Detail pages that belong to a differently named sidebar entry. */
 const activeAliases: Record<string, string[]> = { "/reports": ["/progress-reports"] };
@@ -736,6 +817,10 @@ const under = (pathname: string, prefix: string) =>
 
 export function isActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
+  // A page inside a tab lights up the page that holds it.
+  if (Object.entries(mergedInto).some(([from, to]) => to === href && under(pathname, from))) {
+    return true;
+  }
   const hrefs = navigation.flatMap((g) => g.items.map((i) => i.href));
   const section = href.split("/").slice(0, 2).join("/");
   // Single-record entries (e.g. /sessions/oliver-grant) light up for their whole section, unless

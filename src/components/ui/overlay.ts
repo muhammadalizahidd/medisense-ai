@@ -20,11 +20,27 @@ const subscribe = (l: () => void) => {
   return () => listeners.delete(l);
 };
 
-/** One frame and one size for every popup on the platform. */
+/** One frame for every popup on the platform. */
 export const OVERLAY_FRAME =
   "fixed inset-0 flex items-stretch justify-center sm:items-center sm:p-6";
-export const OVERLAY_PANEL =
-  "dialog-panel relative flex h-full w-full flex-col overflow-hidden bg-raised shadow-overlay sm:h-[90dvh] sm:max-w-295 sm:rounded-sheet";
+
+/**
+ * How wide a popup is on a large screen: `sm` for a reason or a confirmation, `md` for reading
+ * or a short form, `lg` (the default) for a record with work beside its history. Every popup is
+ * only as tall as what it holds, up to 90% of the screen, and fills the screen on a phone.
+ */
+export type OverlaySize = "sm" | "md" | "lg";
+
+const OVERLAY_WIDTH: Record<OverlaySize, string> = {
+  sm: "sm:max-w-xl",
+  md: "sm:max-w-3xl",
+  lg: "sm:max-w-295",
+};
+
+export const overlayPanel = (size: OverlaySize = "lg") =>
+  `dialog-panel relative flex h-full w-full flex-col overflow-hidden bg-raised shadow-overlay sm:h-auto sm:max-h-[90dvh] sm:rounded-sheet ${OVERLAY_WIDTH[size]}`;
+
+export const OVERLAY_PANEL = overlayPanel();
 
 /** Registers an overlay while it is mounted; says whether it is on top and what is under it. */
 export function useOverlayStack(title: string, onClose: () => void) {

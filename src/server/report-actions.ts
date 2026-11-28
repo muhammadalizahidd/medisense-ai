@@ -1269,8 +1269,7 @@ export async function reportsHub(u: UserDoc): Promise<ReportsHubDto> {
         .toArray(),
     ]),
   );
-  const loaded = await loadFacts(u);
-  const allRoles = await loadRoles();
+  const [loaded, allRoles] = await Promise.all([loadFacts(u), loadRoles()]);
   const ids = u.role === "therapist" ? [] : await syncInsights(loaded);
   const [[views, schedules, exports, people], insights] = await Promise.all([
     lists,

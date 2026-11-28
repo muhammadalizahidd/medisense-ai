@@ -397,98 +397,406 @@ export function emptyReferral(): ReferralInput {
   };
 }
 
+type SampleProfile = {
+  ages: [number, number];
+  submitter: (typeof submitterRoles)[number];
+  funding: (typeof fundingStreams)[number];
+  location: (typeof serviceLocations)[number];
+  diagnosis: string;
+  behaviours: (typeof yesNoUnknown)[number];
+  behavioursDetails: string;
+  knownRisk: (typeof yesNoUnknown)[number];
+  riskDetails: string;
+  supports: { support: (typeof supports)[number]; frequency: (typeof frequencies)[number] }[];
+  goals: string;
+  comments: string;
+  otherDetails: string;
+};
+
+/** Believable starting points; names, dates, numbers and addresses are drawn fresh each time. */
+const sampleProfiles: SampleProfile[] = [
+  {
+    ages: [5, 11],
+    submitter: "Parent or guardian",
+    funding: "NDIS",
+    location: "Home",
+    diagnosis: "Autism spectrum disorder, level 2",
+    behaviours: "Yes",
+    behavioursDetails:
+      "Can become distressed with sudden noise or changes to routine; settles with quiet time.",
+    knownRisk: "No",
+    riskDetails: "",
+    supports: [
+      { support: "Occupational Therapy", frequency: "Weekly" },
+      { support: "Speech Therapy", frequency: "Fortnightly" },
+    ],
+    goals: "Build independence with dressing and eating, and use words to ask for help at school.",
+    comments: "After-school visits suit best. A parent is always home.",
+    otherDetails: "",
+  },
+  {
+    ages: [24, 45],
+    submitter: "Support coordinator",
+    funding: "NDIS",
+    location: "Home",
+    diagnosis: "Acquired brain injury after a road accident (2023)",
+    behaviours: "No",
+    behavioursDetails: "",
+    knownRisk: "Unknown",
+    riskDetails: "",
+    supports: [
+      { support: "Functional Capacity Assessment", frequency: "Assessment" },
+      { support: "Physiotherapy", frequency: "Weekly" },
+    ],
+    goals: "Return to cooking simple meals safely and walk to the local shops without help.",
+    comments: "Needs a functional capacity report before the plan review.",
+    otherDetails: "",
+  },
+  {
+    ages: [3, 6],
+    submitter: "Parent or guardian",
+    funding: "NDIS",
+    location: "Daycare",
+    diagnosis: "Global developmental delay",
+    behaviours: "No",
+    behavioursDetails: "",
+    knownRisk: "No",
+    riskDetails: "",
+    supports: [
+      { support: "Speech/Language Assessment", frequency: "Assessment" },
+      { support: "Speech Therapy", frequency: "Weekly" },
+    ],
+    goals: "Use two-word phrases and follow simple instructions at daycare.",
+    comments: "Daycare is happy for sessions to happen there on weekday mornings.",
+    otherDetails: "",
+  },
+  {
+    ages: [68, 86],
+    submitter: "Other referrer",
+    funding: "Aged Care",
+    location: "Home",
+    diagnosis: "Parkinson's disease with two falls in the last three months",
+    behaviours: "No",
+    behavioursDetails: "",
+    knownRisk: "Yes",
+    riskDetails: "Small dog at home; family will keep it outside during visits.",
+    supports: [
+      { support: "Home Mod Assessment", frequency: "Assessment" },
+      { support: "Physiotherapy", frequency: "Fortnightly" },
+    ],
+    goals: "Stay living at home safely and reduce the risk of falls.",
+    comments: "Referred by the GP. Daughter manages appointments.",
+    otherDetails: "Home Care Package level 3, provider to be confirmed",
+  },
+  {
+    ages: [16, 30],
+    submitter: "Participant",
+    funding: "NDIS",
+    location: "Telehealth",
+    diagnosis: "Post-traumatic stress disorder and anxiety",
+    behaviours: "No",
+    behavioursDetails: "",
+    knownRisk: "Unknown",
+    riskDetails: "",
+    supports: [{ support: "Psychological Therapy", frequency: "Weekly" }],
+    goals: "Manage anxiety well enough to keep a part-time job.",
+    comments: "Prefers video sessions in the evening.",
+    otherDetails: "",
+  },
+  {
+    ages: [35, 60],
+    submitter: "Authorised representative",
+    funding: "NDIS",
+    location: "Day Program",
+    diagnosis: "Cerebral palsy (spastic diplegia), uses a wheelchair",
+    behaviours: "No",
+    behavioursDetails: "",
+    knownRisk: "No",
+    riskDetails: "",
+    supports: [
+      { support: "Assistive Technology Assessment", frequency: "Assessment" },
+      { support: "Exercise Physiology", frequency: "Weekly" },
+    ],
+    goals: "Get a new power wheelchair prescribed and keep up strength for transfers.",
+    comments: "Attends the day program Monday to Wednesday.",
+    otherDetails: "",
+  },
+  {
+    ages: [40, 65],
+    submitter: "Other referrer",
+    funding: "Private",
+    location: "Home",
+    diagnosis: "Stroke (left side weakness), discharged from hospital last month",
+    behaviours: "No",
+    behavioursDetails: "",
+    knownRisk: "No",
+    riskDetails: "",
+    supports: [
+      { support: "Occupational Therapy", frequency: "Weekly" },
+      { support: "Swallowing Assessment", frequency: "Assessment" },
+    ],
+    goals: "Regain use of the left hand for everyday tasks and eat a normal diet safely.",
+    comments: "Paying privately with health insurance extras.",
+    otherDetails: "Private health insurance, extras cover",
+  },
+];
+
+const firstNames = [
+  "Olivia",
+  "Liam",
+  "Charlotte",
+  "Jack",
+  "Amelia",
+  "Oliver",
+  "Isla",
+  "Noah",
+  "Mia",
+  "William",
+  "Ava",
+  "Lucas",
+  "Grace",
+  "Henry",
+  "Chloe",
+  "Ethan",
+  "Zoe",
+  "Mason",
+  "Harper",
+  "Lachlan",
+  "Priya",
+  "Arjun",
+  "Mei",
+  "Hamish",
+  "Aisha",
+  "Tane",
+  "Sienna",
+  "Kai",
+  "Ruby",
+  "Hugo",
+];
+const lastNames = [
+  "Nguyen",
+  "Walsh",
+  "Patel",
+  "O'Brien",
+  "Kowalski",
+  "Fraser",
+  "Singh",
+  "Morrison",
+  "Tran",
+  "Campbell",
+  "Hughes",
+  "Russo",
+  "Kelly",
+  "Bennett",
+  "Chen",
+  "Doyle",
+  "Mackenzie",
+  "Ahmed",
+  "Turner",
+  "Fitzgerald",
+  "Papadopoulos",
+  "Reid",
+  "Lam",
+  "Harrington",
+  "Novak",
+];
+const adultNames = [
+  "Sarah",
+  "Michael",
+  "Rebecca",
+  "David",
+  "Emma",
+  "Daniel",
+  "Kate",
+  "Matthew",
+  "Jessica",
+  "Andrew",
+  "Nicole",
+  "Ben",
+  "Laura",
+  "Chris",
+  "Hannah",
+];
+const streets = [
+  "Hawthorne Street",
+  "Wattle Avenue",
+  "Banksia Crescent",
+  "Jacaranda Drive",
+  "Kingfisher Way",
+  "Bayview Terrace",
+  "Lilly Pilly Court",
+  "Riverside Road",
+  "Moreton Parade",
+  "Ironbark Close",
+];
+const suburbs: [string, string][] = [
+  ["Carindale", "4152"],
+  ["Chermside", "4032"],
+  ["Indooroopilly", "4068"],
+  ["Wynnum", "4178"],
+  ["Aspley", "4034"],
+  ["Mount Gravatt", "4122"],
+  ["Toowong", "4066"],
+  ["Redcliffe", "4020"],
+  ["Springfield Lakes", "4300"],
+  ["North Lakes", "4509"],
+  ["Sunnybank", "4109"],
+  ["Ashgrove", "4060"],
+  ["Capalaba", "4157"],
+  ["Kedron", "4031"],
+  ["Bulimba", "4171"],
+];
+const organisations = [
+  "Brightpath Support Coordination",
+  "Riverlink Care Partners",
+  "Northside Connect",
+  "Bayside Support Services",
+  "Compass Coordination",
+];
+const planManagers = [
+  "Plan Partners Australia",
+  "My Plan Manager Co",
+  "Clearview Plan Management",
+  "Leap Plan Services",
+];
+
 /**
- * A complete, fictional referral for testing and demos: an NDIS plan-managed child needing an FCA
- * and weekly OT, with an unknown risk so clinical triage has something to review. A different
- * name each time, so repeated tests don't look like duplicates.
+ * A complete, fictional referral for testing: a new person every time (name, age, address, phone,
+ * NDIS number, needs), so a tester can walk a fresh patient from referral to first visit. All
+ * emails use example.test, so nothing is ever sent to a real address.
  */
 export function sampleReferral(): ReferralInput {
-  const firsts = ["Ava", "Leo", "Isla", "Noah", "Mila", "Theo", "Ruby", "Finn", "Zara", "Eli"];
-  const pick = <T>(list: readonly T[]) => list[Math.floor(Math.random() * list.length)]!;
-  const first = pick(firsts);
-  const tag = Math.random().toString(36).slice(2, 6);
-  const last = `Sample${tag[0]!.toUpperCase()}${tag.slice(1)}`;
-  const year = 2012 + Math.floor(Math.random() * 8);
-  const parent = `Jordan ${last}`;
-  const email = `${first.toLowerCase()}.${last.toLowerCase()}@example.test`;
-  const nextYear = new Date().getFullYear() + 1;
+  const pick = <T>(list: readonly T[]): T => list[Math.floor(Math.random() * list.length)] as T;
+  const between = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1));
+  const digits = (n: number) => Array.from({ length: n }, () => between(0, 9)).join("");
+  const mobile = () => `04${digits(2)} ${digits(3)} ${digits(3)}`;
+  const slug = (v: string) => v.toLowerCase().replace(/[^a-z]/g, "");
+
+  const profile = pick(sampleProfiles);
+  const first = pick(firstNames);
+  const last = pick(lastNames);
+  const now = new Date();
+  const age = between(profile.ages[0], profile.ages[1]);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const dateOfBirth = `${now.getFullYear() - age - 1}-${pad(between(1, 12))}-${pad(between(1, 28))}`;
+  const [suburb, postcode] = pick(suburbs);
+  const street = `${between(2, 180)} ${pick(streets)}`;
+  const child = age < 18;
+  const email = child ? "" : `${slug(first)}.${slug(last)}${digits(2)}@example.test`;
+  const phone = child ? "" : mobile();
+
+  const family = `${pick(adultNames)} ${last}`;
+  const familyEmail = `${slug(family)}${digits(2)}@example.test`;
+  const familyPhone = mobile();
+  const familyRole = profile.funding === "Aged Care" ? "Other" : "Parent or guardian";
+  const selfManaged = !child && profile.submitter === "Participant";
+  const contactName = selfManaged ? `${first} ${last}` : family;
+  const contactEmail = selfManaged ? email : familyEmail;
+  const contactPhone = selfManaged ? phone : familyPhone;
+  const contactRole = selfManaged ? "Participant" : familyRole;
+
+  const coordinatorName = `${pick(adultNames)} ${pick(lastNames)}`;
+  const coordinatorOrg = pick(organisations);
+  const coordinatorEmail = `${slug(coordinatorName)}@example.test`;
+  const coordinatorPhone = mobile();
+
+  const submitter =
+    profile.submitter === "Support coordinator"
+      ? {
+          name: coordinatorName,
+          organisation: coordinatorOrg,
+          email: coordinatorEmail,
+          phone: coordinatorPhone,
+        }
+      : profile.submitter === "Other referrer"
+        ? {
+            name: `Dr ${pick(adultNames)} ${pick(lastNames)}`,
+            organisation: `${suburb} Family Practice`,
+            email: `referrals.${slug(suburb)}@example.test`,
+            phone: `07 3${digits(3)} ${digits(4)}`,
+          }
+        : profile.submitter === "Participant"
+          ? { name: `${first} ${last}`, organisation: "", email, phone }
+          : { name: family, organisation: "", email: familyEmail, phone: familyPhone };
+
+  const ndis = profile.funding === "NDIS";
+  const planType = ndis ? pick(planTypes) : "";
+  const planManager = planType === "Plan Managed" ? pick(planManagers) : "";
   const base = emptyReferral();
+  const atHome = profile.location === "Home" || profile.location === "Telehealth";
+
   return {
     ...base,
-    submitter: {
-      role: "Support coordinator",
-      name: "Casey Coordinator",
-      organisation: "Example Support Services",
-      email: "casey.coordinator@example.test",
-      phone: "0400 111 222",
-      authorityConfirmed: true,
-    },
+    submitter: { role: profile.submitter, ...submitter, authorityConfirmed: true },
     participant: {
       firstName: first,
       lastName: last,
-      dateOfBirth: `${year}-05-20`,
+      dateOfBirth,
       email,
-      phone: "0400 333 444",
-      address: { street: "12 Sample Road", suburb: "Carindale", state: "QLD", postcode: "4152" },
+      phone,
+      address: { street, suburb, state: "QLD", postcode },
     },
     funding: {
-      source: "NDIS",
-      ndisNumber: String(430_000_000 + Math.floor(Math.random() * 9_999_999)),
-      planEndDate: `${nextYear}-06-30`,
-      planType: "Plan Managed",
-      fundingPeriods: "No",
+      source: profile.funding,
+      ndisNumber: ndis ? `43${digits(7)}` : "",
+      planEndDate: ndis
+        ? `${now.getFullYear() + 1}-${pad(between(1, 12))}-${pad(between(1, 28))}`
+        : "",
+      planType,
+      fundingPeriods: ndis ? pick(["No", "No", "Unsure"] as const) : "",
       periods: [],
-      planManagerCompany: "Example Plan Partners",
-      planManagerEmail: "invoices@example.test",
-      otherDetails: "",
+      planManagerCompany: planManager,
+      planManagerEmail: planManager ? `invoices@${slug(planManager)}.example.test` : "",
+      otherDetails: profile.otherDetails,
     },
-    supportCoordinator: {
-      name: "Casey Coordinator",
-      email: "casey.coordinator@example.test",
-      phone: "0400 111 222",
-    },
-    signatory: {
-      role: "Parent or guardian",
-      name: parent,
-      email: "jordan@example.test",
-      phone: "0400 333 444",
-    },
+    supportCoordinator:
+      profile.submitter === "Support coordinator" || (ndis && Math.random() < 0.5)
+        ? { name: coordinatorName, email: coordinatorEmail, phone: coordinatorPhone }
+        : base.supportCoordinator,
+    signatory: { role: contactRole, name: contactName, email: contactEmail, phone: contactPhone },
     booking: {
-      role: "Parent or guardian",
-      name: parent,
-      email: "jordan@example.test",
-      phone: "0400 333 444",
-      method: "Phone",
-      preferredTime: "Weekday mornings",
+      role: contactRole,
+      name: contactName,
+      email: contactEmail,
+      phone: contactPhone,
+      method: pick(contactMethods),
+      preferredTime: pick(["Weekday mornings", "Weekday afternoons", "After 3 pm", "Any time"]),
     },
-    location: { ...base.location, type: "Home", sameAsHome: true },
+    location: atHome
+      ? { ...base.location, type: profile.location, sameAsHome: true }
+      : {
+          ...base.location,
+          type: profile.location,
+          sameAsHome: false,
+          address: {
+            street: `${between(2, 90)} ${pick(streets)}`,
+            suburb,
+            state: "QLD",
+            postcode,
+          },
+          contactName: `${pick(adultNames)} ${pick(lastNames)}`,
+          contactPhone: `07 3${digits(3)} ${digits(4)}`,
+          contactEmail: "",
+          contactNotes: "Sign in at reception on arrival.",
+        },
     clinical: {
-      diagnosis: "Developmental coordination disorder (reported)",
-      behaviours: "No",
-      behavioursDetails: "",
-      knownRisk: "Unknown",
-      riskDetails: "",
-      personPresent: true,
-      personPresentDetails: `${parent} (parent), 0400 333 444`,
+      diagnosis: profile.diagnosis,
+      behaviours: profile.behaviours,
+      behavioursDetails: profile.behavioursDetails,
+      knownRisk: profile.knownRisk,
+      riskDetails: profile.riskDetails,
+      personPresent: child,
+      personPresentDetails: child ? `${family} (parent), ${familyPhone}` : "",
     },
-    supports: [
-      {
-        support: "Functional Capacity Assessment",
-        frequency: "Assessment",
-        frequencyOther: "",
-        nursingType: "",
-        details: "",
-      },
-      {
-        support: "Occupational Therapy",
-        frequency: "Weekly",
-        frequencyOther: "",
-        nursingType: "",
-        details: "",
-      },
-    ],
-    goals: "Dress for school independently and join in sport at school.",
-    comments: "Mornings work best. A parent will be present at every visit.",
+    supports: profile.supports.map((s) => ({
+      support: s.support,
+      frequency: s.frequency,
+      frequencyOther: "",
+      nursingType: "",
+      details: "",
+    })),
+    goals: profile.goals,
+    comments: profile.comments,
     consent: { privacy: true, shareWithClinicians: true },
   };
 }

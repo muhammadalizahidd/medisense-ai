@@ -12,6 +12,9 @@ const NAME = /^[A-Z][A-Za-z'’-]+(?: [A-Z][A-Za-z'’-]+){1,2}$/;
  * screen reads as people rather than rows. It only adds a marker and a CSS variable to the name;
  * the page's own markup is never changed, and rows that already show a photo are left alone.
  */
+/** React marks every element it has hydrated or rendered with an internal key. */
+const hydrated = (el: Element) => Object.keys(el).some((k) => k.startsWith("__reactFiber$"));
+
 export function NamePhotos() {
   useEffect(() => {
     let queued = false;
@@ -20,6 +23,9 @@ export function NamePhotos() {
       for (const el of document.querySelectorAll<HTMLElement>(CANDIDATES)) {
         if (el.childElementCount > 0 || el.dataset.photo !== undefined) continue;
         if (el.closest("[data-no-photo]")) continue;
+        // A name React hasn't hydrated yet must keep the server's HTML exactly, or hydration
+        // reports a mismatch; the timed scans below come back for it.
+        if (!hydrated(el)) continue;
         const text = el.textContent?.trim() ?? "";
         if (text.length > 34 || !NAME.test(text)) continue;
         const row = el.closest("tr, li, [role=row]") ?? el.parentElement;
@@ -48,7 +54,12 @@ export function NamePhotos() {
     });
     observer.observe(document.body, { childList: true, subtree: true, characterData: true });
     scan();
-    return () => observer.disconnect();
+    // Hydration changes nothing the observer can see, so look again as streamed parts finish.
+    const timers = [300, 1000, 2500].map((ms) => setTimeout(scan, ms));
+    return () => {
+      observer.disconnect();
+      timers.forEach(clearTimeout);
+    };
   }, []);
   return null;
 }

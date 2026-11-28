@@ -12,12 +12,16 @@ import {
   Download,
   Filter,
   Search,
+  Settings2,
+  SlidersHorizontal,
   X,
 } from "lucide-react";
 import { KpiLabel } from "@/components/ui/kpi-icon";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Modal } from "@/components/ui/modal";
 import { PageHeader } from "@/components/ui/page";
+import { Segmented } from "@/components/ui/segmented";
 import { Select } from "@/components/ui/select";
 import { TabPanel, Tabs, useTab } from "@/components/ui/tabs";
 import { Tag } from "@/components/ui/tag";
@@ -56,18 +60,32 @@ import {
 } from "./finance-ledger";
 import { QueueTab } from "./finance-queue";
 
-const tabs = [
+// Every view keeps its own address (?tab=claims still opens Claims); the tab bar shows them as
+// five groups so the page reads as a short list of jobs.
+const views = [
   { id: "overview", label: "Overview" },
-  { id: "queue", label: "Billable queue" },
+  { id: "queue", label: "To bill" },
   { id: "invoices", label: "Invoices" },
   { id: "claims", label: "Claims" },
-  { id: "payments", label: "Payments" },
-  { id: "reconciliation", label: "Reconciliation" },
   { id: "adjustments", label: "Credits and adjustments" },
-  { id: "rules", label: "Rates and rules" },
+  { id: "payments", label: "Payments" },
+  { id: "reconciliation", label: "Bank matching" },
   { id: "reports", label: "Reports" },
+  { id: "rules", label: "Rates and rules" },
 ] as const;
-export type FinanceTab = (typeof tabs)[number]["id"];
+export type FinanceTab = (typeof views)[number]["id"];
+
+const groups: readonly { id: Group; label: string; views: readonly FinanceTab[] }[] = [
+  { id: "overview", label: "Overview", views: ["overview"] },
+  { id: "queue", label: "To bill", views: ["queue"] },
+  { id: "billing", label: "Invoices and claims", views: ["invoices", "claims", "adjustments"] },
+  { id: "money", label: "Payments", views: ["payments", "reconciliation"] },
+  { id: "reports", label: "Reports", views: ["reports"] },
+];
+type Group = "overview" | "queue" | "billing" | "money" | "reports";
+
+const groupOf = (v: FinanceTab): Group => groups.find((g) => g.views.includes(v))?.id ?? "overview";
+const viewLabel = (v: FinanceTab) => views.find((x) => x.id === v)?.label ?? v;
 
 /** Module 07: billing and financial management. Claims and payments are simulated (AC-39). */
 export function FinanceHub() {
@@ -75,7 +93,15 @@ export function FinanceHub() {
     "/api/care/billing",
     (e) => e.type === "care",
   );
-  const [tab, setTab] = useTab(tabs);
+  const [view, setView] = useTab(views);
+  const [rulesOpen, setRulesOpen] = useState(false);
+  // Rates and rules is a setting, not a daily list: an old ?tab=rules link opens it over Overview.
+  useEffect(() => {
+    if (view !== "rules") return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- follow an old address once
+    setRulesOpen(true);
+    setView("overview");
+  }, [view, setView]);
   const today = data?.hub.today ?? new Date().toISOString().slice(0, 10);
   const [f, setF] = useFinanceFilters(today);
   if (error && !data) return <ErrorNote message={error} onRetry={reload} />;
@@ -97,23 +123,35 @@ export function FinanceHub() {
       return hub.payments.filter((p) => p.unapplied > 0 && p.status !== "Reversed").length;
     return 0;
   };
-  const tabList = tabs.map((t) => ({
-    ...t,
-    count: count(t.id) || undefined,
-    alert: ["queue", "reconciliation", "adjustments"].includes(t.id),
-  }));
+  const group = groupOf(view);
+  const tabList = groups.map((g) => {
+    const n = g.views.reduce((sum, v) => sum + count(v), 0);
+    return {
+      id: g.id,
+      label: g.label,
+      count: n || undefined,
+      alert: g.views.some((v) => ["queue", "reconciliation", "adjustments"].includes(v)),
+    };
+  });
   const go = (t: FinanceTab, patch: Partial<Filters> = {}) => {
     setF(patch);
-    setTab(t);
+    if (t === "rules") setRulesOpen(true);
+    else setView(t);
   };
+  const inGroup = groups.find((g) => g.id === group)?.views ?? [];
 
   return (
     <>
       <PageHeader
         eyebrow="Live care"
         title="Billing and finance"
+        description="Bill finished visits, follow invoices and claims, and match payments"
         actions={
           <div className="flex items-center gap-3">
+            <Button size="sm" onClick={() => setRulesOpen(true)}>
+              <Settings2 className="size-4" aria-hidden="true" />
+              Rates and rules
+            </Button>
             <span className="hidden text-caption text-ink-500 lg:inline">
               {hub.can.manager
                 ? "Finance Manager"
@@ -128,35 +166,65 @@ export function FinanceHub() {
       />
       <FilterBar hub={hub} f={f} setF={setF} />
       <div className="mt-4">
-        <Tabs label="Finance" tabs={tabList} value={tab} onChange={(t: FinanceTab) => setTab(t)} />
+        <Tabs
+          label="Finance"
+          tabs={tabList}
+          value={group}
+          onChange={(g: Group) => {
+            const first = groups.find((x) => x.id === g)?.views[0];
+            if (first && g !== group) setView(first);
+          }}
+        />
       </div>
-      <TabPanel id="overview" value={tab}>
+      {inGroup.length > 1 && (
+        <div className="mt-4">
+          <Segmented<FinanceTab>
+            label={groups.find((g) => g.id === group)?.label ?? "Show"}
+            value={view}
+            onChange={setView}
+            options={inGroup.map((v) => {
+              const n = count(v);
+              return { id: v, label: n ? `${viewLabel(v)} (${n})` : viewLabel(v) };
+            })}
+          />
+        </div>
+      )}
+      <TabPanel id="overview" value={view}>
         <Overview hub={hub} f={f} go={go} />
       </TabPanel>
-      <TabPanel id="queue" value={tab}>
+      <TabPanel id="queue" value={view}>
         <QueueTab hub={hub} f={f} onDone={reload} />
       </TabPanel>
-      <TabPanel id="invoices" value={tab}>
+      <TabPanel id="invoices" value={view}>
         <InvoicesTab hub={hub} f={f} />
       </TabPanel>
-      <TabPanel id="claims" value={tab}>
+      <TabPanel id="claims" value={view}>
         <ClaimsTab hub={hub} onDone={reload} />
       </TabPanel>
-      <TabPanel id="payments" value={tab}>
+      <TabPanel id="payments" value={view}>
         <PaymentsTab hub={hub} onDone={reload} />
       </TabPanel>
-      <TabPanel id="reconciliation" value={tab}>
+      <TabPanel id="reconciliation" value={view}>
         <ReconTab hub={hub} onDone={reload} />
       </TabPanel>
-      <TabPanel id="adjustments" value={tab}>
+      <TabPanel id="adjustments" value={view}>
         <AdjustmentsTab hub={hub} onDone={reload} />
       </TabPanel>
-      <TabPanel id="rules" value={tab}>
-        <RulesTab hub={hub} onDone={reload} />
-      </TabPanel>
-      <TabPanel id="reports" value={tab}>
+      <TabPanel id="reports" value={view}>
         <Reports hub={hub} f={f} />
       </TabPanel>
+      {rulesOpen && (
+        <Modal
+          title="Rates and rules"
+          description="Prices per funding path, approval limits and when a visit counts as unbilled."
+          size="lg"
+          onClose={() => setRulesOpen(false)}
+        >
+          <div className="p-6">
+            <RulesTab hub={hub} onDone={reload} />
+          </div>
+        </Modal>
+      )}
     </>
   );
 }
@@ -172,16 +240,11 @@ function FilterBar({
   f: Filters;
   setF: (p: Partial<Filters>) => void;
 }) {
-  const active = Boolean(
-    f.service ||
-    f.payer ||
-    f.therapist ||
-    f.status ||
-    f.search ||
-    f.preset !== "This Financial Year",
-  );
+  const [more, setMore] = useState(false);
+  const extra = [f.service, f.payer, f.therapist, f.status].filter(Boolean).length;
+  const active = Boolean(extra || f.search || f.preset !== "This Financial Year");
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-card border border-border bg-surface p-3 shadow-lift">
+    <div className="flex flex-wrap items-center gap-2 rounded-card border border-border bg-surface p-3">
       <Filter className="ml-1 size-4 text-ink-500" aria-hidden="true" />
       <div className="w-44 flex-none">
         <Select
@@ -213,58 +276,6 @@ function FilterBar({
           />
         </>
       )}
-      <div className="w-48 flex-none">
-        <Select
-          aria-label="Service"
-          className="h-9"
-          value={f.service}
-          onChange={(e) => setF({ service: e.target.value })}
-        >
-          <option value="">All services</option>
-          {hub.services.map((s) => (
-            <option key={s}>{s}</option>
-          ))}
-        </Select>
-      </div>
-      <div className="w-44 flex-none">
-        <Select
-          aria-label="Payer"
-          className="h-9"
-          value={f.payer}
-          onChange={(e) => setF({ payer: e.target.value })}
-        >
-          <option value="">All payers</option>
-          {fundingPaths.map((p) => (
-            <option key={p}>{p}</option>
-          ))}
-        </Select>
-      </div>
-      <div className="w-44 flex-none">
-        <Select
-          aria-label="Therapist"
-          className="h-9"
-          value={f.therapist}
-          onChange={(e) => setF({ therapist: e.target.value })}
-        >
-          <option value="">All therapists</option>
-          {hub.clinicians.map((s) => (
-            <option key={s}>{s}</option>
-          ))}
-        </Select>
-      </div>
-      <div className="w-44 flex-none">
-        <Select
-          aria-label="Invoice status"
-          className="h-9"
-          value={f.status}
-          onChange={(e) => setF({ status: e.target.value })}
-        >
-          <option value="">All statuses</option>
-          {[...invoiceStatuses07, "Overdue"].map((s) => (
-            <option key={s}>{s}</option>
-          ))}
-        </Select>
-      </div>
       <label className="flex h-9 min-w-56 flex-1 items-center gap-2 rounded-control border border-border-strong bg-surface px-3 focus-within:shadow-focus">
         <Search className="size-4 text-ink-500" aria-hidden="true" />
         <input
@@ -275,6 +286,15 @@ function FilterBar({
           className="min-w-0 flex-1 bg-transparent text-small outline-none placeholder:text-ink-500"
         />
       </label>
+      <Button size="sm" onClick={() => setMore(true)}>
+        <SlidersHorizontal className="size-4" aria-hidden="true" />
+        More filters
+        {extra > 0 && (
+          <span className="rounded-full bg-accent-tint px-1.5 text-caption font-semibold text-accent">
+            {extra}
+          </span>
+        )}
+      </Button>
       {active && (
         <button
           type="button"
@@ -297,6 +317,84 @@ function FilterBar({
         {dayLabel(f.from)} to {dayLabel(f.to)}. Figures below use only the records these filters
         show.
       </span>
+      {more && (
+        <Modal
+          title="More filters"
+          description="Narrow every tab to one service, payer, therapist or invoice status."
+          onClose={() => setMore(false)}
+        >
+          <div className="grid gap-4 p-6 sm:grid-cols-2">
+            <div className="flex flex-col gap-1.5">
+              <span className="text-caption font-semibold text-ink-700">Service</span>
+              <Select
+                aria-label="Service"
+                className="h-9"
+                value={f.service}
+                onChange={(e) => setF({ service: e.target.value })}
+              >
+                <option value="">All services</option>
+                {hub.services.map((s) => (
+                  <option key={s}>{s}</option>
+                ))}
+              </Select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <span className="text-caption font-semibold text-ink-700">Payer</span>
+              <Select
+                aria-label="Payer"
+                className="h-9"
+                value={f.payer}
+                onChange={(e) => setF({ payer: e.target.value })}
+              >
+                <option value="">All payers</option>
+                {fundingPaths.map((p) => (
+                  <option key={p}>{p}</option>
+                ))}
+              </Select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <span className="text-caption font-semibold text-ink-700">Therapist</span>
+              <Select
+                aria-label="Therapist"
+                className="h-9"
+                value={f.therapist}
+                onChange={(e) => setF({ therapist: e.target.value })}
+              >
+                <option value="">All therapists</option>
+                {hub.clinicians.map((s) => (
+                  <option key={s}>{s}</option>
+                ))}
+              </Select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <span className="text-caption font-semibold text-ink-700">Invoice status</span>
+              <Select
+                aria-label="Invoice status"
+                className="h-9"
+                value={f.status}
+                onChange={(e) => setF({ status: e.target.value })}
+              >
+                <option value="">All statuses</option>
+                {[...invoiceStatuses07, "Overdue"].map((s) => (
+                  <option key={s}>{s}</option>
+                ))}
+              </Select>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 border-t border-border px-6 py-4">
+            <Button
+              variant="ghost"
+              disabled={!extra}
+              onClick={() => setF({ service: "", payer: "", therapist: "", status: "" })}
+            >
+              Clear these
+            </Button>
+            <Button variant="primary" onClick={() => setMore(false)}>
+              Done
+            </Button>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

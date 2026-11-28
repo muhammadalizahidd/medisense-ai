@@ -242,7 +242,7 @@ export const builtInRules: BuiltInRule[] = [
     code: "AUT-12",
     name: "Assessment overdue",
     description:
-      "Opens a follow-up for the clinician when a started assessment passes its review deadline, linked to the same episode. A partial save alone never triggers it.",
+      "Opens a follow-up for the clinician when a started assessment passes its review deadline, linked to the same course of care. A partial save alone never triggers it.",
     trigger: "AssessmentOverdue",
     conditions: [],
     action: "Create Task",

@@ -42,7 +42,11 @@ describe("which apps a person has", () => {
   });
 
   it("keeps therapists to the therapist app and patients to the patient app", () => {
-    expect(appsForRole("therapist", ["app.admin"], [])).toEqual({ ...NO_APPS, therapist: true });
+    expect(appsForRole("therapist", ["app.admin"], [])).toEqual({
+      ...NO_APPS,
+      therapist: true,
+      mobile: { ...NO_APPS.mobile, therapist: true, patient: true },
+    });
     expect(appsForRole("client", ["app.admin"], [])).toEqual({
       ...NO_APPS,
       mobile: { ...NO_APPS.mobile, patient: true },

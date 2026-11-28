@@ -1,26 +1,10 @@
-import { Suspense } from "react";
-import type { Metadata } from "next";
-import { PageContainer, PageLoading } from "@/components/ui/page";
-import { OfflinePage } from "@/features/live/offline-page";
-import { PatientRequests } from "@/features/live/patient-requests";
-import { requirePageUser } from "@/server/page-auth";
+import { TabRedirect } from "@/components/ui/tab-redirect";
 
-export const metadata: Metadata = { title: "Patient requests · Medisense" };
-
-async function PageContent() {
-  if (!(await requirePageUser("/care/patient-requests", "admin"))) return <OfflinePage />;
-  return (
-    <PageContainer>
-      <PatientRequests />
-    </PageContainer>
-  );
-}
-
-/** The session is checked inside Suspense, so the page frame shows straight away. */
-export default function Page() {
-  return (
-    <Suspense fallback={<PageLoading />}>
-      <PageContent />
-    </Suspense>
-  );
+/** Patient requests is now a tab of Patients. */
+export default function Page({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  return <TabRedirect to="/care" tab="requests" searchParams={searchParams} />;
 }

@@ -104,7 +104,7 @@ describe("building an export", () => {
     if (!aggregateReport) return;
     const out = buildExport(loaded(fullScope), base({ reportId: aggregateReport.id }));
     expect(out.reportId).toBe(aggregateReport.id);
-    expect(out.summary[0]).toBe("Custom: 2026-11-01 to 2026-11-30");
+    expect(out.summary[0]).toBe("Custom: 1 Nov – 30 Nov 2026");
     expect(out.basis).toBe(aggregateReport.basis);
   });
 
@@ -198,7 +198,7 @@ describe("export files", () => {
     generatedAt: new Date("2026-11-14T02:00:00.000Z"),
     freshness: new Date("2026-11-14T02:00:00.000Z"),
     contents: "Summary only",
-    summary: ["Custom: 2026-11-01 to 2026-11-30"],
+    summary: ["Custom: 1 Nov – 30 Nov 2026"],
     unit: "referrals",
     basis: "Submitted date",
     columns: [{ key: "a", label: "A", kind: "text" }],
@@ -221,7 +221,7 @@ describe("export files", () => {
       const body = exportFile(snapshot, format, "Neil").body;
       expect(body).toContain("EXP-1");
       expect(body).toContain("Neil");
-      expect(body).toContain("Custom: 2026-11-01 to 2026-11-30");
+      expect(body).toContain("Custom: 1 Nov – 30 Nov 2026");
     }
   });
 });

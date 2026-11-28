@@ -1,0 +1,995 @@
+import "server-only";
+import type { ObjectId } from "mongodb";
+import {
+  appointmentTypes,
+  periodLabel,
+  typeLabel,
+  systemReportById,
+  visitStatusFilters,
+  type SystemReportFilters,
+  type SystemReportFormat,
+  type SystemReportId,
+  type OverviewFigures,
+  type SystemOverview,
+  type SystemReportTable,
+  type VisitSummary,
+} from "@/lib/live/system-reports";
+import { disciplines } from "@/lib/live/catalogue";
+import { collections } from "./db";
+import { UserFacingError } from "./http";
+import { audit } from "./live";
+import type { AppointmentDoc, AppointmentStatus, ClientDoc, TherapistDoc, UserDoc } from "./models";
+import { can } from "./permissions";
+import { modeOf } from "./reports";
+
+const TZ = "Australia/Brisbane";
+/** Brisbane has no daylight saving, so a day always starts at 00:00 +10:00. */
+const OFFSET = "+10:00";
+
+const dayFmt = new Intl.DateTimeFormat("en-CA", { timeZone: TZ, dateStyle: "short" });
+const timeFmt = new Intl.DateTimeFormat("en-AU", {
+  timeZone: TZ,
+  hour: "numeric",
+  minute: "2-digit",
+});
+const weekdayFmt = new Intl.DateTimeFormat("en-AU", { timeZone: TZ, weekday: "long" });
+
+const day = (d: Date | null | undefined) => (d ? dayFmt.format(d) : "");
+const time = (d: Date) => timeFmt.format(d).toLowerCase();
+const hours = (minutes: number) => Math.round(minutes / 6) / 10;
+
+const statusLabel: Record<AppointmentStatus, string> = {
+  tentative: "Tentative",
+  booked: "Booked",
+  completed: "Completed",
+  cancelled: "Cancelled",
+  "late-cancelled": "Late cancellation",
+  "no-show": "Did not attend",
+  aborted: "Incomplete",
+  rescheduled: "Rescheduled",
+};
+
+const isCancelled = (s: AppointmentStatus) => s === "cancelled" || s === "late-cancelled";
+/** Booked and not yet closed: a visit still to happen, or one whose outcome isn't recorded yet. */
+const isBooked = (a: AppointmentDoc) => a.status === "booked" || a.status === "tentative";
+
+/** Time actually given: the recorded check-out minutes, else the booked length. */
+const minutesGiven = (a: AppointmentDoc) =>
+  a.status === "completed"
+    ? (a.checkOut?.minutes ?? Math.round((a.end.getTime() - a.start.getTime()) / 60_000))
+    : 0;
+
+function noteState(a: AppointmentDoc) {
+  if (a.status !== "completed") return "";
+  if (!a.note) return "Not written";
+  if (a.note.signedAt || a.note.status === "Final" || a.note.status === "Amended") return "Signed";
+  return a.note.status ?? "Draft";
+}
+
+function quote(value: string | number) {
+  const s = String(value);
+  return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+/** A byte-order mark first, so Excel reads names with accents correctly. */
+const toCsv = (head: readonly string[], rows: (string | number)[][]) =>
+  `﻿${[head, ...rows].map((r) => r.map(quote).join(",")).join("\r\n")}\r\n`;
+
+/** "12 Wattle Avenue, Carindale QLD 4152" from the patient's record, or "" when there is none. */
+function homeAddress(c: ClientDoc | undefined) {
+  const a = c?.profile?.address;
+  if (!a?.street) return "";
+  return `${a.street}, ${[a.suburb, a.state, a.postcode].filter(Boolean).join(" ")}`;
+}
+
+const parseDay = (v: string | null) => (v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null);
+
+type Tally = {
+  visits: number;
+  completed: number;
+  cancelled: number;
+  dna: number;
+  upcoming: number;
+  minutes: number;
+  first: Date | null;
+  last: Date | null;
+};
+const blank = (): Tally => ({
+  visits: 0,
+  completed: 0,
+  cancelled: 0,
+  dna: 0,
+  upcoming: 0,
+  minutes: 0,
+  first: null,
+  last: null,
+});
+
+function count(t: Tally, a: AppointmentDoc) {
+  if (a.status === "rescheduled") return;
+  t.visits += 1;
+  if (a.status === "completed") {
+    t.completed += 1;
+    t.minutes += minutesGiven(a);
+    if (!t.first || a.start < t.first) t.first = a.start;
+    if (!t.last || a.start > t.last) t.last = a.start;
+  }
+  if (isCancelled(a.status)) t.cancelled += 1;
+  if (a.status === "no-show") t.dna += 1;
+  if (isBooked(a)) t.upcoming += 1;
+}
+
+/** What one row of each report counts, for the first headline figure. */
+const rowNoun: Record<SystemReportId, string> = {
+  "by-patient": "Patients",
+  patients: "Patients",
+  "by-therapist": "Therapists",
+  "patient-therapist": "Patient and therapist pairs",
+  caseload: "Therapists",
+  visits: "Visits",
+  missed: "Visits not delivered",
+  "by-day": "Days",
+  "by-type": "Appointment types",
+  "type-home": "Home visits",
+  "type-telehealth": "Telehealth appointments",
+  "type-school": "School visits",
+  "type-daycare": "Daycare visits",
+  "type-day-program": "Day program visits",
+  "type-community": "Community visits",
+  "by-therapy": "Therapy types",
+  "therapy-ot": "Occupational therapy visits",
+  "therapy-physio": "Physiotherapy visits",
+  "therapy-speech": "Speech pathology visits",
+  "therapy-ep": "Exercise physiology visits",
+  "therapy-psychology": "Psychology visits",
+  "therapy-trauma": "Trauma therapy visits",
+  "therapy-dietetics": "Dietetics visits",
+  "therapy-podiatry": "Podiatry visits",
+  "therapy-nursing": "Nursing visits",
+};
+
+/** The columns people scan a report by, shown in bold on screen and in the PDF. */
+const STRONG = new Set(["MRN", "Patient", "Therapist", "Funding"]);
+
+/** Columns whose Total row adds them up; the rest (averages, scores, names) stay blank there. */
+const SUMMABLE = new Set([
+  "Visits",
+  "Completed",
+  "Cancelled",
+  "Did not attend",
+  "Booked",
+  "Hours given",
+  "Hours delivered",
+  "Hours",
+  "Minutes",
+  "Visits completed",
+  "Booked minutes",
+  "Actual minutes",
+  "Active patients",
+  "Capacity",
+  "Free places",
+  ...appointmentTypes.map((t) => typeLabel(t)),
+]);
+
+/** Of the visits whose outcome is known (not still booked), the share that were completed. */
+const completionRate = (t: Tally) => {
+  const closed = t.visits - t.upcoming;
+  return closed > 0 ? Math.round((t.completed / closed) * 1000) / 10 : "";
+};
+
+const matchesStatus = (a: AppointmentDoc, status: string) => {
+  switch (status) {
+    case "completed":
+      return a.status === "completed";
+    case "booked":
+      return isBooked(a);
+    case "cancelled":
+      return isCancelled(a.status);
+    case "dna":
+      return a.status === "no-show";
+    case "incomplete":
+      return a.status === "aborted";
+    default:
+      return true;
+  }
+};
+
+const summarise = (list: AppointmentDoc[]): VisitSummary => {
+  const t = blank();
+  for (const a of list) count(t, a);
+  return {
+    visits: t.visits,
+    completed: t.completed,
+    cancelled: t.cancelled,
+    booked: t.upcoming,
+    hours: hours(t.minutes),
+  };
+};
+
+const DAY_MS = 86_400_000;
+const startOf = (iso: string) => new Date(`${iso}T00:00:00${OFFSET}`);
+
+const number = new Intl.NumberFormat("en-AU", { maximumFractionDigits: 1 });
+
+/**
+ * Works out one system report on the server for a Brisbane date range (inclusive): the counting
+ * happens here, so the screen and the files receive only the finished table. Row-level detail, so
+ * each report needs its detail permission.
+ */
+export async function systemReportTable(
+  admin: UserDoc,
+  reportId: string,
+  filters: Partial<Record<keyof SystemReportFilters, string | null>>,
+): Promise<SystemReportTable> {
+  const report = systemReportById(reportId);
+  if (!report) throw new UserFacingError("That report doesn't exist.", 404);
+  if (!can(admin, report.permission)) {
+    throw new UserFacingError("You don't have access to this report.", 400);
+  }
+  const from = parseDay(filters.from ?? null);
+  const to = parseDay(filters.to ?? null);
+  if (from && to && from > to) throw new UserFacingError("The start date is after the end date.");
+  const region = filters.region?.trim() || "";
+  const discipline = filters.discipline?.trim() || "";
+  const therapist = /^[a-f0-9]{24}$/.test(filters.therapist ?? "") ? (filters.therapist ?? "") : "";
+  const status = visitStatusFilters.some((s) => s.id === filters.status)
+    ? (filters.status ?? "")
+    : "";
+  // A per-type report is always that appointment type; a per-therapy report, that therapy.
+  const type = "appointmentType" in report ? report.appointmentType : null;
+  const therapy = "therapyType" in report ? report.therapyType : null;
+
+  const range: { $gte?: Date; $lt?: Date } = {};
+  if (from) range.$gte = startOf(from);
+  if (to) range.$lt = new Date(startOf(to).getTime() + DAY_MS);
+  // The period just before, the same length, so the headline figures can show the change.
+  const before =
+    range.$gte && range.$lt
+      ? {
+          $gte: new Date(range.$gte.getTime() - (range.$lt.getTime() - range.$gte.getTime())),
+          $lt: range.$gte,
+        }
+      : null;
+  const fetchFrom = before?.$gte ?? range.$gte;
+
+  const { appointments, clients, therapists } = await collections();
+  const needsVisits = report.id !== "caseload" && report.id !== "patients";
+  const [allVisits, clientList, therapistList] = await Promise.all([
+    needsVisits || report.id === "patients"
+      ? appointments
+          .find(
+            report.id === "patients" || !(from || to)
+              ? {}
+              : { start: { ...range, ...(fetchFrom ? { $gte: fetchFrom } : {}) } },
+            {
+              projection: {
+                therapistId: 1,
+                clientId: 1,
+                discipline: 1,
+                start: 1,
+                end: 1,
+                status: 1,
+                cancellation: 1,
+                checkOut: 1,
+                note: 1,
+                noShow: 1,
+                aborted: 1,
+                modality: 1,
+                ref: 1,
+                needId: 1,
+                purpose: 1,
+                "site.location": 1,
+                "site.address": 1,
+              },
+            },
+          )
+          .sort({ start: 1 })
+          .toArray()
+      : Promise.resolve([] as AppointmentDoc[]),
+    clients
+      .find(
+        {},
+        {
+          projection: {
+            name: 1,
+            mrn: 1,
+            dateOfBirth: 1,
+            email: 1,
+            phone: 1,
+            suburb: 1,
+            region: 1,
+            funding: 1,
+            discharged: 1,
+            provisional: 1,
+            createdAt: 1,
+            "needs.id": 1,
+            "needs.location": 1,
+            "profile.address": 1,
+          },
+        },
+      )
+      .toArray() as Promise<ClientDoc[]>,
+    therapists.find({}, { projection: { profile: 0, weekly: 0, staff: 0 } }).toArray() as Promise<
+      TherapistDoc[]
+    >,
+  ]);
+
+  const clientById = new Map(clientList.map((c) => [String(c._id), c]));
+  const therapistById = new Map(therapistList.map((t) => [String(t._id), t]));
+  const patientName = (id: ObjectId) => clientById.get(String(id))?.name ?? "Unknown patient";
+  const patientMrn = (id: ObjectId) => clientById.get(String(id))?.mrn ?? "";
+  const therapistName = (id: ObjectId) =>
+    therapistById.get(String(id))?.name ?? "Unknown therapist";
+  const byName = <T>(list: T[], name: (t: T) => string) =>
+    list.sort((a, b) => name(a).localeCompare(name(b)));
+  const typeOf = (a: AppointmentDoc) => {
+    const need = clientById.get(String(a.clientId))?.needs?.find((n) => n.id === a.needId);
+    return modeOf(a.site?.location ?? need?.location, a.modality);
+  };
+  const regionOf = (a: AppointmentDoc) => therapistById.get(String(a.therapistId))?.region ?? "";
+  // Every filter but the dates, so the period before can be cut the same way.
+  const passes = (a: AppointmentDoc) =>
+    (!type || typeOf(a) === type) &&
+    (!therapy || a.discipline === therapy) &&
+    (!region || regionOf(a) === region) &&
+    (!discipline || a.discipline === discipline) &&
+    (!therapist || String(a.therapistId) === therapist) &&
+    matchesStatus(a, status);
+  const within = (a: AppointmentDoc, r: { $gte?: Date; $lt?: Date }) =>
+    (!r.$gte || a.start >= r.$gte) && (!r.$lt || a.start < r.$lt);
+  const filtered = allVisits.filter(passes);
+  const visits = filtered.filter((a) => within(a, range));
+  // Lists of everyone (therapists, patients) follow the filters too.
+  const therapistShown = (t: TherapistDoc) =>
+    t.active !== false &&
+    (!region || t.region === region) &&
+    (!discipline || t.discipline === discipline) &&
+    (!therapist || String(t._id) === therapist);
+  const visitFilters = Boolean(region || discipline || therapist || status);
+  // Patient list: every patient, or, once a filter is set, the ones with a matching visit.
+  const patientsWithVisits = new Set(filtered.map((a) => String(a.clientId)));
+  let footerOverride: Record<string, string | number> = {};
+
+  const head = report.columns;
+  let rows: (string | number)[][] = [];
+
+  const detailRow = (a: AppointmentDoc, withType: boolean) => {
+    const c = clientById.get(String(a.clientId));
+    const kind = typeOf(a);
+    const address =
+      kind === "Telehealth"
+        ? "Video call"
+        : a.site?.address || (kind === "Home" ? homeAddress(c) : "") || c?.suburb || "";
+    return [
+      day(a.start),
+      time(a.start),
+      c?.name ?? "Unknown patient",
+      c?.mrn ?? "",
+      c?.dateOfBirth ?? "",
+      c?.phone ?? "",
+      c?.funding ?? "",
+      ...(withType ? [typeLabel(kind)] : []),
+      address,
+      therapistName(a.therapistId),
+      ...(withType ? [] : [a.discipline]),
+      a.purpose ?? "",
+      statusLabel[a.status],
+      Math.round((a.end.getTime() - a.start.getTime()) / 60_000),
+      a.status === "completed" ? minutesGiven(a) : "",
+      noteState(a),
+    ];
+  };
+
+  if (therapy) rows = visits.map((a) => detailRow(a, true));
+  else
+    switch (report.id satisfies SystemReportId) {
+      case "by-patient": {
+        const tallies = new Map<string, { tally: Tally; therapists: Set<string> }>();
+        for (const a of visits) {
+          const key = String(a.clientId);
+          const entry = tallies.get(key) ?? { tally: blank(), therapists: new Set<string>() };
+          count(entry.tally, a);
+          if (a.status === "completed") entry.therapists.add(therapistName(a.therapistId));
+          tallies.set(key, entry);
+        }
+        rows = byName([...tallies.entries()], ([id]) => clientById.get(id)?.name ?? "").map(
+          ([id, { tally: t, therapists: ts }]) => {
+            const c = clientById.get(id);
+            return [
+              c?.mrn ?? "",
+              c?.name ?? "Unknown patient",
+              c?.funding ?? "",
+              c?.suburb ?? "",
+              t.visits,
+              t.completed,
+              t.cancelled,
+              t.dna,
+              t.upcoming,
+              hours(t.minutes),
+              [...ts].sort().join("; "),
+              day(t.first),
+              day(t.last),
+            ];
+          },
+        );
+        break;
+      }
+      case "patients": {
+        const seen = new Map<string, Set<string>>();
+        for (const a of visits) {
+          if (a.status !== "completed" && a.status !== "booked" && a.status !== "tentative")
+            continue;
+          const set = seen.get(String(a.clientId)) ?? new Set<string>();
+          set.add(therapistName(a.therapistId));
+          seen.set(String(a.clientId), set);
+        }
+        rows = byName(
+          clientList.filter((c) => !visitFilters || patientsWithVisits.has(String(c._id))),
+          (c) => c.name,
+        ).map((c) => [
+          c.mrn ?? "",
+          c.name,
+          c.dateOfBirth ?? "",
+          c.phone ?? "",
+          c.email,
+          c.suburb,
+          c.region,
+          c.funding,
+          c.discharged ? "Discharged" : c.provisional ? "Provisional" : "Active",
+          [...(seen.get(String(c._id)) ?? [])].sort().join("; "),
+          day(c.createdAt),
+        ]);
+        break;
+      }
+      case "by-therapist": {
+        const tallies = new Map<string, { tally: Tally; patients: Set<string> }>();
+        for (const t of therapistList) {
+          if (therapistShown(t))
+            tallies.set(String(t._id), { tally: blank(), patients: new Set() });
+        }
+        for (const a of visits) {
+          const key = String(a.therapistId);
+          const entry = tallies.get(key) ?? { tally: blank(), patients: new Set<string>() };
+          count(entry.tally, a);
+          if (a.status === "completed") entry.patients.add(String(a.clientId));
+          tallies.set(key, entry);
+        }
+        rows = byName([...tallies.entries()], ([id]) => therapistById.get(id)?.name ?? "").map(
+          ([id, { tally: t, patients }]) => {
+            const th = therapistById.get(id);
+            return [
+              th?.name ?? "Unknown therapist",
+              th?.discipline ?? "",
+              th?.region ?? "",
+              patients.size,
+              t.visits,
+              t.completed,
+              t.cancelled,
+              t.dna,
+              t.upcoming,
+              hours(t.minutes),
+              t.completed ? Math.round(t.minutes / t.completed) : 0,
+              completionRate(t),
+            ];
+          },
+        );
+        break;
+      }
+      case "patient-therapist": {
+        const pairs = new Map<string, { a: AppointmentDoc; tally: Tally }>();
+        for (const a of visits) {
+          if (a.status !== "completed") continue;
+          const key = `${String(a.therapistId)}|${String(a.clientId)}`;
+          const entry = pairs.get(key) ?? { a, tally: blank() };
+          count(entry.tally, a);
+          pairs.set(key, entry);
+        }
+        rows = [...pairs.values()]
+          .sort(
+            (x, y) =>
+              therapistName(x.a.therapistId).localeCompare(therapistName(y.a.therapistId)) ||
+              patientName(x.a.clientId).localeCompare(patientName(y.a.clientId)),
+          )
+          .map(({ a, tally: t }) => [
+            therapistName(a.therapistId),
+            therapistById.get(String(a.therapistId))?.discipline ?? a.discipline,
+            patientMrn(a.clientId),
+            patientName(a.clientId),
+            t.completed,
+            t.minutes,
+            hours(t.minutes),
+            day(t.first),
+            day(t.last),
+          ]);
+        break;
+      }
+      case "caseload": {
+        rows = byName(therapistList.filter(therapistShown), (t) => t.name).map((t) => [
+          t.name,
+          t.discipline,
+          t.region,
+          t.seniority,
+          t.activeClients,
+          t.capacity,
+          Math.max(t.capacity - t.activeClients, 0),
+          t.caseloadScore,
+          t.caseloadScore >= 80 ? "At Risk" : t.caseloadScore >= 60 ? "Watch" : "Healthy",
+        ]);
+        break;
+      }
+      case "visits": {
+        rows = visits.map((a) => [
+          day(a.start),
+          time(a.start),
+          patientName(a.clientId),
+          patientMrn(a.clientId),
+          therapistName(a.therapistId),
+          a.discipline,
+          typeOf(a),
+          statusLabel[a.status],
+          Math.round((a.end.getTime() - a.start.getTime()) / 60_000),
+          a.status === "completed" ? minutesGiven(a) : "",
+          noteState(a),
+        ]);
+        break;
+      }
+      case "type-home":
+      case "type-telehealth":
+      case "type-school":
+      case "type-daycare":
+      case "type-day-program":
+      case "type-community": {
+        rows = visits.map((a) => detailRow(a, false));
+        break;
+      }
+      case "missed": {
+        rows = visits
+          .filter((a) => isCancelled(a.status) || a.status === "no-show" || a.status === "aborted")
+          .map((a) => [
+            day(a.start),
+            time(a.start),
+            patientName(a.clientId),
+            patientMrn(a.clientId),
+            therapistName(a.therapistId),
+            statusLabel[a.status],
+            a.cancellation
+              ? `${a.cancellation.by === "client" ? "Patient" : "Medisense"}: ${a.cancellation.reason}`
+              : a.aborted
+                ? a.aborted.reason
+                : a.noShow
+                  ? `Did not attend. Attempts: ${a.noShow.attempts}`
+                  : "",
+          ]);
+        break;
+      }
+      case "by-day": {
+        const days = new Map<
+          string,
+          { tally: Tally; when: Date; patients: Set<string>; therapists: Set<string> }
+        >();
+        for (const a of visits) {
+          const key = day(a.start);
+          const entry = days.get(key) ?? {
+            tally: blank(),
+            when: a.start,
+            patients: new Set<string>(),
+            therapists: new Set<string>(),
+          };
+          count(entry.tally, a);
+          if (a.status === "completed") {
+            entry.patients.add(String(a.clientId));
+            entry.therapists.add(String(a.therapistId));
+          }
+          days.set(key, entry);
+        }
+        const doneDays = visits.filter((a) => a.status === "completed");
+        footerOverride = {
+          "Patients visited": new Set(doneDays.map((a) => String(a.clientId))).size,
+          "Therapists working": new Set(doneDays.map((a) => String(a.therapistId))).size,
+        };
+        rows = [...days.entries()]
+          .sort(([x], [y]) => x.localeCompare(y))
+          .map(([d, e]) => [
+            d,
+            weekdayFmt.format(e.when),
+            e.tally.visits,
+            e.tally.completed,
+            e.tally.cancelled,
+            e.tally.dna,
+            hours(e.tally.minutes),
+            e.patients.size,
+            e.therapists.size,
+          ]);
+        break;
+      }
+      case "by-therapy": {
+        // Each therapy's visits split by where they happened (home, telehealth, school…).
+        const kinds = discipline ? [discipline] : [...disciplines];
+        const all = blank();
+        const tallies = new Map(
+          kinds.map((k) => [k as string, { tally: blank(), byType: new Map<string, number>() }]),
+        );
+        for (const a of visits) {
+          const entry = tallies.get(a.discipline);
+          if (!entry || a.status === "rescheduled") continue;
+          count(entry.tally, a);
+          count(all, a);
+          const kind = typeOf(a);
+          entry.byType.set(kind, (entry.byType.get(kind) ?? 0) + 1);
+        }
+        rows = [...tallies.entries()].map(([k, e]) => [
+          k,
+          e.tally.visits,
+          ...appointmentTypes.map((t) => e.byType.get(t) ?? 0),
+          completionRate(e.tally),
+        ]);
+        footerOverride = { "Completion rate": completionRate(all) };
+        break;
+      }
+      case "by-type": {
+        const kinds = type ? [type] : [...appointmentTypes];
+        const tallies = new Map(
+          kinds.map((k) => [
+            k as string,
+            { tally: blank(), patients: new Set<string>(), therapists: new Set<string>() },
+          ]),
+        );
+        for (const a of visits) {
+          const entry = tallies.get(typeOf(a));
+          if (!entry) continue;
+          count(entry.tally, a);
+          if (a.status === "completed") {
+            entry.patients.add(String(a.clientId));
+            entry.therapists.add(String(a.therapistId));
+          }
+        }
+        rows = [...tallies.entries()].map(([k, e]) => [
+          typeLabel(k),
+          e.tally.visits,
+          e.tally.completed,
+          e.tally.cancelled,
+          e.tally.dna,
+          e.tally.upcoming,
+          hours(e.tally.minutes),
+          e.patients.size,
+          e.therapists.size,
+          completionRate(e.tally),
+        ]);
+        const done = visits.filter((a) => a.status === "completed" && tallies.has(typeOf(a)));
+        footerOverride = {
+          "Patients visited": new Set(done.map((a) => String(a.clientId))).size,
+          Therapists: new Set(done.map((a) => String(a.therapistId))).size,
+        };
+        break;
+      }
+    }
+
+  // Visit lists lead with the patient's MRN.
+  const order = head.map((_, i) => i);
+  const mrn = head.indexOf("MRN" as never);
+  if (head[0] === "Date" && mrn > 0) order.unshift(...order.splice(mrn, 1));
+  const cols = order.map((i) => head[i] as string);
+  rows = rows.map((r) => order.map((i) => r[i] ?? ""));
+  const numeric = cols.map((_, i) => rows.some((r) => typeof r[i] === "number"));
+  const sum = (label: string) => {
+    const i = cols.indexOf(label);
+    const total = rows.reduce((n, r) => n + (typeof r[i] === "number" ? r[i] : 0), 0);
+    return Math.round(total * 10) / 10;
+  };
+  // A Total row only where something adds up, and only for more than one row.
+  const footer =
+    rows.length > 1 && cols.some((c) => SUMMABLE.has(c))
+      ? cols.map((c, i) => {
+          if (i === 0) return "Total";
+          if (c in footerOverride) return footerOverride[c] ?? "";
+          if (c === "Completion rate") {
+            const t = blank();
+            t.visits = sum("Visits");
+            t.completed = sum("Completed");
+            t.upcoming = sum("Booked");
+            return completionRate(t);
+          }
+          return SUMMABLE.has(c) ? sum(c) : "";
+        })
+      : null;
+  const active = byName(
+    therapistList.filter((t) => t.active !== false),
+    (t) => t.name,
+  );
+  return {
+    id: report.id,
+    title: report.title,
+    description: report.description,
+    period: periodLabel(from ?? "", to ?? ""),
+    type: typeLabel(type ?? ""),
+    therapy: therapy ?? "",
+    request: [report.id, from ?? "", to ?? "", region, discipline, therapist, status].join("|"),
+    filters:
+      [
+        region,
+        discipline,
+        therapist ? (therapistById.get(therapist)?.name ?? "") : "",
+        visitStatusFilters.find((s) => s.id === status)?.label ?? "",
+      ]
+        .filter(Boolean)
+        .join(" · ") || "No other filters",
+    generatedAt: new Date().toISOString(),
+    columns: cols.map((label, i) => ({
+      label,
+      numeric: numeric[i] ?? false,
+      strong: STRONG.has(label),
+      percent: label === "Completion rate",
+    })),
+    rows,
+    footer,
+    summary: {
+      current: summarise(visits),
+      previous: before ? summarise(filtered.filter((a) => within(a, before))) : null,
+    },
+    options: {
+      regions: [...new Set(active.map((t) => t.region).filter(Boolean))].sort(),
+      disciplines: [...new Set(active.map((t) => t.discipline).filter(Boolean))].sort(),
+      therapists: active.map((t) => ({ id: String(t._id), name: t.name })),
+    },
+    totals: [
+      { label: rowNoun[report.id], value: number.format(rows.length) },
+      ...(report.totals as readonly string[]).map((label) => ({
+        label,
+        value: number.format(sum(label)),
+      })),
+    ],
+  };
+}
+
+/** A download of one report: CSV for Excel, or the branded PDF. Every download is audited. */
+export async function downloadSystemReport(
+  admin: UserDoc,
+  table: SystemReportTable,
+  format: Exclude<SystemReportFormat, "json">,
+  stamp: string,
+) {
+  await audit(
+    admin,
+    `Downloaded system report "${table.title}" as ${format.toUpperCase()} (${table.period}, ${table.type}, ${table.filters}, ${table.rows.length} rows)`,
+    null,
+  );
+  const base = `medisense-${table.id}-${stamp}`;
+  if (format === "csv") {
+    return {
+      body: toCsv(
+        table.columns.map((c) => (c.percent ? `${c.label} (%)` : c.label)),
+        table.footer ? [...table.rows, table.footer] : table.rows,
+      ),
+      type: "text/csv; charset=utf-8",
+      filename: `${base}.csv`,
+    };
+  }
+  const [{ renderPdf }, { SystemReportDocument }] = await Promise.all([
+    import("@/lib/pdf/render"),
+    import("@/lib/pdf/documents/system-report"),
+  ]);
+  const pdf = await renderPdf(SystemReportDocument({ table, preparedBy: admin.name }));
+  return { body: new Uint8Array(pdf), type: "application/pdf", filename: `${base}.pdf` };
+}
+
+/* ------------------------------------------------------------------ overview */
+
+const monthFmt = new Intl.DateTimeFormat("en-AU", {
+  timeZone: TZ,
+  month: "short",
+  year: "2-digit",
+});
+const shortDayFmt = new Intl.DateTimeFormat("en-AU", {
+  timeZone: TZ,
+  day: "numeric",
+  month: "short",
+});
+
+/**
+ * The reports overview: the same visits the system reports count, summed up by appointment type,
+ * therapy, therapist, funding and over time. Worked out here, so the page receives a few hundred
+ * numbers instead of every visit.
+ */
+export async function systemOverview(
+  admin: UserDoc,
+  filters: Partial<Record<keyof SystemReportFilters, string | null>>,
+): Promise<SystemOverview> {
+  if (!can(admin, "reports.detail.scheduling")) {
+    throw new UserFacingError("You don't have access to the reports overview.", 400);
+  }
+  const from = parseDay(filters.from ?? null);
+  const to = parseDay(filters.to ?? null);
+  if (from && to && from > to) throw new UserFacingError("The start date is after the end date.");
+  const region = filters.region?.trim() || "";
+  const discipline = filters.discipline?.trim() || "";
+  const therapist = /^[a-f0-9]{24}$/.test(filters.therapist ?? "") ? (filters.therapist ?? "") : "";
+  const status = visitStatusFilters.some((s) => s.id === filters.status)
+    ? (filters.status ?? "")
+    : "";
+
+  const range: { $gte?: Date; $lt?: Date } = {};
+  if (from) range.$gte = startOf(from);
+  if (to) range.$lt = new Date(startOf(to).getTime() + DAY_MS);
+  const before =
+    range.$gte && range.$lt
+      ? {
+          $gte: new Date(range.$gte.getTime() - (range.$lt.getTime() - range.$gte.getTime())),
+          $lt: range.$gte,
+        }
+      : null;
+  const fetchFrom = before?.$gte ?? range.$gte;
+
+  const { appointments, clients, therapists } = await collections();
+  const [allVisits, clientList, therapistList] = await Promise.all([
+    appointments
+      .find(from || to ? { start: { ...range, ...(fetchFrom ? { $gte: fetchFrom } : {}) } } : {}, {
+        projection: {
+          therapistId: 1,
+          clientId: 1,
+          discipline: 1,
+          start: 1,
+          end: 1,
+          status: 1,
+          checkOut: 1,
+          modality: 1,
+          needId: 1,
+          "site.location": 1,
+        },
+      })
+      .sort({ start: 1 })
+      .toArray(),
+    clients
+      .find({}, { projection: { funding: 1, "needs.id": 1, "needs.location": 1 } })
+      .toArray() as Promise<ClientDoc[]>,
+    therapists
+      .find({}, { projection: { name: 1, discipline: 1, region: 1, active: 1 } })
+      .toArray() as Promise<TherapistDoc[]>,
+  ]);
+
+  const clientById = new Map(clientList.map((c) => [String(c._id), c]));
+  const therapistById = new Map(therapistList.map((t) => [String(t._id), t]));
+  const typeOf = (a: AppointmentDoc) => {
+    const need = clientById.get(String(a.clientId))?.needs?.find((n) => n.id === a.needId);
+    return modeOf(a.site?.location ?? need?.location, a.modality);
+  };
+  const passes = (a: AppointmentDoc) =>
+    a.status !== "rescheduled" &&
+    (!region || therapistById.get(String(a.therapistId))?.region === region) &&
+    (!discipline || a.discipline === discipline) &&
+    (!therapist || String(a.therapistId) === therapist) &&
+    matchesStatus(a, status);
+  const within = (a: AppointmentDoc, r: { $gte?: Date; $lt?: Date }) =>
+    (!r.$gte || a.start >= r.$gte) && (!r.$lt || a.start < r.$lt);
+  const filtered = allVisits.filter(passes);
+  const visits = filtered.filter((a) => within(a, range));
+
+  const figures = (list: AppointmentDoc[]): OverviewFigures => {
+    const t = blank();
+    for (const a of list) count(t, a);
+    const done = list.filter((a) => a.status === "completed");
+    const rate = completionRate(t);
+    return {
+      visits: t.visits,
+      completed: t.completed,
+      cancelled: t.cancelled,
+      booked: t.upcoming,
+      hours: hours(t.minutes),
+      dna: t.dna,
+      patients: new Set(done.map((a) => String(a.clientId))).size,
+      therapists: new Set(done.map((a) => String(a.therapistId))).size,
+      rate: rate === "" ? null : rate,
+      types: Object.fromEntries(
+        appointmentTypes.map((k) => [typeLabel(k), list.filter((a) => typeOf(a) === k).length]),
+      ),
+    };
+  };
+
+  // Days for a month or less, weeks up to about four months, months beyond.
+  const first = range.$gte ?? visits[0]?.start ?? new Date();
+  const last = range.$lt ?? new Date((visits.at(-1)?.start ?? new Date()).getTime() + DAY_MS);
+  const span = (last.getTime() - first.getTime()) / DAY_MS;
+  const grain: SystemOverview["grain"] = span <= 31 ? "Day" : span <= 125 ? "Week" : "Month";
+  const bucketOf = (d: Date) => {
+    const k = dayFmt.format(d);
+    if (grain === "Day") return k;
+    if (grain === "Month") return k.slice(0, 7);
+    const wd = (new Date(`${k}T00:00:00Z`).getUTCDay() + 6) % 7;
+    return new Date(Date.parse(`${k}T00:00:00Z`) - wd * DAY_MS).toISOString().slice(0, 10);
+  };
+  const labelOf = (b: string) => {
+    const d = new Date(`${grain === "Month" ? `${b}-01` : b}T00:00:00${OFFSET}`);
+    return grain === "Month" ? monthFmt.format(d) : shortDayFmt.format(d);
+  };
+  const buckets: string[] = [];
+  for (let t = first.getTime(); t < last.getTime(); t += DAY_MS) {
+    const b = bucketOf(new Date(t));
+    if (buckets.at(-1) !== b) buckets.push(b);
+    if (buckets.length > 400) break;
+  }
+  const trendMap = new Map(
+    buckets.map((b) => [b, { label: labelOf(b), completed: 0, cancelled: 0, dna: 0, booked: 0 }]),
+  );
+  for (const a of visits) {
+    const row = trendMap.get(bucketOf(a.start));
+    if (!row) continue;
+    if (a.status === "completed") row.completed += 1;
+    else if (isCancelled(a.status)) row.cancelled += 1;
+    else if (a.status === "no-show") row.dna += 1;
+    else if (isBooked(a)) row.booked += 1;
+  }
+
+  const statuses = new Map<string, number>();
+  for (const a of visits) {
+    const label = statusLabel[a.status];
+    statuses.set(label, (statuses.get(label) ?? 0) + 1);
+  }
+
+  const byType = appointmentTypes.map((k) => {
+    const t = blank();
+    for (const a of visits) if (typeOf(a) === k) count(t, a);
+    return {
+      label: typeLabel(k),
+      visits: t.visits,
+      completed: t.completed,
+      hours: hours(t.minutes),
+    };
+  });
+
+  const therapies = new Map<string, Tally>();
+  const people = new Map<string, Tally>();
+  for (const a of visits) {
+    const th = therapies.get(a.discipline) ?? blank();
+    count(th, a);
+    therapies.set(a.discipline, th);
+    const p = people.get(String(a.therapistId)) ?? blank();
+    count(p, a);
+    people.set(String(a.therapistId), p);
+  }
+
+  const funding = new Map<string, Set<string>>();
+  for (const a of visits) {
+    if (a.status !== "completed") continue;
+    const f = clientById.get(String(a.clientId))?.funding ?? "Other";
+    const set = funding.get(f) ?? new Set<string>();
+    set.add(String(a.clientId));
+    funding.set(f, set);
+  }
+
+  const active = therapistList
+    .filter((t) => t.active !== false)
+    .sort((a, b) => a.name.localeCompare(b.name));
+  return {
+    request: [from ?? "", to ?? "", region, discipline, therapist, status].join("|"),
+    period: periodLabel(from ?? "", to ?? ""),
+    grain,
+    summary: {
+      current: figures(visits),
+      previous: before ? figures(filtered.filter((a) => within(a, before))) : null,
+    },
+    trend: [...trendMap.values()],
+    statuses: [...statuses]
+      .map(([label, value]) => ({ label, value }))
+      .sort((a, b) => b.value - a.value),
+    byType,
+    byTherapy: [...therapies]
+      .map(([label, t]) => ({ label, visits: t.visits, hours: hours(t.minutes) }))
+      .sort((a, b) => b.visits - a.visits),
+    topTherapists: [...people]
+      .map(([id, t]) => ({
+        name: therapistById.get(id)?.name ?? "Unknown therapist",
+        discipline: therapistById.get(id)?.discipline ?? "",
+        visits: t.visits,
+        hours: hours(t.minutes),
+      }))
+      .sort((a, b) => b.hours - a.hours || b.visits - a.visits)
+      .slice(0, 8),
+    funding: [...funding]
+      .map(([label, set]) => ({ label, patients: set.size }))
+      .sort((a, b) => b.patients - a.patients),
+    options: {
+      regions: [...new Set(active.map((t) => t.region).filter(Boolean))].sort(),
+      disciplines: [...new Set(active.map((t) => t.discipline).filter(Boolean))].sort(),
+      therapists: active.map((t) => ({ id: String(t._id), name: t.name })),
+    },
+  };
+}

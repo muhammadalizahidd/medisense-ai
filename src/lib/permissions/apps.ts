@@ -73,15 +73,22 @@ export function appsFor(
 }
 
 /**
- * Therapists and patients keep fixed apps whatever is stored: a therapist sees only the therapist
- * app, a patient only the patient app.
+ * Therapists and patients keep fixed apps whatever is stored: a therapist gets the therapist app
+ * on the web and on the phone, plus the patient app to show patients how it works; a patient gets
+ * only the patient app.
  */
 export function appsForRole(
   role: Role,
   held: ReadonlySet<string> | readonly string[],
   staffRoles: readonly string[] | null | undefined,
 ): AppAccess {
-  if (role === "therapist") return { ...NO_APPS, therapist: true };
+  if (role === "therapist") {
+    return {
+      ...NO_APPS,
+      therapist: true,
+      mobile: { ...NO_APPS.mobile, therapist: true, patient: true },
+    };
+  }
   if (role === "client") return { ...NO_APPS, mobile: { ...NO_APPS.mobile, patient: true } };
   return appsFor(held, staffRoles);
 }

@@ -1919,7 +1919,7 @@ export async function phrase(
 
 function assertAdmin(u: UserDoc) {
   if (u.role !== "admin")
-    throw new UserFacingError("The operations agent is for admin staff.", 409);
+    throw new UserFacingError("The work agent is for admin staff.", 409);
 }
 
 export async function adminAgentView(u: UserDoc): Promise<AdminAgentDto> {

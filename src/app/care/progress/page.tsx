@@ -1,26 +1,10 @@
-import { Suspense } from "react";
-import type { Metadata } from "next";
-import { PageContainer, PageLoading } from "@/components/ui/page";
-import { OfflinePage } from "@/features/live/offline-page";
-import { ProgressHub } from "@/features/live/progress-hub";
-import { requirePageUser } from "@/server/page-auth";
+import { TabRedirect } from "@/components/ui/tab-redirect";
 
-export const metadata: Metadata = { title: "Treatment plans � Medisense" };
-
-async function PageContent() {
-  if (!(await requirePageUser("/care/progress", "admin"))) return <OfflinePage />;
-  return (
-    <PageContainer>
-      <ProgressHub base="/care/progress" />
-    </PageContainer>
-  );
-}
-
-/** The session is checked inside Suspense, so the page frame shows straight away. */
-export default function Page() {
-  return (
-    <Suspense fallback={<PageLoading />}>
-      <PageContent />
-    </Suspense>
-  );
+/** Progress and reports is now a tab of Clinical; single records keep their own pages. */
+export default function Page({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  return <TabRedirect to="/care/records" tab="progress" searchParams={searchParams} />;
 }

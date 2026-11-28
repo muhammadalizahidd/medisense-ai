@@ -11,6 +11,7 @@ import { isActive, isStandalone, navigationFor, roleUsers } from "@/lib/navigati
 import { pageAccessFor } from "@/lib/permissions/pages";
 import { useUnreadMessages } from "@/features/live/conversations";
 import { preload, useSession } from "@/lib/live/client";
+import { defaultSystemFilters, systemOverviewUrl } from "@/lib/live/system-reports";
 import { useDemoStore } from "@/state/demo-store";
 import { photoFor } from "@/lib/avatars";
 
@@ -94,6 +95,15 @@ export function Sidebar() {
     const t = setTimeout(() => preload(THERAPIST_PAGES), 2500);
     return () => clearTimeout(t);
   }, [therapist]);
+  // The reports overview loads behind the page for anyone who can open it, for this month (the
+  // period it opens on).
+  const readsReports =
+    account?.role === "admin" && account.permissions.includes("reports.detail.scheduling");
+  useEffect(() => {
+    if (!readsReports) return undefined;
+    const t = setTimeout(() => preload([systemOverviewUrl(defaultSystemFilters())]), 4000);
+    return () => clearTimeout(t);
+  }, [readsReports]);
   const unreadMessages = useUnreadMessages(
     account?.role === "therapist" || account?.role === "admin",
   );
@@ -123,6 +133,7 @@ export function Sidebar() {
   return (
     <nav
       aria-label="Primary"
+      data-tour="menu"
       style={darkFocus}
       className="no-scrollbar sticky top-0 hidden h-screen w-(--rail-w) flex-none flex-col gap-4 overflow-y-auto border-r border-sidebar-border bg-sidebar px-2 pt-4 pb-4 md:flex xl:w-(--sidebar-w) xl:px-3 print:hidden"
     >
@@ -200,17 +211,32 @@ export function Sidebar() {
 
       {!sessionLoading &&
         groups.map(({ group, items, live, more }) => {
-          // "More" starts folded and opens on a click; sample groups start open and fold.
+          // "More" starts folded and opens on a click; every other group starts open and folds.
           const open = more && items.some((i) => isActive(pathname, i.href));
           const folded =
-            !q && !open && (more ? !collapsed.includes(group) : !live && collapsed.includes(group));
+            !q && !open && (more ? !collapsed.includes(group) : collapsed.includes(group));
           return (
             <div key={group} className="flex flex-col gap-0.5">
               {live && !more ? (
-                <div className="hidden items-center gap-1.5 px-2.5 pb-1 text-label font-semibold tracking-[0.08em] text-sidebar-muted uppercase xl:flex">
-                  <i aria-hidden="true" className="size-1.5 rounded-full bg-live-dot" />
-                  {group}
-                </div>
+                <button
+                  type="button"
+                  aria-expanded={!folded}
+                  aria-label={`${group}: ${folded ? "show" : "hide"} pages`}
+                  onClick={() => toggle(group)}
+                  className="hidden h-7 cursor-pointer items-center justify-between gap-2 rounded-control px-2.5 text-label font-semibold tracking-[0.08em] text-sidebar-muted uppercase hover:text-sidebar-ink xl:flex"
+                >
+                  <span className="flex min-w-0 items-center gap-1.5">
+                    <i aria-hidden="true" className="size-1.5 flex-none rounded-full bg-live-dot" />
+                    <span className="truncate">{group}</span>
+                  </span>
+                  <ChevronDown
+                    className={cn(
+                      "size-3.5 flex-none transition-transform duration-(--duration-fast) motion-reduce:transition-none",
+                      folded && "-rotate-90",
+                    )}
+                    aria-hidden="true"
+                  />
+                </button>
               ) : (
                 <button
                   type="button"

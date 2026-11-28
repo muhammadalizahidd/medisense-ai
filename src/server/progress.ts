@@ -157,7 +157,7 @@ export const episodeKey = (clientId: ObjectId | string, needId: string) =>
 function parseKey(key: string) {
   const i = key.indexOf(".");
   if (i < 0 || !ObjectId.isValid(key.slice(0, i)))
-    throw new UserFacingError("Episode not found.", 404);
+    throw new UserFacingError("Course of care not found.", 404);
   return { clientId: new ObjectId(key.slice(0, i)), needId: key.slice(i + 1) };
 }
 
@@ -469,7 +469,7 @@ async function loadEpisode(key: string) {
   const { clientId, needId } = parseKey(key);
   const client = await db.clients.findOne({ _id: clientId });
   const need = client?.needs.find((n) => n.id === needId);
-  if (!client || !need) throw new UserFacingError("Episode not found.", 404);
+  if (!client || !need) throw new UserFacingError("Course of care not found.", 404);
   const s = await stores();
   const ep = await s.episodes.findOne({ _id: key });
   return { db, s, client, need, ep, clientId, needId };
@@ -478,7 +478,7 @@ async function loadEpisode(key: string) {
 export async function episodeDetail(u: UserDoc, key: string): Promise<EpisodeFull> {
   const { db, s, client, need, ep, clientId, needId } = await loadEpisode(key);
   const v = viewOf(u, need.therapistId, need.discipline);
-  if (v === "none") throw new UserFacingError("Episode not found.", 404);
+  if (v === "none") throw new UserFacingError("Course of care not found.", 404);
   const clinical = v !== "status";
   const { plan, ext } = await goalsFor(db, clientId, needId);
   const outs = await s.outcomes.find({ clientId, needId }).sort({ date: -1 }).toArray();
@@ -568,10 +568,10 @@ export async function episodeAction(u: UserDoc, key: string, a: EpisodeAction) {
   const { db, s, client, need, ep, clientId, needId } = await loadEpisode(key);
   const v = viewOf(u, need.therapistId, need.discipline);
   if (v !== "edit")
-    throw new UserFacingError("Only the treating clinician changes this episode.", 409);
+    throw new UserFacingError("Only the treating clinician changes this course of care.", 409);
   const e = ep ?? blankEpisode(key, clientId, needId);
   if (e.discharge?.signed && a.type !== "checklist")
-    throw new UserFacingError("This episode is discharged.", 409);
+    throw new UserFacingError("This course of care is discharged.", 409);
   const now = new Date();
   let note = "";
   let reason = "";
@@ -585,7 +585,7 @@ export async function episodeAction(u: UserDoc, key: string, a: EpisodeAction) {
         throw new UserFacingError("Record a result, or choose why it couldn't be assessed.");
       const { plan } = await goalsFor(db, clientId, needId);
       if (o.goalId && !plan?.goals.some((g) => g.id === o.goalId))
-        throw new UserFacingError("That goal belongs to another episode.", 409);
+        throw new UserFacingError("That goal belongs to another course of care.", 409);
       await s.outcomes.insertOne({
         _id: new ObjectId(),
         ref: await nextRef("outcome"),
@@ -918,7 +918,8 @@ async function createReport(
 ) {
   const db = await collections();
   const s = await stores();
-  if (!need.therapistId) throw new UserFacingError("The episode has no treating clinician.", 409);
+  if (!need.therapistId)
+    throw new UserFacingError("The course of care has no treating clinician.", 409);
   const t = await db.therapists.findOne(
     { _id: need.therapistId },
     { projection: { seniority: 1, name: 1 } },

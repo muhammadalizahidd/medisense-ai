@@ -353,7 +353,7 @@ export const productTopics: ProductTopic[] = [
         href: "/therapist/schedule",
       },
       {
-        label: "2. Billable queue checks",
+        label: "2. To bill: checks on each line",
         detail:
           "Each line is checked for: delivery not confirmed, duplicate source (held), service after the plan ended (held for payer validation), price above the limit (Finance Manager approval), payer missing or unverified, tax review. AI review explains likely mistakes as suggestions only.",
         href: "/care/billing?tab=queue",
@@ -377,11 +377,11 @@ export const productTopics: ProductTopic[] = [
       {
         label: "6. Payments",
         detail:
-          "Payments → Record payment (payer, date, method, amount, reference). Open it to allocate across invoices or claims: partial and split allocation are allowed, never more than the payment or a balance. Repeated references are flagged. Unapplied money can be refunded with Finance Manager approval (simulated).",
+          "Payments tab → Payments → Record payment (payer, date, method, amount, reference). Open it to allocate across invoices or claims: partial and split allocation are allowed, never more than the payment or a balance. Repeated references are flagged. Unapplied money can be refunded with Finance Manager approval (simulated).",
         href: "/care/billing?tab=payments",
       },
       {
-        label: "7. Reconciliation",
+        label: "7. Bank matching (reconciliation)",
         detail:
           "Import the mock bank statement; each line gets suggested matches by amount, reference, payer and date. Match it to a payment (or create a payment from an unknown line), then Confirm reconciliation. Nothing reconciles on its own.",
         href: "/care/billing?tab=reconciliation",
@@ -389,7 +389,7 @@ export const productTopics: ProductTopic[] = [
       {
         label: "8. Claims (agency managed)",
         detail:
-          "Claims → open a claim: Prepare (needs the NDIS number), Submit (simulated), record the NDIA outcome (Accepted, Rejected or Partially Paid). A rejection notifies Finance; Correct and resubmit. Record the NDIS remittance in Payments and allocate it to close the claim.",
+          "Invoices and claims tab → Claims → open a claim: Prepare (needs the NDIS number), Submit (simulated), record the NDIA outcome (Accepted, Rejected or Partially Paid). A rejection notifies Finance; Correct and resubmit. Record the NDIS remittance in Payments and allocate it to close the claim.",
         href: "/care/billing?tab=claims",
       },
       {
@@ -401,7 +401,7 @@ export const productTopics: ProductTopic[] = [
       {
         label: "10. Rates, rules and reports",
         detail:
-          "Rates and rules: charge rules per funding path (travel, non-face-to-face, report writing, cancellation notice and share, price limits, tax, terms) saved as new versions by a Finance Manager; rates come from the Funding price catalogue by service date. Reports: invoiced, collected, collection rate, outstanding, credits and unbilled by month, payer, discipline, therapist, service or location, plus ageing; CSV export.",
+          "Rates and rules (button at the top of Billing): charge rules per funding path (travel, non-face-to-face, report writing, cancellation notice and share, price limits, tax, terms) saved as new versions by a Finance Manager; rates come from the Funding price catalogue by service date. Reports: invoiced, collected, collection rate, outstanding, credits and unbilled by month, payer, discipline, therapist, service or location, plus ageing; CSV export.",
         href: "/care/billing?tab=reports",
       },
     ],
@@ -432,7 +432,7 @@ export const productTopics: ProductTopic[] = [
       {
         label: "New task",
         detail:
-          "Title, category, participant and episode, owner, priority, due date or 'no due date', reminder, visibility, instructions and checklist. The owner must have access to the record; urgent tasks need escalation detail.",
+          "Title, category, participant and course of care, owner, priority, due date or 'no due date', reminder, visibility, instructions and checklist. The owner must have access to the record; urgent tasks need escalation detail.",
       },
       {
         label: "Take action",
@@ -498,12 +498,12 @@ export const productTopics: ProductTopic[] = [
     keywords:
       /progress|outcome|reassess|report|discharg|episode|baseline|not calculable|release|amend|co-?sign/,
     summary:
-      "Every service episode from baseline to discharge at Live care › Progress and reports: goal progress from verified observations, reassessments over one or more visits, clinician-signed reports released to authorised recipients, and discharge with a closure checklist.",
+      "Every course of care from baseline to discharge at Live care › Progress and reports: goal progress from verified observations, reassessments over one or more visits, clinician-signed reports released to authorised recipients, and discharge with a closure checklist.",
     steps: [
       {
         label: "Progress overview",
         detail:
-          "Episodes by state, reports by status and an approval queue. Filter by state, discipline and participant; reviews and reports that are overdue are highlighted.",
+          "Courses of care by state, reports by status and an approval queue. Filter by state, discipline and participant; reviews and reports that are overdue are highlighted.",
         href: "/therapist/progress",
       },
       {
@@ -646,12 +646,12 @@ export const productTopics: ProductTopic[] = [
     keywords:
       /treatment plan|\bplans?\b|goal|smart|intervention|home program|plan review|superseded|revise|co-?sign|tp-\d/,
     summary:
-      "Every service episode gets a versioned treatment plan at Live care › Treatment plans: measurable goals with baselines and targets, interventions linked to goals, progress and review, and sharing an approved subset with the participant.",
+      "Every course of care gets a versioned treatment plan at Live care › Treatment plans: measurable goals with baselines and targets, interventions linked to goals, progress and review, and sharing an approved subset with the participant.",
     steps: [
       {
         label: "Plan list",
         detail:
-          "Active, not started, draft, co-sign review and overdue-review figures; plans by state and active plans by discipline. Episodes without a plan show Create plan, which links the latest signed assessment.",
+          "Active, not started, draft, co-sign review and overdue-review figures; plans by state and active plans by discipline. Courses of care without a plan show Create plan, which links the latest signed assessment.",
         href: "/therapist/plans",
       },
       {
@@ -688,7 +688,7 @@ export const productTopics: ProductTopic[] = [
     rules: [
       "Only the treating clinician edits a plan; the Clinical Lead reviews and co-signs; other admin see readiness only.",
       "Achieving a goal needs evidence and the clinician's confirmation; closing a goal needs a reason.",
-      "A participant can decline; the decision and next steps are recorded and the episode closes without treatment.",
+      "A participant can decline; the decision and next steps are recorded and the course of care closes without treatment.",
     ],
   },
   {
@@ -697,7 +697,7 @@ export const productTopics: ProductTopic[] = [
     keywords:
       /assessment|template|instrument|copm|whodas|tug|berg|fca|functional capacity|reassessment|baseline|co-?sign|outcome|unable to assess|evidence/,
     summary:
-      "Every assessment episode from request to signed report, at Live care › Assessments: a queue, then a workspace with plan and template, findings by section, measures and scores, evidence, visits, review, an AI report draft and approval and sharing.",
+      "Every assessment from request to signed report, at Live care › Assessments: a queue, then a workspace with plan and template, findings by section, measures and scores, evidence, visits, review, an AI report draft and approval and sharing.",
     steps: [
       {
         label: "Queue",
@@ -743,7 +743,7 @@ export const productTopics: ProductTopic[] = [
     keywords:
       /operation|work ?queue|task|escalat|sla|approval|rule|automation|aut-\d|run log|quiet hours|notification|reminder template|bulk/,
     summary:
-      "One hub at Live care › Operations for every operational task, rule, approval and message. Rules route the work, AI only suggests, people decide. Every send is simulated.",
+      "One hub at Live care › Work and approvals for every operational task, rule, approval and message. Rules route the work, AI only suggests, people decide. Every send is simulated.",
     steps: [
       {
         label: "Overview",

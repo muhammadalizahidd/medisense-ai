@@ -24,7 +24,12 @@ import { Sheet } from "@/components/ui/sheet";
 
 type Filter = "all" | ClientStage;
 
-export function CareBoard() {
+export function CareBoard({
+  embedded = false,
+}: {
+  /** Inside the Patients page, which brings its own title. */
+  embedded?: boolean;
+} = {}) {
   const { data, error, loading, reload } = useResource<{ clients: ClientSummaryDto[] }>(
     "/api/care/clients",
     (event) => event.type === "care",
@@ -74,37 +79,39 @@ export function CareBoard() {
 
   return (
     <>
-      <PageHeader
-        eyebrow="Live care"
-        title="Patients"
-        description="Accepted referrals become patients with one service request per support. Choose a therapist for each by availability and follow the request until it's accepted."
-        actions={
-          <div className="flex items-center gap-3">
-            <LiveBadge />
-            {waiting.length > 0 && (
-              <Link
-                href="/care/referrals"
-                title={
-                  waiting[0]
-                    ? `Latest: ${waiting[0].name}, ${relativeTime(waiting[0].createdAt)}`
-                    : undefined
-                }
-                className="group inline-flex h-10 items-center gap-2 rounded-control border border-accent bg-accent-tint px-3.5 text-small font-semibold text-accent transition-all duration-(--duration-fast) hover:-translate-y-px hover:bg-accent-fill hover:text-on-accent hover:no-underline active:scale-95"
-              >
-                <span className="relative flex size-2">
-                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-accent-fill opacity-60 group-hover:bg-on-accent motion-reduce:animate-none" />
-                  <span className="relative inline-flex size-2 rounded-full bg-accent-fill group-hover:bg-on-accent" />
-                </span>
-                {waiting.length} new referral{waiting.length === 1 ? "" : "s"} to review →
-              </Link>
-            )}
-            <ButtonLink href="/care/referrals" variant="primary">
-              <Plus className="size-4" aria-hidden="true" />
-              New referral
-            </ButtonLink>
-          </div>
-        }
-      />
+      {!embedded && (
+        <PageHeader
+          eyebrow="Live care"
+          title="Patients"
+          description="Accepted referrals become patients with one service request per support. Choose a therapist for each by availability and follow the request until it's accepted."
+          actions={
+            <div className="flex items-center gap-3">
+              <LiveBadge />
+              {waiting.length > 0 && (
+                <Link
+                  href="/care/referrals"
+                  title={
+                    waiting[0]
+                      ? `Latest: ${waiting[0].name}, ${relativeTime(waiting[0].createdAt)}`
+                      : undefined
+                  }
+                  className="group inline-flex h-10 items-center gap-2 rounded-control border border-accent bg-accent-tint px-3.5 text-small font-semibold text-accent transition-all duration-(--duration-fast) hover:-translate-y-px hover:bg-accent-fill hover:text-on-accent hover:no-underline active:scale-95"
+                >
+                  <span className="relative flex size-2">
+                    <span className="absolute inline-flex size-full animate-ping rounded-full bg-accent-fill opacity-60 group-hover:bg-on-accent motion-reduce:animate-none" />
+                    <span className="relative inline-flex size-2 rounded-full bg-accent-fill group-hover:bg-on-accent" />
+                  </span>
+                  {waiting.length} new referral{waiting.length === 1 ? "" : "s"} to review →
+                </Link>
+              )}
+              <ButtonLink href="/care/referrals" variant="primary">
+                <Plus className="size-4" aria-hidden="true" />
+                New referral
+              </ButtonLink>
+            </div>
+          }
+        />
+      )}
 
       <MetricBand
         size="stat-sm"

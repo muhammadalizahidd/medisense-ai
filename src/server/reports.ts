@@ -54,7 +54,8 @@ export function settingsOf(funding: string, dob: string | null, at = new Date())
   return out;
 }
 
-const modeOf = (loc: string | null | undefined, modality?: string): AppointmentMode => {
+/** A visit's appointment type; system reports use the same rule so the figures agree. */
+export const modeOf = (loc: string | null | undefined, modality?: string): AppointmentMode => {
   if (modality === "Telehealth" || loc === "Telehealth") return "Telehealth";
   if (loc === "School" || loc === "Daycare" || loc === "Day Program") return loc;
   if (loc === "Other community location") return "Community";

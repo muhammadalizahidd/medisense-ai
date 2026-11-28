@@ -283,7 +283,7 @@ function Identity({ r }: { r: RecordDto }) {
         </div>
       )}
       <div className="flex flex-wrap items-center gap-2 border-t border-border px-6 py-3">
-        <span className="mr-1 text-caption font-semibold text-ink-500">Episodes</span>
+        <span className="mr-1 text-caption font-semibold text-ink-500">Courses of care</span>
         {r.episodes.map((e) => (
           <span
             key={e.id}
@@ -349,8 +349,8 @@ function Summary({ r, post, go }: { r: RecordDto; post: Post; go: (t: RecordTab)
       <div className="flex flex-col gap-6 xl:col-span-8 [&>*:last-child]:flex-1">
         <FCard
           icon={Stethoscope}
-          title="Service episodes"
-          sub="Each discipline keeps its own episode, clinician, goals and notes"
+          title="Courses of care"
+          sub="Each discipline keeps its own course of care, clinician, goals and notes"
           flush
         >
           <ul className="divide-y divide-border">
@@ -394,7 +394,7 @@ function Summary({ r, post, go }: { r: RecordDto; post: Post; go: (t: RecordTab)
             ))}
             {!r.episodes.length && (
               <li className="px-5 py-6 text-small text-ink-500">
-                No active episode. Nothing clinical is shown until a service starts.
+                No active course of care. Nothing clinical is shown until a service starts.
               </li>
             )}
           </ul>
@@ -851,7 +851,7 @@ function Consent({ r }: { r: RecordDto }) {
 function CareTeam({ r }: { r: RecordDto }) {
   return (
     <div className="grid items-stretch gap-6 xl:grid-cols-2">
-      <FCard icon={Stethoscope} title="Clinicians" sub="One per service episode" flush>
+      <FCard icon={Stethoscope} title="Clinicians" sub="One per course of care" flush>
         <ul className="divide-y divide-border">
           {r.careTeam.clinicians.map((c, i) => (
             <li key={i} className="flex items-center gap-3 px-5 py-3">

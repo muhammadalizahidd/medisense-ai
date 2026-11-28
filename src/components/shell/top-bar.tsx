@@ -1,6 +1,7 @@
 "use client";
 
 import { PageGuideButton } from "./page-guide";
+import { WelcomeTour } from "./welcome-tour";
 import { ArrowUpRight, Bell, ChevronRight, History } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -216,6 +217,7 @@ export function TopBar() {
 
           <form
             data-ai-only
+            data-tour="ask"
             onSubmit={(e) => {
               e.preventDefault();
               openAssistant(draftQuestion);
@@ -273,6 +275,7 @@ export function TopBar() {
         </div>
       </header>
 
+      <WelcomeTour />
       {auditOpen && <AuditDrawer open onClose={() => setAuditOpen(false)} />}
       {ai && assistant.open && (
         <AssistantPanel

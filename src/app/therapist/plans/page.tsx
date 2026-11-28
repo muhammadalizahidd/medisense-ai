@@ -1,26 +1,10 @@
-import { Suspense } from "react";
-import type { Metadata } from "next";
-import { PageContainer, PageLoading } from "@/components/ui/page";
-import { OfflinePage } from "@/features/live/offline-page";
-import { PlanList } from "@/features/live/plan-list";
-import { requirePageUser } from "@/server/page-auth";
+import { TabRedirect } from "@/components/ui/tab-redirect";
 
-export const metadata: Metadata = { title: "Treatment plans � Medisense" };
-
-async function PageContent() {
-  if (!(await requirePageUser("/therapist/plans", "therapist"))) return <OfflinePage />;
-  return (
-    <PageContainer>
-      <PlanList base="/therapist/plans" />
-    </PageContainer>
-  );
-}
-
-/** The session is checked inside Suspense, so the page frame shows straight away. */
-export default function Page() {
-  return (
-    <Suspense fallback={<PageLoading />}>
-      <PageContent />
-    </Suspense>
-  );
+/** Treatment plans is now a tab of Clinical; single plans keep their own pages. */
+export default function Page({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  return <TabRedirect to="/therapist/records" tab="plans" searchParams={searchParams} />;
 }

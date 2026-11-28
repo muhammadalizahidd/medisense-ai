@@ -2,13 +2,30 @@
 
 import {
   ArrowDownRight,
+  ArrowRight,
   ArrowUpRight,
-  CalendarClock,
+  CalendarCheck,
+  CalendarX2,
+  CircleCheck,
+  ClipboardList,
+  Clock,
+  Gauge,
+  Receipt,
   Download,
-  FileClock,
+  FileText,
+  ListChecks,
+  type LucideIcon,
   Minus,
+  TriangleAlert,
+  UserPlus,
+  UsersRound,
+  Wallet,
+  Workflow,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { createElement, useState, type ReactNode } from "react";
+import { BarList } from "@/components/charts/bar-list";
+import { DonutChart } from "@/components/charts/donut-chart";
+import { StackedColumns } from "@/components/charts/stacked-columns";
 import { colour } from "@/components/charts/chart-kit";
 import { TrendChart } from "@/components/charts/trend-chart";
 import { Button } from "@/components/ui/button";
@@ -25,11 +42,19 @@ import {
   delta,
   formatValue,
   inRange,
+  isCancelled,
   isDelivered,
+  appointmentModes,
+  datePresets,
+  presetRange,
+  readableRange,
   domains,
+  type DatePreset,
+  type TimeGrain,
   type Domain,
   type MetricResult,
 } from "@/lib/live/reports";
+import { DateRangePicker } from "./date-range-picker";
 import { AutomationTab } from "./reports-admin";
 import {
   AppointmentsTab,
@@ -196,6 +221,19 @@ export const AREAS: Area[] = [
   { ...base("finance"), label: "Billing and funding" },
   base("automation"),
 ];
+
+/**
+ * Tabs held back from the Reports page for now. Overview still counts and charts them; it just
+ * doesn't link into them.
+ */
+export const HIDDEN_AREAS: ReadonlySet<AreaId> = new Set<AreaId>([
+  "intake",
+  "finance",
+  "visits",
+  "clinical",
+  "workforce",
+  "automation",
+]);
 
 /** Any area by id, grouped or not; therapist pages reuse the single families. */
 export const areaById = (id: string) =>
@@ -367,17 +405,6 @@ export function AreaPage({
 
 /* ------------------------------------------------------------------ overview */
 
-const when = (iso: string | null) =>
-  iso
-    ? new Intl.DateTimeFormat("en-AU", {
-        timeZone: "Australia/Brisbane",
-        day: "numeric",
-        month: "short",
-        hour: "numeric",
-        minute: "2-digit",
-      }).format(new Date(iso))
-    : "—";
-
 const SEVERITY: Record<InsightDto["severity"], TagTone> = {
   Info: "neutral",
   Review: "watch",
@@ -390,19 +417,37 @@ export function Tile({
   onOpen,
 }: {
   c: Ctx;
-  area: Pick<Area, "headline" | "label">;
-  onOpen: () => void;
+  area: Pick<Area, "headline" | "label"> & { id?: AreaId };
+  onOpen?: () => void;
 }) {
   const main = c.run(area.headline[0]);
   const second = c.run(area.headline[1]);
   const move = movement(main);
+  const Box = onOpen ? "button" : "div";
   return (
-    <button
-      type="button"
-      onClick={onOpen}
-      className="flex min-w-0 cursor-pointer flex-col gap-1 rounded-card border border-border bg-surface p-4 text-left transition-shadow duration-(--duration-fast) hover:shadow-lift"
+    <Box
+      {...(onOpen ? { type: "button" as const, onClick: onOpen } : {})}
+      className={cn(
+        "flex min-w-0 flex-col gap-1 rounded-card border border-border bg-surface p-4 text-left",
+        onOpen && "cursor-pointer transition-shadow duration-(--duration-fast) hover:shadow-lift",
+      )}
     >
-      <span className="text-small font-semibold text-ink-900">{main.def.label}</span>
+      <span className="flex items-center gap-2.5">
+        {"id" in area && area.id && AREA_ICON[area.id] && (
+          <span
+            className={cn(
+              "grid size-9 flex-none place-items-center rounded-control",
+              AREA_TONE[area.id] ?? "bg-accent-tint text-accent",
+            )}
+          >
+            {createElement(AREA_ICON[area.id] as LucideIcon, {
+              className: "size-4.5",
+              "aria-hidden": true,
+            })}
+          </span>
+        )}
+        <span className="text-small font-semibold text-ink-900">{main.def.label}</span>
+      </span>
       <span
         className={cn(
           "type-display text-h1-compact text-ink-900",
@@ -436,9 +481,11 @@ export function Tile({
         <span>
           {second.def.label}: <b className="font-semibold text-ink-900">{show(second)}</b>
         </span>
-        <span className="font-semibold text-accent">{area.label}</span>
+        <span className={cn("font-semibold", onOpen ? "text-accent" : "text-ink-500")}>
+          {area.label}
+        </span>
       </span>
-    </button>
+    </Box>
   );
 }
 
@@ -450,7 +497,7 @@ export function Activity({ c }: { c: Ctx }) {
   const options: { id: Measure; label: string }[] = [
     ...(has(domainOf("R01")) ? [{ id: "referrals" as const, label: "Referrals" }] : []),
     ...(has(domainOf("R07")) ? [{ id: "sessions" as const, label: "Sessions delivered" }] : []),
-    ...(has(domainOf("R04")) ? [{ id: "patients" as const, label: "Patients seen" }] : []),
+    ...(has(domainOf("R04")) ? [{ id: "patients" as const, label: "Patients visited" }] : []),
     ...(has(domainOf("R14")) ? [{ id: "revenue" as const, label: "Revenue invoiced" }] : []),
   ];
   const [pick, setPick] = useState<Measure | null>(null);
@@ -482,7 +529,7 @@ export function Activity({ c }: { c: Ctx }) {
   });
   const label = options.find((o) => o.id === measure)?.label ?? "";
   return (
-    <section className="min-w-0 rounded-card border border-border bg-surface p-4">
+    <section className="flex min-w-0 flex-col rounded-card border border-border bg-surface p-4">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-section font-semibold text-ink-900">Activity over time</h2>
@@ -492,128 +539,557 @@ export function Activity({ c }: { c: Ctx }) {
           <Segmented label="Measure" value={measure} onChange={setPick} options={options} />
         )}
       </header>
-      <div className="mt-3">
+      <div className="mt-3 flex min-h-60 flex-1 flex-col">
         <TrendChart
           label={label}
           data={data}
           xKey="x"
           series={[{ key: "value", label, colour: colour.series1, kind: "area" }]}
-          height={240}
+          height="fill"
         />
       </div>
     </section>
   );
 }
 
-/** The default page: where the organisation stands, what needs a look, and what was made lately. */
+/** Each area's icon and tint on its Overview tile. */
+const AREA_ICON: Partial<Record<AreaId, LucideIcon>> = {
+  intake: UserPlus,
+  visits: CalendarCheck,
+  clinical: FileText,
+  workforce: UsersRound,
+  finance: Wallet,
+  automation: Workflow,
+};
+const AREA_TONE: Partial<Record<AreaId, string>> = {
+  intake: "bg-accent-tint text-accent",
+  visits: "bg-available-bg text-available",
+  clinical: "bg-watch-bg text-watch",
+  workforce: "bg-healthy-bg text-healthy",
+  finance: "bg-accent-tint text-accent",
+  automation: "bg-sunken text-ink-700",
+};
+
+/** The headline figures across the whole system, two of each area, five to a row. */
+const OVERVIEW_KPIS: { id: string; icon: LucideIcon; tone: string }[] = [
+  { id: "new-referrals", icon: UserPlus, tone: "bg-accent-tint text-accent" },
+  { id: "active-participants", icon: UsersRound, tone: "bg-accent-tint text-accent" },
+  { id: "delivered", icon: CalendarCheck, tone: "bg-available-bg text-available" },
+  { id: "cancellation-rate", icon: CalendarX2, tone: "bg-watch-bg text-watch" },
+  { id: "overdue-notes", icon: FileText, tone: "bg-over-bg text-over" },
+  { id: "assessment-backlog", icon: ClipboardList, tone: "bg-watch-bg text-watch" },
+  { id: "utilisation", icon: Gauge, tone: "bg-healthy-bg text-healthy" },
+  { id: "delivered-hours", icon: Clock, tone: "bg-healthy-bg text-healthy" },
+  { id: "issued-revenue", icon: Wallet, tone: "bg-accent-tint text-accent" },
+  { id: "overdue-receivables", icon: Receipt, tone: "bg-over-bg text-over" },
+];
+
+/** A compact headline figure: icon and name, the number, and how it moved. */
+function Kpi({ r, icon: Icon, tone }: { r: MetricResult; icon: LucideIcon; tone: string }) {
+  const move = movement(r);
+  return (
+    <div className="flex min-w-0 flex-col gap-2 rounded-card border border-border bg-surface p-3.5">
+      <span className="flex min-w-0 items-center gap-2">
+        <span className={cn("grid size-7 flex-none place-items-center rounded-control", tone)}>
+          <Icon className="size-4" aria-hidden="true" />
+        </span>
+        <span className="truncate text-caption font-semibold text-ink-700">{r.def.label}</span>
+      </span>
+      <span className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
+        <span className="type-display text-h2 leading-none text-ink-900">{show(r)}</span>
+        {move && !move.flat && (
+          <span
+            title="Against the previous period"
+            className={cn(
+              "inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-caption font-semibold tabular-nums",
+              move.good === null
+                ? "bg-sunken text-ink-700"
+                : move.good
+                  ? "bg-healthy-bg text-healthy"
+                  : "bg-over-bg text-over",
+            )}
+          >
+            {move.up ? (
+              <ArrowUpRight className="size-3" aria-hidden="true" />
+            ) : (
+              <ArrowDownRight className="size-3" aria-hidden="true" />
+            )}
+            {move.text.replace(/^(Up|Down) /, "")}
+          </span>
+        )}
+      </span>
+    </div>
+  );
+}
+
+/** The periods offered on Overview itself; any other range is set from Filters. */
+const QUICK: DatePreset[] = [
+  "This Month",
+  "Last Month",
+  "Last 30 Days",
+  "This Quarter",
+  "Last Quarter",
+];
+const GRAINS: TimeGrain[] = ["Week", "Month"];
+
+function PeriodBar({ c }: { c: Ctx }) {
+  const pick = (p: DatePreset) => c.setF({ preset: p, ...presetRange(p, c.hub.today) });
+  const fresh = new Intl.DateTimeFormat("en-AU", {
+    timeZone: "Australia/Brisbane",
+    day: "numeric",
+    month: "short",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(c.hub.freshness));
+  return (
+    <section
+      aria-label="Report period"
+      className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-border bg-surface px-4 py-3"
+    >
+      <div className="flex min-w-0 items-center gap-3">
+        <span className="grid size-9 flex-none place-items-center rounded-control bg-accent-tint text-accent">
+          <CalendarCheck className="size-4.5" aria-hidden="true" />
+        </span>
+        <div className="min-w-0">
+          <p className="text-small font-semibold text-ink-900">
+            {c.f.preset === "Custom" ? "Custom dates" : c.f.preset} ·{" "}
+            {readableRange(c.f.from, c.f.to)}
+          </p>
+          <p className="text-caption text-ink-500">
+            {c.f.compare === "No comparison"
+              ? "No comparison"
+              : `Compared with the ${c.f.compare.toLowerCase()}`}{" "}
+            · Brisbane time · data as of {fresh}
+          </p>
+        </div>
+      </div>
+      <div className="flex flex-wrap items-center gap-3">
+        <div role="group" aria-label="Period" className="flex flex-wrap gap-1">
+          {QUICK.filter((p) => datePresets.includes(p)).map((p) => (
+            <button
+              key={p}
+              type="button"
+              aria-pressed={c.f.preset === p}
+              onClick={() => pick(p)}
+              className={cn(
+                "h-8 cursor-pointer rounded-full px-3 text-small font-medium transition-colors duration-(--duration-fast) active:scale-[0.98]",
+                c.f.preset === p
+                  ? "bg-accent-fill font-semibold text-on-accent"
+                  : "text-ink-700 hover:bg-sunken hover:text-ink-900",
+              )}
+            >
+              {p}
+            </button>
+          ))}
+        </div>
+        <div className="w-60">
+          <DateRangePicker
+            variant="field"
+            value={{ from: c.f.from, to: c.f.to }}
+            onChange={(r) => {
+              if (r.from && r.to) c.setF({ preset: "Custom", from: r.from, to: r.to });
+            }}
+          />
+        </div>
+        <Segmented
+          label="Chart grouping"
+          value={GRAINS.includes(c.f.grain) ? c.f.grain : "Week"}
+          onChange={(g) => c.setF({ grain: g })}
+          options={GRAINS.map((g) => ({ id: g, label: `By ${g.toLowerCase()}` }))}
+        />
+      </div>
+    </section>
+  );
+}
+
+/** One area's chart on Overview, with the way into its tab. */
+function ChartCard({
+  title,
+  hint,
+  open,
+  onOpen,
+  children,
+}: {
+  title: string;
+  hint: string;
+  open: string;
+  onOpen?: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <section className="flex min-w-0 flex-col gap-3 rounded-card border border-border bg-surface p-4">
+      <header className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-section font-semibold text-ink-900">{title}</h2>
+          <p className="text-caption text-ink-500">{hint}</p>
+        </div>
+        {onOpen && (
+          <button
+            type="button"
+            onClick={onOpen}
+            className="inline-flex flex-none cursor-pointer items-center gap-1 text-caption font-semibold text-accent hover:underline"
+          >
+            {open}
+            <ArrowRight className="size-3.5" aria-hidden="true" />
+          </button>
+        )}
+      </header>
+      <div className="flex min-h-0 flex-1 flex-col justify-center">{children}</div>
+    </section>
+  );
+}
+
+function Empty({ children }: { children: ReactNode }) {
+  return <p className="py-10 text-center text-small text-ink-500">{children}</p>;
+}
+
+const series = [colour.series1, colour.series2, colour.series3, colour.series4, colour.stone];
+const aud = (v: number) => formatValue(v, "AUD");
+
+/** Every chart on Overview, each from the same filtered records and dates as the cards. */
+function AreaCharts({ c, opener }: { c: Ctx; opener: (id: AreaId) => (() => void) | undefined }) {
+  const has = (r: string) => c.hub.scope.domains.includes(domainOf(r));
+  const { from, to, grain } = c.f;
+  const end = to < c.hub.today ? to : c.hub.today;
+  const buckets = bucketsIn(from, end, grain);
+  const within = (iso: string | null) => inRange(iso, from, to);
+  const bucketed = (iso: string | null, b: string) =>
+    Boolean(iso) && within(iso) && bucketOf(dayKey(iso as string), grain) === b;
+  const visits = c.facts.appointments.filter((a) => within(a.start));
+  const cards: ReactNode[] = [];
+
+  if (has("R07")) {
+    const outcomes = buckets.map((b) => {
+      const inB = visits.filter((a) => bucketOf(dayKey(a.start), grain) === b);
+      return {
+        x: bucketLabel(b, grain),
+        completed: inB.filter((a) => a.status === "completed").length,
+        cancelled: inB.filter(isCancelled).length,
+        dna: inB.filter((a) => a.status === "no-show").length,
+      };
+    });
+    cards.push(
+      <ChartCard
+        key="outcomes"
+        title="Visit outcomes"
+        hint={`Completed, cancelled and did not attend, by ${grain.toLowerCase()}`}
+        open="Visits"
+        onOpen={opener("visits")}
+      >
+        {outcomes.some((o) => o.completed + o.cancelled + o.dna > 0) ? (
+          <StackedColumns
+            label="Visit outcomes"
+            data={outcomes}
+            xKey="x"
+            height={230}
+            series={[
+              { key: "completed", label: "Completed", colour: colour.healthy },
+              { key: "cancelled", label: "Cancelled", colour: colour.watch },
+              { key: "dna", label: "Did not attend", colour: colour.over },
+            ]}
+          />
+        ) : (
+          <Empty>No visits in this period.</Empty>
+        )}
+      </ChartCard>,
+    );
+    const modes = appointmentModes
+      .map((m) => [m, visits.filter((a) => a.mode === m && !isCancelled(a)).length] as const)
+      .filter(([, v]) => v > 0);
+    cards.push(
+      <ChartCard
+        key="modes"
+        title="Where care happened"
+        hint="Visits by setting, cancellations left out"
+        open="Visits"
+        onOpen={opener("visits")}
+      >
+        {modes.length ? (
+          <DonutChart
+            label="Visits by setting"
+            slices={modes.map(([k, v], i) => ({
+              id: k,
+              label: k,
+              value: v,
+              colour: series[i % series.length] as string,
+            }))}
+            centre={modes.reduce((s, [, v]) => s + v, 0)}
+            centreCaption="visits"
+          />
+        ) : (
+          <Empty>No visits in this period.</Empty>
+        )}
+      </ChartCard>,
+    );
+  }
+
+  if (has("R01")) {
+    const byStatus = new Map<string, number>();
+    for (const r of c.facts.referrals) {
+      if (within(r.submittedAt)) byStatus.set(r.status, (byStatus.get(r.status) ?? 0) + 1);
+    }
+    const rows = [...byStatus].sort((a, b) => b[1] - a[1]).slice(0, 7);
+    cards.push(
+      <ChartCard
+        key="referrals"
+        title="Referrals by stage"
+        hint="Referrals received in the period, where each one is now"
+        open="Intake and patients"
+        onOpen={opener("intake")}
+      >
+        {rows.length ? (
+          <BarList
+            label="Referrals by stage"
+            labelWidth={150}
+            data={rows.map(([k, v]) => ({ id: k, label: k, value: v, colour: colour.series1 }))}
+          />
+        ) : (
+          <Empty>No referrals received in this period.</Empty>
+        )}
+      </ChartCard>,
+    );
+  }
+
+  if (has("R11")) {
+    const done = visits.filter((a) => a.status === "completed");
+    const notes = [
+      ["Signed", done.filter((a) => a.noteStatus === "Final" || a.noteStatus === "Amended")],
+      ["Awaiting signature", done.filter((a) => a.noteStatus === "Pending Signature")],
+      ["Draft", done.filter((a) => a.noteStatus === "Draft")],
+      ["Not written", done.filter((a) => a.noteStatus === "None")],
+    ] as const;
+    const tones = [colour.healthy, colour.available, colour.watch, colour.over];
+    cards.push(
+      <ChartCard
+        key="notes"
+        title="Clinical notes"
+        hint="Notes for the visits completed in the period"
+        open="Clinical work"
+        onOpen={opener("clinical")}
+      >
+        {done.length ? (
+          <DonutChart
+            label="Clinical notes"
+            slices={notes
+              .map(([k, list], i) => ({
+                id: k,
+                label: k,
+                value: list.length,
+                colour: tones[i] as string,
+              }))
+              .filter((s) => s.value > 0)}
+            centre={done.length}
+            centreCaption="visits"
+          />
+        ) : (
+          <Empty>No completed visits in this period.</Empty>
+        )}
+      </ChartCard>,
+    );
+  }
+
+  if (has("R06")) {
+    const hours = new Map<string, number>();
+    for (const a of visits) {
+      if (!isDelivered(a)) continue;
+      const m = a.deliveredMinutes ?? a.scheduledMinutes;
+      hours.set(a.discipline, (hours.get(a.discipline) ?? 0) + m / 60);
+    }
+    const rows = [...hours].sort((a, b) => b[1] - a[1]).slice(0, 7);
+    cards.push(
+      <ChartCard
+        key="hours"
+        title="Hours delivered by therapy"
+        hint="Verified clinical hours in the period"
+        open="Workforce"
+        onOpen={opener("workforce")}
+      >
+        {rows.length ? (
+          <BarList
+            label="Hours delivered by therapy"
+            labelWidth={150}
+            format={(v) => `${Math.round(v * 10) / 10} h`}
+            data={rows.map(([k, v]) => ({
+              id: k,
+              label: k,
+              value: Math.round(v * 10) / 10,
+              colour: colour.series2,
+            }))}
+          />
+        ) : (
+          <Empty>No hours delivered in this period.</Empty>
+        )}
+      </ChartCard>,
+    );
+  }
+
+  if (has("R14")) {
+    const money = buckets.map((b) => ({
+      x: bucketLabel(b, grain),
+      invoiced: Math.round(
+        c.facts.invoices
+          .filter((i) => bucketed(i.issuedAt, b))
+          .reduce((s, i) => s + i.gross - i.credits, 0),
+      ),
+      received: Math.round(
+        c.facts.payments.filter((p) => bucketed(p.receivedOn, b)).reduce((s, p) => s + p.amount, 0),
+      ),
+    }));
+    cards.push(
+      <ChartCard
+        key="money"
+        title="Invoiced and received"
+        hint={`Money invoiced and payments received, by ${grain.toLowerCase()}`}
+        open="Billing and funding"
+        onOpen={opener("finance")}
+      >
+        <TrendChart
+          label="Invoiced and received"
+          data={money}
+          xKey="x"
+          height={230}
+          format={aud}
+          series={[
+            { key: "invoiced", label: "Invoiced", colour: colour.series1, kind: "area" },
+            { key: "received", label: "Received", colour: colour.healthy, kind: "line" },
+          ]}
+        />
+      </ChartCard>,
+    );
+  }
+
+  if (!cards.length) return null;
+  return (
+    <div
+      className={cn(
+        "grid gap-5",
+        cards.length === 1
+          ? ""
+          : cards.length % 3 === 0
+            ? "md:grid-cols-2 xl:grid-cols-3"
+            : "md:grid-cols-2",
+      )}
+    >
+      {cards}
+    </div>
+  );
+}
+
+/** What needs someone now: new insights, then the open work behind them. */
+function NeedsAttention({
+  c,
+  opener,
+}: {
+  c: Ctx;
+  opener: (id: AreaId) => (() => void) | undefined;
+}) {
+  const attention = c.hub.insights.filter((i) => i.status === "New");
+  const work = (
+    [
+      ["tasks-overdue", "automation"],
+      ["missing-info", "intake"],
+      ["unassigned", "intake"],
+      ["funding-exceptions", "finance"],
+    ] as const
+  )
+    .map(([id, area]) => ({ r: c.run(id), area }))
+    .filter((w) => w.r.value !== null);
+  return (
+    <section className="flex min-w-0 flex-col rounded-card border border-border bg-surface">
+      <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
+        <h2 className="flex items-center gap-2 text-section font-semibold text-ink-900">
+          <TriangleAlert className="size-4 text-over" aria-hidden="true" />
+          Needs attention
+        </h2>
+        <span className="rounded-full bg-over-bg px-2 py-0.5 text-caption font-semibold text-over tabular-nums">
+          {attention.length} new
+        </span>
+      </header>
+      {attention.length ? (
+        <ul className="divide-y divide-border">
+          {attention.slice(0, 4).map((i) => (
+            <li key={i.id}>
+              <div className="flex w-full items-start gap-3 px-4 py-3">
+                <span className="min-w-0 flex-1 text-small text-ink-900">{i.title}</span>
+                <Tag tone={SEVERITY[i.severity]}>{i.severity}</Tag>
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="flex items-center gap-2 px-4 py-4 text-small text-ink-500">
+          <CircleCheck className="size-4 text-healthy" aria-hidden="true" />
+          Nothing new needs a look.
+        </p>
+      )}
+      {work.length > 0 && (
+        <div className="mt-auto border-t border-border p-4">
+          <p className="mb-2 flex items-center gap-1.5 label-caps text-ink-500">
+            <ListChecks className="size-3.5" aria-hidden="true" />
+            Open work
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            {work.map(({ r, area }) => {
+              const go = opener(area);
+              const Box = go ? "button" : "div";
+              return (
+                <Box
+                  key={r.def.id}
+                  {...(go ? { type: "button" as const, onClick: go } : {})}
+                  className={cn(
+                    "flex flex-col gap-0.5 rounded-control bg-sunken px-3 py-2 text-left",
+                    go &&
+                      "cursor-pointer transition-colors duration-(--duration-fast) hover:bg-accent-tint",
+                  )}
+                >
+                  <span className="text-h2 leading-none font-semibold text-ink-900 tabular-nums">
+                    {show(r)}
+                  </span>
+                  <span className="text-caption text-ink-700">{r.def.label}</span>
+                </Box>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+/**
+ * The default page: a summary of every tab. One period bar sets the dates for everything below:
+ * a tile per tab, the activity trend with what needs attention, then one chart per area.
+ */
 export function Overview({
   c,
   openArea,
-  openSchedules,
-  openDownloads,
 }: {
   c: Ctx;
   openArea: (id: AreaId) => void;
-  openSchedules: () => void;
-  openDownloads: () => void;
+  openSchedules?: () => void;
+  openDownloads?: () => void;
 }) {
-  const areas = AREAS.filter((a) => a.id !== "automation" && areaVisible(a, c)).slice(0, 6);
-  const attention = c.hub.insights.filter((i) => i.status === "New");
+  // Hidden tabs keep their numbers here, without a link into them.
+  const opener = (id: AreaId) => (HIDDEN_AREAS.has(id) ? undefined : () => openArea(id));
+  const kpis = OVERVIEW_KPIS.map((k) => ({ ...k, r: c.run(k.id) })).filter(
+    (k) => k.r.value !== null,
+  );
   return (
     <div className="flex flex-col gap-5">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {areas.map((a) => (
-          <Tile key={a.id} c={c} area={a} onOpen={() => openArea(a.id)} />
+      <PeriodBar c={c} />
+      <section
+        aria-label="Headline figures"
+        className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5"
+      >
+        {kpis.map((k) => (
+          <Kpi key={k.id} r={k.r} icon={k.icon} tone={k.tone} />
         ))}
-      </div>
-      <div className="grid gap-5 xl:grid-cols-[2fr_1fr]">
+      </section>
+      <div className="grid items-stretch gap-5 xl:grid-cols-[2fr_1fr]">
         <Activity c={c} />
-        <section className="min-w-0 rounded-card border border-border bg-surface">
-          <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
-            <h2 className="text-section font-semibold text-ink-900">Needs attention</h2>
-            <span className="text-caption text-ink-500 tabular-nums">{attention.length} new</span>
-          </header>
-          {attention.length ? (
-            <ul className="divide-y divide-border">
-              {attention.slice(0, 5).map((i) => (
-                <li key={i.id}>
-                  <button
-                    type="button"
-                    onClick={() => openArea("automation")}
-                    className="flex w-full cursor-pointer items-start gap-3 px-4 py-3 text-left hover:bg-sunken"
-                  >
-                    <span className="min-w-0 flex-1 text-small text-ink-900">{i.title}</span>
-                    <Tag tone={SEVERITY[i.severity]}>{i.severity}</Tag>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="px-4 py-6 text-small text-ink-500">
-              Nothing needs a look right now. Rules check again whenever the data changes.
-            </p>
-          )}
-          {attention.length > 0 && (
-            <button
-              type="button"
-              onClick={() => openArea("automation")}
-              className="w-full cursor-pointer border-t border-border px-4 py-2.5 text-left text-caption font-semibold text-accent hover:bg-sunken"
-            >
-              See all insights
-            </button>
-          )}
-        </section>
+        <NeedsAttention c={c} opener={opener} />
       </div>
-      <div className="grid gap-5 md:grid-cols-2">
-        <section className="min-w-0 rounded-card border border-border bg-surface">
-          <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
-            <h2 className="text-section font-semibold text-ink-900">Recent downloads</h2>
-            <Button size="sm" variant="ghost" onClick={openDownloads}>
-              See all
-            </Button>
-          </header>
-          {c.hub.exports.length ? (
-            <ul className="divide-y divide-border">
-              {c.hub.exports.slice(0, 3).map((e) => (
-                <li key={e.id} className="flex items-center gap-3 px-4 py-3">
-                  <FileClock className="size-4 flex-none text-ink-500" aria-hidden="true" />
-                  <span className="min-w-0 flex-1 truncate text-small text-ink-900">{e.title}</span>
-                  <span className="text-caption text-ink-500">{when(e.generatedAt)}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="px-4 py-6 text-small text-ink-500">
-              Nothing downloaded yet. Open any report and choose Download.
-            </p>
-          )}
-        </section>
-        <section className="min-w-0 rounded-card border border-border bg-surface">
-          <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
-            <h2 className="text-section font-semibold text-ink-900">Scheduled reports</h2>
-            <Button size="sm" variant="ghost" onClick={openSchedules}>
-              Manage
-            </Button>
-          </header>
-          {c.hub.schedules.length ? (
-            <ul className="divide-y divide-border">
-              {c.hub.schedules.slice(0, 3).map((s) => (
-                <li key={s.id} className="flex items-center gap-3 px-4 py-3">
-                  <CalendarClock className="size-4 flex-none text-ink-500" aria-hidden="true" />
-                  <span className="min-w-0 flex-1 truncate text-small text-ink-900">{s.name}</span>
-                  <span className="text-caption text-ink-500">
-                    {s.status === "Failed" ? "Failed" : `Next ${when(s.nextRun)}`}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="px-4 py-6 text-small text-ink-500">
-              No scheduled reports. Set one up to have a report sent to you on a timetable.
-            </p>
-          )}
-        </section>
-      </div>
+      <AreaCharts c={c} opener={opener} />
     </div>
   );
 }

@@ -13,6 +13,7 @@ export function Modal({
   onClose,
   children,
   toolbar,
+  size = "md",
 }: {
   title: string;
   description?: ReactNode;
@@ -20,12 +21,18 @@ export function Modal({
   children: ReactNode;
   /** Filters or tabs that stay put while the body scrolls. */
   toolbar?: ReactNode;
-  /** Kept for callers; every popup now shares one size. */
+  /** A list reads best at `md`; `lg` for wide tables. */
   size?: "md" | "lg";
 }) {
   return (
-    <Dialog title={title} description={description} onRequestClose={onClose} toolbar={toolbar}>
-      <div className="mx-auto w-full max-w-3xl overflow-hidden rounded-card border border-border bg-surface">
+    <Dialog
+      title={title}
+      description={description}
+      onRequestClose={onClose}
+      toolbar={toolbar}
+      size={size}
+    >
+      <div className="w-full overflow-hidden rounded-card border border-border bg-surface">
         {children}
       </div>
     </Dialog>

@@ -3,17 +3,19 @@ import { AiSwitchSync } from "@/components/ai/ai-switch-sync";
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import { Suspense, type ReactNode } from "react";
-import { Sidebar } from "@/components/shell/sidebar";
-import { PageGuideFloating } from "@/components/shell/page-guide";
+import {
+  ChromeDemoStore,
+  ChromePageGuide,
+  ChromeSidebar,
+  ChromeTabBar,
+  ChromeTopBar,
+} from "@/components/shell/chrome";
 import { PresenterLauncher } from "@/components/shell/presenter-launcher";
-import { TabBar } from "@/components/shell/tab-bar";
-import { TopBar } from "@/components/shell/top-bar";
 import { Toaster } from "@/components/ui/toast";
 import { DashboardLoading } from "@/components/ui/page";
 import { NamePhotos } from "@/components/ui/name-photos";
 import { NoteAssistEverywhere } from "@/components/ai/note-assist-everywhere";
 import { AppearanceSync } from "@/features/appearance/appearance-sync";
-import { DemoStoreHydrator } from "@/state/demo-store-hydrator";
 import { fontVariables } from "./fonts";
 import { ThemeScript } from "./theme-script";
 import "./globals.css";
@@ -51,7 +53,9 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
         <ThemeScript />
       </head>
       <body suppressHydrationWarning>
-        <DemoStoreHydrator />
+        <Suspense fallback={null}>
+          <ChromeDemoStore />
+        </Suspense>
         <Suspense fallback={null}>
           <AiSwitchSync />
         </Suspense>
@@ -66,7 +70,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
                 <div className="xl:w-sidebar hidden h-screen w-16 flex-none border-r border-sidebar-border bg-sidebar md:block" />
               }
             >
-              <Sidebar />
+              <ChromeSidebar />
             </Suspense>
           </div>
           <div className="flex min-w-0 flex-1 flex-col">
@@ -74,7 +78,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
               <Suspense
                 fallback={<div className="min-h-(--topbar-h) border-b border-border bg-topbar" />}
               >
-                <TopBar />
+                <ChromeTopBar />
               </Suspense>
             </div>
             <div className="min-w-0 flex-1">
@@ -90,14 +94,14 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
                   <div className="sticky bottom-0 h-16 flex-none border-t border-sidebar-border bg-sidebar md:hidden" />
                 }
               >
-                <TabBar />
+                <ChromeTabBar />
               </Suspense>
             </div>
           </div>
         </div>
         <div data-chrome className="contents">
           <Suspense fallback={null}>
-            <PageGuideFloating />
+            <ChromePageGuide />
           </Suspense>
           <PresenterLauncher />
         </div>

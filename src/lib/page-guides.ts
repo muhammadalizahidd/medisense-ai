@@ -35,6 +35,8 @@ const g = (
 
 /** Pages that never show: they forward to another screen. */
 export const redirectOnly = [
+  // Opens the Pay rates tab of People and HR.
+  "/care/hr/pay",
   "/admin-operations",
   "/automations",
   "/tasks",
@@ -354,11 +356,11 @@ export const guides: Record<string, PageGuide> = {
   /* ------------------------------------------------------------------ live care: intake and patients */
   "/care": g(
     "Patients",
-    "Every new patient moving from accepted referral to ready for service, as a board.",
+    "Every patient in one place: referrals coming in, patients waiting for or seeing a therapist, and corrections they asked for in their app.",
     [
-      "See patients by onboarding stage",
-      "Open a patient to finish their onboarding",
-      "Filter by stage and service",
+      "Patients: find a therapist, follow onboarding, book a visit",
+      "Referrals: triage, check eligibility, accept or decline",
+      "Patient requests: approve or reject changes from the app",
     ],
     [
       "Start with the oldest patients in each stage.",
@@ -470,20 +472,20 @@ export const guides: Record<string, PageGuide> = {
     "An accurate clinician profile for matching and scheduling.",
   ),
   "/care/hr": g(
-    "Credentials and compliance",
-    "Every clinician's registrations, worker screening, insurance and training, with expired and expiring ones first.",
+    "People and HR",
+    "Every clinician's credentials, leave, timesheets and pay rates in one place, with what needs action first.",
     [
-      "See who is fully compliant",
-      "Act on expired and expiring credentials",
-      "Request a renewal from the clinician",
-      "Search the full credential register",
+      "Credentials and compliance: act on expired and expiring credentials, request renewals",
+      "Leave and absence: decide requests, see who's away and the visits to cover",
+      "Timesheets: approve each week and send the hours to payroll",
+      "Pay rates: how each therapist is paid, from which date, with every change audited",
     ],
     [
-      "Start with Needs action: expired and required items are at the top.",
-      "Request the renewal; the clinician uploads it from My profile.",
-      "Verify the new evidence on their staff record.",
+      "Start with Credentials: expired and required items are at the top.",
+      "Decide leave requests, checking the visits they affect.",
+      "Approve timesheets, then send them to payroll.",
     ],
-    "No clinician is booked on an expired credential, and renewals are chased before they lapse.",
+    "Nobody works on an expired credential, leave is covered, and hours are paid on time.",
   ),
   "/care/hr/leave": g(
     "Leave and absence",
@@ -517,22 +519,6 @@ export const guides: Record<string, PageGuide> = {
     ],
     "Hours are approved from what actually happened, with nothing typed in twice.",
   ),
-  "/care/hr/pay": g(
-    "Pay rates",
-    "How each therapist is paid: per appointment, hourly or a share of what was billed, each from a start date.",
-    [
-      "See every therapist's current and upcoming pay rate",
-      "Set or change a rate with the date it starts",
-      "Choose what a late cancellation or Did not attend pays",
-      "See the history of every change, newest first",
-    ],
-    [
-      "Check the alert for therapists with no pay rate.",
-      "Open a therapist and set the method, amounts and start date.",
-      "Past visits keep their old rate; the change is in the audit trail.",
-    ],
-    "Every therapist's pay is set, dated and traceable, and past earnings never move.",
-  ),
   "/care/messages": g(
     "Messages",
     "Chat with anyone in the practice: office staff, clinicians and patients.",
@@ -548,6 +534,27 @@ export const guides: Record<string, PageGuide> = {
       "Unread chats are counted in the sidebar and the bell.",
     ],
     "Everyone is one message away, without leaving the system.",
+  ),
+  "/care/schedule/resources": g(
+    "Resources and leave",
+    "Each clinician's week: rostered hours, what is booked, what is free, and leave.",
+    ["See free and booked hours by day", "Add leave for a clinician", "Filter by therapy type"],
+    ["Pick the week.", "Find the clinician.", "Add leave or check free time."],
+    "A clear picture of who can take more visits this week.",
+  ),
+  "/care/schedule/reminders": g(
+    "Visit reminders",
+    "Reminders sent to patients before their visits, and the ones that failed.",
+    ["See sent and failed reminders", "Resend a reminder"],
+    ["Check the failed list.", "Fix the contact details.", "Resend."],
+    "Every patient reminded before their visit.",
+  ),
+  "/care/schedule/exceptions": g(
+    "Scheduling exceptions and audit",
+    "Clashes, leave conflicts, blocked bookings and change requests, with the booking history.",
+    ["Open each exception", "Move or cancel the visit", "Read the audit trail"],
+    ["Open the exception.", "Resolve it.", "Check the audit trail."],
+    "No double bookings or visits during leave.",
   ),
   "/care/schedule": g(
     "Scheduling",
@@ -602,10 +609,15 @@ export const guides: Record<string, PageGuide> = {
   ),
   "/care/billing": g(
     "Billing and finance",
-    "Billable services, invoices, claims, payments and adjustments.",
-    ["Review the billable queue", "Create and approve invoices", "Track claims and payments"],
-    ["Clear the billable queue.", "Approve and issue invoices.", "Reconcile payments."],
-    "Services billed once and payments reconciled.",
+    "Bill finished visits, follow invoices and claims, and match payments.",
+    [
+      "To bill: check each finished visit and prepare invoices",
+      "Invoices and claims: approve, issue, claim and credit",
+      "Payments: record money in and match it to the bank",
+      "Rates and rules: the button at the top, for Finance Managers",
+    ],
+    ["Clear To bill first.", "Approve and issue invoices.", "Record and match payments."],
+    "Services billed once and payments matched.",
   ),
   "/care/billing/[id]": g(
     "Invoice",
@@ -617,8 +629,8 @@ export const guides: Record<string, PageGuide> = {
 
   /* ------------------------------------------------------------------ live care: operations and reports */
   "/care/operations": g(
-    "Operations",
-    "The operations hub: work queue, approvals, rules, notifications and run log.",
+    "Work and approvals",
+    "Everything to work on and approve in one place: the work queue, approvals, rules, notifications and run log.",
     ["Work the queue by team and priority", "Decide approvals", "Review rules and what they did"],
     [
       "Start with overdue and escalated tasks.",
@@ -647,6 +659,17 @@ export const guides: Record<string, PageGuide> = {
     ["Choose a report", "Filter and compare periods", "Save views and schedule exports"],
     ["Pick the report.", "Set filters.", "Save, schedule or export it."],
     "The figures you need, on demand or on a schedule.",
+  ),
+  "/care/reports/system/[group]": g(
+    "System reports",
+    "Ready-made tables from the live records, by appointment type, patient, therapist or visit.",
+    [
+      "Filter by dates, branch, service, therapist and status",
+      "Switch reports with the tabs",
+      "Download the PDF or Excel file",
+    ],
+    ["Set the date range and filters.", "Pick the report tab.", "Check the table, then download."],
+    "A finished report, the same on screen and in the file, with the download recorded.",
   ),
   "/care/reports/therapists": g(
     "Therapist reports",
@@ -731,12 +754,12 @@ export const guides: Record<string, PageGuide> = {
 
   /* ------------------------------------------------------------------ live care: clinical (modules 11 to 15) */
   "/care/records": g(
-    "Clinical records",
-    "Every participant's clinical record, shown at the level your role allows.",
+    "Clinical",
+    "Every patient's clinical side in one place: records, assessments, treatment plans, and progress and reports.",
     [
-      "Filter by discipline and episode status",
-      "Open a record",
-      "Request access to a locked record",
+      "Clinical records: open a record, or request access to a locked one",
+      "Assessments and treatment plans: follow each from request to signed",
+      "Progress and reports: outcomes, report deadlines and approvals",
     ],
     [
       "Search for the participant.",
@@ -747,7 +770,7 @@ export const guides: Record<string, PageGuide> = {
   ),
   "/care/records/[id]": g(
     "Clinical record",
-    "One participant's clinical record: episodes, history, conditions, medicines, risks and consents.",
+    "One participant's clinical record: courses of care, history, conditions, medicines, risks and consents.",
     [
       "Review history and conditions",
       "Check risks and the safe-visit plan",
@@ -757,11 +780,15 @@ export const guides: Record<string, PageGuide> = {
     "A reviewed, current clinical record.",
   ),
   "/therapist/records": g(
-    "My patients' records",
-    "Clinical records for patients you treat.",
-    ["Find a patient's record", "See drafts to sign and items to review"],
-    ["Open the patient.", "Review and update the record."],
-    "Your patients' records kept current.",
+    "Clinical",
+    "Your patients' clinical side in one place: records, assessments and treatment plans.",
+    [
+      "Clinical records: find a record, sign drafts, review items",
+      "Assessments: start, continue and sign",
+      "Treatment plans: write, review and share with the patient",
+    ],
+    ["Pick a tab.", "Open the patient or the item you need."],
+    "Your patients' records, assessments and plans kept current.",
   ),
   "/therapist/records/[id]": g(
     "Clinical record",
@@ -776,7 +803,7 @@ export const guides: Record<string, PageGuide> = {
   ),
   "/care/assessments": g(
     "Assessments",
-    "Every assessment episode from request to signed report.",
+    "Every assessment from request to signed report.",
     [
       "Filter by status, discipline, location and clinician",
       "See status mix and open work",
@@ -798,7 +825,7 @@ export const guides: Record<string, PageGuide> = {
   ),
   "/therapist/assessments": g(
     "My assessments",
-    "Your assessment episodes from request to signed report.",
+    "Your assessments from request to signed report.",
     ["Filter and open assessments", "See what's due this week"],
     ["Open the next assessment.", "Record findings.", "Sign the report."],
     "Your assessments completed and signed.",
@@ -822,7 +849,7 @@ export const guides: Record<string, PageGuide> = {
   ),
   "/care/plans": g(
     "Treatment plans",
-    "Every treatment plan and episode still waiting for one.",
+    "Every treatment plan and course of care still waiting for one.",
     ["Filter by state and discipline", "See reviews due and co-sign work", "Open a plan"],
     ["Check co-sign and overdue reviews.", "Open the plan.", "Co-sign or review."],
     "Plans active, reviewed and co-signed on time.",
@@ -840,10 +867,10 @@ export const guides: Record<string, PageGuide> = {
   ),
   "/therapist/plans": g(
     "My treatment plans",
-    "Your treatment plans, and episodes waiting for a plan.",
-    ["Create a plan for an episode", "See next reviews", "Open a plan"],
-    ["Create plans for new episodes.", "Open plans with reviews due.", "Record the review."],
-    "Every episode has a current, reviewed plan.",
+    "Your treatment plans, and courses of care waiting for a plan.",
+    ["Create a plan for a course of care", "See next reviews", "Open a plan"],
+    ["Create plans for new courses of care.", "Open plans with reviews due.", "Record the review."],
+    "Every course of care has a current, reviewed plan.",
   ),
   "/therapist/plans/[id]": g(
     "Treatment plan workspace",
@@ -863,12 +890,12 @@ export const guides: Record<string, PageGuide> = {
     "An active, measurable plan the participant understands.",
   ),
   "/care/sessions": g(
-    "Sessions",
-    "Every therapy session across the team, with attendance, note state and delivery verification.",
+    "Sessions and notes",
+    "Every therapy session across the team, and the clinical note that comes out of each one.",
     [
-      "Filter by date, attendance, mode and service",
-      "See notes to sign and unverified delivery",
-      "Open a session",
+      "Sessions: attendance, mode, service and delivery verification",
+      "Notes: what is late, drafted by AI, flagged or waiting for co-sign",
+      "Open a session or a note at your access level",
     ],
     [
       "Check in-progress and missed sessions.",
@@ -991,24 +1018,24 @@ export const guides: Record<string, PageGuide> = {
     "Your caseload, sessions, notes and progress at a glance, with your clinical reports one tap away.",
     [
       "See which goals are improving and which reviews are due",
-      "Open an episode to record outcomes or reassess",
+      "Open a course of care to record outcomes or reassess",
       "Work your report centre and see what's with a reviewer",
     ],
     [
       "Start with overdue reviews and reports.",
-      "Open the episode and record today's measure.",
+      "Open the course of care and record today's measure.",
       "Draft, check and sign the report, then release it.",
     ],
-    "Every episode measured and reported on time.",
+    "Every course of care measured and reported on time.",
   ),
   "/therapist/progress/[episode]": g(
-    "Episode progress",
-    "One service episode: goals against baseline and target, observations, reassessments, reports and discharge.",
+    "Course of care progress",
+    "One course of care: goals against baseline and target, observations, reassessments, reports and discharge.",
     [
       "Record an observation with method, unit, source and setting",
       "Reassess over one or more visits and sign the outcome",
       "Revise a goal target with a reason",
-      "Request a report or discharge the episode",
+      "Request a report or discharge the course of care",
     ],
     [
       "Check each goal's trend; 'Not calculable' explains why.",
@@ -1037,7 +1064,7 @@ export const guides: Record<string, PageGuide> = {
   ),
   "/care/progress": g(
     "Progress and reports",
-    "Team-wide episode progress, report deadlines and the clinical approval queue.",
+    "Team-wide course of care progress, report deadlines and the clinical approval queue.",
     [
       "See overdue reviews and reports by owner",
       "Open the approval queue to co-sign",
@@ -1047,15 +1074,15 @@ export const guides: Record<string, PageGuide> = {
     "Reports delivered on time with governance applied.",
   ),
   "/care/progress/[episode]": g(
-    "Episode progress (care team)",
-    "One episode's progress at your access level: goals, reports and discharge status.",
+    "Course of care progress (care team)",
+    "One course of care's progress at your access level: goals, reports and discharge status.",
     ["Review goal progress and observations (clinical leads)", "See report and discharge status"],
     [
       "Check goal progress.",
       "Open the latest report.",
       "Follow up on discharge or overdue reviews.",
     ],
-    "A clear view of where the episode stands.",
+    "A clear view of where the course of care stands.",
   ),
   "/care/progress/reports/[id]": g(
     "Clinical report",
@@ -1214,8 +1241,8 @@ export const guides: Record<string, PageGuide> = {
     "The therapist gets the answers before the visit.",
   ),
   "/care/ai-agent": g(
-    "Operations agent",
-    "The admin AI operations agent: a daily briefing, 32 features across intake, allocation, scheduling, funding, billing and operations, with every change shown as a proposal a person confirms.",
+    "Work agent",
+    "The admin AI work agent: a daily briefing, 32 features across intake, allocation, scheduling, funding, billing and operations, with every change shown as a proposal a person confirms.",
     [
       "Read today's briefing in the order the operations SOP sets",
       "Ask a question or pick one of the 32 features",

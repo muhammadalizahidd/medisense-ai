@@ -50,7 +50,12 @@ export const leaveRange = (from: string, to: string) =>
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 /** People and HR: leave requests to decide, who's away, balances and past decisions. */
-export function LeaveBoard() {
+export function LeaveBoard({
+  embedded = false,
+}: {
+  /** Inside People and HR, which brings its own title and owns the address. */
+  embedded?: boolean;
+} = {}) {
   const { data, error, loading, reload } = useResource<LeaveBoardDto>(
     "/api/care/hr/leave",
     (e) => e.type === "care",
@@ -66,17 +71,21 @@ export function LeaveBoard() {
     { id: "balances" as const, label: "Balances", count: data?.balances.length },
     { id: "history" as const, label: "History", count: data?.history.length },
   ];
-  const [tab, setTab] = useTab(tabs, "requests");
+  const addressTab = useTab(tabs, "requests");
+  const localTab = useState<(typeof tabs)[number]["id"]>("requests");
+  const [tab, setTab] = embedded ? localTab : addressTab;
   const s = data?.summary;
 
   return (
     <>
-      <PageHeader
-        eyebrow="People and HR"
-        title="Leave and absence"
-        description="Leave requests with what each one means for patients and the team, who's away, and every clinician's balance."
-        actions={<LiveBadge />}
-      />
+      {!embedded && (
+        <PageHeader
+          eyebrow="People and HR"
+          title="Leave and absence"
+          description="Leave requests with what each one means for patients and the team, who's away, and every clinician's balance."
+          actions={<LiveBadge />}
+        />
+      )}
       {error && !data ? (
         <ErrorNote message={error} onRetry={reload} />
       ) : loading && !data ? (

@@ -105,7 +105,7 @@ export const templates: Record<NoteType, { key: string; title: string; required:
     { key: "followup", title: "Follow-up", required: true },
   ],
   "Discharge summary draft": [
-    { key: "dates", title: "Episode dates", required: true },
+    { key: "dates", title: "Course of care dates", required: true },
     { key: "goals", title: "Goals and outcomes", required: true },
     { key: "referrals", title: "Referrals", required: false },
     { key: "followup", title: "Follow-up", required: true },

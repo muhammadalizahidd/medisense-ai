@@ -3,7 +3,13 @@
 import { X } from "lucide-react";
 import { useEffect, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { OVERLAY_FRAME, OVERLAY_PANEL, useOverlayStack, useScrollLock } from "./overlay";
+import {
+  OVERLAY_FRAME,
+  overlayPanel,
+  useOverlayStack,
+  useScrollLock,
+  type OverlaySize,
+} from "./overlay";
 import { OverlayCrumbs } from "./overlay-crumbs";
 
 const FOCUSABLE = "button, input, select, textarea, a[href]";
@@ -19,6 +25,7 @@ export function Sheet({
   children,
   footer,
   above = false,
+  size = "md",
 }: {
   title: string;
   description?: ReactNode;
@@ -27,6 +34,8 @@ export function Sheet({
   footer?: ReactNode;
   /** Opens above a dialog or another sheet. */
   above?: boolean;
+  /** How wide it is on a large screen; see `OverlaySize`. */
+  size?: OverlaySize;
 }) {
   const panel = useRef<HTMLDivElement>(null);
   const close = useRef(onClose);
@@ -76,7 +85,13 @@ export function Sheet({
         onClick={onClose}
         className="absolute inset-0 cursor-default bg-scrim"
       />
-      <div ref={panel} role="dialog" aria-modal="true" aria-label={title} className={OVERLAY_PANEL}>
+      <div
+        ref={panel}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        className={overlayPanel(size)}
+      >
         <OverlayCrumbs title={title} below={below} onClose={onClose} />
         <header className="flex items-start justify-between gap-3 border-b border-border px-6 py-5">
           <div className="min-w-0">

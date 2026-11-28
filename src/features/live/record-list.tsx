@@ -15,7 +15,14 @@ import { th, td } from "./funding-bits";
 import { KpiBand, ops, tableBox, tableHead, textArea, when } from "./ops-bits";
 
 /** Module 11 CR-01: My clients and clinical record search, permission-aware. */
-export function RecordList({ base }: { base: "/therapist/records" | "/care/records" }) {
+export function RecordList({
+  base,
+  embedded = false,
+}: {
+  base: "/therapist/records" | "/care/records";
+  /** Inside a combined page, which brings its own title. */
+  embedded?: boolean;
+}) {
   const { data, error, loading, reload } = useResource<{ records: RecordListItem[] }>(
     "/api/care/records",
     (e) => e.type === "care",
@@ -48,16 +55,18 @@ export function RecordList({ base }: { base: "/therapist/records" | "/care/recor
   const open = all.filter((r) => r.access !== "none");
   return (
     <>
-      <PageHeader
-        eyebrow="Live care"
-        title="Clinical records"
-        description={
-          therapist
-            ? "Your assigned participants, with history, risks, consent and the full clinical timeline"
-            : "Clinical records, shown at the level your role allows"
-        }
-        actions={<LiveBadge />}
-      />
+      {!embedded && (
+        <PageHeader
+          eyebrow="Live care"
+          title="Clinical records"
+          description={
+            therapist
+              ? "Your assigned participants, with history, risks, consent and the full clinical timeline"
+              : "Clinical records, shown at the level your role allows"
+          }
+          actions={<LiveBadge />}
+        />
+      )}
       <KpiBand
         label="Record figures"
         items={[
@@ -67,7 +76,7 @@ export function RecordList({ base }: { base: "/therapist/records" | "/care/recor
             sub: therapist ? "assigned or consultation access" : "you can open",
           },
           {
-            label: "Active episodes",
+            label: "Active courses of care",
             value: open.reduce(
               (s, r) => s + r.episodes.filter((e) => e.status === "Active").length,
               0,
@@ -138,12 +147,12 @@ export function RecordList({ base }: { base: "/therapist/records" | "/care/recor
         </div>
         <div className="w-48">
           <Select
-            aria-label="Episode status"
+            aria-label="Course of care status"
             className="h-9"
             value={status}
             onChange={(e) => setStatus(e.target.value)}
           >
-            <option value="">Any episode status</option>
+            <option value="">Any course of care status</option>
             {["Awaiting assessment", "Active", "On hold", "Discharged", "Closed"].map((d) => (
               <option key={d}>{d}</option>
             ))}
@@ -175,7 +184,7 @@ export function RecordList({ base }: { base: "/therapist/records" | "/care/recor
           <thead className={tableHead}>
             <tr>
               <th className={th}>Participant</th>
-              <th className={th}>Episodes</th>
+              <th className={th}>Courses of care</th>
               <th className={th}>Next visit</th>
               <th className={th}>Risks</th>
               <th className={th}>History</th>

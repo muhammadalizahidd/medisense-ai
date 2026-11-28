@@ -2,21 +2,21 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { PageContainer, PageLoading } from "@/components/ui/page";
 import { OfflinePage } from "@/features/live/offline-page";
-import { DocQueue } from "@/features/live/doc-queue";
+import { SessionsHub } from "@/features/live/sessions-hub";
 import { requirePageUser } from "@/server/page-auth";
 
-export const metadata: Metadata = { title: "Treatment plans � Medisense" };
+export const metadata: Metadata = { title: "Clinical notes · Medisense" };
 
 async function PageContent() {
   if (!(await requirePageUser("/care/documentation", "admin"))) return <OfflinePage />;
   return (
     <PageContainer>
-      <DocQueue base="/care/documentation" />
+      <SessionsHub section="notes" />
     </PageContainer>
   );
 }
 
-/** The session is checked inside Suspense, so the page frame shows straight away. */
+/** Clinical notes, its own page in the Sessions and notes menu. */
 export default function Page() {
   return (
     <Suspense fallback={<PageLoading />}>

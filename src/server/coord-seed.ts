@@ -227,7 +227,7 @@ async function seedOnce() {
     },
   });
   await make({
-    title: "Handover: OT goals for the psychology episode",
+    title: "Handover: OT goals for the psychology course of care",
     category: "Care Coordination",
     participant: "Alex Chen",
     discipline: "Occupational Therapy",

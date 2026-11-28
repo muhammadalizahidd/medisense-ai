@@ -36,6 +36,12 @@ export const pagePermissions: Record<string, readonly string[]> = {
     "operations.matching",
   ],
   "/care/reports/therapists": ["reports.therapist"],
+  // Each group of system reports opens for the detail permission its reports need.
+  "/care/reports/system/types": ["reports.detail.scheduling"],
+  "/care/reports/system/therapy": ["reports.detail.scheduling"],
+  "/care/reports/system/patients": ["reports.detail.participants"],
+  "/care/reports/system/therapists": ["reports.detail.staff", "reports.detail.scheduling"],
+  "/care/reports/system/visits": ["reports.detail.scheduling"],
   "/care/reports": [
     "reports.read.referrals",
     "reports.read.participants",
@@ -57,8 +63,10 @@ export const pagePermissions: Record<string, readonly string[]> = {
   // control for the roles tab; the account actions there stay with the Super Admin.
   "/": [],
   "/care/users": ["roles.manage"],
-  "/care/hr": ["hr.manage"],
-  // A Finance Manager sets pay rates without holding the rest of People and HR.
+  // Pay rate holders open People and HR for its Pay rates tab only; the other tabs need hr.manage.
+  "/care/hr": ["hr.manage", "pay.view", "pay.manage"],
+  "/care/hr/leave": ["hr.manage"],
+  "/care/hr/timesheets": ["hr.manage"],
   "/care/hr/pay": ["pay.view", "pay.manage"],
   "/care/messages": ["messages.use"],
 };

@@ -5,7 +5,7 @@ import { OfflinePage } from "@/features/live/offline-page";
 import { OperationsHub } from "@/features/live/ops-hub";
 import { requirePageUser } from "@/server/page-auth";
 
-export const metadata: Metadata = { title: "Operations · Medisense" };
+export const metadata: Metadata = { title: "Work and approvals · Medisense" };
 
 async function PageContent() {
   if (!(await requirePageUser("/care/operations", "admin"))) return <OfflinePage />;

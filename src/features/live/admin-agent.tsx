@@ -87,8 +87,8 @@ export function AdminAgent({ embedded = false }: { embedded?: boolean }) {
         className={cn("flex flex-wrap items-end justify-between gap-4", embedded && "sr-only")}
       >
         <div>
-          <p className="label-caps text-ink-500">Live care · AI operations agent</p>
-          <h1 className="type-display text-h1 text-ink-900">Operations agent</h1>
+          <p className="label-caps text-ink-500">Live care · AI work agent</p>
+          <h1 className="type-display text-h1 text-ink-900">Work agent</h1>
           <p className="mt-1 max-w-180 text-small text-ink-700">
             Ask about intake, allocation, scheduling, funding, billing or today&apos;s priorities.
             Answers come from live records and approved sources; any change is shown as a proposal
@@ -144,7 +144,7 @@ export function AdminAgent({ embedded = false }: { embedded?: boolean }) {
           aria-label="Ask the agent"
         >
           <div className="flex items-center gap-2 border-b border-border px-4 py-3">
-            <span className="label-caps text-ink-500">Ask the operations agent</span>
+            <span className="label-caps text-ink-500">Ask the work agent</span>
           </div>
           <div
             aria-live="polite"
@@ -198,7 +198,7 @@ export function AdminAgent({ embedded = false }: { embedded?: boolean }) {
             )}
             <div className="flex items-center gap-2 rounded-card border border-border-strong bg-surface p-1.5 pl-3 shadow-lift focus-within:border-accent-fill">
               <label htmlFor="agent-q" className="sr-only">
-                Ask the operations agent
+                Ask the work agent
               </label>
               <input
                 id="agent-q"

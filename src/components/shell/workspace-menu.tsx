@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, LayoutGrid, LogIn, LogOut, Palette, UserRound } from "lucide-react";
+import { ChevronDown, Compass, LayoutGrid, LogIn, LogOut, Palette, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -11,6 +11,7 @@ import { homeFor } from "@/lib/live/routes";
 import { roleUsers, type Role } from "@/lib/navigation";
 import { useDemoStore } from "@/state/demo-store";
 import { photoFor } from "@/lib/avatars";
+import { TOUR_EVENT } from "./welcome-tour";
 
 /** A row in the menu: icon, label, optional hint. */
 const rowClass =
@@ -102,6 +103,7 @@ export function WorkspaceMenu() {
         type="button"
         aria-expanded={open}
         aria-label={`Switch workspace. Signed in as ${user.name}`}
+        data-tour="account"
         onClick={() => setOpen(!open)}
         className="flex cursor-pointer items-center gap-2.5 rounded-control py-1 pr-1.5 pl-1 text-left hover:bg-canvas"
       >
@@ -172,6 +174,17 @@ export function WorkspaceMenu() {
                       <Palette className="size-4 flex-none text-ink-500" aria-hidden="true" />
                       Appearance
                     </Link>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOpen(false);
+                        window.dispatchEvent(new Event(TOUR_EVENT));
+                      }}
+                      className={rowClass}
+                    >
+                      <Compass className="size-4 flex-none text-ink-500" aria-hidden="true" />
+                      Take the tour
+                    </button>
                   </>
                 )}
               </nav>

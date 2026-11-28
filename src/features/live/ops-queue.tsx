@@ -1,7 +1,23 @@
 "use client";
 
-import { Bookmark, Check, Circle, Filter, Plus, Search, X } from "lucide-react";
+import {
+  Bookmark,
+  Check,
+  Circle,
+  Filter,
+  Plus,
+  Search,
+  X,
+  Clock,
+  History,
+  Link2,
+  ListChecks,
+  Timer,
+  UserRound,
+  Users,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { RecordCard, RecordFacts, RecordPopup } from "@/components/ui/record-popup";
 import { RuleMark } from "@/components/ai/provenance";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
@@ -562,13 +578,22 @@ function BulkRun({
 }
 
 export function TaskPreview({ task: t, onClose }: { task: TaskDto; onClose: () => void }) {
+  const done = t.checklist.filter((c) => c.done).length;
   return (
-    <Sheet
+    <RecordPopup
       title={t.ref}
       description={t.title}
       onClose={onClose}
-      footer={
+      meta={
         <>
+          <Tag tone={taskTone[t.status]}>{t.status}</Tag>
+          <PriorityTag p={t.priority} />
+          <Tag tone="outline">{t.visibility}</Tag>
+          {t.source === "Rule" && <RuleMark>{`${t.ruleCode} v${t.ruleVersion}`}</RuleMark>}
+        </>
+      }
+      footer={
+        <div className="flex flex-wrap items-center gap-2">
           <ButtonLink variant="primary" href={`/care/operations/tasks/${t.id}`}>
             Open task
           </ButtonLink>
@@ -580,74 +605,80 @@ export function TaskPreview({ task: t, onClose }: { task: TaskDto; onClose: () =
               Open {t.related.kind.toLowerCase()}
             </ButtonLink>
           )}
-        </>
+        </div>
+      }
+      aside={
+        <RecordCard title="History" icon={History} flush={false}>
+          {t.history.length === 0 ? (
+            <p className="text-small text-ink-500">Nothing recorded yet.</p>
+          ) : (
+            <ol className="relative ml-2 border-l border-border pl-5">
+              {[...t.history]
+                .reverse()
+                .slice(0, 8)
+                .map((h, i) => (
+                  <li key={i} className="relative pb-3 last:pb-0">
+                    <span
+                      aria-hidden="true"
+                      className="absolute top-1.5 -left-[25px] size-2.5 rounded-full border-2 border-surface bg-accent-fill"
+                    />
+                    <p className="text-small text-ink-900">{h.action}</p>
+                    <p className="text-caption text-ink-500">
+                      {h.by}, {when(h.at)}
+                    </p>
+                  </li>
+                ))}
+            </ol>
+          )}
+        </RecordCard>
       }
     >
-      <div className="flex flex-col gap-4 text-small">
-        <div className="flex flex-wrap gap-2">
-          <Tag tone={taskTone[t.status]}>{t.status}</Tag>
-          <PriorityTag p={t.priority} />
-          <Tag tone="outline">{t.visibility}</Tag>
-          {t.source === "Rule" && <RuleMark>{`${t.ruleCode} v${t.ruleVersion}`}</RuleMark>}
-        </div>
-        <dl className="grid grid-cols-2 gap-3">
-          {[
-            ["Team", t.team],
-            ["Owner", t.assigneeName ?? "Unassigned"],
-            ["Due", when(t.dueAt)],
-            ["SLA", t.sla],
-            ["Related", `${t.related.kind} ${t.related.ref}`],
-            ["Participant", t.participant ?? "—"],
-          ].map(([k, v]) => (
-            <div key={k}>
-              <dt className="text-caption font-semibold text-ink-500">{k}</dt>
-              <dd className="text-ink-900">{v}</dd>
-            </div>
-          ))}
-        </dl>
-        {t.checklist.length > 0 && (
-          <div>
-            <p className="mb-1 text-caption font-semibold text-ink-500">Checklist</p>
-            <ul className="flex flex-col gap-1">
-              {t.checklist.map((c) => (
-                <li
-                  key={c.id}
-                  className={cn(
-                    "flex items-start gap-2 text-ink-900",
-                    c.done && "text-ink-500 line-through",
-                  )}
-                >
-                  {c.done ? (
-                    <Check className="mt-0.5 size-3.5 flex-none text-healthy" aria-label="Done" />
-                  ) : (
-                    <Circle className="mt-0.5 size-3.5 flex-none text-ink-400" aria-label="Open" />
-                  )}
-                  {c.label}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-        {t.restrictedHidden && (
-          <p className="rounded-control bg-sunken px-3 py-2 text-caption text-ink-700">
-            A clinical note on this task is visible to the Clinical Lead only.
-          </p>
-        )}
-        <div>
-          <p className="mb-1 text-caption font-semibold text-ink-500">Latest</p>
-          <ul className="flex flex-col gap-1 text-caption text-ink-700">
-            {t.history
-              .slice(-4)
-              .reverse()
-              .map((h, i) => (
-                <li key={i}>
-                  {when(h.at)} · {h.by}: {h.action}
-                </li>
-              ))}
+      <RecordFacts
+        facts={[
+          { icon: Users, label: "Team", value: t.team },
+          { icon: UserRound, label: "Owner", value: t.assigneeName ?? "Unassigned" },
+          { icon: Clock, label: "Due", value: when(t.dueAt) },
+        ]}
+      />
+      <RecordFacts
+        facts={[
+          { icon: Timer, label: "SLA", value: t.sla },
+          { icon: Link2, label: "Related", value: `${t.related.kind} ${t.related.ref}` },
+          { icon: UserRound, label: "Participant", value: t.participant ?? "None" },
+        ]}
+      />
+      {t.restrictedHidden && (
+        <p className="rounded-control bg-sunken px-4 py-3 text-small text-ink-700">
+          A clinical note on this task is visible to the Clinical Lead only.
+        </p>
+      )}
+      {t.checklist.length > 0 && (
+        <RecordCard
+          title="Checklist"
+          icon={ListChecks}
+          aside={`${done} of ${t.checklist.length} done`}
+        >
+          <ul className="divide-y divide-border">
+            {t.checklist.map((c) => (
+              <li
+                key={c.id}
+                className={cn(
+                  "flex items-start gap-2.5 px-4 py-2.5 text-small text-ink-900",
+                  c.done && "text-ink-500 line-through",
+                )}
+              >
+                {c.done ? (
+                  <Check className="mt-0.5 size-4 flex-none text-healthy" aria-label="Done" />
+                ) : (
+                  <Circle className="mt-0.5 size-4 flex-none text-ink-400" aria-label="Open" />
+                )}
+                {c.label}
+              </li>
+            ))}
           </ul>
-        </div>
-      </div>
-    </Sheet>
+        </RecordCard>
+      )}
+    </RecordPopup>
   );
 }
 

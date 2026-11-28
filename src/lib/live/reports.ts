@@ -630,9 +630,23 @@ export const blankFilters = (today: string): ReportFilters => ({
   grain: "Week",
 });
 
+const readableDay = (key: string, year: boolean) =>
+  new Intl.DateTimeFormat("en-AU", {
+    timeZone: "UTC",
+    day: "numeric",
+    month: "short",
+    ...(year ? { year: "numeric" } : {}),
+  }).format(new Date(`${key}T00:00:00Z`));
+
+/** "1 Oct – 31 Dec 2026", or one day on its own. */
+export function readableRange(from: string, to: string) {
+  if (from === to) return readableDay(from, true);
+  return `${readableDay(from, from.slice(0, 4) !== to.slice(0, 4))} – ${readableDay(to, true)}`;
+}
+
 export function filterSummary(f: ReportFilters, patientName?: string) {
   return [
-    `${f.preset === "Custom" ? "Custom" : f.preset}: ${f.from} to ${f.to}`,
+    `${f.preset === "Custom" ? "Custom" : f.preset}: ${readableRange(f.from, f.to)}`,
     f.setting && `Setting: ${f.setting}`,
     f.discipline && `Discipline: ${f.discipline}`,
     f.support && `Support: ${f.support}`,
@@ -1010,7 +1024,7 @@ export const metrics: MetricDef[] = [
     domain: "Participants",
     basis: "Started",
     definition: "Service requests whose first delivered visit falls in the period.",
-    limit: "Repeat appointments are not new episodes.",
+    limit: "Repeat appointments are not new courses of care.",
     drill: { module: "Patients", href: "/care" },
     compute: (f, from, to) =>
       count(f.services.filter((s) => inRange(s.startedAt, from, to)).length),
@@ -1403,7 +1417,7 @@ export const metrics: MetricDef[] = [
     definition:
       "Accepted AI suggestions ÷ reviewed suggestions × 100. Rejected and deferred are counted separately.",
     limit: "Pending suggestions are not in the denominator.",
-    drill: { module: "Operations", href: "/care/operations" },
+    drill: { module: "Work and approvals", href: "/care/operations" },
     compute: (f, from, to) => {
       const s = f.suggestions.filter((x) => inRange(x.at, from, to) && x.decision !== "Pending");
       return pct(s.filter((x) => x.decision === "Accepted").length, s.length);
@@ -1419,7 +1433,7 @@ export const metrics: MetricDef[] = [
     better: "down",
     definition: "Open assigned tasks whose due time is before now (business timestamp).",
     limit: "Completed and cancelled tasks are excluded.",
-    drill: { module: "Operations", href: "/care/operations?tab=work" },
+    drill: { module: "Work and approvals", href: "/care/operations?tab=work" },
     compute: (f, _from, _to, ctx) =>
       count(
         f.tasks.filter((t) => !["Completed", "Cancelled"].includes(t.status) && t.dueAt < ctx.now)
@@ -1442,12 +1456,12 @@ export const metrics: MetricDef[] = [
   },
   {
     id: "patients-seen",
-    label: "Patients seen",
+    label: "Patients visited",
     unit: "people",
     domain: "Scheduling",
     basis: "Appointment date",
     definition: "Distinct patients with at least one delivered session in the period.",
-    limit: "Includes patients seen for a colleague. A cancelled or missed visit is not seen.",
+    limit: "Includes patients visited for a colleague. A cancelled or missed visit is not counted.",
     drill: { module: "Appointments", href: "/care/schedule" },
     compute: (f, from, to) => count(seenSet(f, from, to).size),
   },

@@ -92,7 +92,7 @@ export function ReportComposer({
         eyebrow="Live care"
         leading={
           <ButtonLink size="sm" variant="ghost" href={`${base}/${encodeURIComponent(r.episodeId)}`}>
-            <ArrowLeft className="size-3.5" aria-hidden="true" /> Episode
+            <ArrowLeft className="size-3.5" aria-hidden="true" /> Course of care
           </ButtonLink>
         }
         title={r.type}
@@ -568,7 +568,7 @@ function Sign({ r, post }: { r: ReportFull; post: Post }) {
           ) : (
             <div className="flex flex-col gap-3 text-small">
               <ul className="flex flex-col gap-1.5 text-ink-700">
-                <li>Identity, dates, episode and purpose are correct.</li>
+                <li>Identity, dates, course of care and purpose are correct.</li>
                 <li>Quoted values match their sources; nothing is unsupported.</li>
                 <li>Interpretation is mine as the treating clinician.</li>
                 <li>Limitations, risks and disclosures are documented.</li>

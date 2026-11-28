@@ -355,7 +355,7 @@ export async function createTask(
     if (!client) throw new UserFacingError("Participant not found.", 404);
     const need = client.needs.find((n) => n.id === input.needId);
     if (!need && input.category !== "Care Coordination")
-      throw new UserFacingError("Choose the service episode for a participant task.");
+      throw new UserFacingError("Choose the course of care for a participant task.");
     discipline = need?.discipline ?? "";
   }
   if (!input.noDue && !input.dueAt)
@@ -725,7 +725,7 @@ export async function taskAction(u: UserDoc, id: ObjectId, a: TaskAction) {
     }
     case "draft-summary": {
       if (!client || !t.needId)
-        throw new UserFacingError("A handover summary needs a participant episode.", 409);
+        throw new UserFacingError("A handover summary needs a participant course of care.", 409);
       set.aiDraft = await aiSummary(client, t.needId, t.discipline);
       note = "AI drafted a handover summary for review";
       break;

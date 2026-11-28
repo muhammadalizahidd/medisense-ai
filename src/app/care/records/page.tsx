@@ -2,16 +2,16 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { PageContainer, PageLoading } from "@/components/ui/page";
 import { OfflinePage } from "@/features/live/offline-page";
-import { RecordList } from "@/features/live/record-list";
+import { ClinicalHub } from "@/features/live/clinical-hub";
 import { requirePageUser } from "@/server/page-auth";
 
-export const metadata: Metadata = { title: "Clinical records · Medisense" };
+export const metadata: Metadata = { title: "Clinical · Medisense" };
 
 async function PageContent() {
   if (!(await requirePageUser("/care/records", "admin"))) return <OfflinePage />;
   return (
     <PageContainer>
-      <RecordList base="/care/records" />
+      <ClinicalHub />
     </PageContainer>
   );
 }
