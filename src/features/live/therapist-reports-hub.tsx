@@ -12,6 +12,7 @@ import type { TherapistHubDto } from "@/lib/live/report-dto";
 import { filterSummary } from "@/lib/live/reports";
 import { populations, type Population } from "@/lib/live/therapist-reports";
 import { ErrorNote, LiveBadge, Skeleton } from "./bits";
+import { MyEarnings } from "./my-earnings";
 import { ProgressHub } from "./progress-hub";
 import { readParam, useNavParam } from "./report-nav";
 import { AreaPage, areaById, type AreaId } from "./reports-areas";
@@ -28,6 +29,8 @@ import { PatientPanel } from "./patient-view";
 const tabs = [
   { id: "overview", label: "Overview" },
   ...THERAPIST_AREAS.map((a) => ({ id: a.id, label: a.label })),
+  // Only for the therapist themself: an admin viewing someone's reports never sees this tab.
+  { id: "earnings", label: "Earnings" },
 ] as const;
 type Tab = (typeof tabs)[number]["id"];
 
@@ -117,7 +120,10 @@ function Hub({
     .sort((a, b) => a.name.localeCompare(b.name));
   const patientName = patients.find((p) => p.id === f.patient)?.name;
   const [period, ...rest] = filterSummary(f, patientName);
-  const current: Tab = tabs.some((t) => t.id === tab) ? tab : "overview";
+  const shownTabs = self ? tabs : tabs.filter((t) => t.id !== "earnings");
+  const current: Tab = shownTabs.some((t) => t.id === tab) ? tab : "overview";
+  // Earnings has its own date and service filters; the report filters don't apply there.
+  const showFilters = current !== "earnings";
   const capacity = areaById("capacity");
   const time = new Intl.DateTimeFormat("en-AU", {
     timeZone: "Australia/Brisbane",
@@ -182,15 +188,17 @@ function Hub({
                   All therapists
                 </Link>
               )}
-              <Button onClick={() => setOpen({ kind: "filters" })}>
-                <Filter className="size-4" aria-hidden="true" />
-                {period}
-                {rest.length > 0 && (
-                  <span className="rounded-full bg-accent-tint px-1.5 text-caption font-semibold text-accent">
-                    +{rest.length}
-                  </span>
-                )}
-              </Button>
+              {showFilters && (
+                <Button onClick={() => setOpen({ kind: "filters" })}>
+                  <Filter className="size-4" aria-hidden="true" />
+                  {period}
+                  {rest.length > 0 && (
+                    <span className="rounded-full bg-accent-tint px-1.5 text-caption font-semibold text-accent">
+                      +{rest.length}
+                    </span>
+                  )}
+                </Button>
+              )}
               <Button size="sm" variant="ghost" aria-label="Refresh" onClick={reload}>
                 <RefreshCw className="size-4" aria-hidden="true" />
               </Button>
@@ -202,7 +210,7 @@ function Hub({
       <div className="mt-4">
         <Tabs
           label="Reports"
-          tabs={tabs}
+          tabs={shownTabs}
           value={current}
           onChange={(t: Tab) => go(t)}
           sticky={!embedded}
@@ -220,6 +228,11 @@ function Hub({
         <TabPanel id="overview" value={current}>
           <TherapistOverview c={c} openArea={(id: AreaId) => go(id)} />
         </TabPanel>
+        {self && (
+          <TabPanel id="earnings" value={current}>
+            <MyEarnings />
+          </TabPanel>
+        )}
         {THERAPIST_AREAS.map((a) => (
           <TabPanel key={a.id} id={a.id} value={current}>
             {a.id === "patients" && patient ? (

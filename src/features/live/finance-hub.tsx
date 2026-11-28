@@ -34,6 +34,7 @@ import {
 } from "@/lib/live/finance";
 import { cn } from "@/lib/cn";
 import { ErrorNote, LiveBadge, Skeleton } from "./bits";
+import { TherapistEarnings } from "./finance-earnings";
 import { FCard } from "./funding-bits";
 import {
   dayLabel,
@@ -1020,6 +1021,7 @@ function Reports({ hub, f }: { hub: FinanceHubDto; f: Filters }) {
           ))}
         </div>
       </FCard>
+      <TherapistEarnings f={f} />
       <p className="text-caption text-ink-500">
         <Tag tone="outline">Note</Tag> Therapist utilisation is a scheduling metric (Modules 04 and
         05), not a revenue proxy.

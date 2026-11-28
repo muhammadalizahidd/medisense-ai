@@ -5,6 +5,7 @@ import {
   IdCard,
   CalendarOff,
   Timer,
+  Wallet,
   CircleUserRound,
   Landmark,
   Stethoscope,
@@ -95,6 +96,7 @@ export const navigation: { group: string; items: NavItem[] }[] = [
       { href: "/care/hr", label: "Credentials and compliance", icon: IdCard, roles: [L, A] },
       { href: "/care/hr/leave", label: "Leave and absence", icon: CalendarOff, roles: [L, A] },
       { href: "/care/hr/timesheets", label: "Timesheets", icon: Timer, roles: [L, A] },
+      { href: "/care/hr/pay", label: "Pay rates", icon: Wallet, roles: [L, A] },
       { href: "/care/operations", label: "Operations", icon: Workflow, roles: [L, A] },
       { href: "/care/records", label: "Clinical records", icon: FileText, roles: [L, A] },
       { href: "/care/assessments", label: "Assessments", icon: ClipboardList, roles: [L, A] },
@@ -282,7 +284,7 @@ const roleLayouts: Partial<Record<Role, Section[]>> = {
     {
       group: "People and HR",
       live: true,
-      hrefs: ["/care/hr", "/care/hr/leave", "/care/hr/timesheets"],
+      hrefs: ["/care/hr", "/care/hr/leave", "/care/hr/timesheets", "/care/hr/pay"],
     },
     {
       group: "Operations and AI",
@@ -411,6 +413,10 @@ const routes: { prefix: string; meta: RouteMeta }[] = [
   {
     prefix: "/care/hr/timesheets",
     meta: { section: "People and HR", page: "Timesheets", role: "Admin" },
+  },
+  {
+    prefix: "/care/hr/pay",
+    meta: { section: "People and HR", page: "Pay rates", role: "Admin" },
   },
   {
     prefix: "/care/hr/leave",

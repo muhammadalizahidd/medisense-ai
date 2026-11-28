@@ -512,6 +512,20 @@ export const permissions: readonly PermissionDef[] = [
     "See credential alerts, decide leave requests, approve timesheets and remind staff.",
     [OPS, CL],
   ),
+  action(
+    "pay.view",
+    H,
+    "See pay rates",
+    "See how each therapist is paid and the history of their pay rates.",
+    [OPS, CL, FIN, FM],
+  ),
+  action(
+    "pay.manage",
+    H,
+    "Set pay rates",
+    "Create and change therapist pay rates. Every change is audited.",
+    [FM],
+  ),
   // Messages
   action(
     "messages.use",
@@ -540,6 +554,8 @@ export const defaultPermissionsFor = (slug: BuiltInRoleSlug): string[] =>
 export const enforcedPermissions: readonly string[] = [
   // People and HR, and Messages
   "hr.manage",
+  "pay.view",
+  "pay.manage",
   "messages.use",
   // Roles and apps
   "roles.manage",

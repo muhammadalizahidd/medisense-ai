@@ -58,6 +58,8 @@ export const pagePermissions: Record<string, readonly string[]> = {
   "/": [],
   "/care/users": ["roles.manage"],
   "/care/hr": ["hr.manage"],
+  // A Finance Manager sets pay rates without holding the rest of People and HR.
+  "/care/hr/pay": ["pay.view", "pay.manage"],
   "/care/messages": ["messages.use"],
 };
 

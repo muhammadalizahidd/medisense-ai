@@ -19,6 +19,7 @@ import type {
   TelehealthDoc,
   FundingPlanDoc,
   PayerDoc,
+  PayRateDoc,
   PriceItemDoc,
   AgreementDoc,
   FundingAckDoc,
@@ -105,6 +106,10 @@ async function prepare(client: MongoClient) {
     db.collection("billables").createIndex({ sourceKey: 1 }),
     db.collection("billables").createIndex({ clientId: 1, start: -1 }),
     db.collection("payments").createIndex({ reference: 1 }),
+    db.collection("billables").createIndex({ appointmentId: 1 }),
+    db.collection("appointments").createIndex({ therapistId: 1, start: -1, status: 1 }),
+    db.collection("payRates").createIndex({ therapistId: 1, seq: 1 }, { unique: true }),
+    db.collection("payRates").createIndex({ therapistId: 1, effectiveFrom: -1 }),
     db
       .collection("opsTasks")
       .createIndex(
@@ -169,6 +174,7 @@ export async function collections() {
     telehealth: db.collection<TelehealthDoc>("telehealth"),
     fundingPlans: db.collection<FundingPlanDoc>("fundingPlans"),
     payers: db.collection<PayerDoc>("payers"),
+    payRates: db.collection<PayRateDoc>("payRates"),
     priceItems: db.collection<PriceItemDoc>("priceItems"),
     agreements: db.collection<AgreementDoc>("agreements"),
     fundingAcks: db.collection<FundingAckDoc>("fundingAcks"),

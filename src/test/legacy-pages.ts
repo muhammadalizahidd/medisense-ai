@@ -34,6 +34,8 @@ export const legacyPageAccess: Record<string, string[]> = {
   "/care/hr": [LEAD, OPS],
   "/care/hr/leave": [LEAD, OPS],
   "/care/hr/timesheets": [LEAD, OPS],
+  // Added with pay rates: HR can view them; Finance views and the Finance Manager sets them.
+  "/care/hr/pay": [LEAD, OPS, FIN, FINM],
   "/": [],
   "/care/users": [],
 };

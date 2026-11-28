@@ -18,9 +18,9 @@ describe("permission catalogue", () => {
   });
 
   it("holds every permission from the phase 0 inventory", () => {
-    // 49 listed permissions plus read and detail for each of the 9 report domains, and HR and
-    // Messages, added with those modules.
-    expect(permissions).toHaveLength(49 + 18 + 7 + 1 + 2);
+    // 49 listed permissions plus read and detail for each of the 9 report domains, HR and
+    // Messages, and pay rates (view and set), added with those modules.
+    expect(permissions).toHaveLength(49 + 18 + 7 + 1 + 2 + 2);
   });
 
   it("puts every permission in a known group with a label and description", () => {

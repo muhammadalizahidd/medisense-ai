@@ -20,6 +20,7 @@ import type {
   ReviewDecision,
   SectionEntry,
 } from "@/lib/live/clinical";
+import type { CancellationPay, PayMethod } from "@/lib/live/pay";
 import type { Gap, ReferralInput, ReferralStatus } from "@/lib/live/referral";
 import type {
   Address,
@@ -560,6 +561,8 @@ export interface AuditDoc {
   referralId?: ObjectId | null;
   /** Module 04: changes to a staff member's record. */
   therapistId?: ObjectId | null;
+  /** The value before and after a change, kept as data (pay rates). */
+  detail?: { before: unknown; after: unknown } | null;
   at: Date;
 }
 
@@ -1056,6 +1059,33 @@ export interface FundingAckDoc {
 }
 
 /* ------------------------------------------------------------------ Module 07 */
+
+/**
+ * How a therapist is paid from a date. Append-only: a change is a new row, so every past visit
+ * keeps the rate that applied on its day. Only a rate that hasn't started can be withdrawn.
+ */
+export interface PayRateDoc {
+  _id: ObjectId;
+  therapistId: ObjectId;
+  /** 1, 2, 3… per therapist; unique, so two saves made at the same moment can't both land. */
+  seq: number;
+  method: PayMethod;
+  inPersonCents: number | null;
+  telehealthCents: number | null;
+  hourlyCents: number | null;
+  sharePercent: number | null;
+  cancellation: CancellationPay;
+  /** Brisbane day, "YYYY-MM-DD". */
+  effectiveFrom: string;
+  note: string;
+  createdBy: ObjectId | null;
+  createdByName: string;
+  createdAt: Date;
+  withdrawnAt?: Date | null;
+  withdrawnBy?: string | null;
+  /** Rows from scripts/seed-pay-rates.mjs; removable in one query. */
+  demo?: boolean;
+}
 
 export interface FinanceEvent {
   at: Date;

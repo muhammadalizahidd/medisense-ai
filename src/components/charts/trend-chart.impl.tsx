@@ -45,6 +45,7 @@ export function TrendChart({
   references = [],
   domain,
   format = (v) => String(v),
+  axisFormat,
   tooltipTitle,
   label,
 }: {
@@ -56,6 +57,8 @@ export function TrendChart({
   references?: TrendReference[];
   domain?: [number | "auto" | "dataMin", number | "auto" | "dataMax"];
   format?: (value: number) => string;
+  /** A shorter label for the value axis, which is narrow; the tooltip keeps `format`. */
+  axisFormat?: (value: number) => string;
   tooltipTitle?: (x: string) => ReactNode;
   label: string;
 }) {
@@ -101,7 +104,7 @@ export function TrendChart({
               {...axisProps}
               domain={domain ?? ["auto", "auto"]}
               width={44}
-              tickFormatter={(v: number) => format(v)}
+              tickFormatter={(v: number) => (axisFormat ?? format)(v)}
             />
             <Tooltip
               cursor={cursorLine}

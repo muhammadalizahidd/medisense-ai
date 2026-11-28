@@ -517,6 +517,22 @@ export const guides: Record<string, PageGuide> = {
     ],
     "Hours are approved from what actually happened, with nothing typed in twice.",
   ),
+  "/care/hr/pay": g(
+    "Pay rates",
+    "How each therapist is paid: per appointment, hourly or a share of what was billed, each from a start date.",
+    [
+      "See every therapist's current and upcoming pay rate",
+      "Set or change a rate with the date it starts",
+      "Choose what a late cancellation or Did not attend pays",
+      "See the history of every change, newest first",
+    ],
+    [
+      "Check the alert for therapists with no pay rate.",
+      "Open a therapist and set the method, amounts and start date.",
+      "Past visits keep their old rate; the change is in the audit trail.",
+    ],
+    "Every therapist's pay is set, dated and traceable, and past earnings never move.",
+  ),
   "/care/messages": g(
     "Messages",
     "Chat with anyone in the practice: office staff, clinicians and patients.",

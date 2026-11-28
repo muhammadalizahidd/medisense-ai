@@ -4,6 +4,7 @@ import { useAiEnabled } from "@/components/ai/ai-switch";
 import { NoteAssist, wantsAssist } from "@/components/ai/note-assist";
 import { PatientAiTab, TherapistAiInbox, VisitCheckin } from "./enhance-therapist";
 import {
+  Wallet,
   CalendarPlus,
   AlertTriangle,
   CalendarCheck,
@@ -61,6 +62,7 @@ import type { AppointmentDto, SessionUser, TherapistHomeDto } from "@/lib/live/t
 import { ErrorNote, Skeleton } from "./bits";
 import { ChatOverlay } from "./chat-overlay";
 import { ConversationList, useConversations, useUnreadMessages } from "./conversations";
+import { MyEarnings } from "./my-earnings";
 import { SignInForm } from "./sign-in-form";
 
 /* ------------------------------------------------------------------ frame */
@@ -1615,6 +1617,28 @@ function MeTab({
             <a href="/profile?tab=timesheet">My timesheet</a>
           </p>
         </section>
+        <button
+          type="button"
+          onClick={() =>
+            ctx.open(
+              <AppSheet title="My earnings" onClose={ctx.close}>
+                <MyEarnings compact />
+              </AppSheet>,
+            )
+          }
+          className="flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-card border border-border bg-surface p-4 text-left hover:shadow-lift active:scale-[0.98]"
+        >
+          <span className="flex size-9 items-center justify-center rounded-control bg-accent-tint text-accent">
+            <Wallet className="size-4" aria-hidden="true" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-section font-semibold text-ink-900">My earnings</span>
+            <span className="text-caption text-ink-500">
+              This week, this month, the financial year and what&rsquo;s pending
+            </span>
+          </span>
+          <ChevronRight className="size-4 text-ink-500" aria-hidden="true" />
+        </button>
         <Button
           className="w-full"
           onClick={async () => {
